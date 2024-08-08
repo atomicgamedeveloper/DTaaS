@@ -1,11 +1,10 @@
 // src: https://playwright.dev/docs/writing-tests
 
-import { test, expect } from '@playwright/test';
 import links from './Links'; // Extension is required with Playwright import
 
 test.describe('Tests on Authentication Flow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('./');
+    await page.goto('localhost:4000/');
   });
 
   test('Homepage has correct title and signin link', async ({ page }) => {

@@ -2,17 +2,16 @@
 // @ts-check
 // src: https://playwright.dev/docs/api/class-testconfig
 
-import { defineConfig, devices } from '@playwright/test';
+//import { /* defineConfig, */ devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
-
 dotenv.config({ path: './test/.env' });
 // import fs from 'fs';
 // import path from 'path';
 
 // const storeState = JSON.parse(fs.readFileSync(path.resolve('./playwright/.auth/user.json'), 'utf-8'));
-const BASE_URI = process.env.REACT_APP_URL.toString() ?? '';
+const BASE_URI = process.env.REACT_APP_URL!.toString()// ?? '';
 
-export default defineConfig({
+export default {
   webServer: {
     command: 'yarn start',
     port: 4000,
@@ -24,11 +23,11 @@ export default defineConfig({
   reporter: process.env.CI
     ? 'github'
     : [
-        ['html', { outputFile: 'playwright-report/index.html' }],
-        ['list'],
-        ['junit', { outputFile: 'playwright-report/results.xml' }],
-        ['json', { outputFile: 'playwright-report/results.json' }],
-      ],
+      ['html', { outputFile: 'playwright-report/index.html' }],
+      ['list'],
+      ['junit', { outputFile: 'playwright-report/results.xml' }],
+      ['json', { outputFile: 'playwright-report/results.json' }],
+    ],
   use: {
     baseURL: BASE_URI,
   },
@@ -42,7 +41,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: {
-        ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
@@ -50,11 +48,10 @@ export default defineConfig({
     {
       name: 'firefox',
       use: {
-        ...devices['Desktop Firefox'],
         // Use prepared auth state.
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
     },
   ],
-});
+};
