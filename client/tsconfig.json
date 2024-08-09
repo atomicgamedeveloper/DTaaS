@@ -7,10 +7,9 @@
     "jsx": "react", //use react
     "types": [
       "react",
-      "node",
-      "@types/jest",
-      "jest-playwright-preset",
-      "expect-playwright",
+      "../jest-playwright-preset",
+      "../expect-playwright",
+      "node"
     ], //use react and node types
     "module": "esnext", //use esnext modules
     "moduleResolution": "node", //use node module resolution strategy node

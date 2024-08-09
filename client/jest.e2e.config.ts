@@ -1,6 +1,6 @@
 process.env.JEST_PLAYWRIGHT_CONFIG = './jest-playwright.config.ts'
 
-module.exports = {
+export default {
   preset: "jest-playwright-preset",
   testRegex: "/test/.*\\.spec.ts$",
   transform: {
