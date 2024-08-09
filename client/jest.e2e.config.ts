@@ -9,5 +9,6 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["text", "cobertura", "clover", "lcov", "json"],
   collectCoverageFrom: ["src/**/*.{ts,tsx}"],
-  verbose: true
+  verbose: true,
+  setupFilesAfterEnv: ["expect-playwright"]
 };
