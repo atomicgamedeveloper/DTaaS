@@ -7,9 +7,9 @@ import Button from '@mui/material/Button';
 import { useState, useEffect } from 'react';
 import VerifyConfig, {
   getValidationResults,
-  loadingComponent,
   validationType,
 } from 'route/config/Verify';
+import { loadingComponent } from 'route/config/ConfigItems';
 
 function SignIn() {
   const auth = useAuth();
@@ -62,7 +62,12 @@ function SignIn() {
 const verifyConfigComponent = (configsToShow: string[]): React.ReactNode =>
   VerifyConfig({
     keys: configsToShow,
-    title: `Invalid Application Configuration. Please contact the administrator of your DTaaS installation.`,
+    title: (
+      <>
+        Invalid Application Configuration. <br />
+        Please contact the administrator of your DTaaS installation.
+      </>
+    ),
   });
 
 const signInComponent = (startAuthProcess: () => void): React.ReactNode => (

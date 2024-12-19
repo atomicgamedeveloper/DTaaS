@@ -1,6 +1,6 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { Tooltip } from '@mui/material';
+import { Box, CircularProgress, Tooltip } from '@mui/material';
 import * as React from 'react';
 import { validationType } from 'route/config/Verify';
 import { StatusCodes } from 'http-status-codes';
@@ -64,3 +64,17 @@ export const ConfigItem: React.FC<{
   </div>
 );
 ConfigItem.displayName = 'ConfigItem';
+
+export const loadingComponent = (): React.ReactNode => (
+  <Box
+    sx={{
+      marginTop: 8,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    }}
+  >
+    Verifying configuration
+    <CircularProgress />
+  </Box>
+);

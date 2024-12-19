@@ -1,13 +1,15 @@
 import { z } from 'zod';
 import * as React from 'react';
-import { Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { ConfigItem } from 'route/config/ConfigItems';
+
+import { loadingComponent } from 'route/config/ConfigItems';
 
 const EnvironmentEnum = z.enum(['dev', 'local', 'prod', 'test']);
 const PathString = z.string();
 const ScopesString = z.literal('openid profile read_user read_repository api');
 
-const VerifyConfig: React.FC<{ keys?: string[]; title?: string }> = ({
+const VerifyConfig: React.FC<{ keys?: string[]; title?: JSX.Element }> = ({
   keys = [],
   title = 'Config verification',
 }) => {
@@ -37,20 +39,31 @@ const VerifyConfig: React.FC<{ keys?: string[]; title?: string }> = ({
               window.env[key as keyof typeof window.env] as string,
             ]),
         );
-
   return isLoading ? (
     loadingComponent()
   ) : (
     <Paper
       sx={{
         p: 2,
-        height: '100%',
+        width: 'min(60vw, 100%)',
+        aspectRatio: '2 / 1',
         display: 'flex',
         flexDirection: 'column',
+        marginLeft: 'auto',
+        marginRight: 'auto',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Typography variant="h4">{title}</Typography>
+      <Typography
+        variant="h4"
+        sx={{
+          fontSize: 'clamp(0.2rem, 4vw, 1.6rem)',
+          padding: 'clamp(0, 4vw, 5%)',
+        }}
+      >
+        {title}
+      </Typography>
       <div id="config-items">
         {Object.entries(displayedConfigs).map(([key, value]) => (
           <ConfigItem
@@ -70,20 +83,6 @@ export type validationType = {
   status?: number;
   error?: string;
 };
-
-export const loadingComponent = (): React.ReactNode => (
-  <Box
-    sx={{
-      marginTop: 8,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    }}
-  >
-    Verifying configuration
-    <CircularProgress />
-  </Box>
-);
 
 async function opaqueRequest(url: string): Promise<validationType> {
   const urlValidation: validationType = {
