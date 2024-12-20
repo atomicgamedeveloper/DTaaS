@@ -2,7 +2,7 @@ import * as React from 'react';
 import { validationType } from 'util/config';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { Box, CircularProgress, Tooltip } from '@mui/material';
+import { Box, CircularProgress, Tooltip, Typography } from '@mui/material';
 import { StatusCodes } from 'http-status-codes';
 
 const ConfigIcon = (toolTipTitle: string, icon: JSX.Element): JSX.Element => (
@@ -58,9 +58,14 @@ export const ConfigItem: React.FC<{
     className="Config-item"
   >
     {getConfigIcon(validation, label)}
-    <div id="config-text">
+    <Typography
+      sx={{
+        fontSize: 'clamp(0.1rem, 4vw, 1rem)',
+        padding: 'clamp(0, 4vw, 5%)',
+      }}
+    >
       <strong>{label}:</strong> {value}
-    </div>
+    </Typography>
   </div>
 );
 ConfigItem.displayName = 'ConfigItem';

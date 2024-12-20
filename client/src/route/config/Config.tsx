@@ -13,12 +13,16 @@ const DeveloperConfig = (validationResults: {
       sx={{
         p: 2,
         width: 'min(60vw, 100%)',
-        aspectRatio: '2 / 1',
+        height: 'auto',
+        marginTop: '2%',
+        maxHeight: '75vh',
+        minWidth: '360px',
         display: 'flex',
         flexDirection: 'column',
         marginLeft: 'auto',
         marginRight: 'auto',
         position: 'relative',
+        overflow: 'auto',
       }}
     >
       <Typography
@@ -105,13 +109,14 @@ const Config = (props: { role: string }) => {
       key !== undefined && validationResults[key]?.error !== undefined,
   );
 
-  if (!isLoading) {
-    // Show signin if config is ready and good, otherwise show problems
-    if (hasConfigErrors || props.role === 'developer') {
-      displayedComponent = verifyConfig;
-    } else if (props.role === 'user') {
+  useEffect(() => {
+    if (!isLoading && props.role === 'user' && !hasConfigErrors) {
       navigate('/signin');
     }
+  }, [isLoading, props.role, hasConfigErrors, navigate]);
+
+  if (!isLoading && (hasConfigErrors || props.role === 'developer')) {
+    displayedComponent = verifyConfig;
   }
 
   return displayedComponent;
