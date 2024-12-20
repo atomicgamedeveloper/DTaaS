@@ -1,8 +1,8 @@
+import * as React from 'react';
+import { validationType } from 'util/config';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { Box, CircularProgress, Tooltip } from '@mui/material';
-import * as React from 'react';
-import { validationType } from 'route/config/Verify';
 import { StatusCodes } from 'http-status-codes';
 
 const ConfigIcon = (toolTipTitle: string, icon: JSX.Element): JSX.Element => (

@@ -7,7 +7,7 @@ import Library from 'route/library/Library';
 import authReducer from 'store/auth.slice';
 import { mockUser } from 'test/__mocks__/global_mocks';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
-import { getValidationResults } from 'route/config/Verify'; // Globally mocked
+import { getValidationResults } from 'route/config/Verification'; // Globally mocked
 
 jest.mock('util/auth/Authentication', () => ({
   useGetAndSetUsername: () => jest.fn(),

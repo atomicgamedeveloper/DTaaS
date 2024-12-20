@@ -9,7 +9,7 @@ import {
 import { MemoryRouter } from 'react-router-dom';
 import SignIn from 'route/auth/Signin';
 import { useAuth } from 'react-oidc-context';
-import { getValidationResults } from 'route/config/Verify'; // Globally mocked
+import { getValidationResults } from 'route/config/Verification'; // Globally mocked
 
 jest.unmock('route/auth/Signin');
 jest.mock('react-oidc-context');
