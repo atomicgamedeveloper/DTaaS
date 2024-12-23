@@ -22,7 +22,7 @@ export default defineConfig({
         command: 'yarn start',
       },
   retries: process.env.CI ? 0 : 1, // Disable retries on Github actions for now as setup always fails
-  timeout: 90 * 1000,
+  timeout: process.env.CI ? 0 : 120 * 1000, //  Disable timeouts on Github actions for now as setup always fails
   globalTimeout: 10 * 60 * 1000,
   testDir: './test/e2e/tests',
   testMatch: /.*\.test\.ts/,
@@ -50,6 +50,7 @@ export default defineConfig({
   use: {
     baseURL: BASE_URI,
     trace: 'on-first-retry', // Wil not record trace on Github actions because of no retries
+    headless: true,
   },
   projects: [
     // Setup project

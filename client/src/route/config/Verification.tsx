@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { validationType } from 'util/config';
+import { validationType } from 'util/configUtil';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { Box, CircularProgress, Tooltip, Typography } from '@mui/material';

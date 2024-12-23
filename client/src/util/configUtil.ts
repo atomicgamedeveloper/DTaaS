@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { wait } from 'util/auth/Authentication';
 
 export type validationType = {
   value?: string;
@@ -9,6 +10,22 @@ export type validationType = {
 const EnvironmentEnum = z.enum(['dev', 'local', 'prod', 'test']);
 const PathString = z.string();
 const ScopesString = z.literal('openid profile read_user read_repository api');
+
+export async function retryFetch(
+  url: string,
+  options: RequestInit = {},
+  retries = 2,
+): Promise<Response> {
+  if (retries === 0) {
+    throw new Error('No retries left');
+  }
+  try {
+    return await fetch(url, options);
+  } catch (_error) {
+    wait(1000);
+    return retryFetch(url, options, retries - 1);
+  }
+}
 
 export const getValidationResults = async (
   keysToValidate: string[],
@@ -96,7 +113,7 @@ async function opaqueRequest(url: string): Promise<validationType> {
     error: undefined,
   };
   try {
-    await fetch(url, {
+    await retryFetch(url, {
       method: 'HEAD',
       mode: 'no-cors',
       signal: AbortSignal.timeout(2000),
@@ -104,6 +121,7 @@ async function opaqueRequest(url: string): Promise<validationType> {
     urlValidation.status = 0;
   } catch (error) {
     urlValidation.error = `An error occurred when fetching ${url}: ${error}`;
+    throw error;
   }
   return urlValidation;
 }
@@ -114,26 +132,30 @@ async function corsRequest(url: string): Promise<validationType> {
     status: undefined,
     error: undefined,
   };
-  const response = await fetch(url, {
-    method: 'HEAD',
-    signal: AbortSignal.timeout(2000),
-  });
-  const responseIsAcceptable = response.ok || response.status === 302;
-  if (!responseIsAcceptable) {
-    urlValidation.error = `Unexpected response code ${response.status} from ${url}.`;
+  try {
+    const response = await retryFetch(url, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(2000),
+    });
+    const responseIsAcceptable = response.ok || response.redirected;
+    if (!responseIsAcceptable) {
+      urlValidation.error = `Unexpected response code ${response.status} from ${url}.`;
+      throw new Error(urlValidation.error);
+    }
+    urlValidation.status = response.status;
+    return urlValidation;
+  } catch (error) {
+    urlValidation.error = `An error occurred when fetching ${url}: ${error}`;
+    throw error;
   }
-  urlValidation.status = response.status;
-  return urlValidation;
 }
 
 export async function urlIsReachable(url: string): Promise<validationType> {
-  let urlValidation: validationType;
   try {
-    urlValidation = await corsRequest(url);
+    return await corsRequest(url);
   } catch {
-    urlValidation = await opaqueRequest(url);
+    return opaqueRequest(url);
   }
-  return urlValidation;
 }
 
 const parseField = (

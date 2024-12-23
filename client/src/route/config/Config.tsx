@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { getValidationResults, validationType } from 'util/config';
+import { getValidationResults, validationType } from 'util/configUtil';
 import { ConfigItem, loadingComponent } from './Verification';
 import { Paper, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -59,7 +59,8 @@ const UserConfig = (): JSX.Element => {
     <Paper
       sx={{
         p: 2,
-        width: 'min(60vw, 100%)',
+        marginTop: '2%',
+        width: 'min(60vw, 390px)',
         aspectRatio: '2 / 1',
         display: 'flex',
         flexDirection: 'column',
@@ -103,8 +104,7 @@ const Config = (props: { role: string }) => {
   const verifyConfig =
     props.role === 'user' ? UserConfig() : DeveloperConfig(validationResults);
 
-  let displayedComponent = loading;
-  const hasConfigErrors = Object.values(window.env).some(
+  const hasConfigErrors = Object.keys(window.env).some(
     (key: string | undefined) =>
       key !== undefined && validationResults[key]?.error !== undefined,
   );
@@ -115,8 +115,14 @@ const Config = (props: { role: string }) => {
     }
   }, [isLoading, props.role, hasConfigErrors, navigate]);
 
-  if (!isLoading && (hasConfigErrors || props.role === 'developer')) {
-    displayedComponent = verifyConfig;
+  let displayedComponent = loading;
+
+  if (!isLoading) {
+    if (props.role === 'developer') {
+      displayedComponent = verifyConfig;
+    } else if (hasConfigErrors) {
+      displayedComponent = loading;
+    }
   }
 
   return displayedComponent;

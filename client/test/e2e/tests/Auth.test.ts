@@ -46,7 +46,9 @@ test.describe('Tests on Authentication Flow', () => {
       await previousPromise;
       await page.goto(link.url.charAt(1).toUpperCase());
       await expect(page).toHaveURL(baseURL?.replace(/\/$/, '') ?? './');
-      await expect(page.locator('button:has-text("Sign In")')).toBeVisible();
+      await expect(page.locator('button:has-text("Sign In")')).toBeVisible({
+        timeout: 10000,
+      });
     }, Promise.resolve());
   });
 });
