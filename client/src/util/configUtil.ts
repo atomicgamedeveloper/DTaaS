@@ -16,12 +16,12 @@ export async function retryFetch(
   options: RequestInit = {},
   retries = 2,
 ): Promise<Response> {
-  if (retries === 0) {
-    throw new Error('No retries left');
-  }
   try {
     return await fetch(url, options);
-  } catch (_error) {
+  } catch (error) {
+    if (retries === 0) {
+      return Promise.reject(error);
+    }
     wait(1000);
     return retryFetch(url, options, retries - 1);
   }
@@ -143,18 +143,26 @@ async function corsRequest(url: string): Promise<validationType> {
       throw new Error(urlValidation.error);
     }
     urlValidation.status = response.status;
-    return urlValidation;
   } catch (error) {
     urlValidation.error = `An error occurred when fetching ${url}: ${error}`;
     throw error;
   }
+  return urlValidation;
 }
 
 export async function urlIsReachable(url: string): Promise<validationType> {
   try {
     return await corsRequest(url);
-  } catch {
-    return opaqueRequest(url);
+  } catch (_corsError) {
+    try {
+      return await opaqueRequest(url);
+    } catch (opaqueError) {
+      return {
+        value: url,
+        status: undefined,
+        error: `Failed to fetch ${url} after multiple attempts: ${opaqueError instanceof Error ? opaqueError.message : opaqueError}`,
+      };
+    }
   }
 }
 

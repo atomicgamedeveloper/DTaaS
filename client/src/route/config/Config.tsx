@@ -51,8 +51,12 @@ const DeveloperConfig = (validationResults: {
 const UserConfig = (): JSX.Element => {
   const title: JSX.Element = (
     <>
-      Invalid Application Configuration. <br />
-      Please contact the administ rator of your DTaaS installation.
+      Invalid Application Configuration. Please contact the administrator of
+      your DTaaS installation.
+      <br />
+      <a href="./config/verify" style={{ fontSize: '0.7em' }}>
+        Inspect configuration
+      </a>
     </>
   );
   return (
@@ -118,11 +122,7 @@ const Config = (props: { role: string }) => {
   let displayedComponent = loading;
 
   if (!isLoading) {
-    if (props.role === 'developer') {
-      displayedComponent = verifyConfig;
-    } else if (hasConfigErrors) {
-      displayedComponent = loading;
-    }
+    displayedComponent = verifyConfig;
   }
 
   return displayedComponent;

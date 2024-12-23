@@ -5,11 +5,12 @@
     "main": "index.tsx",
     "author": "prasadtalasila <prasad.talasila@gmail.com> (http://prasad.talasila.in/)",
     "contributors": [
-        "Omar Suleiman",
         "Asger Busk Breinholm",
-        "Mathias Brændgaard",
-        "Emre Temel",
         "Cesar Vela",
+        "Emre Temel",
+        "Enok Maj",
+        "Mathias Brændgaard",
+        "Omar Suleiman",
         "Vanessa Scherma"
     ],
     "license": "SEE LICENSE IN <LICENSE.md>",
