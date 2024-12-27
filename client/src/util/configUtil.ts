@@ -14,15 +14,15 @@ const ScopesString = z.literal('openid profile read_user read_repository api');
 export async function retryFetch(
   url: string,
   options: RequestInit = {},
-  retries = 2,
+  retries = 1,
 ): Promise<Response> {
   try {
     return await fetch(url, options);
   } catch (error) {
-    if (retries === 0) {
+    if (retries <= 0) {
       return Promise.reject(error);
     }
-    wait(1000);
+    await wait(1000);
     return retryFetch(url, options, retries - 1);
   }
 }
@@ -108,7 +108,7 @@ export const getValidationResults = async (
 
 async function opaqueRequest(url: string): Promise<validationType> {
   const urlValidation: validationType = {
-    value: url,
+    value: undefined,
     status: undefined,
     error: undefined,
   };
@@ -118,6 +118,7 @@ async function opaqueRequest(url: string): Promise<validationType> {
       mode: 'no-cors',
       signal: AbortSignal.timeout(2000),
     });
+    urlValidation.value = url;
     urlValidation.status = 0;
   } catch (error) {
     urlValidation.error = `An error occurred when fetching ${url}: ${error}`;
@@ -128,7 +129,7 @@ async function opaqueRequest(url: string): Promise<validationType> {
 
 async function corsRequest(url: string): Promise<validationType> {
   const urlValidation: validationType = {
-    value: url,
+    value: undefined,
     status: undefined,
     error: undefined,
   };
@@ -142,6 +143,7 @@ async function corsRequest(url: string): Promise<validationType> {
       urlValidation.error = `Unexpected response code ${response.status} from ${url}.`;
       throw new Error(urlValidation.error);
     }
+    urlValidation.value = url;
     urlValidation.status = response.status;
   } catch (error) {
     urlValidation.error = `An error occurred when fetching ${url}: ${error}`;
@@ -158,7 +160,7 @@ export async function urlIsReachable(url: string): Promise<validationType> {
       return await opaqueRequest(url);
     } catch (opaqueError) {
       return {
-        value: url,
+        value: undefined,
         status: undefined,
         error: `Failed to fetch ${url} after multiple attempts: ${opaqueError instanceof Error ? opaqueError.message : opaqueError}`,
       };
@@ -177,6 +179,6 @@ const parseField = (
 ): validationType => {
   const result = parser.safeParse(value);
   return result.success
-    ? { value, error: undefined }
-    : { value: undefined, error: result.error?.message };
+    ? { error: undefined, value, status: undefined }
+    : { error: result.error?.message, status: undefined, value: undefined };
 };

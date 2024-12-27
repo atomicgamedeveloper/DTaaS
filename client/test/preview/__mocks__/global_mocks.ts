@@ -183,7 +183,6 @@ jest.mock('util/envUtil', () => ({
 
 window.env = {
   ...global.window.env,
-  REACT_APP_AUTH_AUTHORITY: 'https://foo.net',
   REACT_APP_ENVIRONMENT: 'test',
   REACT_APP_URL: 'https://foo.com',
   REACT_APP_URL_BASENAME: 'mock_url_basename',
@@ -193,8 +192,11 @@ window.env = {
   REACT_APP_WORKBENCHLINK_VSCODE: '/tools/vscode/',
   REACT_APP_WORKBENCHLINK_JUPYTERLAB: '/lab',
   REACT_APP_WORKBENCHLINK_JUPYTERNOTEBOOK: '',
+  REACT_APP_WORKBENCHLINK_LIBRARY_PREVIEW: '/preview/library',
+  REACT_APP_WORKBENCHLINK_DT_PREVIEW: '/preview/digitaltwins',
 
   REACT_APP_CLIENT_ID: 'abc123',
+  REACT_APP_AUTH_AUTHORITY: 'https://foo.git.com',
   REACT_APP_REDIRECT_URI: 'https://bar.com',
   REACT_APP_LOGOUT_REDIRECT_URI: 'https://foobar.com',
   REACT_APP_GITLAB_SCOPES: 'openid profile read_user read_repository api',

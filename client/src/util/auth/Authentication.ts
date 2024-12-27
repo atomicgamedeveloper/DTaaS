@@ -62,7 +62,7 @@ export function useSignOut() {
   return signOut;
 }
 
-export function wait(milliseconds: number): Promise<void> {
+export async function wait(milliseconds: number): Promise<void> {
   return new Promise<void>((resolve) => {
     const onTimeout = () => {
       resolve();
