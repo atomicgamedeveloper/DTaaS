@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { getValidationResults, validationType } from 'util/configUtil';
-import { ConfigItem, loadingComponent } from './Verification';
+import { ConfigItem, loadingComponent } from './ConfigItems';
 import { Paper, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 

@@ -8,7 +8,11 @@ import { StatusCodes } from 'http-status-codes';
 const ConfigIcon = (toolTipTitle: string, icon: JSX.Element): JSX.Element => (
   <Tooltip
     title={toolTipTitle}
-    PopperProps={{ container: document.getElementById('root') }}
+    PopperProps={
+      document.getElementById('root')
+        ? { container: document.getElementById('root') }
+        : undefined
+    }
   >
     {icon}
   </Tooltip>
@@ -31,6 +35,7 @@ const getValidationIconConfig = (
     };
   }
 
+  // If status is undefined then the validation is derived from a parsing.
   const statusIsAcceptable = status === StatusCodes.OK || status === undefined;
 
   return statusIsAcceptable
@@ -89,6 +94,6 @@ export const loadingComponent = (): React.ReactNode => (
     }}
   >
     Verifying configuration
-    <CircularProgress />
+    <CircularProgress data-testid="loading-icon" />
   </Box>
 );
