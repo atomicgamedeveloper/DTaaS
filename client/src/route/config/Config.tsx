@@ -1,52 +1,50 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { getValidationResults, validationType } from 'util/configUtil';
-import { ConfigItem, loadingComponent } from './ConfigItems';
 import { Paper, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { ConfigItem, loadingComponent } from './ConfigItems';
 
 const DeveloperConfig = (validationResults: {
   [key: string]: validationType;
-}): JSX.Element => {
-  return (
-    <Paper
+}): JSX.Element => (
+  <Paper
+    sx={{
+      p: 2,
+      width: 'min(60vw, 100%)',
+      height: 'auto',
+      marginTop: '2%',
+      maxHeight: '75vh',
+      minWidth: '360px',
+      display: 'flex',
+      flexDirection: 'column',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      position: 'relative',
+      overflow: 'auto',
+    }}
+  >
+    <Typography
+      variant="h4"
       sx={{
-        p: 2,
-        width: 'min(60vw, 100%)',
-        height: 'auto',
-        marginTop: '2%',
-        maxHeight: '75vh',
-        minWidth: '360px',
-        display: 'flex',
-        flexDirection: 'column',
-        marginLeft: 'auto',
-        marginRight: 'auto',
-        position: 'relative',
-        overflow: 'auto',
+        fontSize: 'clamp(0.2rem, 4vw, 1.6rem)',
+        padding: 'clamp(0, 4vw, 5%)',
       }}
     >
-      <Typography
-        variant="h4"
-        sx={{
-          fontSize: 'clamp(0.2rem, 4vw, 1.6rem)',
-          padding: 'clamp(0, 4vw, 5%)',
-        }}
-      >
-        {'Config verification'}
-      </Typography>
-      <div id="config-items">
-        {Object.entries(window.env).map(([key, value]) => (
-          <ConfigItem
-            key={key}
-            label={key}
-            value={value!}
-            validation={validationResults[key]}
-          />
-        ))}
-      </div>
-    </Paper>
-  );
-};
+      {'Config verification'}
+    </Typography>
+    <div id="config-items">
+      {Object.entries(window.env).map(([key, value]) => (
+        <ConfigItem
+          key={key}
+          label={key}
+          value={value!}
+          validation={validationResults[key]}
+        />
+      ))}
+    </div>
+  </Paper>
+);
 
 const UserConfig = (): JSX.Element => {
   const title: JSX.Element = (
@@ -119,7 +117,7 @@ const Config = (props: { role: string }) => {
     if (shouldRedirect) {
       navigate('/signin');
     }
-  }, [isLoading, props.role, hasConfigErrors, navigate]);
+  }, [shouldRedirect, navigate]);
 
   let displayedComponent = loading;
 
