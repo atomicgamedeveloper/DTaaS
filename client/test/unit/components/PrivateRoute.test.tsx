@@ -46,40 +46,45 @@ const setupTest = (authState: AuthState) => {
   );
 };
 
-test('renders loading and redirects correctly when authenticated/not authentic', async () => {
-  setupTest({
-    isLoading: false,
-    error: null,
-    isAuthenticated: false,
+describe('PrivateRoute', () => {
+  test('renders loading and redirects correctly when authenticated/not authentic', async () => {
+    setupTest({
+      isLoading: false,
+      error: null,
+      isAuthenticated: false,
+    });
+
+    await waitFor(
+      () => expect(screen.getByText('Signin')).toBeInTheDocument(),
+      {
+        timeout: 60000,
+      },
+    );
+
+    setupTest({
+      isLoading: true,
+      error: null,
+      isAuthenticated: false,
+    });
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+    setupTest({
+      isLoading: false,
+      error: null,
+      isAuthenticated: true,
+    });
+
+    expect(screen.getByText('Test Component')).toBeInTheDocument();
   });
 
-  await waitFor(() => expect(screen.getByText('Signin')).toBeInTheDocument(), {
-    timeout: 60000,
+  test('renders error', () => {
+    setupTest({
+      isLoading: false,
+      error: new Error('Test error'),
+      isAuthenticated: false,
+    });
+
+    expect(screen.getByText('Oops... Test error')).toBeInTheDocument();
   });
-
-  setupTest({
-    isLoading: true,
-    error: null,
-    isAuthenticated: false,
-  });
-
-  expect(screen.getByText('Loading...')).toBeInTheDocument();
-
-  setupTest({
-    isLoading: false,
-    error: null,
-    isAuthenticated: true,
-  });
-
-  expect(screen.getByText('Test Component')).toBeInTheDocument();
-});
-
-test('renders error', () => {
-  setupTest({
-    isLoading: false,
-    error: new Error('Test error'),
-    isAuthenticated: false,
-  });
-
-  expect(screen.getByText('Oops... Test error')).toBeInTheDocument();
 });

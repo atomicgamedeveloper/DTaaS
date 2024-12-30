@@ -105,7 +105,7 @@ const Config = (props: { role: string }) => {
   }, [window.env]);
 
   const loading = loadingComponent();
-  const verifyConfig =
+  const configVerification =
     props.role === 'user' ? UserConfig() : DeveloperConfig(validationResults);
 
   const hasConfigErrors = Object.keys(window.env).some(
@@ -113,16 +113,18 @@ const Config = (props: { role: string }) => {
       key !== undefined && validationResults[key]?.error !== undefined,
   );
 
+  const shouldRedirect =
+    !isLoading && props.role === 'user' && !hasConfigErrors;
   useEffect(() => {
-    if (!isLoading && props.role === 'user' && !hasConfigErrors) {
+    if (shouldRedirect) {
       navigate('/signin');
     }
   }, [isLoading, props.role, hasConfigErrors, navigate]);
 
   let displayedComponent = loading;
 
-  if (!isLoading) {
-    displayedComponent = verifyConfig;
+  if (!isLoading && !shouldRedirect) {
+    displayedComponent = configVerification;
   }
 
   return displayedComponent;

@@ -1,7 +1,7 @@
 import test from 'test/e2e/setup/fixtures';
 import { expect } from '@playwright/test';
 
-test('Verification is visible', async ({ page }) => {
+test('Developer config is visible', async ({ page }) => {
   await page.goto('./config/verify');
 
   await page.waitForSelector('[data-testid="success-icon"]', {
