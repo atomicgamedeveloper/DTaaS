@@ -14,7 +14,7 @@ const ScopesString = z.literal('openid profile read_user read_repository api');
 export async function retryFetch(
   url: string,
   options: RequestInit = {},
-  retries = 1,
+  retries = 2,
 ): Promise<Response> {
   try {
     return await fetch(url, options);

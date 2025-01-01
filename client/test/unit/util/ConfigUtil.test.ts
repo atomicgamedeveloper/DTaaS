@@ -69,7 +69,7 @@ describe('configUtil', () => {
       global.fetch = jest.fn().mockRejectedValue(networkError);
 
       await expect(retryFetch('https://bar.com')).rejects.toThrow(networkError);
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledTimes(3);
     });
   });
 
