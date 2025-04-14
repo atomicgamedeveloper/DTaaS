@@ -62,3 +62,4 @@ Once an execution of digital twin is complete, you can see the execution
 log as well.
 
 ![Digital Twin Execution Log](dt_execute_log.png)
+

@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import GitlabInstance from 'preview/util/gitlab';
+import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setJobLogs,
   setPipelineCompleted,
@@ -94,33 +95,38 @@ export const updatePipelineStateOnStop = (
 export const fetchJobLogs = async (
   gitlabInstance: GitlabInstance,
   pipelineId: number,
-) => {
-  const jobs = await gitlabInstance.getPipelineJobs(
-    gitlabInstance.projectId!,
-    pipelineId,
-  );
+): Promise<Array<{ jobName: string; log: string }>> => {
+  const { projectId } = gitlabInstance;
+  if (!projectId) {
+    return [];
+  }
+
+  const jobs = await gitlabInstance.getPipelineJobs(projectId, pipelineId);
+
   const logPromises = jobs.map(async (job) => {
-    const log = await gitlabInstance.getJobTrace(
-      gitlabInstance.projectId!,
-      job.id,
-    );
-    if (typeof log === 'string') {
-      log
-        .replace(
-          // TODO: Fix ansi character stripping
-          // eslint-disable-next-line no-control-regex
-          /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-          '',
-        )
-        .split('\n')
-        .map((line: string) =>
-          line
-            .replace(/section_start:\d+:[^A-Z]*/, '')
-            .replace(/section_end:\d+:[^A-Z]*/, ''),
-        )
-        .join('\n');
+    if (!job || typeof job.id === 'undefined') {
+      return { jobName: 'Unknown', log: 'Job ID not available' };
     }
-    return { jobName: job.name, log };
+
+    try {
+      let log = await gitlabInstance.getJobTrace(projectId, job.id);
+
+      if (typeof log === 'string') {
+        log = cleanLog(log);
+      } else {
+        log = '';
+      }
+
+      return {
+        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
+        log,
+      };
+    } catch (_e) {
+      return {
+        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
+        log: 'Error fetching log content',
+      };
+    }
   });
   return (await Promise.all(logPromises)).reverse();
 };
