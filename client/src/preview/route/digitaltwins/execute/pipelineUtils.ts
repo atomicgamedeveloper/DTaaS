@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import GitlabInstance from 'preview/util/gitlab';
+import { BackendInterface } from 'model/backend/gitlab/gitlab';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setJobLogs,
@@ -93,7 +93,7 @@ export const updatePipelineStateOnStop = (
 };
 
 export const fetchJobLogs = async (
-  gitlabInstance: GitlabInstance,
+  gitlabInstance: BackendInterface,
   pipelineId: number,
 ): Promise<Array<{ jobName: string; log: string }>> => {
   const { projectId } = gitlabInstance;
