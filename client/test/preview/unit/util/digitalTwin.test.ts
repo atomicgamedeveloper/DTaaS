@@ -1,7 +1,22 @@
 import GitlabInstance from 'preview/util/gitlab';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
-import { RUNNER_TAG } from 'model/backend/gitlab/constants';
+import { getRunnerTag } from 'model/backend/gitlab/constants';
+import * as envUtil from 'util/envUtil';
+
+// Mock the constants module
+jest.mock('model/backend/gitlab/constants', () => {
+  // Import the mock factory using import-like syntax to maintain ESLint compliance
+  const { default: createConstantsMock } = jest.requireActual('../../../preview/__mocks__/constants.mock');
+  return createConstantsMock();
+});
+
+// Mock the envUtil module
+jest.mock('util/envUtil', () => ({
+  __esModule: true,
+  ...jest.requireActual('util/envUtil'),
+  getAuthority: jest.fn().mockReturnValue('https://example.com/AUTHORITY'),
+}));
 
 const mockApi = {
   RepositoryFiles: {
@@ -43,8 +58,28 @@ describe('DigitalTwin', () => {
   let dt: DigitalTwin;
 
   beforeEach(() => {
+    // Clear mock calls but preserve mock implementations
+    jest.clearAllMocks();
+
+    // Re-initialize the instance for the test
     mockGitlabInstance.projectId = 1;
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
+
+    // Re-apply the mock for getAuthority - without using require()
+    (envUtil.getAuthority as jest.Mock).mockReturnValue('https://example.com/AUTHORITY');
+
+    // Mock sessionStorage for tests that need it
+    Object.defineProperty(window, 'sessionStorage', {
+      value: {
+        getItem: jest.fn(() => 'testUser'),
+        setItem: jest.fn(),
+        clear: jest.fn(),
+        removeItem: jest.fn(),
+        length: 0,
+        key: jest.fn(),
+      },
+      writable: true,
+    });
   });
 
   it('should get description', async () => {
@@ -77,17 +112,19 @@ describe('DigitalTwin', () => {
       'Test README content with an image ![alt text](image.png)',
     );
 
-    (mockApi.RepositoryFiles.show as jest.Mock).mockResolvedValue({
-      content: mockContent,
-    });
-
-    Object.defineProperty(window, 'sessionStorage', {
-      value: {
-        getItem: jest.fn(() => 'testUser'),
-        setItem: jest.fn(),
+    // Mock for RepositoryFiles.show specific to this test
+    (mockApi.RepositoryFiles.show as jest.Mock).mockImplementation(
+      async (projectId, filePath, ref) => {
+        if (
+          projectId === 1 &&
+          filePath === 'digital_twins/test-DTName/README.md' &&
+          ref === 'main'
+        ) {
+          return { content: mockContent };
+        }
+        throw new Error(`File not found: ${filePath}`);
       },
-      writable: true,
-    });
+    );
 
     await dt.getFullDescription();
 
@@ -136,7 +173,7 @@ describe('DigitalTwin', () => {
       1,
       'main',
       'test-token',
-      { variables: { DTName: 'test-DTName', RunnerTag: RUNNER_TAG } },
+      { variables: { DTName: 'test-DTName', RunnerTag: getRunnerTag() } },
     );
   });
 
@@ -156,12 +193,12 @@ describe('DigitalTwin', () => {
   });
 
   it('should log success and update status', () => {
-    dtUtils.logSuccess(dt, RUNNER_TAG);
+    dtUtils.logSuccess(dt, getRunnerTag());
 
     expect(dt.gitlabInstance.logs).toContainEqual({
       status: 'success',
       DTName: 'test-DTName',
-      runnerTag: RUNNER_TAG,
+      runnerTag: getRunnerTag(),
     });
     expect(dt.lastExecutionStatus).toBe('success');
   });

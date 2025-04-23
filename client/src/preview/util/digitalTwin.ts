@@ -4,7 +4,7 @@
 import { getAuthority } from 'util/envUtil';
 import { FileState } from 'preview/store/file.slice';
 import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
-import { RUNNER_TAG } from 'model/backend/gitlab/constants';
+import { getRunnerTag } from 'model/backend/gitlab/constants';
 import GitlabInstance from './gitlab';
 import {
   isValidInstance,
@@ -86,7 +86,8 @@ class DigitalTwin {
   }
 
   private async triggerPipeline() {
-    const variables = { DTName: this.DTName, RunnerTag: RUNNER_TAG };
+    const runnerTag = getRunnerTag();
+    const variables = { DTName: this.DTName, RunnerTag: runnerTag };
     return this.gitlabInstance.api.PipelineTriggerTokens.trigger(
       this.gitlabInstance.projectId!,
       'main',
@@ -96,23 +97,25 @@ class DigitalTwin {
   }
 
   async execute(): Promise<number | null> {
+    const runnerTag = getRunnerTag();
     if (!isValidInstance(this)) {
-      logError(this, RUNNER_TAG, 'Missing projectId or triggerToken');
+      logError(this, runnerTag, 'Missing projectId or triggerToken');
       return null;
     }
 
     try {
       const response = await this.triggerPipeline();
-      logSuccess(this, RUNNER_TAG);
+      logSuccess(this, runnerTag);
       this.pipelineId = response.id;
       return this.pipelineId;
     } catch (error) {
-      logError(this, RUNNER_TAG, String(error));
+      logError(this, runnerTag, String(error));
       return null;
     }
   }
 
   async stop(projectId: number, pipeline: string): Promise<void> {
+    const runnerTag = getRunnerTag();
     const pipelineId =
       pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
     try {
@@ -120,7 +123,7 @@ class DigitalTwin {
       this.gitlabInstance.logs.push({
         status: 'canceled',
         DTName: this.DTName,
-        runnerTag: RUNNER_TAG,
+        runnerTag,
       });
       this.lastExecutionStatus = 'canceled';
     } catch (error) {
@@ -128,7 +131,7 @@ class DigitalTwin {
         status: 'error',
         error: new Error(String(error)),
         DTName: this.DTName,
-        runnerTag: RUNNER_TAG,
+        runnerTag,
       });
       this.lastExecutionStatus = 'error';
     }

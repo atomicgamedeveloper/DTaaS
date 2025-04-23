@@ -2,7 +2,7 @@
 /* eslint-disable no-await-in-loop */
 
 import { FileState } from 'preview/store/file.slice';
-import { COMMON_LIBRARY_PROJECT_ID } from 'model/backend/gitlab/constants';
+import { getCommonLibraryProjectId } from 'model/backend/gitlab/constants';
 import GitlabInstance from './gitlab';
 import { IFile } from './ifile';
 import { FileType } from './DTAssets';
@@ -44,7 +44,7 @@ class FileHandler implements IFile {
     commonProject?: boolean,
   ): Promise<void> {
     const projectToUse = commonProject
-      ? COMMON_LIBRARY_PROJECT_ID
+      ? getCommonLibraryProjectId()
       : this.gitlabInstance.projectId;
     await this.gitlabInstance.api.RepositoryFiles.create(
       projectToUse!,
@@ -81,7 +81,7 @@ class FileHandler implements IFile {
   async getFileContent(filePath: string, isPrivate?: boolean): Promise<string> {
     const projectToUse =
       isPrivate === false
-        ? COMMON_LIBRARY_PROJECT_ID
+        ? getCommonLibraryProjectId()
         : this.gitlabInstance.projectId;
 
     const response = await this.gitlabInstance.api.RepositoryFiles.show(
@@ -123,7 +123,7 @@ class FileHandler implements IFile {
   ): Promise<string[]> {
     const projectToUse = isPrivate
       ? this.gitlabInstance.projectId
-      : COMMON_LIBRARY_PROJECT_ID;
+      : getCommonLibraryProjectId();
 
     try {
       const response =
@@ -162,7 +162,7 @@ class FileHandler implements IFile {
   ): Promise<string[]> {
     const projectToUse = isPrivate
       ? this.gitlabInstance.projectId
-      : COMMON_LIBRARY_PROJECT_ID;
+      : getCommonLibraryProjectId();
 
     const shouldBeRecursive = filePath.includes('common/');
 

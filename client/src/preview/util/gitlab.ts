@@ -1,8 +1,8 @@
 import { Camelize, Gitlab, JobSchema } from '@gitbeaker/rest';
 import {
-  GROUP_NAME,
-  DT_DIRECTORY,
-  COMMON_LIBRARY_PROJECT_ID,
+  getGroupName,
+  getDTDirectory,
+  getCommonLibraryProjectId,
 } from 'model/backend/gitlab/constants';
 import { Asset } from '../components/asset/Asset';
 
@@ -63,7 +63,7 @@ class GitlabInstance {
   async getProjectId(): Promise<number | null> {
     let projectId: number | null = null;
 
-    const group = await this.api.Groups.show(GROUP_NAME);
+    const group = await this.api.Groups.show(getGroupName());
     const projects = await this.api.Groups.allProjects(group.id);
     const project = projects.find((proj) => proj.name === this.username);
 
@@ -86,13 +86,15 @@ class GitlabInstance {
 
   async getDTSubfolders(projectId: number): Promise<Asset[]> {
     const files = await this.api.Repositories.allRepositoryTrees(projectId, {
-      path: DT_DIRECTORY,
+      path: getDTDirectory(),
       recursive: false,
     });
 
     const subfolders: Asset[] = await Promise.all(
       files
-        .filter((file) => file.type === 'tree' && file.path !== DT_DIRECTORY)
+        .filter(
+          (file) => file.type === 'tree' && file.path !== getDTDirectory(),
+        )
         .map(async (file) => ({
           name: file.name,
           path: file.path,
@@ -113,7 +115,7 @@ class GitlabInstance {
       throw new Error(`Invalid asset type: ${type}`);
     }
 
-    const projectToUse = isPrivate ? projectId : COMMON_LIBRARY_PROJECT_ID;
+    const projectToUse = isPrivate ? projectId : getCommonLibraryProjectId();
 
     const files = await this.api.Repositories.allRepositoryTrees(projectToUse, {
       path: mappedPath,
