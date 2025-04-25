@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import { BackendInterface } from 'model/backend/gitlab/gitlab';
+import { BackendInterface } from 'model/backend/gitlab/interfaces';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setJobLogs,
