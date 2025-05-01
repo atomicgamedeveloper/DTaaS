@@ -35,7 +35,7 @@ export const handleStart = async (
   digitalTwin: DigitalTwin,
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
   dispatch: ReturnType<typeof useDispatch>,
-  executionId?: string, 
+  executionId?: string,
 ) => {
   if (buttonText === 'Start') {
     setButtonText('Stop');
@@ -73,7 +73,7 @@ export const handleStop = async (
   digitalTwin: DigitalTwin,
   setButtonText: Dispatch<SetStateAction<string>>,
   dispatch: ReturnType<typeof useDispatch>,
-  executionId?: string, 
+  executionId?: string,
 ) => {
   try {
     await stopPipelines(digitalTwin, executionId);
@@ -104,7 +104,7 @@ export const handleStop = async (
 
 export const stopPipelines = async (
   digitalTwin: DigitalTwin,
-  executionId?: string, 
+  executionId?: string,
 ) => {
   if (digitalTwin.gitlabInstance.projectId) {
     if (executionId) {

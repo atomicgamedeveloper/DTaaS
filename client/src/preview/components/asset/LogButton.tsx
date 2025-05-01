@@ -7,7 +7,7 @@ import { selectExecutionHistoryByDTName } from 'preview/store/executionHistory.s
 interface LogButtonProps {
   setShowLog: Dispatch<React.SetStateAction<boolean>>;
   logButtonDisabled: boolean;
-  assetName: string; 
+  assetName: string;
 }
 
 export const handleToggleLog = (

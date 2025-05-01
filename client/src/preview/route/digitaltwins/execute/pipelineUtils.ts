@@ -51,7 +51,7 @@ export const startPipeline = async (
 
   dispatch(setSelectedExecutionId(digitalTwin.currentExecutionId));
 
-  setLogButtonDisabled(false); 
+  setLogButtonDisabled(false);
 
   return digitalTwin.currentExecutionId;
 };
