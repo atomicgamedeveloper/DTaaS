@@ -127,7 +127,7 @@ function CardButtonsContainerExecute({
   assetName,
   setShowLog,
 }: CardButtonsContainerExecuteProps) {
-  const [logButtonDisabled, setLogButtonDisabled] = useState(true);
+  const [logButtonDisabled, setLogButtonDisabled] = useState(false); 
   return (
     <CardActions style={{ justifyContent: 'flex-end' }}>
       <StartStopButton
@@ -137,6 +137,7 @@ function CardButtonsContainerExecute({
       <LogButton
         setShowLog={setShowLog}
         logButtonDisabled={logButtonDisabled}
+        assetName={assetName} 
       />
     </CardActions>
   );

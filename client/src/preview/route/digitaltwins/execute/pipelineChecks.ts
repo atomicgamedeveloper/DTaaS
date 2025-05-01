@@ -1,18 +1,22 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
+import indexedDBService from 'preview/services/indexedDBService';
 import {
   fetchJobLogs,
   updatePipelineStateOnCompletion,
 } from 'preview/route/digitaltwins/execute/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
+import { ExecutionStatus } from 'preview/model/executionHistory';
+import { updateExecutionStatus } from 'preview/store/executionHistory.slice';
 
 interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;
   digitalTwin: DigitalTwin;
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>;
   dispatch: ReturnType<typeof useDispatch>;
+  executionId?: string;
 }
 
 export const delay = (ms: number) =>
@@ -23,11 +27,12 @@ export const delay = (ms: number) =>
 export const hasTimedOut = (startTime: number) =>
   Date.now() - startTime > MAX_EXECUTION_TIME;
 
-export const handleTimeout = (
+export const handleTimeout = async (
   DTName: string,
   setButtonText: Dispatch<SetStateAction<string>>,
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
   dispatch: ReturnType<typeof useDispatch>,
+  executionId?: string,
 ) => {
   dispatch(
     showSnackbar({
@@ -35,6 +40,23 @@ export const handleTimeout = (
       severity: 'error',
     }),
   );
+
+  if (executionId) {
+    const execution =
+      await indexedDBService.getExecutionHistoryById(executionId);
+    if (execution) {
+      execution.status = ExecutionStatus.TIMEOUT;
+      await indexedDBService.updateExecutionHistory(execution);
+    }
+
+    dispatch(
+      updateExecutionStatus({
+        id: executionId,
+        status: ExecutionStatus.TIMEOUT,
+      }),
+    );
+  }
+
   setButtonText('Start');
   setLogButtonDisabled(false);
 };
@@ -50,12 +72,18 @@ export const checkParentPipelineStatus = async ({
   setLogButtonDisabled,
   dispatch,
   startTime,
+  executionId,
 }: PipelineStatusParams & {
   startTime: number;
 }) => {
+  const pipelineId = executionId
+    ? (await digitalTwin.getExecutionHistoryById(executionId))?.pipelineId ||
+      digitalTwin.pipelineId!
+    : digitalTwin.pipelineId!;
+
   const pipelineStatus = await digitalTwin.gitlabInstance.getPipelineStatus(
     digitalTwin.gitlabInstance.projectId!,
-    digitalTwin.pipelineId!,
+    pipelineId,
   );
 
   if (pipelineStatus === 'success') {
@@ -65,18 +93,18 @@ export const checkParentPipelineStatus = async ({
       setLogButtonDisabled,
       dispatch,
       startTime,
+      executionId,
     });
   } else if (pipelineStatus === 'failed') {
-    const jobLogs = await fetchJobLogs(
-      digitalTwin.gitlabInstance,
-      digitalTwin.pipelineId!,
-    );
-    updatePipelineStateOnCompletion(
+    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
+    await updatePipelineStateOnCompletion(
       digitalTwin,
       jobLogs,
       setButtonText,
       setLogButtonDisabled,
       dispatch,
+      executionId,
+      ExecutionStatus.FAILED,
     );
   } else if (hasTimedOut(startTime)) {
     handleTimeout(
@@ -84,6 +112,7 @@ export const checkParentPipelineStatus = async ({
       setButtonText,
       setLogButtonDisabled,
       dispatch,
+      executionId,
     );
   } else {
     await delay(5000);
@@ -93,6 +122,7 @@ export const checkParentPipelineStatus = async ({
       setLogButtonDisabled,
       dispatch,
       startTime,
+      executionId,
     });
   }
 };
@@ -104,20 +134,33 @@ export const handlePipelineCompletion = async (
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
   dispatch: ReturnType<typeof useDispatch>,
   pipelineStatus: 'success' | 'failed',
+  executionId?: string,
 ) => {
   const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
-  updatePipelineStateOnCompletion(
+  await updatePipelineStateOnCompletion(
     digitalTwin,
     jobLogs,
     setButtonText,
     setLogButtonDisabled,
     dispatch,
+    executionId,
+    pipelineStatus === 'success'
+      ? ExecutionStatus.COMPLETED
+      : ExecutionStatus.FAILED,
   );
+
   if (pipelineStatus === 'failed') {
     dispatch(
       showSnackbar({
         message: `Execution failed for ${formatName(digitalTwin.DTName)}`,
         severity: 'error',
+      }),
+    );
+  } else {
+    dispatch(
+      showSnackbar({
+        message: `Execution completed successfully for ${formatName(digitalTwin.DTName)}`,
+        severity: 'success',
       }),
     );
   }
@@ -129,10 +172,21 @@ export const checkChildPipelineStatus = async ({
   setLogButtonDisabled,
   dispatch,
   startTime,
+  executionId,
 }: PipelineStatusParams & {
   startTime: number;
 }) => {
-  const pipelineId = digitalTwin.pipelineId! + 1;
+  let pipelineId: number;
+
+  if (executionId) {
+    const execution = await digitalTwin.getExecutionHistoryById(executionId);
+    pipelineId = execution
+      ? execution.pipelineId + 1
+      : digitalTwin.pipelineId! + 1;
+  } else {
+    pipelineId = digitalTwin.pipelineId! + 1;
+  }
+
   const pipelineStatus = await digitalTwin.gitlabInstance.getPipelineStatus(
     digitalTwin.gitlabInstance.projectId!,
     pipelineId,
@@ -146,6 +200,7 @@ export const checkChildPipelineStatus = async ({
       setLogButtonDisabled,
       dispatch,
       pipelineStatus,
+      executionId,
     );
   } else if (hasTimedOut(startTime)) {
     handleTimeout(
@@ -153,6 +208,7 @@ export const checkChildPipelineStatus = async ({
       setButtonText,
       setLogButtonDisabled,
       dispatch,
+      executionId,
     );
   } else {
     await delay(5000);
@@ -162,6 +218,7 @@ export const checkChildPipelineStatus = async ({
       setLogButtonDisabled,
       dispatch,
       startTime,
+      executionId,
     });
   }
 };

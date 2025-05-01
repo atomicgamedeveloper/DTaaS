@@ -35,21 +35,37 @@ export const handleStart = async (
   digitalTwin: DigitalTwin,
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
   dispatch: ReturnType<typeof useDispatch>,
+  executionId?: string, 
 ) => {
   if (buttonText === 'Start') {
     setButtonText('Stop');
-    setLogButtonDisabled(true);
+
     updatePipelineState(digitalTwin, dispatch);
-    await startPipeline(digitalTwin, dispatch, setLogButtonDisabled);
-    const params = {
-      setButtonText,
+
+    const newExecutionId = await startPipeline(
       digitalTwin,
-      setLogButtonDisabled,
       dispatch,
-    };
-    startPipelineStatusCheck(params);
+      setLogButtonDisabled,
+    );
+
+    if (newExecutionId) {
+      const params = {
+        setButtonText,
+        digitalTwin,
+        setLogButtonDisabled,
+        dispatch,
+        executionId: newExecutionId,
+      };
+      startPipelineStatusCheck(params);
+    }
   } else {
     setButtonText('Start');
+
+    if (executionId) {
+      await handleStop(digitalTwin, setButtonText, dispatch, executionId);
+    } else {
+      await handleStop(digitalTwin, setButtonText, dispatch);
+    }
   }
 };
 
@@ -57,9 +73,10 @@ export const handleStop = async (
   digitalTwin: DigitalTwin,
   setButtonText: Dispatch<SetStateAction<string>>,
   dispatch: ReturnType<typeof useDispatch>,
+  executionId?: string, 
 ) => {
   try {
-    await stopPipelines(digitalTwin);
+    await stopPipelines(digitalTwin, executionId);
     dispatch(
       showSnackbar({
         message: `Execution stopped successfully for ${formatName(
@@ -76,19 +93,41 @@ export const handleStop = async (
       }),
     );
   } finally {
-    updatePipelineStateOnStop(digitalTwin, setButtonText, dispatch);
+    updatePipelineStateOnStop(
+      digitalTwin,
+      setButtonText,
+      dispatch,
+      executionId,
+    );
   }
 };
 
-export const stopPipelines = async (digitalTwin: DigitalTwin) => {
-  if (digitalTwin.gitlabInstance.projectId && digitalTwin.pipelineId) {
-    await digitalTwin.stop(
-      digitalTwin.gitlabInstance.projectId,
-      'parentPipeline',
-    );
-    await digitalTwin.stop(
-      digitalTwin.gitlabInstance.projectId,
-      'childPipeline',
-    );
+export const stopPipelines = async (
+  digitalTwin: DigitalTwin,
+  executionId?: string, 
+) => {
+  if (digitalTwin.gitlabInstance.projectId) {
+    if (executionId) {
+      await digitalTwin.stop(
+        digitalTwin.gitlabInstance.projectId,
+        'parentPipeline',
+        executionId,
+      );
+      await digitalTwin.stop(
+        digitalTwin.gitlabInstance.projectId,
+        'childPipeline',
+        executionId,
+      );
+    } else if (digitalTwin.pipelineId) {
+      // For backward compatibility, stop the current execution
+      await digitalTwin.stop(
+        digitalTwin.gitlabInstance.projectId,
+        'parentPipeline',
+      );
+      await digitalTwin.stop(
+        digitalTwin.gitlabInstance.projectId,
+        'childPipeline',
+      );
+    }
   }
 };

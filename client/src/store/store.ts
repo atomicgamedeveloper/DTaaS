@@ -6,6 +6,7 @@ import assetsSlice from 'preview/store/assets.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
+import executionHistorySlice from 'preview/store/executionHistory.slice';
 import menuSlice from './menu.slice';
 import authSlice from './auth.slice';
 
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   files: fileSlice,
   cart: cartSlice,
   libraryConfigFiles: libraryConfigFilesSlice,
+  executionHistory: executionHistorySlice,
 });
 
 const store = configureStore({
@@ -25,7 +27,11 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['digitalTwin/setDigitalTwin'],
+        ignoredActions: [
+          'digitalTwin/setDigitalTwin',
+          'executionHistory/addExecutionHistoryEntry',
+          'executionHistory/updateExecutionHistoryEntry',
+        ],
       },
     }),
 });

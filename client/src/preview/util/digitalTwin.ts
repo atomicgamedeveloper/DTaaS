@@ -1,10 +1,16 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-
 import { getAuthority } from 'util/envUtil';
 import { FileState } from 'preview/store/file.slice';
 import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
 import { RUNNER_TAG } from 'model/backend/gitlab/constants';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  ExecutionHistoryEntry,
+  ExecutionStatus,
+  JobLog,
+} from 'preview/model/executionHistory';
+import indexedDBService from 'preview/services/indexedDBService';
 import GitlabInstance from './gitlab';
 import {
   isValidInstance,
@@ -29,14 +35,24 @@ class DigitalTwin {
 
   public DTAssets: DTAssets;
 
+  // Current active pipeline ID (for backward compatibility)
   public pipelineId: number | null = null;
 
+  public activePipelineIds: number[] = [];
+
+  // Current execution ID (for backward compatibility)
+  public currentExecutionId: string | null = null;
+
+  // Last execution status (for backward compatibility)
   public lastExecutionStatus: string | null = null;
 
-  public jobLogs: { jobName: string; log: string }[] = [];
+  // Job logs for the current execution (for backward compatibility)
+  public jobLogs: JobLog[] = [];
 
+  // Loading state for the current pipeline (for backward compatibility)
   public pipelineLoading: boolean = false;
 
+  // Completion state for the current pipeline (for backward compatibility)
   public pipelineCompleted: boolean = false;
 
   public descriptionFiles: string[] = [];
@@ -72,7 +88,7 @@ class DigitalTwin {
         const fileContent = await this.DTAssets.getFileContent('README.md');
         this.fullDescription = fileContent.replace(
           /(!\[[^\]]*\])\(([^)]+)\)/g,
-          (match, altText, imagePath) => {
+          (_match, altText, imagePath) => {
             const fullUrl = `${getAuthority()}/dtaas/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
@@ -95,6 +111,10 @@ class DigitalTwin {
     );
   }
 
+  /**
+   * Execute a Digital Twin and create an execution history entry
+   * @returns Promise that resolves with the pipeline ID or null if execution failed
+   */
   async execute(): Promise<number | null> {
     if (!isValidInstance(this)) {
       logError(this, RUNNER_TAG, 'Missing projectId or triggerToken');
@@ -104,25 +124,94 @@ class DigitalTwin {
     try {
       const response = await this.triggerPipeline();
       logSuccess(this, RUNNER_TAG);
+
       this.pipelineId = response.id;
-      return this.pipelineId;
+
+      this.activePipelineIds.push(response.id);
+
+      const executionId = uuidv4();
+      this.currentExecutionId = executionId;
+
+      const executionEntry: ExecutionHistoryEntry = {
+        id: executionId,
+        dtName: this.DTName,
+        pipelineId: response.id,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      await indexedDBService.addExecutionHistory(executionEntry);
+
+      return response.id;
     } catch (error) {
       logError(this, RUNNER_TAG, String(error));
       return null;
     }
   }
 
-  async stop(projectId: number, pipeline: string): Promise<void> {
-    const pipelineId =
-      pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
+  /**
+   * Stop a specific pipeline execution
+   * @param projectId The GitLab project ID
+   * @param pipeline The pipeline to stop ('parentPipeline' or 'childPipeline')
+   * @param executionId Optional execution ID to stop a specific execution
+   * @returns Promise that resolves when the pipeline is stopped
+   */
+  async stop(
+    projectId: number,
+    pipeline: string,
+    executionId?: string,
+  ): Promise<void> {
+    let pipelineId: number | null = null;
+
+    if (executionId) {
+      const execution =
+        await indexedDBService.getExecutionHistoryById(executionId);
+      if (execution) {
+        pipelineId = execution.pipelineId;
+        if (pipeline !== 'parentPipeline') {
+          pipelineId += 1;
+        }
+      }
+    } else {
+      pipelineId =
+        pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
+    }
+
+    if (!pipelineId) {
+      return;
+    }
+
     try {
-      await this.gitlabInstance.api.Pipelines.cancel(projectId, pipelineId!);
+      await this.gitlabInstance.api.Pipelines.cancel(projectId, pipelineId);
       this.gitlabInstance.logs.push({
         status: 'canceled',
         DTName: this.DTName,
         runnerTag: RUNNER_TAG,
       });
+
       this.lastExecutionStatus = 'canceled';
+
+      if (executionId) {
+        const execution =
+          await indexedDBService.getExecutionHistoryById(executionId);
+        if (execution) {
+          execution.status = ExecutionStatus.CANCELED;
+          await indexedDBService.updateExecutionHistory(execution);
+        }
+      } else if (this.currentExecutionId) {
+        const execution = await indexedDBService.getExecutionHistoryById(
+          this.currentExecutionId,
+        );
+        if (execution) {
+          execution.status = ExecutionStatus.CANCELED;
+          await indexedDBService.updateExecutionHistory(execution);
+        }
+      }
+
+      this.activePipelineIds = this.activePipelineIds.filter(
+        (id) => id !== pipelineId,
+      );
     } catch (error) {
       this.gitlabInstance.logs.push({
         status: 'error',
@@ -131,6 +220,73 @@ class DigitalTwin {
         runnerTag: RUNNER_TAG,
       });
       this.lastExecutionStatus = 'error';
+    }
+  }
+
+  /**
+   * Get all execution history entries for this Digital Twin
+   * @returns Promise that resolves with an array of execution history entries
+   */
+  async getExecutionHistory(): Promise<ExecutionHistoryEntry[]> {
+    return indexedDBService.getExecutionHistoryByDTName(this.DTName);
+  }
+
+  /**
+   * Get a specific execution history entry by ID
+   * @param executionId The execution ID
+   * @returns Promise that resolves with the execution history entry or undefined if not found
+   */
+  // eslint-disable-next-line class-methods-use-this
+  async getExecutionHistoryById(
+    executionId: string,
+  ): Promise<ExecutionHistoryEntry | undefined> {
+    const result = await indexedDBService.getExecutionHistoryById(executionId);
+    return result || undefined;
+  }
+
+  /**
+   * Update job logs for a specific execution
+   * @param executionId The execution ID
+   * @param jobLogs The job logs to update
+   * @returns Promise that resolves when the logs are updated
+   */
+  async updateExecutionLogs(
+    executionId: string,
+    jobLogs: JobLog[],
+  ): Promise<void> {
+    const execution =
+      await indexedDBService.getExecutionHistoryById(executionId);
+    if (execution) {
+      execution.jobLogs = jobLogs;
+      await indexedDBService.updateExecutionHistory(execution);
+
+      // Update current job logs for backward compatibility
+      if (executionId === this.currentExecutionId) {
+        this.jobLogs = jobLogs;
+      }
+    }
+  }
+
+  /**
+   * Update the status of a specific execution
+   * @param executionId The execution ID
+   * @param status The new status
+   * @returns Promise that resolves when the status is updated
+   */
+  async updateExecutionStatus(
+    executionId: string,
+    status: ExecutionStatus,
+  ): Promise<void> {
+    const execution =
+      await indexedDBService.getExecutionHistoryById(executionId);
+    if (execution) {
+      execution.status = status;
+      await indexedDBService.updateExecutionHistory(execution);
+
+      // Update current status for backward compatibility
+      if (executionId === this.currentExecutionId) {
+        this.lastExecutionStatus = status;
+      }
     }
   }
 

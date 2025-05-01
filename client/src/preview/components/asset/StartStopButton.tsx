@@ -1,14 +1,11 @@
 import * as React from 'react';
-import { useState, Dispatch, SetStateAction } from 'react';
-import { Button, CircularProgress } from '@mui/material';
-import { handleButtonClick } from 'preview/route/digitaltwins/execute/pipelineHandler';
+import { Dispatch, SetStateAction } from 'react';
+import { Button, CircularProgress, Box } from '@mui/material';
+import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
-
-export interface JobLog {
-  jobName: string;
-  log: string;
-}
+import { selectExecutionHistoryByDTName } from 'preview/store/executionHistory.slice';
+import { ExecutionStatus } from 'preview/model/executionHistory';
 
 interface StartStopButtonProps {
   assetName: string;
@@ -19,33 +16,52 @@ function StartStopButton({
   assetName,
   setLogButtonDisabled,
 }: StartStopButtonProps) {
-  const [buttonText, setButtonText] = useState('Start');
-
   const dispatch = useDispatch();
   const digitalTwin = useSelector(selectDigitalTwinByName(assetName));
+  const executions =
+    useSelector(selectExecutionHistoryByDTName(assetName)) || [];
+
+  const runningExecutions = Array.isArray(executions)
+    ? executions.filter(
+        (execution) => execution.status === ExecutionStatus.RUNNING,
+      )
+    : [];
+
+  const isLoading =
+    digitalTwin?.pipelineLoading || runningExecutions.length > 0;
+
+  const runningCount = runningExecutions.length;
 
   return (
-    <>
-      {digitalTwin?.pipelineLoading ? (
-        <CircularProgress size={22} style={{ marginRight: '8px' }} />
-      ) : null}
+    <Box display="flex" alignItems="center">
+      {isLoading && (
+        <Box display="flex" alignItems="center" mr={1}>
+          <CircularProgress size={22} data-testid="circular-progress" />
+          {runningCount > 0 && (
+            <Box component="span" ml={0.5} fontSize="0.75rem">
+              ({runningCount})
+            </Box>
+          )}
+        </Box>
+      )}
       <Button
         variant="contained"
         size="small"
         color="primary"
-        onClick={() =>
-          handleButtonClick(
-            buttonText,
+        onClick={() => {
+          const setButtonText = () => {}; // Dummy function since we don't need to change button text
+          handleStart(
+            'Start',
             setButtonText,
             digitalTwin,
             setLogButtonDisabled,
             dispatch,
-          )
-        }
+          );
+        }}
       >
-        {buttonText}
+        Start
       </Button>
-    </>
+    </Box>
   );
 }
 
