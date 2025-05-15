@@ -35,7 +35,9 @@ test.describe('Digital Twin Log Cleaning', () => {
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
     // Get the Start button
-    const startButton = helloWorldCard.getByRole('button', { name: 'Start' }).first();
+    const startButton = helloWorldCard
+      .getByRole('button', { name: 'Start' })
+      .first();
     await expect(startButton).toBeVisible();
 
     // Start the execution
@@ -45,14 +47,18 @@ test.describe('Digital Twin Log Cleaning', () => {
     await page.waitForTimeout(2000);
 
     // Click the History button
-    const historyButton = helloWorldCard.getByRole('button', { name: 'History' }).first();
+    const historyButton = helloWorldCard
+      .getByRole('button', { name: 'History' })
+      .first();
     await expect(historyButton).toBeEnabled({ timeout: 5000 });
     await historyButton.click();
 
     // Verify that the execution history dialog is displayed
     const historyDialog = page.locator('div[role="dialog"]');
     await expect(historyDialog).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Execution History' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Execution History' }),
+    ).toBeVisible();
 
     // This is more stable than a polling loop
     const completedExecution = historyDialog
@@ -66,10 +72,14 @@ test.describe('Digital Twin Log Cleaning', () => {
     await completedExecution.getByLabel('view').click();
 
     // Verify that the logs dialog shows the execution details
-    await expect(page.getByRole('heading', { name: 'create_hello-world' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'create_hello-world' }),
+    ).toBeVisible();
 
     // Verify logs content is loaded and properly cleaned
-    const logsPanel = page.locator('div[role="tabpanel"]').filter({ hasText: /Running with gitlab-runner/ });
+    const logsPanel = page
+      .locator('div[role="tabpanel"]')
+      .filter({ hasText: /Running with gitlab-runner/ });
     await expect(logsPanel).toBeVisible({ timeout: 10000 });
 
     // Get the log content
