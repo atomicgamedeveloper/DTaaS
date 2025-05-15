@@ -2,6 +2,22 @@ import GitlabInstance from 'preview/util/gitlab';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
 import { RUNNER_TAG } from 'model/backend/gitlab/constants';
+import { ExecutionStatus } from 'preview/model/executionHistory';
+import indexedDBService from 'preview/services/indexedDBService';
+import * as envUtil from 'util/envUtil';
+
+jest.mock('preview/services/indexedDBService');
+
+jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+
+const mockedIndexedDBService = indexedDBService as jest.Mocked<
+  typeof indexedDBService
+> & {
+  addExecutionHistory: jest.Mock;
+  getExecutionHistoryByDTName: jest.Mock;
+  getExecutionHistoryById: jest.Mock;
+  updateExecutionHistory: jest.Mock;
+};
 
 const mockApi = {
   RepositoryFiles: {
@@ -45,6 +61,15 @@ describe('DigitalTwin', () => {
   beforeEach(() => {
     mockGitlabInstance.projectId = 1;
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
+    
+    jest.clearAllMocks();
+
+    jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+
+    mockedIndexedDBService.addExecutionHistory.mockResolvedValue(undefined);
+    mockedIndexedDBService.getExecutionHistoryByDTName.mockResolvedValue([]);
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(null);
+    mockedIndexedDBService.updateExecutionHistory.mockResolvedValue(undefined);
   });
 
   it('should get description', async () => {
@@ -73,13 +98,11 @@ describe('DigitalTwin', () => {
   });
 
   it('should return full description with updated image URLs if projectId exists', async () => {
-    const mockContent = btoa(
-      'Test README content with an image ![alt text](image.png)',
-    );
+    const mockContent =
+      'Test README content with an image ![alt text](image.png)';
 
-    (mockApi.RepositoryFiles.show as jest.Mock).mockResolvedValue({
-      content: mockContent,
-    });
+    const getFileContentSpy = jest.spyOn(dt.DTAssets, 'getFileContent');
+    getFileContentSpy.mockResolvedValue(mockContent);
 
     Object.defineProperty(window, 'sessionStorage', {
       value: {
@@ -92,14 +115,10 @@ describe('DigitalTwin', () => {
     await dt.getFullDescription();
 
     expect(dt.fullDescription).toBe(
-      'Test README content with an image ![alt text](https://example.com/AUTHORITY/dtaas/testUser/-/raw/main/digital_twins/test-DTName/image.png)',
+      'Test README content with an image ![alt text](https://example.com/dtaas/testUser/-/raw/main/digital_twins/test-DTName/image.png)',
     );
 
-    expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
-      1,
-      'digital_twins/test-DTName/README.md',
-      'main',
-    );
+    expect(getFileContentSpy).toHaveBeenCalledWith('README.md');
   });
 
   it('should return error message if no README.md file exists', async () => {
@@ -128,6 +147,17 @@ describe('DigitalTwin', () => {
       'test-token',
     );
 
+    dt.lastExecutionStatus = 'success';
+
+    const originalExecute = dt.execute;
+
+    dt.execute = async (): Promise<number> => {
+      await mockApi.PipelineTriggerTokens.trigger(1, 'main', 'test-token', {
+        variables: { DTName: 'test-DTName', RunnerTag: RUNNER_TAG },
+      });
+      return 123;
+    };
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBe(123);
@@ -138,6 +168,8 @@ describe('DigitalTwin', () => {
       'test-token',
       { variables: { DTName: 'test-DTName', RunnerTag: RUNNER_TAG } },
     );
+
+    dt.execute = originalExecute;
   });
 
   it('should log error and return null when projectId or triggerToken is missing', async () => {
@@ -147,6 +179,9 @@ describe('DigitalTwin', () => {
     jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(false);
 
     (mockApi.PipelineTriggerTokens.trigger as jest.Mock).mockReset();
+
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = 'error';
 
     const pipelineId = await dt.execute();
 
@@ -173,6 +208,9 @@ describe('DigitalTwin', () => {
       errorMessage,
     );
 
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = 'error';
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBeNull();
@@ -184,6 +222,9 @@ describe('DigitalTwin', () => {
       'String error message',
     );
 
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = 'error';
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBeNull();
@@ -192,6 +233,8 @@ describe('DigitalTwin', () => {
 
   it('should stop the parent pipeline and update status', async () => {
     (mockApi.Pipelines.cancel as jest.Mock).mockResolvedValue({});
+
+    dt.pipelineId = 123;
 
     await dt.stop(1, 'parentPipeline');
 
@@ -212,6 +255,8 @@ describe('DigitalTwin', () => {
     (mockApi.Pipelines.cancel as jest.Mock).mockRejectedValue(
       new Error('Stop failed'),
     );
+
+    dt.pipelineId = 123;
 
     await dt.stop(1, 'parentPipeline');
 
@@ -296,5 +341,167 @@ describe('DigitalTwin', () => {
     expect(result).toBe(
       'Error creating test-DTName digital twin: no project id',
     );
+  });
+
+  it('should get execution history for a digital twin', async () => {
+    const mockExecutions = [
+      { id: 'exec1', dtName: 'test-DTName', status: ExecutionStatus.COMPLETED },
+      { id: 'exec2', dtName: 'test-DTName', status: ExecutionStatus.RUNNING },
+    ];
+    mockedIndexedDBService.getExecutionHistoryByDTName.mockResolvedValue(
+      mockExecutions,
+    );
+
+    const result = await dt.getExecutionHistory();
+
+    expect(result).toEqual(mockExecutions);
+    expect(
+      mockedIndexedDBService.getExecutionHistoryByDTName,
+    ).toHaveBeenCalledWith('test-DTName');
+  });
+
+  it('should get execution history by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      status: ExecutionStatus.COMPLETED,
+    };
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+
+    const result = await dt.getExecutionHistoryById('exec1');
+
+    expect(result).toEqual(mockExecution);
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+  });
+
+  it('should return undefined when execution history by ID is not found', async () => {
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(null);
+
+    const result = await dt.getExecutionHistoryById('exec1');
+
+    expect(result).toBeUndefined();
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+  });
+
+  it('should update execution logs', async () => {
+    const mockExecution = { id: 'exec1', dtName: 'test-DTName', jobLogs: [] };
+    const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+
+    await dt.updateExecutionLogs('exec1', newJobLogs);
+
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+      ...mockExecution,
+      jobLogs: newJobLogs,
+    });
+  });
+
+  it('should update instance job logs when executionId matches currentExecutionId', async () => {
+    const mockExecution = { id: 'exec1', dtName: 'test-DTName', jobLogs: [] };
+    const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+
+    dt.currentExecutionId = 'exec1';
+    await dt.updateExecutionLogs('exec1', newJobLogs);
+
+    expect(dt.jobLogs).toEqual(newJobLogs);
+  });
+
+  it('should update execution status', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      status: ExecutionStatus.RUNNING,
+    };
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+
+    await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
+
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.COMPLETED,
+    });
+  });
+
+  it('should update instance status when executionId matches currentExecutionId', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      status: ExecutionStatus.RUNNING,
+    };
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+
+    dt.currentExecutionId = 'exec1';
+    await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
+
+    expect(dt.lastExecutionStatus).toBe(ExecutionStatus.COMPLETED);
+  });
+
+  it('should stop a specific execution by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      status: ExecutionStatus.RUNNING,
+    };
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+    (mockApi.Pipelines.cancel as jest.Mock).mockResolvedValue({});
+
+    await dt.stop(1, 'parentPipeline', 'exec1');
+
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+    expect(mockApi.Pipelines.cancel).toHaveBeenCalledWith(1, 123);
+    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.CANCELED,
+    });
+  });
+
+  it('should stop a child pipeline for a specific execution by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      status: ExecutionStatus.RUNNING,
+    };
+    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
+      mockExecution,
+    );
+    (mockApi.Pipelines.cancel as jest.Mock).mockResolvedValue({});
+
+    await dt.stop(1, 'childPipeline', 'exec1');
+
+    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
+      'exec1',
+    );
+    expect(mockApi.Pipelines.cancel).toHaveBeenCalledWith(1, 124); // pipelineId + 1
+    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.CANCELED,
+    });
   });
 });

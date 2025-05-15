@@ -1,17 +1,38 @@
 import { screen, render, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import LogButton from 'preview/components/asset/LogButton';
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import store from 'store/store';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import executionHistoryReducer, {
+  addExecutionHistoryEntry,
+} from 'preview/store/executionHistory.slice';
+import { ExecutionStatus } from 'preview/model/executionHistory';
 
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-}));
+// Create a test store with the executionHistory reducer
+const createTestStore = () =>
+  configureStore({
+    reducer: combineReducers({
+      executionHistory: executionHistoryReducer,
+    }),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: false,
+      }),
+  });
 
-describe('LogButton', () => {
+describe('LogButton Integration Test', () => {
+  const assetName = 'test-asset';
+  let store: ReturnType<typeof createTestStore>;
+
+  beforeEach(() => {
+    store = createTestStore();
+  });
+
   const renderLogButton = (
     setShowLog: jest.Mock = jest.fn(),
     logButtonDisabled = false,
+    testAssetName = assetName,
   ) =>
     act(() => {
       render(
@@ -19,6 +40,7 @@ describe('LogButton', () => {
           <LogButton
             setShowLog={setShowLog}
             logButtonDisabled={logButtonDisabled}
+            assetName={testAssetName}
           />
         </Provider>,
       );
@@ -28,15 +50,17 @@ describe('LogButton', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the Log button', () => {
+  it('renders the History button', () => {
     renderLogButton();
-    expect(screen.getByRole('button', { name: /Log/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /History/i }),
+    ).toBeInTheDocument();
   });
 
   it('handles button click when enabled', () => {
     renderLogButton();
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
+    const logButton = screen.getByRole('button', { name: /History/i });
     act(() => {
       fireEvent.click(logButton);
     });
@@ -44,13 +68,11 @@ describe('LogButton', () => {
     expect(logButton).toBeEnabled();
   });
 
-  it('does not handle button click when disabled', () => {
+  it('does not handle button click when disabled and no executions', () => {
     renderLogButton(jest.fn(), true);
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
-    act(() => {
-      fireEvent.click(logButton);
-    });
+    const logButton = screen.getByRole('button', { name: /History/i });
+    expect(logButton).toBeDisabled();
   });
 
   it('toggles setShowLog value correctly', () => {
@@ -61,7 +83,7 @@ describe('LogButton', () => {
 
     renderLogButton(mockSetShowLog);
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
+    const logButton = screen.getByRole('button', { name: /History/i });
 
     act(() => {
       fireEvent.click(logButton);
@@ -72,5 +94,57 @@ describe('LogButton', () => {
       fireEvent.click(logButton);
     });
     expect(toggleValue).toBe(false);
+  });
+
+  it('shows badge with execution count when executions exist', async () => {
+    // Add executions to the store
+    await act(async () => {
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        }),
+      );
+
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '2',
+          dtName: assetName,
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        }),
+      );
+    });
+
+    renderLogButton();
+
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('enables button when logButtonDisabled is true but executions exist', async () => {
+    // Add an execution to the store
+    await act(async () => {
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        }),
+      );
+    });
+
+    renderLogButton(jest.fn(), true);
+
+    const logButton = screen.getByRole('button', { name: /History/i });
+    expect(logButton).toBeEnabled();
   });
 });

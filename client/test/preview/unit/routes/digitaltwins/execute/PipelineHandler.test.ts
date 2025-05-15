@@ -3,6 +3,10 @@ import * as PipelineUtils from 'preview/route/digitaltwins/execute/pipelineUtils
 import * as PipelineChecks from 'preview/route/digitaltwins/execute/pipelineChecks';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 
+jest.mock('preview/route/digitaltwins/execute/pipelineChecks', () => ({
+  startPipelineStatusCheck: jest.fn(),
+}));
+
 describe('PipelineHandler', () => {
   const setButtonText = jest.fn();
   const digitalTwin = mockDigitalTwin;
@@ -49,10 +53,11 @@ describe('PipelineHandler', () => {
       'updatePipelineState',
     );
     const startPipeline = jest.spyOn(PipelineUtils, 'startPipeline');
-    const startPipelineStatusCheck = jest.spyOn(
-      PipelineChecks,
-      'startPipelineStatusCheck',
-    );
+
+    const startPipelineStatusCheck =
+      PipelineChecks.startPipelineStatusCheck as jest.Mock;
+
+    startPipeline.mockResolvedValue('test-execution-id');
 
     await PipelineHandlers.handleStart(
       'Start',
@@ -72,7 +77,6 @@ describe('PipelineHandler', () => {
 
     updatePipelineState.mockRestore();
     startPipeline.mockRestore();
-    startPipelineStatusCheck.mockRestore();
   });
 
   it('handles start when button text is Stop', async () => {
@@ -100,6 +104,29 @@ describe('PipelineHandler', () => {
 
     expect(dispatch).toHaveBeenCalled();
     expect(updatePipelineStateOnStop).toHaveBeenCalled();
+
+    updatePipelineStateOnStop.mockRestore();
+    stopPipelines.mockRestore();
+  });
+
+  it('handles stop with execution ID', async () => {
+    const updatePipelineStateOnStop = jest.spyOn(
+      PipelineUtils,
+      'updatePipelineStateOnStop',
+    );
+
+    const stopPipelines = jest.spyOn(PipelineHandlers, 'stopPipelines');
+    const executionId = '123';
+    await PipelineHandlers.handleStop(
+      digitalTwin,
+      setButtonText,
+      dispatch,
+      executionId,
+    );
+
+    expect(dispatch).toHaveBeenCalled();
+    expect(updatePipelineStateOnStop).toHaveBeenCalled();
+    expect(stopPipelines).toHaveBeenCalled();
 
     updatePipelineStateOnStop.mockRestore();
     stopPipelines.mockRestore();

@@ -117,12 +117,14 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" p={2}>
-        <CircularProgress />
+        <div data-testid="circular-progress">
+          <CircularProgress data-testid="progress-indicator" />
+        </div>
       </Box>
     );
   }
 
-  if (executions.length === 0) {
+  if (!executions || executions.length === 0) {
     return (
       <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
         <Typography variant="body1" align="center">

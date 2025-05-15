@@ -13,12 +13,16 @@ import digitalTwinReducer, {
   setDigitalTwin,
   setPipelineLoading,
 } from 'preview/store/digitalTwin.slice';
-import { handleButtonClick } from 'preview/route/digitaltwins/execute/pipelineHandler';
+import executionHistoryReducer, {
+  addExecutionHistoryEntry,
+} from 'preview/store/executionHistory.slice';
+import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
 import '@testing-library/jest-dom';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
+import { ExecutionStatus } from 'preview/model/executionHistory';
 
 jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
-  handleButtonClick: jest.fn(),
+  handleStart: jest.fn(),
 }));
 
 jest.mock('@mui/material/CircularProgress', () => ({
@@ -30,6 +34,7 @@ const createStore = () =>
   configureStore({
     reducer: combineReducers({
       digitalTwin: digitalTwinReducer,
+      executionHistory: executionHistoryReducer,
     }),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
@@ -43,7 +48,11 @@ describe('StartStopButton Integration Test', () => {
   const setLogButtonDisabled = jest.fn();
 
   beforeEach(() => {
+    jest.clearAllMocks();
     store = createStore();
+  });
+
+  const renderComponent = () => {
     act(() => {
       render(
         <Provider store={store}>
@@ -54,25 +63,23 @@ describe('StartStopButton Integration Test', () => {
         </Provider>,
       );
     });
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  };
 
   it('renders only the Start button', () => {
+    renderComponent();
     expect(screen.getByRole('button', { name: /Start/i })).toBeInTheDocument();
     expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
   });
 
   it('handles button click', async () => {
+    renderComponent();
     const startButton = screen.getByRole('button', { name: /Start/i });
 
     await act(async () => {
       fireEvent.click(startButton);
     });
 
-    expect(handleButtonClick).toHaveBeenCalled();
+    expect(handleStart).toHaveBeenCalled();
     expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
   });
 
@@ -80,21 +87,71 @@ describe('StartStopButton Integration Test', () => {
     await act(async () => {
       store.dispatch(
         setDigitalTwin({
-          assetName: 'mockedDTName',
+          assetName,
           digitalTwin: mockDigitalTwin,
         }),
       );
       store.dispatch(setPipelineLoading({ assetName, pipelineLoading: true }));
     });
 
-    const startButton = screen.getByRole('button', { name: /Start/i });
-
-    await act(async () => {
-      fireEvent.click(startButton);
-    });
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.queryByTestId('circular-progress')).toBeInTheDocument();
     });
+  });
+
+  it('shows running execution count when there are running executions', async () => {
+    // Add running executions to the store
+    await act(async () => {
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        }),
+      );
+
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '2',
+          dtName: assetName,
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        }),
+      );
+    });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('circular-progress')).toBeInTheDocument();
+      expect(screen.getByText('(2)')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show loading indicator when there are only completed executions', async () => {
+    // Add completed executions to the store
+    await act(async () => {
+      store.dispatch(
+        addExecutionHistoryEntry({
+          id: '1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        }),
+      );
+    });
+
+    renderComponent();
+
+    expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
   });
 });

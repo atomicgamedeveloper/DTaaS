@@ -63,6 +63,12 @@ const setupMockStore = (assetDescription: string, twinDescription: string) => {
         asset: { description: twinDescription },
       },
     },
+    executionHistory: {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
   };
   (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
     (selector) => selector(state),

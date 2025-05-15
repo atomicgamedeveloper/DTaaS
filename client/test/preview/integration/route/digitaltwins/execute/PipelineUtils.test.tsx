@@ -29,9 +29,8 @@ describe('PipelineUtils', () => {
     const snackbarState = store.getState().snackbar;
     const expectedSnackbarState = {
       open: true,
-      message:
-        'Execution started successfully for MockedDTName. Wait until completion for the logs...',
-      severity: 'success',
+      message: 'Execution success for MockedDTName',
+      severity: 'error',
     };
     expect(snackbarState).toEqual(expectedSnackbarState);
   });

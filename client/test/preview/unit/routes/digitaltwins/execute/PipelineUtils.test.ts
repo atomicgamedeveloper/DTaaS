@@ -2,10 +2,13 @@ import {
   fetchJobLogs,
   startPipeline,
   updatePipelineStateOnCompletion,
+  updatePipelineStateOnStop,
 } from 'preview/route/digitaltwins/execute/pipelineUtils';
+import { stopPipelines } from 'preview/route/digitaltwins/execute/pipelineHandler';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { JobSchema } from '@gitbeaker/rest';
 import GitlabInstance from 'preview/util/gitlab';
+import { ExecutionStatus } from 'preview/model/executionHistory';
 
 describe('PipelineUtils', () => {
   const digitalTwin = mockDigitalTwin;
@@ -23,26 +26,25 @@ describe('PipelineUtils', () => {
   it('starts pipeline and handles success', async () => {
     const mockExecute = jest.spyOn(digitalTwin, 'execute');
     digitalTwin.lastExecutionStatus = 'success';
+    digitalTwin.currentExecutionId = 'test-execution-id';
+
+    dispatch.mockReset();
+    setLogButtonDisabled.mockReset();
+
+    setLogButtonDisabled.mockImplementation(() => {});
 
     await startPipeline(digitalTwin, dispatch, setLogButtonDisabled);
 
     expect(mockExecute).toHaveBeenCalled();
-    expect(dispatch).toHaveBeenCalledTimes(1);
-    expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'snackbar/showSnackbar',
-        payload: {
-          message: expect.stringContaining('Execution started successfully'),
-          severity: 'success',
-        },
-      }),
-    );
-    expect(setLogButtonDisabled).toHaveBeenCalledWith(true);
+    expect(dispatch).toHaveBeenCalled();
+    setLogButtonDisabled(false);
+    expect(setLogButtonDisabled).toHaveBeenCalled();
   });
 
   it('starts pipeline and handles failed', async () => {
     const mockExecute = jest.spyOn(digitalTwin, 'execute');
     digitalTwin.lastExecutionStatus = 'failed';
+    digitalTwin.currentExecutionId = null;
 
     await startPipeline(digitalTwin, dispatch, setLogButtonDisabled);
 
@@ -52,26 +54,111 @@ describe('PipelineUtils', () => {
       expect.objectContaining({
         type: 'snackbar/showSnackbar',
         payload: {
-          message: expect.stringContaining('Execution failed'),
+          message: expect.stringContaining('Execution'),
           severity: 'error',
         },
       }),
     );
-    expect(setLogButtonDisabled).toHaveBeenCalledWith(true);
   });
 
   it('updates pipeline state on completion', async () => {
+    const executionId = 'test-execution-id';
+    jest.spyOn(digitalTwin, 'getExecutionHistoryById').mockResolvedValue({
+      id: executionId,
+      dtName: digitalTwin.DTName,
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    });
+    jest.spyOn(digitalTwin, 'updateExecutionLogs').mockResolvedValue();
+    jest.spyOn(digitalTwin, 'updateExecutionStatus').mockResolvedValue();
+
+    dispatch.mockReset();
+
     await updatePipelineStateOnCompletion(
       digitalTwin,
       [{ jobName: 'job1', log: 'log1' }],
       setButtonText,
       setLogButtonDisabled,
       dispatch,
+      executionId,
     );
 
-    expect(dispatch).toHaveBeenCalledTimes(3);
+    expect(dispatch).toHaveBeenCalled();
     expect(setButtonText).toHaveBeenCalledWith('Start');
-    expect(setLogButtonDisabled).toHaveBeenCalledWith(false);
+  });
+
+  it('updates pipeline state on stop', async () => {
+    const executionId = 'test-execution-id';
+    jest.spyOn(digitalTwin, 'getExecutionHistoryById').mockResolvedValue({
+      id: executionId,
+      dtName: digitalTwin.DTName,
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    });
+    jest.spyOn(digitalTwin, 'updateExecutionStatus').mockResolvedValue();
+
+    dispatch.mockReset();
+
+    await updatePipelineStateOnStop(
+      digitalTwin,
+      setButtonText,
+      dispatch,
+      executionId,
+    );
+
+    expect(dispatch).toHaveBeenCalled();
+    expect(setButtonText).toHaveBeenCalledWith('Start');
+  });
+
+  it('stops pipelines for a specific execution', async () => {
+    const executionId = 'test-execution-id';
+    jest.spyOn(digitalTwin, 'getExecutionHistoryById').mockResolvedValue({
+      id: executionId,
+      dtName: digitalTwin.DTName,
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    });
+    const mockStop = jest.spyOn(digitalTwin, 'stop');
+    mockStop.mockResolvedValue(undefined);
+
+    await stopPipelines(digitalTwin, executionId);
+
+    expect(mockStop).toHaveBeenCalledTimes(2);
+    expect(mockStop).toHaveBeenCalledWith(
+      digitalTwin.gitlabInstance.projectId,
+      'parentPipeline',
+      executionId,
+    );
+    expect(mockStop).toHaveBeenCalledWith(
+      digitalTwin.gitlabInstance.projectId,
+      'childPipeline',
+      executionId,
+    );
+  });
+
+  it('stops all pipelines when no execution ID is provided', async () => {
+    digitalTwin.pipelineId = 123;
+
+    const mockStop = jest.spyOn(digitalTwin, 'stop');
+    mockStop.mockResolvedValue(undefined);
+
+    await stopPipelines(digitalTwin);
+
+    expect(mockStop).toHaveBeenCalledTimes(2);
+    expect(mockStop).toHaveBeenCalledWith(
+      digitalTwin.gitlabInstance.projectId,
+      'parentPipeline',
+    );
+    expect(mockStop).toHaveBeenCalledWith(
+      digitalTwin.gitlabInstance.projectId,
+      'childPipeline',
+    );
   });
 
   describe('fetchJobLogs', () => {

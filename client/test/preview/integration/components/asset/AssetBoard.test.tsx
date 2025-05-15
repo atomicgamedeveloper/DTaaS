@@ -8,6 +8,7 @@ import digitalTwinReducer, {
   setDigitalTwin,
   setShouldFetchDigitalTwins,
 } from 'preview/store/digitalTwin.slice';
+import executionHistoryReducer from 'preview/store/executionHistory.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import {
   mockGitlabInstance,
@@ -43,6 +44,7 @@ const store = configureStore({
   reducer: combineReducers({
     assets: assetsReducer,
     digitalTwin: digitalTwinReducer,
+    executionHistory: executionHistoryReducer,
     snackbar: snackbarSlice,
     files: fileSlice,
     libraryConfigFiles: libraryConfigFilesSlice,
@@ -51,6 +53,14 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  preloadedState: {
+    executionHistory: {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
+  },
 });
 
 describe('AssetBoard Integration Tests', () => {

@@ -3,6 +3,7 @@ import {
   createSlice,
   ThunkAction,
   Action,
+  createSelector,
 } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import {
@@ -12,7 +13,6 @@ import {
 } from 'preview/model/executionHistory';
 import indexedDBService from 'preview/services/indexedDBService';
 
-// Define the AppThunk type for our thunk actions
 type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,
@@ -97,6 +97,10 @@ const executionHistorySlice = createSlice({
     setSelectedExecutionId: (state, action: PayloadAction<string | null>) => {
       state.selectedExecutionId = action.payload;
     },
+    clearEntries: (state) => {
+      state.entries = [];
+      state.selectedExecutionId = null;
+    },
   },
 });
 
@@ -166,23 +170,39 @@ export const removeExecution =
 export const selectExecutionHistoryEntries = (state: RootState) =>
   state.executionHistory.entries;
 
-export const selectExecutionHistoryByDTName =
+// Memoized selector using createSelector to avoid unnecessary re-renders
+export const selectExecutionHistoryByDTName = (dtName: string) =>
+  createSelector(
+    [(state: RootState) => state.executionHistory.entries],
+    (entries) => entries.filter((entry) => entry.dtName === dtName),
+  );
+
+// eslint-disable-next-line no-underscore-dangle
+export const _selectExecutionHistoryByDTName =
   (dtName: string) => (state: RootState) =>
     state.executionHistory.entries.filter((entry) => entry.dtName === dtName);
 
-export const selectExecutionHistoryById = (id: string) => (state: RootState) =>
-  state.executionHistory.entries.find((entry) => entry.id === id);
+// Memoized selector for finding execution by ID
+export const selectExecutionHistoryById = (id: string) =>
+  createSelector(
+    [(state: RootState) => state.executionHistory.entries],
+    (entries) => entries.find((entry) => entry.id === id),
+  );
 
 export const selectSelectedExecutionId = (state: RootState) =>
   state.executionHistory.selectedExecutionId;
 
-export const selectSelectedExecution = (state: RootState) => {
-  const selectedId = state.executionHistory.selectedExecutionId;
-  if (!selectedId) return null;
-  return state.executionHistory.entries.find(
-    (entry) => entry.id === selectedId,
-  );
-};
+// Memoized selector for the currently selected execution
+export const selectSelectedExecution = createSelector(
+  [
+    (state: RootState) => state.executionHistory.entries,
+    (state: RootState) => state.executionHistory.selectedExecutionId,
+  ],
+  (entries, selectedId) => {
+    if (!selectedId) return null;
+    return entries.find((entry) => entry.id === selectedId);
+  },
+);
 
 export const selectExecutionHistoryLoading = (state: RootState) =>
   state.executionHistory.loading;
@@ -200,6 +220,7 @@ export const {
   updateExecutionLogs,
   removeExecutionHistoryEntry,
   setSelectedExecutionId,
+  clearEntries,
 } = executionHistorySlice.actions;
 
 export default executionHistorySlice.reducer;

@@ -132,11 +132,12 @@ export const mockDigitalTwin: DigitalTwin = {
   assetFiles: [
     { assetPath: 'assetPath', fileNames: ['assetFileName1', 'assetFileName2'] },
   ],
+  currentExecutionId: 'test-execution-id',
 
   getDescription: jest.fn(),
   getFullDescription: jest.fn(),
   triggerPipeline: jest.fn(),
-  execute: jest.fn(),
+  execute: jest.fn().mockResolvedValue(123),
   stop: jest.fn(),
   create: jest.fn().mockResolvedValue('Success'),
   delete: jest.fn(),
@@ -145,6 +146,10 @@ export const mockDigitalTwin: DigitalTwin = {
   getConfigFiles: jest.fn().mockResolvedValue(['configFile']),
   prepareAllAssetFiles: jest.fn(),
   getAssetFiles: jest.fn(),
+  updateExecutionStatus: jest.fn(),
+  updateExecutionLogs: jest.fn(),
+  getExecutionHistoryById: jest.fn(),
+  getExecutionHistoryByDTName: jest.fn(),
 } as unknown as DigitalTwin;
 
 export const mockLibraryAsset = {
@@ -161,6 +166,44 @@ export const mockLibraryAsset = {
   getDescription: jest.fn(),
   getFullDescription: jest.fn(),
   getConfigFiles: jest.fn(),
+};
+
+// Mock for execution history entries
+export const mockExecutionHistoryEntry = {
+  id: 'test-execution-id',
+  dtName: 'mockedDTName',
+  pipelineId: 123,
+  timestamp: Date.now(),
+  status: 'RUNNING',
+  jobLogs: [],
+};
+
+// Mock for indexedDBService
+export const mockIndexedDBService = {
+  init: jest.fn().mockResolvedValue(undefined),
+  addExecutionHistory: jest
+    .fn()
+    .mockImplementation((entry) => Promise.resolve(entry.id)),
+  updateExecutionHistory: jest.fn().mockResolvedValue(undefined),
+  getExecutionHistoryByDTName: jest.fn().mockResolvedValue([]),
+  getAllExecutionHistory: jest.fn().mockResolvedValue([]),
+  getExecutionHistoryById: jest.fn().mockImplementation((id) =>
+    Promise.resolve({
+      ...mockExecutionHistoryEntry,
+      id,
+    }),
+  ),
+  deleteExecutionHistory: jest.fn().mockResolvedValue(undefined),
+  deleteExecutionHistoryByDTName: jest.fn().mockResolvedValue(undefined),
+};
+
+// Helper function to reset all indexedDBService mocks
+export const resetIndexedDBServiceMocks = () => {
+  Object.values(mockIndexedDBService).forEach((mock) => {
+    if (typeof mock === 'function' && typeof mock.mockClear === 'function') {
+      mock.mockClear();
+    }
+  });
 };
 
 jest.mock('util/envUtil', () => ({

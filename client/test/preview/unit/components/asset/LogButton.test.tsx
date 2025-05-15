@@ -1,50 +1,61 @@
 import { screen, render, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import LogButton from 'preview/components/asset/LogButton';
 import * as React from 'react';
-import { Provider } from 'react-redux';
-import store from 'store/store';
+import { ExecutionStatus } from 'preview/model/executionHistory';
+import * as redux from 'react-redux';
 
+// Mock useSelector
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
+  useSelector: jest.fn().mockReturnValue([]),
 }));
 
 describe('LogButton', () => {
+  const assetName = 'test-asset';
+  const useSelector = redux.useSelector as unknown as jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    useSelector.mockReturnValue([]);
+  });
+
   const renderLogButton = (
     setShowLog: jest.Mock = jest.fn(),
     logButtonDisabled = false,
+    testAssetName = assetName,
   ) =>
     render(
-      <Provider store={store}>
-        <LogButton
-          setShowLog={setShowLog}
-          logButtonDisabled={logButtonDisabled}
-        />
-      </Provider>,
+      <LogButton
+        setShowLog={setShowLog}
+        logButtonDisabled={logButtonDisabled}
+        assetName={testAssetName}
+      />,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders the Log button', () => {
+  it('renders the History button', () => {
     renderLogButton();
-    expect(screen.getByRole('button', { name: /Log/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /History/i }),
+    ).toBeInTheDocument();
   });
 
   it('handles button click when enabled', () => {
-    renderLogButton();
+    const setShowLog = jest.fn((callback) => callback(false));
+    renderLogButton(setShowLog);
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
+    const logButton = screen.getByRole('button', { name: /History/i });
     fireEvent.click(logButton);
 
-    expect(logButton).toBeEnabled();
+    expect(setShowLog).toHaveBeenCalled();
   });
 
-  it('does not handle button click when disabled', () => {
+  it('does not handle button click when disabled and no executions', () => {
     renderLogButton(jest.fn(), true);
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
-    fireEvent.click(logButton);
+    const logButton = screen.getByRole('button', { name: /History/i });
+    expect(logButton).toBeDisabled();
   });
 
   it('toggles setShowLog value correctly', () => {
@@ -55,12 +66,52 @@ describe('LogButton', () => {
 
     renderLogButton(mockSetShowLog);
 
-    const logButton = screen.getByRole('button', { name: /Log/i });
+    const logButton = screen.getByRole('button', { name: /History/i });
 
     fireEvent.click(logButton);
     expect(toggleValue).toBe(true);
 
     fireEvent.click(logButton);
     expect(toggleValue).toBe(false);
+  });
+
+  it('shows badge with execution count when executions exist', () => {
+    const mockExecutions = [
+      { id: '1', dtName: assetName, status: ExecutionStatus.COMPLETED },
+      { id: '2', dtName: assetName, status: ExecutionStatus.RUNNING },
+    ];
+
+    useSelector.mockReturnValue(mockExecutions);
+
+    renderLogButton();
+
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('enables button when logButtonDisabled is true but executions exist', () => {
+    const mockExecutions = [
+      { id: '1', dtName: assetName, status: ExecutionStatus.COMPLETED },
+    ];
+
+    useSelector.mockReturnValue(mockExecutions);
+
+    renderLogButton(jest.fn(), true);
+
+    const logButton = screen.getByRole('button', { name: /History/i });
+    expect(logButton).toBeEnabled();
+  });
+
+  it('filters executions by assetName', () => {
+    // Setup mock data for filtered executions
+    const mockExecutions = [
+      { id: '1', dtName: assetName, status: ExecutionStatus.COMPLETED },
+      { id: '3', dtName: assetName, status: ExecutionStatus.RUNNING },
+    ];
+
+    useSelector.mockReturnValue(mockExecutions);
+
+    renderLogButton();
+
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });

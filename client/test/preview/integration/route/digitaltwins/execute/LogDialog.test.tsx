@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import '@testing-library/jest-dom';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
@@ -7,24 +14,34 @@ import digitalTwinReducer, {
   setDigitalTwin,
   setJobLogs,
 } from 'preview/store/digitalTwin.slice';
+import executionHistoryReducer from 'preview/store/executionHistory.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 
 const store = configureStore({
   reducer: combineReducers({
     digitalTwin: digitalTwinReducer,
+    executionHistory: executionHistoryReducer,
   }),
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  preloadedState: {
+    executionHistory: {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
+  },
 });
 
 describe('LogDialog', () => {
   const assetName = 'mockedDTName';
   const setShowLog = jest.fn();
 
-  const renderLogDialog = () => {
-    act(() => {
+  const renderLogDialog = async () => {
+    await act(async () => {
       render(
         <Provider store={store}>
           <LogDialog name={assetName} showLog={true} setShowLog={setShowLog} />
@@ -46,7 +63,7 @@ describe('LogDialog', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the LogDialog with logs available', () => {
+  it('renders the LogDialog with logs available', async () => {
     store.dispatch(
       setJobLogs({
         assetName,
@@ -54,14 +71,23 @@ describe('LogDialog', () => {
       }),
     );
 
-    renderLogDialog();
+    await renderLogDialog();
 
-    expect(screen.getByText(/mockedDTName log/i)).toBeInTheDocument();
-    expect(screen.getByText(/job/i)).toBeInTheDocument();
-    expect(screen.getByText(/testLog/i)).toBeInTheDocument();
+    // Click on the Logs tab to show logs
+    const logsTab = screen.getByRole('tab', { name: /Logs/i });
+    await act(async () => {
+      fireEvent.click(logsTab);
+    });
+
+    // Wait for loading to complete and logs to appear
+    await waitFor(() => {
+      expect(screen.getByText(/mockedDTName log/i)).toBeInTheDocument();
+      expect(screen.getByText(/job/i)).toBeInTheDocument();
+      expect(screen.getByText(/testLog/i)).toBeInTheDocument();
+    });
   });
 
-  it('renders the LogDialog with no logs available', () => {
+  it('renders the LogDialog with no logs available', async () => {
     store.dispatch(
       setJobLogs({
         assetName,
@@ -69,9 +95,18 @@ describe('LogDialog', () => {
       }),
     );
 
-    renderLogDialog();
+    await renderLogDialog();
 
-    expect(screen.getByText(/No logs available/i)).toBeInTheDocument();
+    // Click on the Logs tab to show logs
+    const logsTab = screen.getByRole('tab', { name: /Logs/i });
+    await act(async () => {
+      fireEvent.click(logsTab);
+    });
+
+    // Wait for loading to complete and "No logs available" message to appear
+    await waitFor(() => {
+      expect(screen.getByText(/No logs available/i)).toBeInTheDocument();
+    });
   });
 
   it('handles button click', async () => {
@@ -82,10 +117,10 @@ describe('LogDialog', () => {
       }),
     );
 
-    renderLogDialog();
+    await renderLogDialog();
 
     const closeButton = screen.getByRole('button', { name: /Close/i });
-    act(() => {
+    await act(async () => {
       fireEvent.click(closeButton);
     });
 
