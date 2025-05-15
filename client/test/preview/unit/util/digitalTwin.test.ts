@@ -61,7 +61,7 @@ describe('DigitalTwin', () => {
   beforeEach(() => {
     mockGitlabInstance.projectId = 1;
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
-    
+
     jest.clearAllMocks();
 
     jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');

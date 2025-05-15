@@ -1,10 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import {
-  fireEvent,
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
+import { fireEvent, render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AssetCardExecute } from 'preview/components/asset/AssetCard';
 import * as React from 'react';
@@ -28,9 +23,9 @@ import { RootState } from 'store/store';
 jest.mock('preview/services/indexedDBService');
 
 jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
-  handleStart: jest.fn().mockImplementation(() =>
-     Promise.resolve('test-execution-id')
-  ),
+  handleStart: jest
+    .fn()
+    .mockImplementation(() => Promise.resolve('test-execution-id')),
   handleStop: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -123,7 +118,9 @@ describe('AssetCardExecute Integration Test', () => {
       fireEvent.click(startButton);
     });
 
-    const { handleStart } = jest.requireMock('preview/route/digitaltwins/execute/pipelineHandler');
+    const { handleStart } = jest.requireMock(
+      'preview/route/digitaltwins/execute/pipelineHandler',
+    );
     expect(handleStart).toHaveBeenCalled();
   });
 

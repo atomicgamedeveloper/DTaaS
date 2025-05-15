@@ -79,7 +79,7 @@ describe('StartStopButton', () => {
     expect(handleStart).toHaveBeenCalledWith(
       'Start',
       expect.any(Function),
-      mockDigitalTwin, 
+      mockDigitalTwin,
       setLogButtonDisabled,
       expect.any(Function),
     );

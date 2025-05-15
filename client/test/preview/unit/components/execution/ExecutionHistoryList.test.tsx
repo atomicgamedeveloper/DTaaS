@@ -306,7 +306,6 @@ describe('ExecutionHistoryList', () => {
     fireEvent.click(stopButton);
 
     expect(mockDispatch).toHaveBeenCalled();
-
   });
 
   it('sorts executions by timestamp in descending order', () => {
