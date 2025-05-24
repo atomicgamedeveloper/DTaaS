@@ -4,9 +4,23 @@ import {
 } from '../preview/model/executionHistory';
 
 /**
- * Service for interacting with IndexedDB
+ * Interface for IndexedDB operations
  */
-class IndexedDBService {
+export interface IIndexedDBService {
+  init(): Promise<void>;
+  addExecutionHistory(entry: ExecutionHistoryEntry): Promise<string>;
+  updateExecutionHistory(entry: ExecutionHistoryEntry): Promise<void>;
+  getExecutionHistoryById(id: string): Promise<ExecutionHistoryEntry | null>;
+  getExecutionHistoryByDTName(dtName: string): Promise<ExecutionHistoryEntry[]>;
+  getAllExecutionHistory(): Promise<ExecutionHistoryEntry[]>;
+  deleteExecutionHistory(id: string): Promise<void>;
+  deleteExecutionHistoryByDTName(dtName: string): Promise<void>;
+}
+
+/**
+ * For interacting with IndexedDB
+ */
+class IndexedDBService implements IIndexedDBService {
   private db: IDBDatabase | null = null;
 
   private dbName: string;
