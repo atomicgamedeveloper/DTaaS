@@ -10,7 +10,7 @@ import {
   ExecutionHistoryEntry,
   ExecutionStatus,
   JobLog,
-} from 'preview/model/executionHistory';
+} from 'model/backend/gitlab/types/executionHistory';
 import indexedDBService from 'database/digitalTwins';
 import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
 

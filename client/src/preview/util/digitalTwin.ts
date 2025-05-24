@@ -9,7 +9,7 @@ import {
   ExecutionHistoryEntry,
   ExecutionStatus,
   JobLog,
-} from 'preview/model/executionHistory';
+} from 'model/backend/gitlab/types/executionHistory';
 import indexedDBService from 'database/digitalTwins';
 import GitlabInstance from './gitlab';
 import {

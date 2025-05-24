@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { JobLog } from 'preview/model/executionHistory';
+import { JobLog } from 'model/backend/gitlab/types/executionHistory';
 import { RootState } from 'store/store';
 
 interface DigitalTwinState {

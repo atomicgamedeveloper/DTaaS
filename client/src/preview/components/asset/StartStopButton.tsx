@@ -5,7 +5,7 @@ import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { selectExecutionHistoryByDTName } from 'model/backend/gitlab/state/executionHistory.slice';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
 interface StartStopButtonProps {
   assetName: string;
@@ -27,8 +27,11 @@ function StartStopButton({
       )
     : [];
 
-  const isLoading =
-    digitalTwin?.pipelineLoading || runningExecutions.length > 0;
+  const hasRunningExecutions = runningExecutions.length > 0;
+  const hasAnyExecutions = executions.length > 0;
+
+  const isLoading = hasRunningExecutions ||
+    (!hasAnyExecutions && digitalTwin?.pipelineLoading);
 
   const runningCount = runningExecutions.length;
 

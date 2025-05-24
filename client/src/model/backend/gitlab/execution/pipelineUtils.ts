@@ -9,7 +9,7 @@ import {
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { useDispatch } from 'react-redux';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import {
   updateExecutionLogs,
   updateExecutionStatus,

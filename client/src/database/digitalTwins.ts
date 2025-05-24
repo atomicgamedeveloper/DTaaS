@@ -1,7 +1,7 @@
 import {
   DB_CONFIG,
   ExecutionHistoryEntry,
-} from '../preview/model/executionHistory';
+} from '../model/backend/gitlab/types/executionHistory';
 
 /**
  * Interface for IndexedDB operations

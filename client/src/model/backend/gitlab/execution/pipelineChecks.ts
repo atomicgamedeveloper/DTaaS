@@ -8,7 +8,7 @@ import {
 } from 'model/backend/gitlab/execution/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   setPipelineCompleted,
