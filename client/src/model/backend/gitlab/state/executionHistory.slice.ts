@@ -51,6 +51,15 @@ const executionHistorySlice = createSlice({
     ) => {
       state.entries = action.payload;
     },
+    setExecutionHistoryEntriesForDT: (
+      state,
+      action: PayloadAction<{ dtName: string; entries: ExecutionHistoryEntry[] }>,
+    ) => {
+      state.entries = state.entries.filter(
+        (entry) => entry.dtName !== action.payload.dtName,
+      );
+      state.entries.push(...action.payload.entries);
+    },
     addExecutionHistoryEntry: (
       state,
       action: PayloadAction<ExecutionHistoryEntry>,
@@ -113,7 +122,7 @@ export const fetchExecutionHistory =
     try {
       const entries =
         await indexedDBService.getExecutionHistoryByDTName(dtName);
-      dispatch(setExecutionHistoryEntries(entries));
+      dispatch(setExecutionHistoryEntriesForDT({ dtName, entries }));
 
       dispatch(checkRunningExecutions());
 
@@ -319,6 +328,7 @@ export const {
   setLoading,
   setError,
   setExecutionHistoryEntries,
+  setExecutionHistoryEntriesForDT,
   addExecutionHistoryEntry,
   updateExecutionHistoryEntry,
   updateExecutionStatus,
