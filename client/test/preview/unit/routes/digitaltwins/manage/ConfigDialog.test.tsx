@@ -12,7 +12,7 @@ import store, { RootState } from 'store/store';
 
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { selectModifiedFiles } from 'preview/store/file.slice';
 import { selectModifiedLibraryFiles } from 'preview/store/libraryConfigFiles.slice';
 
@@ -21,8 +21,8 @@ jest.mock('preview/store/file.slice', () => ({
   saveAllFiles: jest.fn().mockResolvedValue(Promise.resolve()),
 }));
 
-jest.mock('preview/store/digitalTwin.slice', () => ({
-  ...jest.requireActual('preview/store/digitalTwin.slice'),
+jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => ({
+  ...jest.requireActual('model/backend/gitlab/state/digitalTwin.slice'),
   updateDescription: jest.fn(),
 }));
 

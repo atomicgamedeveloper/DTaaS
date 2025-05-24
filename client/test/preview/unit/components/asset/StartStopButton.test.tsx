@@ -1,13 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import * as React from 'react';
-import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
+import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import StartStopButton from 'preview/components/asset/StartStopButton';
 import { ExecutionStatus } from 'preview/model/executionHistory';
 import * as redux from 'react-redux';
 
 // Mock dependencies
-jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
+jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest.fn(),
 }));
 
@@ -57,22 +57,27 @@ describe('StartStopButton', () => {
   });
 
   const renderComponent = () =>
-    render(
-      <StartStopButton
-        assetName={assetName}
-        setLogButtonDisabled={setLogButtonDisabled}
-      />,
-    );
+    act(() => {
+      render(
+        <StartStopButton
+          assetName={assetName}
+          setLogButtonDisabled={setLogButtonDisabled}
+        />,
+      );
+    });
 
   it('renders the Start button', () => {
     renderComponent();
     expect(screen.getByText('Start')).toBeInTheDocument();
   });
 
-  it('handles button click', () => {
+  it('handles button click', async () => {
     renderComponent();
     const startButton = screen.getByText('Start');
-    fireEvent.click(startButton);
+
+    await act(async () => {
+      fireEvent.click(startButton);
+    });
 
     expect(handleStart).toHaveBeenCalled();
 

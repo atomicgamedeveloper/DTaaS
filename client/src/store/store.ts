@@ -1,12 +1,12 @@
 import { combineReducers } from 'redux';
 import { configureStore } from '@reduxjs/toolkit';
-import digitalTwinSlice from 'preview/store/digitalTwin.slice';
+import executionHistorySlice from 'model/backend/gitlab/state/executionHistory.slice';
+import digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
+import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import assetsSlice from 'preview/store/assets.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';
-import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
-import executionHistorySlice from 'preview/store/executionHistory.slice';
 import menuSlice from './menu.slice';
 import authSlice from './auth.slice';
 
@@ -28,9 +28,31 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
+          // Digital Twin actions that contain class instances
           'digitalTwin/setDigitalTwin',
+          'digitalTwin/setJobLogs',
+          'digitalTwin/setPipelineCompleted',
+          'digitalTwin/setPipelineLoading',
+          'digitalTwin/setShouldFetchDigitalTwins',
+          // Asset actions that contain LibraryAsset class instances
+          'assets/setAssets',
+          'assets/setAsset',
+          'assets/deleteAsset',
+          // Execution history actions
           'executionHistory/addExecutionHistoryEntry',
           'executionHistory/updateExecutionHistoryEntry',
+          'executionHistory/setExecutionHistoryEntries',
+          'executionHistory/updateExecutionLogs',
+          'executionHistory/updateExecutionStatus',
+          'executionHistory/setLoading',
+          'executionHistory/setError',
+          'executionHistory/setSelectedExecutionId',
+        ],
+        ignoredPaths: [
+          // Ignore the entire assets state as it contains LibraryAsset class instances
+          'assets.items',
+          // Ignore digital twin state as it contains class instances
+          'digitalTwin.digitalTwin',
         ],
       },
     }),

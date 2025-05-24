@@ -5,7 +5,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';

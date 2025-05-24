@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import { Button, Badge } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { selectExecutionHistoryByDTName } from 'preview/store/executionHistory.slice';
+import { selectExecutionHistoryByDTName } from 'model/backend/gitlab/state/executionHistory.slice';
 
 interface LogButtonProps {
   setShowLog: Dispatch<React.SetStateAction<boolean>>;

@@ -1,38 +1,43 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  List,
-  ListItem,
-  ListItemText,
   IconButton,
   Typography,
   Paper,
   Box,
   Tooltip,
   CircularProgress,
-  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Cancel as CancelIcon,
   AccessTime as AccessTimeIcon,
   HourglassEmpty as HourglassEmptyIcon,
   Stop as StopIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus, JobLog } from 'preview/model/executionHistory';
 import {
   fetchExecutionHistory,
   removeExecution,
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
   setSelectedExecutionId,
-} from 'preview/store/executionHistory.slice';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
-import { handleStop } from 'preview/route/digitaltwins/execute/pipelineHandler';
+  selectSelectedExecution,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { handleStop } from 'model/backend/gitlab/execution/pipelineHandler';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 
@@ -80,6 +85,45 @@ const getStatusText = (status: ExecutionStatus): string => {
   }
 };
 
+interface DeleteConfirmationDialogProps {
+  open: boolean;
+  executionId: string | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
+  open,
+  executionId,
+  onClose,
+  onConfirm,
+}) => (
+  <Dialog open={open} onClose={onClose}>
+    <DialogTitle>Confirm Deletion</DialogTitle>
+    <DialogContent>
+      <Typography>
+        Are you sure you want to delete this execution history entry?
+        {executionId && (
+          <>
+            <br />
+            <strong>Execution ID:</strong> {executionId.slice(-8)}
+          </>
+        )}
+        <br />
+        This action cannot be undone.
+      </Typography>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} color="primary">
+        Cancel
+      </Button>
+      <Button onClick={onConfirm} color="error">
+        Delete
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
   dtName,
   onViewLogs,
@@ -90,15 +134,49 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
   const executions = useSelector(selectExecutionHistoryByDTName(dtName));
   const loading = useSelector(selectExecutionHistoryLoading);
   const digitalTwin = useSelector(selectDigitalTwinByName(dtName));
+  const selectedExecution = useSelector(selectSelectedExecution);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [executionToDelete, setExecutionToDelete] = useState<string | null>(
+    null,
+  );
+
+  const [expandedExecution, setExpandedExecution] = useState<string | false>(
+    false,
+  );
 
   useEffect(() => {
-    // Use the thunk action creator directly
     dispatch(fetchExecutionHistory(dtName));
   }, [dispatch, dtName]);
 
-  const handleDelete = (executionId: string) => {
-    // Use the thunk action creator directly
-    dispatch(removeExecution(executionId));
+  const handleAccordionChange =
+    (executionId: string) =>
+    (_event: React.SyntheticEvent, isExpanded: boolean) => {
+      setExpandedExecution(isExpanded ? executionId : false);
+      if (isExpanded) {
+        handleViewLogs(executionId);
+      }
+    };
+
+  const handleDeleteClick = (executionId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation(); // Prevent accordion from toggling
+    }
+    setExecutionToDelete(executionId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (executionToDelete) {
+      dispatch(removeExecution(executionToDelete));
+    }
+    setDeleteDialogOpen(false);
+    setExecutionToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setExecutionToDelete(null);
   };
 
   const handleViewLogs = (executionId: string) => {
@@ -106,7 +184,13 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
     onViewLogs(executionId);
   };
 
-  const handleStopExecution = (executionId: string) => {
+  const handleStopExecution = (
+    executionId: string,
+    event?: React.MouseEvent,
+  ) => {
+    if (event) {
+      event.stopPropagation(); // Prevent accordion from toggling
+    }
     if (digitalTwin) {
       // Dummy function since we don't need to change button text
       const setButtonText = () => {};
@@ -139,67 +223,116 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
   );
 
   return (
-    <Paper elevation={2} sx={{ mt: 2 }}>
-      <Box p={2}>
-        <Typography variant="h6" gutterBottom>
-          Execution History
-        </Typography>
-        <List>
+    <>
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        executionId={executionToDelete}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <Paper elevation={2} sx={{ mt: 2 }}>
+        <Box p={2}>
+          <Typography variant="h6" gutterBottom>
+            Execution History
+          </Typography>
           {sortedExecutions.map((execution) => (
-            <React.Fragment key={execution.id}>
-              <ListItem
-                secondaryAction={
-                  <Box display="flex">
-                    <Tooltip title="View Logs">
-                      <IconButton
-                        edge="end"
-                        aria-label="view"
-                        onClick={() => handleViewLogs(execution.id)}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    {execution.status === ExecutionStatus.RUNNING && (
-                      <Tooltip title="Stop Execution">
-                        <IconButton
-                          edge="end"
-                          aria-label="stop"
-                          onClick={() => handleStopExecution(execution.id)}
-                        >
-                          <StopIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title="Delete">
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() => handleDelete(execution.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                }
+            <Accordion
+              key={execution.id}
+              expanded={expandedExecution === execution.id}
+              onChange={handleAccordionChange(execution.id)}
+              sx={{ mb: 1 }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls={`execution-${execution.id}-content`}
+                id={`execution-${execution.id}-header`}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  '& .MuiAccordionSummary-content': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  },
+                }}
               >
-                <Box display="flex" alignItems="center" mr={2}>
-                  {getStatusIcon(execution.status)}
-                </Box>
-                <ListItemText
-                  primary={formatTimestamp(execution.timestamp)}
-                  secondary={
+                <Box display="flex" alignItems="center">
+                  <Box mr={2}>{getStatusIcon(execution.status)}</Box>
+                  <Box>
+                    <Typography>
+                      {formatTimestamp(execution.timestamp)}
+                    </Typography>
                     <Typography variant="body2" color="textSecondary">
                       Status: {getStatusText(execution.status)}
                     </Typography>
+                  </Box>
+                </Box>
+                <Box display="flex" alignItems="center">
+                  {execution.status === ExecutionStatus.RUNNING && (
+                    <Tooltip title="Stop Execution">
+                      <IconButton
+                        edge="end"
+                        aria-label="stop"
+                        onClick={(e) => handleStopExecution(execution.id, e)}
+                        size="small"
+                      >
+                        <StopIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Tooltip title="Delete">
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={(e) => handleDeleteClick(execution.id, e)}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {(() => {
+                  if (
+                    !selectedExecution ||
+                    selectedExecution.id !== execution.id
+                  ) {
+                    return (
+                      <Box display="flex" justifyContent="center" p={2}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    );
                   }
-                />
-              </ListItem>
-              <Divider variant="inset" component="li" />
-            </React.Fragment>
+
+                  if (selectedExecution.jobLogs.length === 0) {
+                    return (
+                      <Typography variant="body2">No logs available</Typography>
+                    );
+                  }
+
+                  return selectedExecution.jobLogs.map(
+                    (jobLog: JobLog, index: number) => (
+                      <div key={index} style={{ marginBottom: '16px' }}>
+                        <Typography variant="h6">{jobLog.jobName}</Typography>
+                        <Typography
+                          variant="body2"
+                          style={{ whiteSpace: 'pre-wrap' }}
+                        >
+                          {jobLog.log}
+                        </Typography>
+                      </div>
+                    ),
+                  );
+                })()}
+              </AccordionDetails>
+            </Accordion>
           ))}
-        </List>
-      </Box>
-    </Paper>
+        </Box>
+      </Paper>
+    </>
   );
 };
 

@@ -8,7 +8,7 @@ import styled from '@emotion/styled';
 import { formatName } from 'preview/util/digitalTwin';
 import CustomSnackbar from 'preview/route/digitaltwins/Snackbar';
 import { useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';

@@ -7,8 +7,8 @@ import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
   setShouldFetchDigitalTwins,
-} from 'preview/store/digitalTwin.slice';
-import executionHistoryReducer from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import {
   mockGitlabInstance,

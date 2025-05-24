@@ -3,12 +3,13 @@ import {
   startPipeline,
   updatePipelineStateOnCompletion,
   updatePipelineStateOnStop,
-} from 'preview/route/digitaltwins/execute/pipelineUtils';
-import { stopPipelines } from 'preview/route/digitaltwins/execute/pipelineHandler';
+} from 'model/backend/gitlab/execution/pipelineUtils';
+import { stopPipelines } from 'model/backend/gitlab/execution/pipelineHandler';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { JobSchema } from '@gitbeaker/rest';
 import GitlabInstance from 'preview/util/gitlab';
 import { ExecutionStatus } from 'preview/model/executionHistory';
+// import { JobLog } from 'model/backend/gitlab/execution/interfaces';
 
 describe('PipelineUtils', () => {
   const digitalTwin = mockDigitalTwin;

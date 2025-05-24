@@ -1,20 +1,21 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import { useDispatch } from 'react-redux';
 import { showSnackbar } from 'preview/store/snackbar.slice';
+import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   startPipeline,
   updatePipelineState,
   updatePipelineStateOnStop,
 } from './pipelineUtils';
 import { startPipelineStatusCheck } from './pipelineChecks';
+import { PipelineHandlerDispatch } from './interfaces';
 
 export const handleButtonClick = (
   buttonText: string,
   setButtonText: Dispatch<SetStateAction<string>>,
   digitalTwin: DigitalTwin,
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: PipelineHandlerDispatch,
 ) => {
   if (buttonText === 'Start') {
     handleStart(
@@ -34,7 +35,7 @@ export const handleStart = async (
   setButtonText: Dispatch<SetStateAction<string>>,
   digitalTwin: DigitalTwin,
   setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: PipelineHandlerDispatch,
   executionId?: string,
 ) => {
   if (buttonText === 'Start') {
@@ -49,6 +50,8 @@ export const handleStart = async (
     );
 
     if (newExecutionId) {
+      dispatch(fetchExecutionHistory(digitalTwin.DTName));
+
       const params = {
         setButtonText,
         digitalTwin,
@@ -72,7 +75,7 @@ export const handleStart = async (
 export const handleStop = async (
   digitalTwin: DigitalTwin,
   setButtonText: Dispatch<SetStateAction<string>>,
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: PipelineHandlerDispatch,
   executionId?: string,
 ) => {
   try {
@@ -119,7 +122,7 @@ export const stopPipelines = async (
         executionId,
       );
     } else if (digitalTwin.pipelineId) {
-      // For backward compatibility, stop the current execution
+      //  backward compatibility, stop the current execution
       await digitalTwin.stop(
         digitalTwin.gitlabInstance.projectId,
         'parentPipeline',

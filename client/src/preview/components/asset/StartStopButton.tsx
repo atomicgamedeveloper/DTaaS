@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import { Button, CircularProgress, Box } from '@mui/material';
-import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
+import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
-import { selectExecutionHistoryByDTName } from 'preview/store/executionHistory.slice';
+import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { selectExecutionHistoryByDTName } from 'model/backend/gitlab/state/executionHistory.slice';
 import { ExecutionStatus } from 'preview/model/executionHistory';
 
 interface StartStopButtonProps {

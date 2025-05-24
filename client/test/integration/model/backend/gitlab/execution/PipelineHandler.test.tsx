@@ -1,9 +1,9 @@
-import * as PipelineHandlers from 'preview/route/digitaltwins/execute/pipelineHandler';
+import * as PipelineHandlers from 'model/backend/gitlab/execution/pipelineHandler';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice, { SnackbarState } from 'preview/store/snackbar.slice';
 import { formatName } from 'preview/util/digitalTwin';
 
@@ -30,12 +30,13 @@ describe('PipelineHandler Integration Tests', () => {
   });
 
   it('handles button click when button text is Stop', async () => {
+    const { dispatch } = store;
     await PipelineHandlers.handleButtonClick(
       'Start',
       jest.fn(),
       digitalTwin,
       jest.fn(),
-      store.dispatch,
+      dispatch,
     );
 
     await PipelineHandlers.handleButtonClick(
@@ -43,7 +44,7 @@ describe('PipelineHandler Integration Tests', () => {
       jest.fn(),
       digitalTwin,
       jest.fn(),
-      store.dispatch,
+      dispatch,
     );
 
     const snackbarState = store.getState().snackbar;
@@ -60,13 +61,14 @@ describe('PipelineHandler Integration Tests', () => {
   it('handles start when button text is Stop', async () => {
     const setButtonText = jest.fn();
     const setLogButtonDisabled = jest.fn();
+    const { dispatch } = store;
 
     await PipelineHandlers.handleStart(
       'Stop',
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      store.dispatch,
+      dispatch,
     );
 
     expect(setButtonText).toHaveBeenCalledWith('Start');
@@ -76,8 +78,9 @@ describe('PipelineHandler Integration Tests', () => {
     const stopPipelinesMock = jest
       .spyOn(PipelineHandlers, 'stopPipelines')
       .mockRejectedValueOnce(new Error('error'));
+    const { dispatch } = store;
 
-    await PipelineHandlers.handleStop(digitalTwin, jest.fn(), store.dispatch);
+    await PipelineHandlers.handleStop(digitalTwin, jest.fn(), dispatch);
 
     const snackbarState = store.getState().snackbar as SnackbarState;
     expect(snackbarState.message).toBe(

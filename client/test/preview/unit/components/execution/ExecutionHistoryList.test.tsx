@@ -9,7 +9,7 @@ import {
   ExecutionStatus,
 } from 'preview/model/executionHistory';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import digitalTwinReducer from 'preview/store/digitalTwin.slice';
+import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import executionHistoryReducer, {
   setLoading,
@@ -28,9 +28,10 @@ import executionHistoryReducer, {
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/executionHistory.slice';
 
-jest.mock('preview/route/digitaltwins/execute/pipelineHandler');
+// Mock the pipelineHandler module
+jest.mock('model/backend/gitlab/execution/pipelineHandler');
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -88,7 +89,25 @@ const mockExecutions = [
   },
 ];
 
-type TestStore = ReturnType<typeof configureStore>;
+// Define the state structure for the test store
+interface TestState {
+  executionHistory: {
+    entries: ExecutionHistoryEntry[];
+    selectedExecutionId: string | null;
+    loading: boolean;
+    error: string | null;
+  };
+  digitalTwin: {
+    digitalTwin: {
+      [key: string]: unknown;
+    };
+    shouldFetchDigitalTwins: boolean;
+  };
+}
+
+type TestStore = ReturnType<typeof configureStore> & {
+  getState: () => TestState;
+};
 
 const createTestStore = (
   initialEntries: ExecutionHistoryEntry[] = [],
@@ -114,7 +133,7 @@ const createTestStore = (
         shouldFetchDigitalTwins: false,
       },
     },
-  });
+  }) as TestStore;
 
 describe('ExecutionHistoryList', () => {
   const dtName = 'test-dt';
@@ -216,8 +235,9 @@ describe('ExecutionHistoryList', () => {
     expect(screen.getByLabelText(/stop/i)).toBeInTheDocument(); // Only one running execution
   });
 
-  it('calls fetchExecutionHistory on mount', () => {
+  it('does not call fetchExecutionHistory on mount (handled by ExecutionHistoryLoader)', () => {
     testStore = createTestStore([]);
+    mockDispatch.mockClear();
 
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector) => selector(testStore.getState()),
@@ -229,7 +249,9 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    expect(mockDispatch).toHaveBeenCalled();
+    // The component no longer fetches execution history on mount
+    // This is now handled by ExecutionHistoryLoader
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('handles delete execution correctly', () => {
@@ -274,8 +296,23 @@ describe('ExecutionHistoryList', () => {
     expect(mockOnViewLogs).toHaveBeenCalledWith('exec5');
   });
 
-  it('handles stop execution correctly', () => {
+  it('handles stop execution correctly', async () => {
+    // Clear mocks before test
     mockDispatch.mockClear();
+
+    // Create a spy on the handleStop function
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    const pipelineHandler = require('model/backend/gitlab/execution/pipelineHandler');
+    const handleStopSpy = jest
+      .spyOn(pipelineHandler, 'handleStop')
+      .mockImplementation(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (_digitalTwin, _setButtonText, dispatch: any, executionId) => {
+          // Mock implementation that calls dispatch
+          dispatch({ type: 'mock/stopExecution', payload: executionId });
+          return Promise.resolve();
+        },
+      );
 
     const mockRunningExecution = {
       id: 'exec3',
@@ -288,24 +325,46 @@ describe('ExecutionHistoryList', () => {
 
     testStore = createTestStore([mockRunningExecution]);
 
+    // Mock useSelector to return test store state
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector) => selector(testStore.getState()),
     );
 
+    // Mock useDispatch to return the mockDispatch function
+    (useDispatch as jest.MockedFunction<typeof useDispatch>).mockReturnValue(
+      mockDispatch,
+    );
+
+    // Render the component
     render(
       <Provider store={testStore}>
         <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
       </Provider>,
     );
 
+    // Verify running execution is displayed
     expect(screen.getByText(/Running/i)).toBeInTheDocument();
 
+    // Find and verify stop button exists
     const stopButton = screen.getByLabelText('stop');
     expect(stopButton).toBeInTheDocument();
 
+    // Click the stop button to trigger the handleStopExecution function
     fireEvent.click(stopButton);
 
+    // Verify that handleStopSpy was called with the correct parameters
+    expect(handleStopSpy).toHaveBeenCalledWith(
+      expect.anything(), // digitalTwin
+      expect.any(Function), // setButtonText
+      mockDispatch, // dispatch
+      'exec3', // executionId
+    );
+
+    // Verify that mockDispatch was called by the handleStopExecution function
     expect(mockDispatch).toHaveBeenCalled();
+
+    // Clean up the spy
+    handleStopSpy.mockRestore();
   });
 
   it('sorts executions by timestamp in descending order', () => {

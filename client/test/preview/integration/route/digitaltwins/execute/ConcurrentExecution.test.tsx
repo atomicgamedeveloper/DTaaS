@@ -7,12 +7,12 @@ import LogButton from 'preview/components/asset/LogButton';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
   clearEntries,
-} from 'preview/store/executionHistory.slice';
-import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import { v4 as uuidv4 } from 'uuid';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { ExecutionStatus } from 'preview/model/executionHistory';
@@ -23,7 +23,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(),
 }));
 
-jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
+jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest.fn(),
   handleStop: jest.fn(),
 }));
@@ -35,7 +35,7 @@ jest.mock('@mui/material/CircularProgress', () => ({
 }));
 
 // Mock the indexedDBService
-jest.mock('preview/services/indexedDBService', () => ({
+jest.mock('database/digitalTwins', () => ({
   __esModule: true,
   default: {
     init: jest.fn().mockResolvedValue(undefined),

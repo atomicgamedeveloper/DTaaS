@@ -10,8 +10,8 @@ import assetsReducer, {
 } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
-import executionHistoryReducer from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import { ExecutionStatus } from 'preview/model/executionHistory';
 import {
@@ -22,7 +22,7 @@ import { RootState } from 'store/store';
 
 jest.mock('preview/services/indexedDBService');
 
-jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
+jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest
     .fn()
     .mockImplementation(() => Promise.resolve('test-execution-id')),
@@ -119,7 +119,7 @@ describe('AssetCardExecute Integration Test', () => {
     });
 
     const { handleStart } = jest.requireMock(
-      'preview/route/digitaltwins/execute/pipelineHandler',
+      'model/backend/gitlab/execution/pipelineHandler',
     );
     expect(handleStart).toHaveBeenCalled();
   });

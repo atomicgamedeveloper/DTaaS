@@ -1,7 +1,7 @@
 import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import Sidebar from 'preview/route/digitaltwins/editor/Sidebar';
 import {

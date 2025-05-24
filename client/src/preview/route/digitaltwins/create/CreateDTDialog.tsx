@@ -17,7 +17,7 @@ import { showSnackbar } from 'preview/store/snackbar.slice';
 import {
   setDigitalTwin,
   setShouldFetchDigitalTwins,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import {
   addDefaultFiles,
   defaultFiles,

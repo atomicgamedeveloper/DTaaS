@@ -7,7 +7,7 @@ import 'katex/dist/katex.min.css';
 import * as RemarkableKatex from 'remarkable-katex';
 import { useSelector } from 'react-redux';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import { selectDigitalTwinByName } from '../../../store/digitalTwin.slice';
+import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 
 interface DetailsDialogProps {
   showDialog: boolean;

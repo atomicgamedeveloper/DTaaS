@@ -7,7 +7,7 @@ import { RootState } from 'store/store';
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
 import { getFilteredFileNames } from 'preview/util/fileUtils';
 import { FileState } from '../../../store/file.slice';
-import { selectDigitalTwinByName } from '../../../store/digitalTwin.slice';
+import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import { fetchData } from './sidebarFetchers';
 import { handleAddFileClick } from './sidebarFunctions';
 import { renderFileTreeItems, renderFileSection } from './sidebarRendering';

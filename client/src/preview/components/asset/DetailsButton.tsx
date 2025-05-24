@@ -4,7 +4,7 @@ import { Button } from '@mui/material';
 import { useSelector } from 'react-redux';
 import LibraryAsset from 'preview/util/libraryAsset';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import { selectDigitalTwinByName } from '../../store/digitalTwin.slice';
+import { selectDigitalTwinByName } from '../../../model/backend/gitlab/state/digitalTwin.slice';
 import DigitalTwin from '../../util/digitalTwin';
 
 interface DialogButtonProps {

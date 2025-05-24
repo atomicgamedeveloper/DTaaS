@@ -4,7 +4,7 @@ import { getAuthority } from 'util/envUtil';
 import GitlabInstance from './gitlab';
 import DigitalTwin from './digitalTwin';
 import { setAsset, setAssets } from '../store/assets.slice';
-import { setDigitalTwin } from '../store/digitalTwin.slice';
+import { setDigitalTwin } from '../../model/backend/gitlab/state/digitalTwin.slice';
 import LibraryAsset from './libraryAsset';
 
 const initialGitlabInstance = new GitlabInstance(

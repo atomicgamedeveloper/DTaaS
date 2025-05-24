@@ -11,7 +11,8 @@ import {
   ExecutionStatus,
   JobLog,
 } from 'preview/model/executionHistory';
-import indexedDBService from 'preview/services/indexedDBService';
+import indexedDBService from 'database/digitalTwins';
+import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
 
 type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
@@ -113,6 +114,9 @@ export const fetchExecutionHistory =
       const entries =
         await indexedDBService.getExecutionHistoryByDTName(dtName);
       dispatch(setExecutionHistoryEntries(entries));
+
+      dispatch(checkRunningExecutions());
+
       dispatch(setError(null));
     } catch (error) {
       dispatch(setError(`Failed to fetch execution history: ${error}`));
@@ -120,6 +124,22 @@ export const fetchExecutionHistory =
       dispatch(setLoading(false));
     }
   };
+
+export const fetchAllExecutionHistory = (): AppThunk => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const entries = await indexedDBService.getAllExecutionHistory();
+    dispatch(setExecutionHistoryEntries(entries));
+
+    dispatch(checkRunningExecutions());
+
+    dispatch(setError(null));
+  } catch (error) {
+    dispatch(setError(`Failed to fetch all execution history: ${error}`));
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
 
 export const addExecution =
   (entry: ExecutionHistoryEntry): AppThunk =>
@@ -153,24 +173,111 @@ export const updateExecution =
 
 export const removeExecution =
   (id: string): AppThunk =>
-  async (dispatch) => {
-    dispatch(setLoading(true));
+  async (dispatch, getState) => {
+    const state = getState();
+    const execution = state.executionHistory.entries.find(
+      (entry) => entry.id === id,
+    );
+
+    if (!execution) {
+      return;
+    }
+
+    dispatch(removeExecutionHistoryEntry(id));
+
     try {
       await indexedDBService.deleteExecutionHistory(id);
-      dispatch(removeExecutionHistoryEntry(id));
       dispatch(setError(null));
     } catch (error) {
+      if (execution) {
+        dispatch(addExecutionHistoryEntry(execution));
+      }
       dispatch(setError(`Failed to remove execution: ${error}`));
-    } finally {
-      dispatch(setLoading(false));
     }
   };
 
-// Selectors
+export const checkRunningExecutions =
+  (): AppThunk => async (dispatch, getState) => {
+    const state = getState();
+    const runningExecutions = state.executionHistory.entries.filter(
+      (entry) => entry.status === ExecutionStatus.RUNNING,
+    );
+
+    if (runningExecutions.length === 0) {
+      return;
+    }
+
+    const { fetchLogsAndUpdateExecution } = await import(
+      'model/backend/gitlab/execution/pipelineUtils'
+    );
+
+    await Promise.all(
+      runningExecutions.map(async (execution) => {
+        try {
+          const digitalTwin = selectDigitalTwinByName(execution.dtName)(state);
+          if (!digitalTwin) {
+            return;
+          }
+
+          const parentPipelineStatus =
+            await digitalTwin.gitlabInstance.getPipelineStatus(
+              digitalTwin.gitlabInstance.projectId!,
+              execution.pipelineId,
+            );
+
+          if (parentPipelineStatus === 'failed') {
+            await fetchLogsAndUpdateExecution(
+              digitalTwin,
+              execution.pipelineId,
+              execution.id,
+              ExecutionStatus.FAILED,
+              dispatch,
+            );
+            return;
+          }
+
+          if (parentPipelineStatus !== 'success') {
+            return;
+          }
+
+          const childPipelineId = execution.pipelineId + 1;
+          try {
+            const childPipelineStatus =
+              await digitalTwin.gitlabInstance.getPipelineStatus(
+                digitalTwin.gitlabInstance.projectId!,
+                childPipelineId,
+              );
+
+            if (
+              childPipelineStatus === 'success' ||
+              childPipelineStatus === 'failed'
+            ) {
+              const newStatus =
+                childPipelineStatus === 'success'
+                  ? ExecutionStatus.COMPLETED
+                  : ExecutionStatus.FAILED;
+
+              await fetchLogsAndUpdateExecution(
+                digitalTwin,
+                childPipelineId,
+                execution.id,
+                newStatus,
+                dispatch,
+              );
+            }
+          } catch (_error) {
+            // Child pipeline might not exist yet or other error - silently ignore
+          }
+        } catch (_error) {
+          // Silently ignore errors for individual executions
+        }
+      }),
+    );
+  };
+
 export const selectExecutionHistoryEntries = (state: RootState) =>
   state.executionHistory.entries;
 
-// Memoized selector using createSelector to avoid unnecessary re-renders
 export const selectExecutionHistoryByDTName = (dtName: string) =>
   createSelector(
     [(state: RootState) => state.executionHistory.entries],
@@ -182,7 +289,6 @@ export const _selectExecutionHistoryByDTName =
   (dtName: string) => (state: RootState) =>
     state.executionHistory.entries.filter((entry) => entry.dtName === dtName);
 
-// Memoized selector for finding execution by ID
 export const selectExecutionHistoryById = (id: string) =>
   createSelector(
     [(state: RootState) => state.executionHistory.entries],
@@ -192,7 +298,6 @@ export const selectExecutionHistoryById = (id: string) =>
 export const selectSelectedExecutionId = (state: RootState) =>
   state.executionHistory.selectedExecutionId;
 
-// Memoized selector for the currently selected execution
 export const selectSelectedExecution = createSelector(
   [
     (state: RootState) => state.executionHistory.entries,

@@ -4,7 +4,7 @@ import {
   ExecutionHistoryEntry,
   ExecutionStatus,
 } from 'preview/model/executionHistory';
-import indexedDBService from 'preview/services/indexedDBService';
+import indexedDBService from 'database/digitalTwins';
 
 // Add structuredClone polyfill for Node.js environment
 if (typeof globalThis.structuredClone !== 'function') {

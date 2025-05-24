@@ -6,23 +6,22 @@ import {
   setJobLogs,
   setPipelineCompleted,
   setPipelineLoading,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import { useDispatch } from 'react-redux';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { ExecutionStatus, JobLog } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'preview/model/executionHistory';
 import {
   updateExecutionLogs,
   updateExecutionStatus,
   setSelectedExecutionId,
-} from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { JobLog } from './interfaces';
 
-/**
- * Start a pipeline execution and create an execution history entry
- * @param digitalTwin The Digital Twin to execute
- * @param dispatch Redux dispatch function
- * @param setLogButtonDisabled Function to set the log button disabled state
- * @returns The execution ID
- */
+export const delay = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 export const startPipeline = async (
   digitalTwin: DigitalTwin,
   dispatch: ReturnType<typeof useDispatch>,
@@ -56,12 +55,6 @@ export const startPipeline = async (
   return digitalTwin.currentExecutionId;
 };
 
-/**
- * Update the pipeline state in the Redux store
- * @param digitalTwin The Digital Twin
- * @param dispatch Redux dispatch function
- * @param executionId Optional execution ID for concurrent executions
- */
 export const updatePipelineState = (
   digitalTwin: DigitalTwin,
   dispatch: ReturnType<typeof useDispatch>,
@@ -91,16 +84,6 @@ export const updatePipelineState = (
   }
 };
 
-/**
- * Update the pipeline state on completion
- * @param digitalTwin The Digital Twin
- * @param jobLogs The job logs
- * @param setButtonText Function to set the button text
- * @param setLogButtonDisabled Function to set the log button disabled state
- * @param dispatch Redux dispatch function
- * @param executionId Optional execution ID for concurrent executions
- * @param status Optional status for the execution
- */
 export const updatePipelineStateOnCompletion = async (
   digitalTwin: DigitalTwin,
   jobLogs: JobLog[],
@@ -146,13 +129,6 @@ export const updatePipelineStateOnCompletion = async (
   setButtonText('Start');
 };
 
-/**
- * Update the pipeline state on stop
- * @param digitalTwin The Digital Twin
- * @param setButtonText Function to set the button text
- * @param dispatch Redux dispatch function
- * @param executionId Optional execution ID for concurrent executions
- */
 export const updatePipelineStateOnStop = (
   digitalTwin: DigitalTwin,
   setButtonText: Dispatch<SetStateAction<string>>,
@@ -186,12 +162,6 @@ export const updatePipelineStateOnStop = (
   }
 };
 
-/**
- * Fetch job logs from GitLab
- * @param gitlabInstance The GitLab instance
- * @param pipelineId The pipeline ID
- * @returns Promise that resolves with an array of job logs
- */
 export const fetchJobLogs = async (
   gitlabInstance: GitlabInstance,
   pipelineId: number,
@@ -229,4 +199,45 @@ export const fetchJobLogs = async (
     }
   });
   return (await Promise.all(logPromises)).reverse();
+};
+
+export const fetchLogsAndUpdateExecution = async (
+  digitalTwin: DigitalTwin,
+  pipelineId: number,
+  executionId: string,
+  status: ExecutionStatus,
+  dispatch: ReturnType<typeof useDispatch>,
+): Promise<boolean> => {
+  try {
+    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
+
+    if (
+      jobLogs.length === 0 ||
+      jobLogs.every((log) => !log.log || log.log.trim() === '')
+    ) {
+      return false;
+    }
+
+    await digitalTwin.updateExecutionLogs(executionId, jobLogs);
+
+    await digitalTwin.updateExecutionStatus(executionId, status);
+
+    dispatch(
+      updateExecutionLogs({
+        id: executionId,
+        logs: jobLogs,
+      }),
+    );
+
+    dispatch(
+      updateExecutionStatus({
+        id: executionId,
+        status,
+      }),
+    );
+
+    return true;
+  } catch (_error) {
+    return false;
+  }
 };

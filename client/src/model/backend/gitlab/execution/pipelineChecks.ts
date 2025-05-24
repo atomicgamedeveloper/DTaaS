@@ -1,23 +1,20 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import indexedDBService from 'preview/services/indexedDBService';
+import indexedDBService from 'database/digitalTwins';
 import {
   fetchJobLogs,
   updatePipelineStateOnCompletion,
-} from 'preview/route/digitaltwins/execute/pipelineUtils';
+} from 'model/backend/gitlab/execution/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
 import { ExecutionStatus } from 'preview/model/executionHistory';
-import { updateExecutionStatus } from 'preview/store/executionHistory.slice';
-
-interface PipelineStatusParams {
-  setButtonText: Dispatch<SetStateAction<string>>;
-  digitalTwin: DigitalTwin;
-  setLogButtonDisabled: Dispatch<SetStateAction<boolean>>;
-  dispatch: ReturnType<typeof useDispatch>;
-  executionId?: string;
-}
+import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
+import {
+  setPipelineCompleted,
+  setPipelineLoading,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import { PipelineStatusParams } from './interfaces';
 
 export const delay = (ms: number) =>
   new Promise((resolve) => {
@@ -136,18 +133,67 @@ export const handlePipelineCompletion = async (
   pipelineStatus: 'success' | 'failed',
   executionId?: string,
 ) => {
-  const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
-  await updatePipelineStateOnCompletion(
-    digitalTwin,
-    jobLogs,
-    setButtonText,
-    setLogButtonDisabled,
-    dispatch,
-    executionId,
+  const status =
     pipelineStatus === 'success'
       ? ExecutionStatus.COMPLETED
-      : ExecutionStatus.FAILED,
-  );
+      : ExecutionStatus.FAILED;
+
+  if (!executionId) {
+    // For backward compatibility
+    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
+    await updatePipelineStateOnCompletion(
+      digitalTwin,
+      jobLogs,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
+      undefined,
+      status,
+    );
+  } else {
+    // For concurrent executions, use the new helper function
+    const { fetchLogsAndUpdateExecution } = await import('./pipelineUtils');
+
+    // Fetch logs and update execution
+    const logsUpdated = await fetchLogsAndUpdateExecution(
+      digitalTwin,
+      pipelineId,
+      executionId,
+      status,
+      dispatch,
+    );
+
+    if (!logsUpdated) {
+      await delay(5000);
+      await handlePipelineCompletion(
+        pipelineId,
+        digitalTwin,
+        setButtonText,
+        setLogButtonDisabled,
+        dispatch,
+        pipelineStatus,
+        executionId,
+      );
+      return;
+    }
+
+    setButtonText('Start');
+    setLogButtonDisabled(false);
+
+    // For backward compatibility
+    dispatch(
+      setPipelineCompleted({
+        assetName: digitalTwin.DTName,
+        pipelineCompleted: true,
+      }),
+    );
+    dispatch(
+      setPipelineLoading({
+        assetName: digitalTwin.DTName,
+        pipelineLoading: false,
+      }),
+    );
+  }
 
   if (pipelineStatus === 'failed') {
     dispatch(

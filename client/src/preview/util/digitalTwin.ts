@@ -10,7 +10,7 @@ import {
   ExecutionStatus,
   JobLog,
 } from 'preview/model/executionHistory';
-import indexedDBService from 'preview/services/indexedDBService';
+import indexedDBService from 'database/digitalTwins';
 import GitlabInstance from './gitlab';
 import {
   isValidInstance,

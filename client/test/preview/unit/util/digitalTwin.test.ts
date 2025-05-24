@@ -3,10 +3,10 @@ import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
 import { RUNNER_TAG } from 'model/backend/gitlab/constants';
 import { ExecutionStatus } from 'preview/model/executionHistory';
-import indexedDBService from 'preview/services/indexedDBService';
+import indexedDBService from 'database/digitalTwins';
 import * as envUtil from 'util/envUtil';
 
-jest.mock('preview/services/indexedDBService');
+jest.mock('database/digitalTwins');
 
 jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 

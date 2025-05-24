@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
-} from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/executionHistory.slice';
 import { ExecutionStatus } from 'preview/model/executionHistory';
 
 // Create a test store with the executionHistory reducer

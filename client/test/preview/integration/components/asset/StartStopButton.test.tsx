@@ -12,16 +12,16 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
   setPipelineLoading,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
-} from 'preview/store/executionHistory.slice';
-import { handleStart } from 'preview/route/digitaltwins/execute/pipelineHandler';
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import '@testing-library/jest-dom';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'preview/model/executionHistory';
 
-jest.mock('preview/route/digitaltwins/execute/pipelineHandler', () => ({
+jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest.fn(),
 }));
 

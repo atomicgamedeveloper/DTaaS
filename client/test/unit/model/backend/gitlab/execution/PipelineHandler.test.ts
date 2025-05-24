@@ -1,9 +1,10 @@
-import * as PipelineHandlers from 'preview/route/digitaltwins/execute/pipelineHandler';
-import * as PipelineUtils from 'preview/route/digitaltwins/execute/pipelineUtils';
-import * as PipelineChecks from 'preview/route/digitaltwins/execute/pipelineChecks';
+import * as PipelineHandlers from 'model/backend/gitlab/execution/pipelineHandler';
+import * as PipelineUtils from 'model/backend/gitlab/execution/pipelineUtils';
+import * as PipelineChecks from 'model/backend/gitlab/execution/pipelineChecks';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
+import { PipelineHandlerDispatch } from 'model/backend/gitlab/execution/interfaces';
 
-jest.mock('preview/route/digitaltwins/execute/pipelineChecks', () => ({
+jest.mock('model/backend/gitlab/execution/pipelineChecks', () => ({
   startPipelineStatusCheck: jest.fn(),
 }));
 
@@ -11,7 +12,7 @@ describe('PipelineHandler', () => {
   const setButtonText = jest.fn();
   const digitalTwin = mockDigitalTwin;
   const setLogButtonDisabled = jest.fn();
-  const dispatch = jest.fn();
+  const dispatch: PipelineHandlerDispatch = jest.fn();
 
   afterEach(() => {
     jest.clearAllMocks();

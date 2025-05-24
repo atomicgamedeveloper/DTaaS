@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from '../../../store/digitalTwin.slice';
+import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import { showSnackbar } from '../../../store/snackbar.slice';
 

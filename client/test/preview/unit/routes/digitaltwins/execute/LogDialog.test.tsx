@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import { ExecutionStatus } from 'preview/model/executionHistory';
-import { selectSelectedExecution } from 'preview/store/executionHistory.slice';
+import { selectSelectedExecution } from 'model/backend/gitlab/state/executionHistory.slice';
 import { RootState } from 'store/store';
 
 // Mock Redux hooks
@@ -23,7 +23,7 @@ const mockSetSelectedExecutionId = jest.fn((id: string) => ({
   payload: id,
 }));
 
-jest.mock('preview/store/executionHistory.slice', () => ({
+jest.mock('model/backend/gitlab/state/executionHistory.slice', () => ({
   fetchExecutionHistory: jest.fn((name: string) =>
     mockFetchExecutionHistory(name),
   ),
@@ -38,7 +38,7 @@ jest.mock('preview/store/executionHistory.slice', () => ({
   ),
 }));
 
-jest.mock('preview/store/digitalTwin.slice', () => ({
+jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => ({
   selectDigitalTwinByName: jest.fn(() => () => ({
     DTName: 'testDT',
     jobLogs: [{ jobName: 'digitalTwinJob', log: 'digitalTwin log content' }],
@@ -89,7 +89,7 @@ describe('LogDialog', () => {
     mockSetSelectedExecutionId.mockClear();
 
     const executionHistorySlice = jest.requireMock(
-      'preview/store/executionHistory.slice',
+      'model/backend/gitlab/state/executionHistory.slice',
     );
 
     executionHistorySlice.fetchExecutionHistory.mockImplementation(

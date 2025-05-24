@@ -1,4 +1,7 @@
-import { DB_CONFIG, ExecutionHistoryEntry } from '../model/executionHistory';
+import {
+  DB_CONFIG,
+  ExecutionHistoryEntry,
+} from '../preview/model/executionHistory';
 
 /**
  * Service for interacting with IndexedDB

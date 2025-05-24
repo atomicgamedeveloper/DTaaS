@@ -25,7 +25,7 @@ import {
 import {
   selectDigitalTwinByName,
   updateDescription,
-} from '../../../store/digitalTwin.slice';
+} from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import { showSnackbar } from '../../../store/snackbar.slice';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import Editor from '../editor/Editor';

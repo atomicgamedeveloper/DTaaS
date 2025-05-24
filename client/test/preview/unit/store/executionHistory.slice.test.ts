@@ -8,23 +8,34 @@ import executionHistoryReducer, {
   updateExecutionLogs,
   removeExecutionHistoryEntry,
   setSelectedExecutionId,
-} from 'preview/store/executionHistory.slice';
-import { ExecutionStatus } from 'preview/model/executionHistory';
-import { configureStore } from '@reduxjs/toolkit';
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import {
+  ExecutionHistoryEntry,
+  ExecutionStatus,
+} from 'preview/model/executionHistory';
+import { configureStore, EnhancedStore } from '@reduxjs/toolkit';
+
+// Define the state structure for the test store
+interface TestState {
+  executionHistory: {
+    entries: ExecutionHistoryEntry[];
+    selectedExecutionId: string | null;
+    loading: boolean;
+    error: string | null;
+  };
+}
 
 describe('executionHistory slice', () => {
-  const store = configureStore({
-    reducer: {
-      executionHistory: executionHistoryReducer,
-    },
-  });
+  // Create a new store for each test with proper typing
+  let store: EnhancedStore<TestState>;
 
   beforeEach(() => {
-    // Reset the store
-    store.dispatch(setExecutionHistoryEntries([]));
-    store.dispatch(setLoading(false));
-    store.dispatch(setError(null));
-    store.dispatch(setSelectedExecutionId(null));
+    // Create a fresh store for each test
+    store = configureStore({
+      reducer: {
+        executionHistory: executionHistoryReducer,
+      },
+    }) as EnhancedStore<TestState>;
   });
 
   describe('reducers', () => {
@@ -67,6 +78,76 @@ describe('executionHistory slice', () => {
 
       store.dispatch(setExecutionHistoryEntries(entries));
       expect(store.getState().executionHistory.entries).toEqual(entries);
+    });
+
+    it('should merge entries when using setExecutionHistoryEntries', () => {
+      // First set of entries for digital twin 1
+      const entriesDT1 = [
+        {
+          id: '1',
+          dtName: 'digital-twin-1',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+        {
+          id: '2',
+          dtName: 'digital-twin-1',
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        },
+      ];
+
+      // Add first set of entries
+      store.dispatch(setExecutionHistoryEntries(entriesDT1));
+
+      // Second set of entries for digital twin 2
+      const entriesDT2 = [
+        {
+          id: '3',
+          dtName: 'digital-twin-2',
+          pipelineId: 789,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        },
+      ];
+
+      // Add second set of entries
+      store.dispatch(setExecutionHistoryEntries(entriesDT2));
+
+      // Verify that both sets of entries are in the state
+      const stateEntries = store.getState().executionHistory.entries;
+      expect(stateEntries.length).toBe(3);
+      expect(stateEntries).toEqual(
+        expect.arrayContaining([...entriesDT1, ...entriesDT2]),
+      );
+
+      // Update an existing entry
+      const updatedEntry = {
+        ...entriesDT1[0],
+        status: ExecutionStatus.FAILED,
+      };
+
+      // Add the updated entry
+      store.dispatch(setExecutionHistoryEntries([updatedEntry]));
+
+      // Verify that the entry was updated and others remain
+      const updatedStateEntries = store.getState().executionHistory.entries;
+      expect(updatedStateEntries.length).toBe(3);
+      expect(
+        updatedStateEntries.find((e: ExecutionHistoryEntry) => e.id === '1')
+          ?.status,
+      ).toBe(ExecutionStatus.FAILED);
+      expect(
+        updatedStateEntries.find((e: ExecutionHistoryEntry) => e.id === '2'),
+      ).toBeDefined();
+      expect(
+        updatedStateEntries.find((e: ExecutionHistoryEntry) => e.id === '3'),
+      ).toBeDefined();
     });
 
     it('should handle addExecutionHistoryEntry', () => {
@@ -122,7 +203,9 @@ describe('executionHistory slice', () => {
 
       const updatedEntry = store
         .getState()
-        .executionHistory.entries.find((e) => e.id === '1');
+        .executionHistory.entries.find(
+          (e: ExecutionHistoryEntry) => e.id === '1',
+        );
       expect(updatedEntry?.status).toBe(ExecutionStatus.COMPLETED);
     });
 
@@ -143,7 +226,9 @@ describe('executionHistory slice', () => {
 
       const updatedEntry = store
         .getState()
-        .executionHistory.entries.find((e) => e.id === '1');
+        .executionHistory.entries.find(
+          (e: ExecutionHistoryEntry) => e.id === '1',
+        );
       expect(updatedEntry?.jobLogs).toEqual(logs);
     });
 

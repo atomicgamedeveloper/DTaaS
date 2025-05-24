@@ -6,7 +6,7 @@ import fileSlice, {
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarReducer from 'preview/store/snackbar.slice';
 import {
   mockGitlabInstance,

@@ -9,7 +9,7 @@ import digitalTwinReducer, {
   setPipelineCompleted,
   setPipelineLoading,
   updateDescription,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import DigitalTwin from 'preview/util/digitalTwin';
 import GitlabInstance from 'preview/util/gitlab';
 import snackbarSlice, {

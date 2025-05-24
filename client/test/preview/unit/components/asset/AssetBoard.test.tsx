@@ -51,7 +51,16 @@ describe('AssetBoard', () => {
       (selector) =>
         selector({
           assets: { items: mockAssets },
-          digitalTwin: { shouldFetchDigitalTwins: false },
+          digitalTwin: {
+            shouldFetchDigitalTwins: false,
+            digitalTwin: {}, // Add empty digitalTwin object to prevent null error
+          },
+          executionHistory: {
+            entries: [],
+            selectedExecutionId: null,
+            loading: false,
+            error: null,
+          },
         }),
     );
   });

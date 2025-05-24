@@ -13,8 +13,8 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
   setJobLogs,
-} from 'preview/store/digitalTwin.slice';
-import executionHistoryReducer from 'preview/store/executionHistory.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 
 const store = configureStore({
