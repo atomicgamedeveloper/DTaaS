@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ExecutionHistoryList from 'preview/components/execution/ExecutionHistoryList';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -7,7 +7,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import {
   ExecutionHistoryEntry,
   ExecutionStatus,
-} from 'preview/model/executionHistory';
+} from 'model/backend/gitlab/types/executionHistory';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
@@ -39,11 +39,12 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('preview/services/indexedDBService', () => ({
+jest.mock('database/digitalTwins', () => ({
   getExecutionHistoryByDTName: jest.fn(),
   deleteExecutionHistory: jest.fn(),
   updateExecutionHistory: jest.fn(),
   addExecutionHistory: jest.fn(),
+  getAllExecutionHistory: jest.fn(),
 }));
 
 const mockExecutions = [
@@ -230,12 +231,11 @@ describe('ExecutionHistoryList', () => {
     expect(screen.getByText(/Canceled/i)).toBeInTheDocument();
     expect(screen.getByText(/Timed out/i)).toBeInTheDocument();
 
-    expect(screen.getAllByLabelText(/view/i).length).toBe(5);
     expect(screen.getAllByLabelText(/delete/i).length).toBe(5);
     expect(screen.getByLabelText(/stop/i)).toBeInTheDocument(); // Only one running execution
   });
 
-  it('does not call fetchExecutionHistory on mount (handled by ExecutionHistoryLoader)', () => {
+  it('calls fetchExecutionHistory on mount', () => {
     testStore = createTestStore([]);
     mockDispatch.mockClear();
 
@@ -249,9 +249,8 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    // The component no longer fetches execution history on mount
-    // This is now handled by ExecutionHistoryLoader
-    expect(mockDispatch).not.toHaveBeenCalledWith(expect.any(Function));
+    // The component fetches execution history on mount
+    expect(mockDispatch).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('handles delete execution correctly', () => {
@@ -274,7 +273,7 @@ describe('ExecutionHistoryList', () => {
     expect(mockDispatch).toHaveBeenCalled();
   });
 
-  it('handles view logs correctly', () => {
+  it('handles accordion expansion correctly', async () => {
     mockDispatch.mockClear();
     mockOnViewLogs.mockClear();
 
@@ -290,7 +289,21 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    fireEvent.click(screen.getAllByLabelText(/view/i)[0]);
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    const timedOutAccordion = accordions[0];
+
+    expect(timedOutAccordion.textContent).toContain('Timed out');
+    expect(timedOutAccordion).toBeInTheDocument();
+
+    fireEvent.click(timedOutAccordion);
+
+    await new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), 0);
+    });
 
     expect(mockDispatch).toHaveBeenCalled();
     expect(mockOnViewLogs).toHaveBeenCalledWith('exec5');
@@ -300,7 +313,6 @@ describe('ExecutionHistoryList', () => {
     // Clear mocks before test
     mockDispatch.mockClear();
 
-    // Create a spy on the handleStop function
     // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
     const pipelineHandler = require('model/backend/gitlab/execution/pipelineHandler');
     const handleStopSpy = jest
@@ -342,17 +354,13 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    // Verify running execution is displayed
     expect(screen.getByText(/Running/i)).toBeInTheDocument();
 
-    // Find and verify stop button exists
     const stopButton = screen.getByLabelText('stop');
     expect(stopButton).toBeInTheDocument();
 
-    // Click the stop button to trigger the handleStopExecution function
     fireEvent.click(stopButton);
 
-    // Verify that handleStopSpy was called with the correct parameters
     expect(handleStopSpy).toHaveBeenCalledWith(
       expect.anything(), // digitalTwin
       expect.any(Function), // setButtonText
@@ -360,10 +368,8 @@ describe('ExecutionHistoryList', () => {
       'exec3', // executionId
     );
 
-    // Verify that mockDispatch was called by the handleStopExecution function
     expect(mockDispatch).toHaveBeenCalled();
 
-    // Clean up the spy
     handleStopSpy.mockRestore();
   });
 
@@ -380,13 +386,17 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const listItems = screen.getAllByRole('listitem');
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
 
-    const timeoutIndex = listItems.findIndex((item) =>
-      item.textContent?.includes('Timed out'),
+    const timeoutIndex = accordions.findIndex((accordion) =>
+      accordion.textContent?.includes('Timed out'),
     );
-    const completedIndex = listItems.findIndex((item) =>
-      item.textContent?.includes('Completed'),
+    const completedIndex = accordions.findIndex((accordion) =>
+      accordion.textContent?.includes('Completed'),
     );
 
     expect(timeoutIndex).toBeLessThan(completedIndex);
@@ -405,7 +415,12 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    expect(screen.getAllByRole('listitem').length).toBe(2);
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    expect(accordions.length).toBe(2);
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
     expect(screen.getByText(/Failed/i)).toBeInTheDocument();
   });
@@ -446,7 +461,7 @@ describe('ExecutionHistoryList', () => {
     expect(mockDispatch).toHaveBeenCalledWith(expect.any(Function));
   });
 
-  it('dispatches setSelectedExecutionId when view logs button is clicked', () => {
+  it('dispatches setSelectedExecutionId when accordion is expanded', () => {
     mockDispatch.mockClear();
     mockOnViewLogs.mockClear();
 
@@ -462,8 +477,12 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    // Click the view logs button for the first execution (which is exec5 due to sorting by timestamp)
-    fireEvent.click(screen.getAllByLabelText(/view/i)[0]);
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    fireEvent.click(accordions[0]);
 
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -497,9 +516,169 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    expect(screen.getAllByRole('listitem').length).toBe(50);
-    expect(screen.getAllByLabelText(/view/i).length).toBe(50);
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    expect(accordions.length).toBe(50);
     expect(screen.getAllByLabelText(/delete/i).length).toBe(50);
+  });
+
+  it('handles accordion details rendering with no selected execution', async () => {
+    testStore = createTestStore(mockExecutions);
+
+    // Mock useSelector to return the proper state
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => selector(testStore.getState()),
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    fireEvent.click(accordions[0]);
+
+    await new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), 200);
+    });
+
+    const expandedRegion = screen.getByRole('region');
+    expect(expandedRegion).toBeInTheDocument();
+
+    const accordionDetails = expandedRegion.querySelector(
+      '.MuiAccordionDetails-root',
+    );
+    expect(accordionDetails).toBeInTheDocument();
+  });
+
+  it('handles accordion details rendering with selected execution but no logs', async () => {
+    const executionWithNoLogs = {
+      id: 'exec-no-logs',
+      dtName: 'test-dt',
+      pipelineId: 9999,
+      timestamp: Date.now(),
+      status: ExecutionStatus.COMPLETED,
+      jobLogs: [],
+    };
+
+    testStore = createTestStore([executionWithNoLogs]);
+
+    testStore.dispatch(setSelectedExecutionId('exec-no-logs'));
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => {
+        const state = testStore.getState();
+        if (selector.toString().includes('selectSelectedExecution')) {
+          return executionWithNoLogs; // Return the execution with matching ID
+        }
+        return selector(state);
+      },
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    const accordions = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        button.getAttribute('aria-controls')?.includes('execution-'),
+      );
+    fireEvent.click(accordions[0]);
+
+    await new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), 100);
+    });
+
+    expect(screen.getByText('No logs available')).toBeInTheDocument();
+  });
+
+  it('handles delete dialog cancel correctly', async () => {
+    testStore = createTestStore(mockExecutions);
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => selector(testStore.getState()),
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    fireEvent.click(screen.getAllByLabelText(/delete/i)[0]);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    fireEvent.click(cancelButton);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles delete dialog confirm correctly', () => {
+    mockDispatch.mockClear();
+    testStore = createTestStore(mockExecutions);
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => selector(testStore.getState()),
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    fireEvent.click(screen.getAllByLabelText(/delete/i)[0]);
+
+    const confirmButton = screen.getByRole('button', { name: /delete/i });
+    fireEvent.click(confirmButton);
+
+    expect(mockDispatch).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('renders action buttons correctly for running execution', () => {
+    const mockRunningExecution = {
+      id: 'exec-running',
+      dtName: 'test-dt',
+      pipelineId: 1234,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+
+    testStore = createTestStore([mockRunningExecution]);
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => selector(testStore.getState()),
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    expect(screen.getByLabelText('stop')).toBeInTheDocument();
+    expect(screen.getByLabelText('delete')).toBeInTheDocument();
+
+    const runningElements = screen.getAllByText(
+      (_content, element) => element?.textContent?.includes('Running') || false,
+    );
+    expect(runningElements.length).toBeGreaterThan(0);
   });
 });
 

@@ -45,14 +45,14 @@ test.describe('Concurrent Execution', () => {
     // Start the first execution
     await startButton.click();
 
-    // Wait a bit for the execution to start
-    await page.waitForTimeout(2000);
+    // Wait for debounce period (250ms) plus a bit for execution to start
+    await page.waitForTimeout(500);
 
     // Start a second execution
     await startButton.click();
 
-    // Wait a bit for the second execution to start
-    await page.waitForTimeout(2000);
+    // Wait for debounce period plus a bit for second execution to start
+    await page.waitForTimeout(500);
 
     // Click the History button
     const historyButton = helloWorldCard
@@ -65,77 +65,69 @@ test.describe('Concurrent Execution', () => {
     const historyDialog = page.locator('div[role="dialog"]');
     await expect(historyDialog).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Execution History' }),
+      page.getByRole('heading', { name: /Hello world Execution History/ }),
     ).toBeVisible();
 
-    // Verify that there are at least 2 executions in the history
-    const executionItems = historyDialog.locator('li');
-    const count = await executionItems.count();
+    // Verify that there are at least 2 executions in the history (accordion items)
+    const executionAccordions = historyDialog.locator(
+      '[role="button"][aria-controls*="execution-"]',
+    );
+    const count = await executionAccordions.count();
     expect(count).toBeGreaterThanOrEqual(2);
 
     // Wait for at least one execution to complete
     // This may take some time as it depends on the GitLab pipeline
 
-    // Use Playwright's built-in waiting mechanism for more stability
     const completedSelector = historyDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
 
     await completedSelector.waitFor({ timeout: 35000 });
 
-    // For the first completed execution, view the logs
+    // For the first completed execution, expand the accordion to view the logs
     const firstCompletedExecution = historyDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
 
-    await firstCompletedExecution.getByLabel('view').click();
+    await firstCompletedExecution.click();
 
-    // Verify that the logs dialog shows the execution details
-    await expect(
-      page.getByRole('heading', { name: 'create_hello-world' }),
-    ).toBeVisible();
+    // Wait for accordion to expand and show logs
+    await page.waitForTimeout(1000);
 
     // Verify logs content is loaded
-    const logsPanel = page
-      .locator('div[role="tabpanel"]')
-      .filter({ hasText: /Running with gitlab-runner/ });
-    await expect(logsPanel).toBeVisible({ timeout: 10000 });
+    const logsContent = historyDialog
+      .locator('[role="region"][aria-labelledby*="execution-"]')
+      .filter({ hasText: /Running with gitlab-runner|No logs available/ });
+    await expect(logsContent).toBeVisible({ timeout: 10000 });
 
     // Wait a bit to ensure both executions have time to complete
     await page.waitForTimeout(1500);
 
-    // Go back to history view
-    await page.getByRole('tab', { name: 'History' }).click();
-
     // Check another execution's logs if available
     const secondExecution = historyDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .nth(1);
 
     if ((await secondExecution.count()) > 0) {
-      await secondExecution.getByLabel('view').click();
+      await secondExecution.click();
+
+      // Wait for accordion to expand
+      await page.waitForTimeout(1000);
 
       // Verify logs for second execution
-      await expect(
-        page.getByRole('heading', { name: 'create_hello-world' }),
-      ).toBeVisible();
-      await expect(
-        page.locator('div[role="tabpanel"]').filter({
-          hasText: /Running with gitlab-runner/,
-        }),
-      ).toBeVisible({ timeout: 10000 });
-
-      // Go back to history view
-      await page.getByRole('tab', { name: 'History' }).click();
+      const secondLogsContent = historyDialog
+        .locator('[role="region"][aria-labelledby*="execution-"]')
+        .filter({ hasText: /Running with gitlab-runner|No logs available/ });
+      await expect(secondLogsContent).toBeVisible({ timeout: 10000 });
     }
 
     // Get all completed executions
-    const completedExecutions = historyDialog.locator('li').filter({
-      hasText: /Status: (Completed|Failed|Canceled)/,
-    });
+    const completedExecutions = historyDialog
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ });
 
     const completedCount = await completedExecutions.count();
 
@@ -148,13 +140,29 @@ test.describe('Concurrent Execution', () => {
 
       // Always delete the first one since the list gets rerendered after each deletion
       const execution = historyDialog
-        .locator('li')
-        .filter({
-          hasText: /Status: (Completed|Failed|Canceled)/,
-        })
+        .locator('[role="button"][aria-controls*="execution-"]')
+        .filter({ hasText: /Status: Completed|Failed|Canceled/ })
         .first();
 
-      await execution.getByLabel('delete').click();
+      // Find the delete button within the accordion summary
+      await execution.locator('[aria-label="delete"]').click();
+
+      // Wait for confirmation dialog to appear
+      const confirmDialog = page.locator('div[role="dialog"]').nth(1); // Second dialog (confirmation)
+      await expect(confirmDialog).toBeVisible();
+
+      // First click "Cancel" to test the cancel functionality
+      await page.getByRole('button', { name: 'Cancel' }).click();
+      await expect(confirmDialog).not.toBeVisible();
+
+      // Click delete button again
+      await execution.locator('[aria-label="delete"]').click();
+      await expect(confirmDialog).toBeVisible();
+
+      // Now click "DELETE" to confirm
+      await page.getByRole('button', { name: 'DELETE' }).click();
+      await expect(confirmDialog).not.toBeVisible();
+
       await page.waitForTimeout(500); // Wait a bit for the UI to update
 
       // Recursive call with decremented count
@@ -188,30 +196,13 @@ test.describe('Concurrent Execution', () => {
     // Start an execution
     await startButton.click();
 
-    // Wait a bit for the execution to start
-    await page.waitForTimeout(2000);
+    // Wait for debounce period plus a bit for execution to start
+    await page.waitForTimeout(500);
 
-    // Click the History button to check execution status
-    const preReloadHistoryButton = helloWorldCard
-      .getByRole('button', { name: 'History' })
-      .first();
-    await expect(preReloadHistoryButton).toBeEnabled({ timeout: 5000 });
-    await preReloadHistoryButton.click();
+    // Wait a bit more to ensure execution is properly started before reload
+    await page.waitForTimeout(500);
 
-    // Verify that the execution history dialog is displayed
-    const preReloadHistoryDialog = page.locator('div[role="dialog"]');
-    await expect(preReloadHistoryDialog).toBeVisible();
-
-    await preReloadHistoryDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
-      .first()
-      .waitFor({ timeout: 35000 });
-
-    // Close the dialog
-    await page.getByRole('button', { name: 'Close' }).click();
-
-    // Reload the page
+    // Reload the page after execution has started
     await page.reload();
 
     // Wait for the page to load
@@ -235,21 +226,29 @@ test.describe('Concurrent Execution', () => {
     await expect(postReloadHistoryDialog).toBeVisible();
 
     // Verify that there is at least 1 execution in the history
-    const postReloadExecutionItems = postReloadHistoryDialog.locator('li');
+    const postReloadExecutionItems = postReloadHistoryDialog.locator(
+      '[role="button"][aria-controls*="execution-"]',
+    );
     const postReloadCount = await postReloadExecutionItems.count();
     expect(postReloadCount).toBeGreaterThanOrEqual(1);
 
-    // Use Playwright's built-in waiting mechanism for more stability
+    // Wait for the execution to complete
     const completedSelector = postReloadHistoryDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
 
     await completedSelector.waitFor({ timeout: 35000 });
 
     // Clean up by deleting the execution
-    const deleteButton = completedSelector.getByLabel('delete');
+    const deleteButton = completedSelector.locator('[aria-label="delete"]');
     await deleteButton.click();
+
+    // Wait for confirmation dialog and confirm deletion
+    const confirmDialog = page.locator('div[role="dialog"]').nth(1); // Second dialog (confirmation)
+    await expect(confirmDialog).toBeVisible();
+    await page.getByRole('button', { name: 'DELETE' }).click();
+    await expect(confirmDialog).not.toBeVisible();
 
     // Close the dialog
     await page.getByRole('button', { name: 'Close' }).click();

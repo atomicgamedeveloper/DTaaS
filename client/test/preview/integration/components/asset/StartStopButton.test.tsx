@@ -19,7 +19,7 @@ import executionHistoryReducer, {
 import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import '@testing-library/jest-dom';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
 jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest.fn(),

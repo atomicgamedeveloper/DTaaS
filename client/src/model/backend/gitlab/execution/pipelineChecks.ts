@@ -93,16 +93,14 @@ export const checkParentPipelineStatus = async ({
       executionId,
     });
   } else if (pipelineStatus === 'failed') {
-    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
-    await updatePipelineStateOnCompletion(
-      digitalTwin,
-      jobLogs,
+    await checkChildPipelineStatus({
       setButtonText,
+      digitalTwin,
       setLogButtonDisabled,
       dispatch,
+      startTime,
       executionId,
-      ExecutionStatus.FAILED,
-    );
+    });
   } else if (hasTimedOut(startTime)) {
     handleTimeout(
       digitalTwin.DTName,
@@ -164,17 +162,13 @@ export const handlePipelineCompletion = async (
     );
 
     if (!logsUpdated) {
-      await delay(5000);
-      await handlePipelineCompletion(
-        pipelineId,
-        digitalTwin,
-        setButtonText,
-        setLogButtonDisabled,
-        dispatch,
-        pipelineStatus,
-        executionId,
+      await digitalTwin.updateExecutionStatus(executionId, status);
+      dispatch(
+        updateExecutionStatus({
+          id: executionId,
+          status,
+        }),
       );
-      return;
     }
 
     setButtonText('Start');

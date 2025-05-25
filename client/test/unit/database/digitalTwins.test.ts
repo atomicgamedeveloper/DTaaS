@@ -3,43 +3,34 @@ import 'fake-indexeddb/auto';
 import {
   ExecutionHistoryEntry,
   ExecutionStatus,
-} from 'preview/model/executionHistory';
+} from 'model/backend/gitlab/types/executionHistory';
 import indexedDBService from 'database/digitalTwins';
 
-// Add structuredClone polyfill for Node.js environment
 if (typeof globalThis.structuredClone !== 'function') {
-  // Simple polyfill using JSON for our test purposes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   globalThis.structuredClone = (obj: any): any =>
     JSON.parse(JSON.stringify(obj));
 }
 
-// Helper function to delete all entries from the database
 async function clearDatabase() {
   try {
     const entries = await indexedDBService.getAllExecutionHistory();
-    // Use Promise.all instead of for loop to satisfy ESLint
     await Promise.all(
       entries.map((entry) => indexedDBService.deleteExecutionHistory(entry.id)),
     );
   } catch (error) {
-    // Use a more test-friendly approach than console.error
     throw new Error(`Failed to clear database: ${error}`);
   }
 }
 
 describe('IndexedDBService (Real Implementation)', () => {
   beforeEach(async () => {
-    // Initialize the database before each test
     await indexedDBService.init();
-    // Clear any existing data
     await clearDatabase();
   });
 
   describe('init', () => {
     it('should initialize the database', async () => {
-      // Since we already call init in beforeEach, we just need to verify
-      // that we can call it again without errors
       await expect(indexedDBService.init()).resolves.not.toThrow();
     });
   });
@@ -55,11 +46,9 @@ describe('IndexedDBService (Real Implementation)', () => {
         jobLogs: [],
       };
 
-      // Add the entry
       const resultId = await indexedDBService.addExecutionHistory(entry);
       expect(resultId).toBe(entry.id);
 
-      // Retrieve the entry
       const retrievedEntry = await indexedDBService.getExecutionHistoryById(
         entry.id,
       );
@@ -76,7 +65,6 @@ describe('IndexedDBService (Real Implementation)', () => {
 
   describe('updateExecutionHistory', () => {
     it('should update an existing execution history entry', async () => {
-      // First, add an entry
       const entry: ExecutionHistoryEntry = {
         id: 'test-id-456',
         dtName: 'test-dt',
@@ -87,7 +75,6 @@ describe('IndexedDBService (Real Implementation)', () => {
       };
       await indexedDBService.addExecutionHistory(entry);
 
-      // Now update it
       const updatedEntry = {
         ...entry,
         status: ExecutionStatus.COMPLETED,
@@ -95,7 +82,6 @@ describe('IndexedDBService (Real Implementation)', () => {
       };
       await indexedDBService.updateExecutionHistory(updatedEntry);
 
-      // Retrieve and verify the update
       const retrievedEntry = await indexedDBService.getExecutionHistoryById(
         entry.id,
       );
@@ -107,7 +93,6 @@ describe('IndexedDBService (Real Implementation)', () => {
 
   describe('getExecutionHistoryByDTName', () => {
     it('should retrieve entries by digital twin name', async () => {
-      // Add multiple entries for the same DT
       const dtName = 'test-dt-multi';
       const entries = [
         {
@@ -136,7 +121,6 @@ describe('IndexedDBService (Real Implementation)', () => {
         },
       ];
 
-      // Add all entries using Promise.all instead of for loop
       await Promise.all(
         entries.map((entry) => indexedDBService.addExecutionHistory(entry)),
       );
@@ -162,7 +146,6 @@ describe('IndexedDBService (Real Implementation)', () => {
 
   describe('getAllExecutionHistory', () => {
     it('should retrieve all execution history entries', async () => {
-      // Add multiple entries
       const entries = [
         {
           id: 'all-1',
@@ -182,15 +165,12 @@ describe('IndexedDBService (Real Implementation)', () => {
         },
       ];
 
-      // Add all entries using Promise.all
       await Promise.all(
         entries.map((entry) => indexedDBService.addExecutionHistory(entry)),
       );
 
-      // Retrieve all entries
       const result = await indexedDBService.getAllExecutionHistory();
 
-      // Verify results
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(2);
       expect(result.find((entry) => entry.id === 'all-1')).toBeTruthy();
@@ -220,7 +200,6 @@ describe('IndexedDBService (Real Implementation)', () => {
       // Delete it
       await indexedDBService.deleteExecutionHistory(entry.id);
 
-      // Verify it's gone
       retrievedEntry = await indexedDBService.getExecutionHistoryById(entry.id);
       expect(retrievedEntry).toBeNull();
     });
@@ -257,15 +236,12 @@ describe('IndexedDBService (Real Implementation)', () => {
         },
       ];
 
-      // Add all entries using Promise.all
       await Promise.all(
         entries.map((entry) => indexedDBService.addExecutionHistory(entry)),
       );
 
-      // Delete by DT name
       await indexedDBService.deleteExecutionHistoryByDTName(dtName);
 
-      // Verify the entries for the deleted DT are gone
       const deletedEntries =
         await indexedDBService.getExecutionHistoryByDTName(dtName);
       expect(deletedEntries.length).toBe(0);
@@ -274,6 +250,182 @@ describe('IndexedDBService (Real Implementation)', () => {
       const keptEntry =
         await indexedDBService.getExecutionHistoryById('keep-dt');
       expect(keptEntry).not.toBeNull();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle database initialization errors', async () => {
+      const originalOpen = indexedDB.open;
+      indexedDB.open = jest.fn().mockImplementation(() => {
+        const request = {
+          onerror: null as ((event: Event) => void) | null,
+          onsuccess: null as ((event: Event) => void) | null,
+          onupgradeneeded: null as
+            | ((event: IDBVersionChangeEvent) => void)
+            | null,
+        };
+        setTimeout(() => {
+          if (request.onerror) request.onerror(new Event('error'));
+        }, 0);
+        return request;
+      });
+
+      const { default: IndexedDBService } = await import(
+        'database/digitalTwins'
+      );
+      const newService = Object.create(Object.getPrototypeOf(IndexedDBService));
+      newService.db = null;
+      newService.dbName = 'test-db';
+      newService.dbVersion = 1;
+
+      await expect(newService.init()).rejects.toThrow(
+        'Failed to open IndexedDB',
+      );
+
+      indexedDB.open = originalOpen;
+    });
+
+    it('should handle multiple init calls gracefully', async () => {
+      await expect(indexedDBService.init()).resolves.not.toThrow();
+      await expect(indexedDBService.init()).resolves.not.toThrow();
+      await expect(indexedDBService.init()).resolves.not.toThrow();
+    });
+
+    it('should handle add operation errors', async () => {
+      const entry: ExecutionHistoryEntry = {
+        id: 'error-test',
+        dtName: 'test-dt',
+        pipelineId: 456,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      await indexedDBService.addExecutionHistory(entry);
+
+      await expect(indexedDBService.addExecutionHistory(entry)).rejects.toThrow(
+        'Failed to add execution history',
+      );
+    });
+
+    it('should handle empty results gracefully', async () => {
+      const allEntries = await indexedDBService.getAllExecutionHistory();
+      expect(allEntries).toEqual([]);
+
+      const dtEntries =
+        await indexedDBService.getExecutionHistoryByDTName('non-existent');
+      expect(dtEntries).toEqual([]);
+
+      const singleEntry =
+        await indexedDBService.getExecutionHistoryById('non-existent');
+      expect(singleEntry).toBeNull();
+    });
+
+    it('should handle delete operations on non-existent entries', async () => {
+      await expect(
+        indexedDBService.deleteExecutionHistory('non-existent'),
+      ).resolves.not.toThrow();
+
+      await expect(
+        indexedDBService.deleteExecutionHistoryByDTName('non-existent'),
+      ).resolves.not.toThrow();
+    });
+  });
+
+  describe('concurrent operations', () => {
+    it('should handle concurrent add operations', async () => {
+      const entries = Array.from({ length: 5 }, (_, i) => ({
+        id: `concurrent-${i}`,
+        dtName: 'concurrent-dt',
+        pipelineId: 100 + i,
+        timestamp: Date.now() + i,
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      }));
+
+      await Promise.all(
+        entries.map((entry) => indexedDBService.addExecutionHistory(entry)),
+      );
+
+      const result =
+        await indexedDBService.getExecutionHistoryByDTName('concurrent-dt');
+      expect(result.length).toBe(5);
+    });
+
+    it('should handle concurrent read/write operations', async () => {
+      const entry: ExecutionHistoryEntry = {
+        id: 'rw-test',
+        dtName: 'rw-dt',
+        pipelineId: 999,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      const operations = [
+        indexedDBService.addExecutionHistory(entry),
+        indexedDBService.getExecutionHistoryByDTName('rw-dt'),
+        indexedDBService.getAllExecutionHistory(),
+      ];
+
+      await Promise.all(operations);
+
+      const result = await indexedDBService.getExecutionHistoryById('rw-test');
+      expect(result).not.toBeNull();
+    });
+  });
+
+  describe('data integrity', () => {
+    it('should preserve data types and structure', async () => {
+      const entry: ExecutionHistoryEntry = {
+        id: 'integrity-test',
+        dtName: 'integrity-dt',
+        pipelineId: 12345,
+        timestamp: 1640995200000, // Specific timestamp
+        status: ExecutionStatus.COMPLETED,
+        jobLogs: [
+          { jobName: 'job1', log: 'log content 1' },
+          { jobName: 'job2', log: 'log content 2' },
+        ],
+      };
+
+      await indexedDBService.addExecutionHistory(entry);
+      const retrieved =
+        await indexedDBService.getExecutionHistoryById('integrity-test');
+
+      expect(retrieved).toEqual(entry);
+      expect(typeof retrieved?.pipelineId).toBe('number');
+      expect(typeof retrieved?.timestamp).toBe('number');
+      expect(Array.isArray(retrieved?.jobLogs)).toBe(true);
+      expect(retrieved?.jobLogs.length).toBe(2);
+    });
+
+    it('should handle large datasets', async () => {
+      const largeDataset = Array.from({ length: 50 }, (_, i) => ({
+        id: `large-${i}`,
+        dtName: `dt-${i % 5}`, // 5 different DTs
+        pipelineId: 1000 + i,
+        timestamp: Date.now() + i * 1000,
+        status:
+          i % 2 === 0 ? ExecutionStatus.COMPLETED : ExecutionStatus.RUNNING,
+        jobLogs: Array.from({ length: 3 }, (__, j) => ({
+          jobName: `job-${j}`,
+          log: `Log content for job ${j} in execution ${i}`,
+        })),
+      }));
+
+      await Promise.all(
+        largeDataset.map((entry) =>
+          indexedDBService.addExecutionHistory(entry),
+        ),
+      );
+
+      const allEntries = await indexedDBService.getAllExecutionHistory();
+      expect(allEntries.length).toBe(50);
+
+      const dt0Entries =
+        await indexedDBService.getExecutionHistoryByDTName('dt-0');
+      expect(dt0Entries.length).toBe(10); // Every 5th entry
     });
   });
 });

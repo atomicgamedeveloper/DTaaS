@@ -15,7 +15,7 @@ import executionHistoryReducer, {
 import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import { v4 as uuidv4 } from 'uuid';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import '@testing-library/jest-dom';
 
 // Mock the dependencies
@@ -310,5 +310,31 @@ describe('Concurrent Execution Integration', () => {
       const logButton = screen.getByRole('button', { name: /History/i });
       expect(logButton).not.toBeDisabled();
     });
+  });
+
+  it('should debounce rapid clicks on Start button', async () => {
+    jest.useFakeTimers();
+    renderComponents();
+
+    const startButton = screen.getByRole('button', { name: /Start/i });
+
+    fireEvent.click(startButton);
+    fireEvent.click(startButton);
+    fireEvent.click(startButton);
+
+    expect(handleStart).toHaveBeenCalledTimes(1);
+
+    expect(startButton).toBeDisabled();
+
+    jest.advanceTimersByTime(250);
+
+    await waitFor(() => {
+      expect(startButton).not.toBeDisabled();
+    });
+
+    fireEvent.click(startButton);
+    expect(handleStart).toHaveBeenCalledTimes(2);
+
+    jest.useRealTimers();
   });
 });

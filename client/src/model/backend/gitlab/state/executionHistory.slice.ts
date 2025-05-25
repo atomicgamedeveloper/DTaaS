@@ -53,7 +53,10 @@ const executionHistorySlice = createSlice({
     },
     setExecutionHistoryEntriesForDT: (
       state,
-      action: PayloadAction<{ dtName: string; entries: ExecutionHistoryEntry[] }>,
+      action: PayloadAction<{
+        dtName: string;
+        entries: ExecutionHistoryEntry[];
+      }>,
     ) => {
       state.entries = state.entries.filter(
         (entry) => entry.dtName !== action.payload.dtName,

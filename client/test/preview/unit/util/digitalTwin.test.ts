@@ -2,11 +2,17 @@ import GitlabInstance from 'preview/util/gitlab';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
 import { RUNNER_TAG } from 'model/backend/gitlab/constants';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import indexedDBService from 'database/digitalTwins';
 import * as envUtil from 'util/envUtil';
+import { getUpdatedLibraryFile } from 'preview/util/digitalTwinUtils';
 
 jest.mock('database/digitalTwins');
+
+jest.mock('preview/util/digitalTwinUtils', () => ({
+  ...jest.requireActual('preview/util/digitalTwinUtils'),
+  getUpdatedLibraryFile: jest.fn(),
+}));
 
 jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 
@@ -502,6 +508,269 @@ describe('DigitalTwin', () => {
     expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
       ...mockExecution,
       status: ExecutionStatus.CANCELED,
+    });
+  });
+
+  describe('getAssetFiles', () => {
+    beforeEach(() => {
+      jest.spyOn(dt.DTAssets, 'getFolders').mockImplementation();
+      jest.spyOn(dt.DTAssets, 'getLibraryConfigFileNames').mockImplementation();
+    });
+
+    it('should get asset files with common subfolder structure', async () => {
+      const mockFolders = ['folder1', 'folder2/common', 'folder3'];
+      const mockSubFolders = ['folder2/common/sub1', 'folder2/common/sub2'];
+      const mockFileNames = ['file1.json', 'file2.json'];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFolders')
+        .mockResolvedValueOnce(mockFolders) // Main folders
+        .mockResolvedValueOnce(mockSubFolders); // Common subfolders
+
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith(
+        'digital_twins/test-DTName',
+      );
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith('folder2/common');
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2/common/sub1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2/common/sub2',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder2/common/sub1', fileNames: mockFileNames },
+        { assetPath: 'folder2/common/sub2', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+
+      expect(dt.assetFiles).toEqual(result);
+    });
+
+    it('should get asset files without common subfolders', async () => {
+      const mockFolders = ['folder1', 'folder2', 'folder3'];
+      const mockFileNames = ['config1.json', 'config2.json'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith(
+        'digital_twins/test-DTName',
+      );
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder2', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+    });
+
+    it('should filter out lifecycle folders', async () => {
+      const mockFolders = [
+        'folder1',
+        'lifecycle',
+        'folder2/lifecycle',
+        'folder3',
+      ];
+      const mockFileNames = ['file1.json'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).not.toHaveBeenCalledWith(
+        'lifecycle',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).not.toHaveBeenCalledWith(
+        'folder2/lifecycle',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+    });
+
+    it('should return empty array when getFolders fails (line 439)', async () => {
+      jest
+        .spyOn(dt.DTAssets, 'getFolders')
+        .mockRejectedValue(new Error('Folder access failed'));
+
+      const result = await dt.getAssetFiles();
+
+      expect(result).toEqual([]);
+      expect(dt.assetFiles).toEqual([]);
+    });
+
+    it('should handle getLibraryConfigFileNames errors gracefully', async () => {
+      const mockFolders = ['folder1', 'folder2'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockRejectedValue(new Error('File access failed'));
+
+      const result = await dt.getAssetFiles();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('prepareAllAssetFiles', () => {
+    const mockGetUpdatedLibraryFile =
+      getUpdatedLibraryFile as jest.MockedFunction<
+        typeof getUpdatedLibraryFile
+      >;
+
+    beforeEach(() => {
+      mockGetUpdatedLibraryFile.mockClear();
+    });
+
+    it('should process cart assets and library files', async () => {
+      const mockCartAssets = [
+        {
+          name: 'asset1',
+          path: 'path/to/asset1',
+          isPrivate: false,
+        },
+      ];
+      const mockLibraryFiles = [
+        {
+          name: 'config.json',
+          fileContent: 'updated content',
+        },
+      ];
+      const mockAssetFiles = [
+        {
+          name: 'config.json',
+          content: 'original content',
+          path: 'path/to/config.json',
+          isPrivate: false,
+        },
+      ];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFilesFromAsset')
+        .mockResolvedValue(mockAssetFiles);
+      mockGetUpdatedLibraryFile.mockReturnValue({
+        fileContent: 'updated content',
+      } as unknown as ReturnType<typeof mockGetUpdatedLibraryFile>);
+
+      const result = await dt.prepareAllAssetFiles(
+        mockCartAssets as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[0],
+        mockLibraryFiles as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[1],
+      );
+
+      expect(dt.DTAssets.getFilesFromAsset).toHaveBeenCalledWith(
+        'path/to/asset1',
+        false,
+      );
+      expect(mockGetUpdatedLibraryFile).toHaveBeenCalledWith(
+        'config.json',
+        'path/to/asset1',
+        false,
+        mockLibraryFiles,
+      );
+      expect(result).toEqual([
+        {
+          name: 'asset1/config.json',
+          content: 'updated content', // Should use updated content from library files
+          isNew: true,
+          isFromCommonLibrary: true,
+        },
+      ]);
+    });
+
+    it('should handle empty cart assets', async () => {
+      const result = await dt.prepareAllAssetFiles([], []);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle assets without library file updates', async () => {
+      const mockCartAssets = [
+        {
+          name: 'asset1',
+          path: 'path/to/asset1',
+          isPrivate: true,
+        },
+      ];
+      const mockAssetFiles = [
+        {
+          name: 'file.txt',
+          content: 'original content',
+          path: 'path/to/file.txt',
+          isPrivate: true,
+        },
+      ];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFilesFromAsset')
+        .mockResolvedValue(mockAssetFiles);
+      mockGetUpdatedLibraryFile.mockReturnValue(null); // No library file update
+
+      const result = await dt.prepareAllAssetFiles(
+        mockCartAssets as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[0],
+        [],
+      );
+
+      expect(mockGetUpdatedLibraryFile).toHaveBeenCalledWith(
+        'file.txt',
+        'path/to/asset1',
+        true,
+        [],
+      );
+      expect(result).toEqual([
+        {
+          name: 'asset1/file.txt',
+          content: 'original content', // Should use original content when no library file update
+          isNew: true,
+          isFromCommonLibrary: false, // Private asset
+        },
+      ]);
     });
   });
 });

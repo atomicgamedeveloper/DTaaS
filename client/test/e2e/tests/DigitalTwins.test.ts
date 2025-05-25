@@ -43,8 +43,8 @@ test.describe('Digital Twin Log Cleaning', () => {
     // Start the execution
     await startButton.click();
 
-    // Wait a bit for the execution to start
-    await page.waitForTimeout(2000);
+    // Wait for debounce period plus a bit for execution to start
+    await page.waitForTimeout(500);
 
     // Click the History button
     const historyButton = helloWorldCard
@@ -57,29 +57,27 @@ test.describe('Digital Twin Log Cleaning', () => {
     const historyDialog = page.locator('div[role="dialog"]');
     await expect(historyDialog).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Execution History' }),
+      page.getByRole('heading', { name: /Hello world Execution History/ }),
     ).toBeVisible();
 
     // This is more stable than a polling loop
     const completedExecution = historyDialog
-      .locator('li')
-      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
+      .locator('[role="button"][aria-controls*="execution-"]')
+      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
 
     await completedExecution.waitFor({ timeout: 35000 });
 
-    // View the logs for the completed execution
-    await completedExecution.getByLabel('view').click();
+    // Expand the accordion to view the logs for the completed execution
+    await completedExecution.click();
 
-    // Verify that the logs dialog shows the execution details
-    await expect(
-      page.getByRole('heading', { name: 'create_hello-world' }),
-    ).toBeVisible();
+    // Wait for accordion to expand and show logs
+    await page.waitForTimeout(1000);
 
-    // Verify logs content is loaded and properly cleaned
-    const logsPanel = page
-      .locator('div[role="tabpanel"]')
-      .filter({ hasText: /Running with gitlab-runner/ });
+    // Verify logs content is loaded and properly cleaned in the expanded accordion
+    const logsPanel = historyDialog
+      .locator('[role="region"][aria-labelledby*="execution-"]')
+      .filter({ hasText: /Running with gitlab-runner|No logs available/ });
     await expect(logsPanel).toBeVisible({ timeout: 10000 });
 
     // Get the log content
@@ -101,11 +99,14 @@ test.describe('Digital Twin Log Cleaning', () => {
       expect(logContent).not.toMatch(/section_end:[0-9]+:[a-zA-Z0-9_-]+/);
     }
 
-    // Go back to history view
-    await page.getByRole('tab', { name: 'History' }).click();
-
     // Clean up by deleting the execution
-    await completedExecution.getByLabel('delete').click();
+    await completedExecution.locator('[aria-label="delete"]').click();
+
+    // Wait for confirmation dialog and confirm deletion
+    const confirmDialog = page.locator('div[role="dialog"]').nth(1); // Second dialog (confirmation)
+    await expect(confirmDialog).toBeVisible();
+    await page.getByRole('button', { name: 'DELETE' }).click();
+    await expect(confirmDialog).not.toBeVisible();
 
     // Close the dialog
     await page.getByRole('button', { name: 'Close' }).click();

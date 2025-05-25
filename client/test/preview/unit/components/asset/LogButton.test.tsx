@@ -2,7 +2,7 @@ import { screen, render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LogButton from 'preview/components/asset/LogButton';
 import * as React from 'react';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import * as redux from 'react-redux';
 
 // Mock useSelector

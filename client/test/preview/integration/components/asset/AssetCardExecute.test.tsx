@@ -13,14 +13,14 @@ import digitalTwinReducer, {
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import {
   mockDigitalTwin,
   mockLibraryAsset,
 } from 'test/preview/__mocks__/global_mocks';
 import { RootState } from 'store/store';
 
-jest.mock('preview/services/indexedDBService');
+jest.mock('database/digitalTwins');
 
 jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
   handleStart: jest

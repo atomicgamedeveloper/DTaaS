@@ -12,10 +12,20 @@ import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-  setJobLogs,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
+import executionHistoryReducer, {
+  setExecutionHistoryEntries,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
+
+jest.mock('database/digitalTwins', () => ({
+  getExecutionHistoryByDTName: jest.fn().mockResolvedValue([]),
+  getAllExecutionHistory: jest.fn().mockResolvedValue([]),
+  addExecutionHistory: jest.fn().mockResolvedValue(undefined),
+  updateExecutionHistory: jest.fn().mockResolvedValue(undefined),
+  deleteExecutionHistory: jest.fn().mockResolvedValue(undefined),
+}));
 
 const store = configureStore({
   reducer: combineReducers({
@@ -63,58 +73,57 @@ describe('LogDialog', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the LogDialog with logs available', async () => {
+  it('renders the LogDialog with execution history', async () => {
     store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [{ jobName: 'job', log: 'testLog' }],
-      }),
+      setExecutionHistoryEntries([
+        {
+          id: 'test-execution-1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [{ jobName: 'job', log: 'testLog' }],
+        },
+      ]),
     );
 
     await renderLogDialog();
 
-    // Click on the Logs tab to show logs
-    const logsTab = screen.getByRole('tab', { name: /Logs/i });
-    await act(async () => {
-      fireEvent.click(logsTab);
-    });
-
-    // Wait for loading to complete and logs to appear
     await waitFor(() => {
-      expect(screen.getByText(/mockedDTName log/i)).toBeInTheDocument();
-      expect(screen.getByText(/job/i)).toBeInTheDocument();
-      expect(screen.getByText(/testLog/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/MockedDTName Execution History/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Completed/i)).toBeInTheDocument();
     });
   });
 
-  it('renders the LogDialog with no logs available', async () => {
-    store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [],
-      }),
-    );
+  it('renders the LogDialog with empty execution history', async () => {
+    store.dispatch(setExecutionHistoryEntries([]));
 
     await renderLogDialog();
 
-    // Click on the Logs tab to show logs
-    const logsTab = screen.getByRole('tab', { name: /Logs/i });
-    await act(async () => {
-      fireEvent.click(logsTab);
-    });
-
-    // Wait for loading to complete and "No logs available" message to appear
     await waitFor(() => {
-      expect(screen.getByText(/No logs available/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/MockedDTName Execution History/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/No execution history found/i),
+      ).toBeInTheDocument();
     });
   });
 
   it('handles button click', async () => {
     store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [{ jobName: 'create', log: 'create log' }],
-      }),
+      setExecutionHistoryEntries([
+        {
+          id: 'test-execution-2',
+          dtName: assetName,
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [{ jobName: 'create', log: 'create log' }],
+        },
+      ]),
     );
 
     await renderLogDialog();

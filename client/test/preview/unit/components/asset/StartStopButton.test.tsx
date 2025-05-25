@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import * as React from 'react';
 import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import StartStopButton from 'preview/components/asset/StartStopButton';
-import { ExecutionStatus } from 'preview/model/executionHistory';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import * as redux from 'react-redux';
 
 // Mock dependencies
