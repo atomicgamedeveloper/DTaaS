@@ -14,6 +14,7 @@ import {
 } from 'test/preview/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 
 const setupStore = () => {
   const preSetItems: LibraryAsset[] = [mockLibraryAsset];
@@ -37,8 +38,12 @@ const setupStore = () => {
   const digitalTwin = new DigitalTwin('Asset 1', mockGitlabInstance);
   digitalTwin.descriptionFiles = ['description.md'];
 
+  const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+
   store.dispatch(setAssets(preSetItems));
-  store.dispatch(setDigitalTwin({ assetName: 'Asset 1', digitalTwin }));
+  store.dispatch(
+    setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
+  );
   store.dispatch(addOrUpdateFile(files[0]));
 
   return store;

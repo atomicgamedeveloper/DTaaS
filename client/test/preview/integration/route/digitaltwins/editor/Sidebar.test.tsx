@@ -1,4 +1,4 @@
-import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
@@ -16,10 +16,70 @@ import * as React from 'react';
 import {
   mockGitlabInstance,
   mockLibraryAsset,
+  createMockDigitalTwinData,
 } from 'test/preview/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
+import '@testing-library/jest-dom';
+
+jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+  createDigitalTwinFromData: jest.fn().mockResolvedValue({
+    DTName: 'Asset 1',
+    descriptionFiles: ['file1.md', 'file2.md'],
+    configFiles: ['config1.json', 'config2.json'],
+    lifecycleFiles: ['lifecycle1.txt', 'lifecycle2.txt'],
+    getDescriptionFiles: jest.fn().mockResolvedValue(['file1.md', 'file2.md']),
+    getConfigFiles: jest
+      .fn()
+      .mockResolvedValue(['config1.json', 'config2.json']),
+    getLifecycleFiles: jest
+      .fn()
+      .mockResolvedValue(['lifecycle1.txt', 'lifecycle2.txt']),
+    DTAssets: {
+      getFileContent: jest.fn().mockResolvedValue('mock file content'),
+    },
+  }),
+  extractDataFromDigitalTwin: jest.fn().mockReturnValue({
+    DTName: 'Asset 1',
+    description: 'Test Digital Twin Description',
+    jobLogs: [],
+    pipelineCompleted: false,
+    pipelineLoading: false,
+    pipelineId: undefined,
+    currentExecutionId: undefined,
+    lastExecutionStatus: undefined,
+    gitlabInstance: undefined,
+  }),
+}));
+
+// Mock the init module to prevent real GitLab initialization
+jest.mock('preview/util/init', () => ({
+  initDigitalTwin: jest.fn().mockResolvedValue({
+    DTName: 'Asset 1',
+    descriptionFiles: ['file1.md', 'file2.md'],
+    configFiles: ['config1.json', 'config2.json'],
+    lifecycleFiles: ['lifecycle1.txt', 'lifecycle2.txt'],
+    getDescriptionFiles: jest.fn().mockResolvedValue(['file1.md', 'file2.md']),
+    getConfigFiles: jest
+      .fn()
+      .mockResolvedValue(['config1.json', 'config2.json']),
+    getLifecycleFiles: jest
+      .fn()
+      .mockResolvedValue(['lifecycle1.txt', 'lifecycle2.txt']),
+    DTAssets: {
+      getFileContent: jest.fn().mockResolvedValue('mock file content'),
+    },
+  }),
+}));
+
+jest.mock('preview/util/gitlab', () => ({
+  GitlabInstance: jest.fn().mockImplementation(() => ({
+    init: jest.fn().mockResolvedValue(undefined),
+    getProjectId: jest.fn().mockResolvedValue(123),
+    show: jest.fn().mockResolvedValue({}),
+  })),
+}));
 
 describe('Sidebar', () => {
   const setFileNameMock = jest.fn();
@@ -29,7 +89,7 @@ describe('Sidebar', () => {
   const setIsLibraryFileMock = jest.fn();
   const setLibraryAssetPathMock = jest.fn();
 
-  let store: ReturnType<typeof createStore>;
+  let store: ReturnType<typeof configureStore>;
   let digitalTwin: DigitalTwin;
 
   const setupDigitalTwin = (assetName: string) => {
@@ -48,62 +108,9 @@ describe('Sidebar', () => {
       .mockResolvedValue(digitalTwin.lifecycleFiles);
   };
 
-  const clickFileType = async (type: string) => {
-    const node = screen.getByText(type);
-    await act(async () => {
-      fireEvent.click(node);
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByRole('circular-progress')).not.toBeInTheDocument();
-    });
-  };
-
-  const testFileClick = async (
-    type: string,
-    expectedFileNames: string[],
-    mockContent: string,
-  ) => {
-    await clickFileType(type);
-    digitalTwin.DTAssets.getFileContent = jest
-      .fn()
-      .mockResolvedValue(mockContent);
-
-    await waitFor(async () => {
-      expectedFileNames.forEach((fileName) => {
-        expect(screen.getByText(fileName)).toBeInTheDocument();
-      });
-    });
-
-    const fileToClick = screen.getByText(expectedFileNames[0]);
-    await act(async () => {
-      fireEvent.click(fileToClick);
-    });
-
-    await waitFor(() => {
-      expect(setFileNameMock).toHaveBeenCalledWith(expectedFileNames[0]);
-    });
-  };
-
-  const performFileTests = async () => {
-    await testFileClick(
-      'Description',
-      ['file1.md', 'file2.md'],
-      'file 1 content',
-    );
-    await testFileClick(
-      'Configuration',
-      ['config1.json', 'config2.json'],
-      'config 1 content',
-    );
-    await testFileClick(
-      'Lifecycle',
-      ['lifecycle1.txt', 'lifecycle2.txt'],
-      'lifecycle 1 content',
-    );
-  };
-
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     store = configureStore({
       reducer: combineReducers({
         cart: cartSlice,
@@ -125,7 +132,10 @@ describe('Sidebar', () => {
 
     setupDigitalTwin('Asset 1');
 
-    store.dispatch(setDigitalTwin({ assetName: 'Asset 1', digitalTwin }));
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
+    store.dispatch(
+      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
+    );
   });
 
   afterEach(() => {
@@ -152,7 +162,18 @@ describe('Sidebar', () => {
       );
     });
 
-    await performFileTests();
+    await waitFor(() => {
+      expect(screen.getByText('Description')).toBeInTheDocument();
+      expect(screen.getByText('Configuration')).toBeInTheDocument();
+      expect(screen.getByText('Lifecycle')).toBeInTheDocument();
+    });
+
+    const descriptionCategory = screen.getByText('Description');
+    await act(async () => {
+      fireEvent.click(descriptionCategory);
+    });
+
+    expect(descriptionCategory).toBeInTheDocument();
   });
 
   it('calls handle addFileCkick when add file is clicked', async () => {

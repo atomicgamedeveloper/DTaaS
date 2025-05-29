@@ -8,15 +8,15 @@ import styled from '@emotion/styled';
 import { formatName } from 'preview/util/digitalTwin';
 import CustomSnackbar from 'preview/route/digitaltwins/Snackbar';
 import { useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { RootState } from 'store/store';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import ReconfigureDialog from 'preview/route/digitaltwins/manage/ReconfigureDialog';
 import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import StartStopButton from './StartStopButton';
-import LogButton from './LogButton';
+import HistoryButton from 'components/asset/HistoryButton';
+import StartButton from 'preview/components/asset/StartButton';
 import { Asset } from './Asset';
 import DetailsButton from './DetailsButton';
 import ReconfigureButton from './ReconfigureButton';
@@ -127,16 +127,16 @@ function CardButtonsContainerExecute({
   assetName,
   setShowLog,
 }: CardButtonsContainerExecuteProps) {
-  const [logButtonDisabled, setLogButtonDisabled] = useState(false);
+  const [historyButtonDisabled, setHistoryButtonDisabled] = useState(false);
   return (
     <CardActions style={{ justifyContent: 'flex-end' }}>
-      <StartStopButton
+      <StartButton
         assetName={assetName}
-        setLogButtonDisabled={setLogButtonDisabled}
+        setHistoryButtonDisabled={setHistoryButtonDisabled}
       />
-      <LogButton
+      <HistoryButton
         setShowLog={setShowLog}
-        logButtonDisabled={logButtonDisabled}
+        historyButtonDisabled={historyButtonDisabled}
         assetName={assetName}
       />
     </CardActions>

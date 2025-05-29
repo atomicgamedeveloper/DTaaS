@@ -1,6 +1,10 @@
-/**
- * Represents the status of a Digital Twin execution
- */
+export type Timestamp = number;
+export type ExecutionId = string;
+export type DTName = string;
+export type PipelineId = number;
+export type JobName = string;
+export type LogContent = string;
+
 export enum ExecutionStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
@@ -9,53 +13,18 @@ export enum ExecutionStatus {
   TIMEOUT = 'timeout',
 }
 
-/**
- * Represents a job log entry
- */
 export interface JobLog {
-  jobName: string;
-  log: string;
+  jobName: JobName;
+  log: LogContent;
 }
 
-/**
- * Represents an execution history entry
- */
-export interface ExecutionHistoryEntry {
-  id: string; // Unique identifier for the execution
-  dtName: string; // Name of the Digital Twin
-  pipelineId: number; // GitLab pipeline ID
-  timestamp: number; // Timestamp when the execution was started
-  status: ExecutionStatus; // Current status of the execution
-  jobLogs: JobLog[]; // Logs from the execution
+export interface DTExecutionResult {
+  id: ExecutionId;
+  dtName: DTName;
+  pipelineId: PipelineId;
+  timestamp: Timestamp;
+  status: ExecutionStatus;
+  jobLogs: JobLog[];
 }
 
-/**
- * Represents the schema for the IndexedDB database
- */
-export interface IndexedDBSchema {
-  executionHistory: {
-    key: string; // id
-    value: ExecutionHistoryEntry;
-    indexes: {
-      dtName: string;
-      timestamp: number;
-    };
-  };
-}
-
-/**
- * Database configuration
- */
-export const DB_CONFIG = {
-  name: 'DTaaS',
-  version: 1,
-  stores: {
-    executionHistory: {
-      keyPath: 'id',
-      indexes: [
-        { name: 'dtName', keyPath: 'dtName' },
-        { name: 'timestamp', keyPath: 'timestamp' },
-      ],
-    },
-  },
-};
+export type ExecutionHistoryEntry = DTExecutionResult;

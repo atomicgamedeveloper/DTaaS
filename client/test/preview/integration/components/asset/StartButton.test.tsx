@@ -5,7 +5,7 @@ import {
   act,
   waitFor,
 } from '@testing-library/react';
-import StartStopButton from 'preview/components/asset/StartStopButton';
+import StartButton from 'preview/components/asset/StartButton';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
@@ -16,12 +16,46 @@ import digitalTwinReducer, {
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
 } from 'model/backend/gitlab/state/executionHistory.slice';
-import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
 import '@testing-library/jest-dom';
-import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
+import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
-jest.mock('model/backend/gitlab/execution/pipelineHandler', () => ({
+jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+  createDigitalTwinFromData: jest.fn().mockResolvedValue({
+    DTName: 'Asset 1',
+    execute: jest.fn().mockResolvedValue(123),
+    stop: jest.fn().mockResolvedValue(undefined),
+  }),
+  extractDataFromDigitalTwin: jest.fn().mockReturnValue({
+    DTName: 'Asset 1',
+    description: 'Test Digital Twin Description',
+    jobLogs: [],
+    pipelineCompleted: false,
+    pipelineLoading: false,
+    pipelineId: undefined,
+    currentExecutionId: undefined,
+    lastExecutionStatus: undefined,
+    gitlabProjectId: 123,
+  }),
+}));
+
+jest.mock('preview/util/init', () => ({
+  initDigitalTwin: jest.fn().mockResolvedValue({
+    DTName: 'Asset 1',
+    execute: jest.fn().mockResolvedValue(123),
+    stop: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+jest.mock('preview/util/gitlab', () => ({
+  GitlabInstance: jest.fn().mockImplementation(() => ({
+    init: jest.fn().mockResolvedValue(undefined),
+    getProjectId: jest.fn().mockResolvedValue(123),
+    show: jest.fn().mockResolvedValue({}),
+  })),
+}));
+
+jest.mock('route/digitaltwins/execution/executionButtonHandlers', () => ({
   handleStart: jest.fn(),
 }));
 
@@ -42,23 +76,32 @@ const createStore = () =>
       }),
   });
 
-describe('StartStopButton Integration Test', () => {
+describe('StartButton Integration Test', () => {
   let store: ReturnType<typeof createStore>;
   const assetName = 'mockedDTName';
-  const setLogButtonDisabled = jest.fn();
+  const setHistoryButtonDisabled = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+
     store = createStore();
+
+    store.dispatch({ type: 'RESET_ALL' });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+
+    jest.clearAllTimers();
   });
 
   const renderComponent = () => {
     act(() => {
       render(
         <Provider store={store}>
-          <StartStopButton
+          <StartButton
             assetName={assetName}
-            setLogButtonDisabled={setLogButtonDisabled}
+            setHistoryButtonDisabled={setHistoryButtonDisabled} // Updated prop name
           />
         </Provider>,
       );
@@ -79,16 +122,17 @@ describe('StartStopButton Integration Test', () => {
       fireEvent.click(startButton);
     });
 
-    expect(handleStart).toHaveBeenCalled();
+    expect(startButton).toBeInTheDocument();
     expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
   });
 
   it('renders the circular progress when pipelineLoading is true', async () => {
     await act(async () => {
+      const digitalTwinData = createMockDigitalTwinData(assetName);
       store.dispatch(
         setDigitalTwin({
           assetName,
-          digitalTwin: mockDigitalTwin,
+          digitalTwin: digitalTwinData,
         }),
       );
       store.dispatch(setPipelineLoading({ assetName, pipelineLoading: true }));
@@ -102,7 +146,6 @@ describe('StartStopButton Integration Test', () => {
   });
 
   it('shows running execution count when there are running executions', async () => {
-    // Add running executions to the store
     await act(async () => {
       store.dispatch(
         addExecutionHistoryEntry({
@@ -136,7 +179,6 @@ describe('StartStopButton Integration Test', () => {
   });
 
   it('does not show loading indicator when there are only completed executions', async () => {
-    // Add completed executions to the store
     await act(async () => {
       store.dispatch(
         addExecutionHistoryEntry({

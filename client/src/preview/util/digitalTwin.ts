@@ -6,7 +6,7 @@ import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
 import { RUNNER_TAG } from 'model/backend/gitlab/constants';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  ExecutionHistoryEntry,
+  DTExecutionResult,
   ExecutionStatus,
   JobLog,
 } from 'model/backend/gitlab/types/executionHistory';
@@ -132,7 +132,7 @@ class DigitalTwin {
       const executionId = uuidv4();
       this.currentExecutionId = executionId;
 
-      const executionEntry: ExecutionHistoryEntry = {
+      const executionEntry: DTExecutionResult = {
         id: executionId,
         dtName: this.DTName,
         pipelineId: response.id,
@@ -141,7 +141,7 @@ class DigitalTwin {
         jobLogs: [],
       };
 
-      await indexedDBService.addExecutionHistory(executionEntry);
+      await indexedDBService.add(executionEntry);
 
       return response.id;
     } catch (error) {
@@ -165,8 +165,7 @@ class DigitalTwin {
     let pipelineId: number | null = null;
 
     if (executionId) {
-      const execution =
-        await indexedDBService.getExecutionHistoryById(executionId);
+      const execution = await indexedDBService.getById(executionId);
       if (execution) {
         pipelineId = execution.pipelineId;
         if (pipeline !== 'parentPipeline') {
@@ -193,19 +192,18 @@ class DigitalTwin {
       this.lastExecutionStatus = 'canceled';
 
       if (executionId) {
-        const execution =
-          await indexedDBService.getExecutionHistoryById(executionId);
+        const execution = await indexedDBService.getById(executionId);
         if (execution) {
           execution.status = ExecutionStatus.CANCELED;
-          await indexedDBService.updateExecutionHistory(execution);
+          await indexedDBService.update(execution);
         }
       } else if (this.currentExecutionId) {
-        const execution = await indexedDBService.getExecutionHistoryById(
+        const execution = await indexedDBService.getById(
           this.currentExecutionId,
         );
         if (execution) {
           execution.status = ExecutionStatus.CANCELED;
-          await indexedDBService.updateExecutionHistory(execution);
+          await indexedDBService.update(execution);
         }
       }
 
@@ -227,8 +225,8 @@ class DigitalTwin {
    * Get all execution history entries for this Digital Twin
    * @returns Promise that resolves with an array of execution history entries
    */
-  async getExecutionHistory(): Promise<ExecutionHistoryEntry[]> {
-    return indexedDBService.getExecutionHistoryByDTName(this.DTName);
+  async getExecutionHistory(): Promise<DTExecutionResult[]> {
+    return indexedDBService.getByDTName(this.DTName);
   }
 
   /**
@@ -239,8 +237,8 @@ class DigitalTwin {
   // eslint-disable-next-line class-methods-use-this
   async getExecutionHistoryById(
     executionId: string,
-  ): Promise<ExecutionHistoryEntry | undefined> {
-    const result = await indexedDBService.getExecutionHistoryById(executionId);
+  ): Promise<DTExecutionResult | undefined> {
+    const result = await indexedDBService.getById(executionId);
     return result || undefined;
   }
 
@@ -254,11 +252,10 @@ class DigitalTwin {
     executionId: string,
     jobLogs: JobLog[],
   ): Promise<void> {
-    const execution =
-      await indexedDBService.getExecutionHistoryById(executionId);
+    const execution = await indexedDBService.getById(executionId);
     if (execution) {
       execution.jobLogs = jobLogs;
-      await indexedDBService.updateExecutionHistory(execution);
+      await indexedDBService.update(execution);
 
       // Update current job logs for backward compatibility
       if (executionId === this.currentExecutionId) {
@@ -277,13 +274,11 @@ class DigitalTwin {
     executionId: string,
     status: ExecutionStatus,
   ): Promise<void> {
-    const execution =
-      await indexedDBService.getExecutionHistoryById(executionId);
+    const execution = await indexedDBService.getById(executionId);
     if (execution) {
       execution.status = status;
-      await indexedDBService.updateExecutionHistory(execution);
+      await indexedDBService.update(execution);
 
-      // Update current status for backward compatibility
       if (executionId === this.currentExecutionId) {
         this.lastExecutionStatus = status;
       }

@@ -1,11 +1,10 @@
 import { screen, render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LogButton from 'preview/components/asset/LogButton';
+import HistoryButton from 'components/asset/HistoryButton';
 import * as React from 'react';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import * as redux from 'react-redux';
 
-// Mock useSelector
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn().mockReturnValue([]),
@@ -27,9 +26,9 @@ describe('LogButton', () => {
     testAssetName = assetName,
   ) =>
     render(
-      <LogButton
+      <HistoryButton
         setShowLog={setShowLog}
-        logButtonDisabled={logButtonDisabled}
+        historyButtonDisabled={logButtonDisabled}
         assetName={testAssetName}
       />,
     );

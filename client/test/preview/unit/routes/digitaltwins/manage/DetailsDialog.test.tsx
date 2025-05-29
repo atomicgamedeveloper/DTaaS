@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import * as React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 
 describe('DetailsDialog', () => {
   const setShowDialog = jest.fn();
@@ -9,7 +10,7 @@ describe('DetailsDialog', () => {
   beforeEach(() => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       () => ({
-        fullDescription: 'fullDescription',
+        description: 'fullDescription',
       }),
     );
   });
@@ -28,13 +29,22 @@ describe('DetailsDialog', () => {
   });
 
   it('closes the dialog when the "Close" button is clicked', () => {
+    const mockStore = configureStore({
+      reducer: {
+        digitalTwin: () => ({}),
+        assets: () => ({ items: [] }),
+      },
+    });
+
     render(
-      <DetailsDialog
-        showDialog={true}
-        setShowDialog={setShowDialog}
-        name="name"
-        isPrivate={true}
-      />,
+      <Provider store={mockStore}>
+        <DetailsDialog
+          showDialog={true}
+          setShowDialog={setShowDialog}
+          name="name"
+          isPrivate={true}
+        />
+      </Provider>,
     );
 
     screen.getByText('Close').click();

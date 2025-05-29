@@ -8,11 +8,32 @@ import digitalTwinReducer, {
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import {
+  mockGitlabInstance,
+  createMockDigitalTwinData,
+} from 'test/preview/__mocks__/global_mocks';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
+jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.ADAPTER_MOCKS;
+});
+jest.mock('preview/util/init', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.INIT_MOCKS;
+});
+jest.mock('preview/util/gitlab', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.GITLAB_MOCKS;
+});
 
 const mockDigitalTwin = new DigitalTwin('Asset 1', mockGitlabInstance);
 mockDigitalTwin.delete = jest.fn().mockResolvedValue('Deleted successfully');
@@ -30,8 +51,13 @@ const store = configureStore({
 
 describe('DeleteDialog Integration Tests', () => {
   const setupTest = () => {
+    jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
     store.dispatch(
-      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: mockDigitalTwin }),
+      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
     );
   };
 
@@ -41,6 +67,10 @@ describe('DeleteDialog Integration Tests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
+    jest.clearAllTimers();
   });
 
   it('closes DeleteDialog on Cancel button click', async () => {

@@ -1,27 +1,27 @@
 import * as React from 'react';
 import { Dispatch, SetStateAction, useState, useCallback } from 'react';
 import { Button, CircularProgress, Box } from '@mui/material';
-import { handleStart } from 'model/backend/gitlab/execution/pipelineHandler';
+import { handleStart } from 'route/digitaltwins/execution';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { selectExecutionHistoryByDTName } from 'model/backend/gitlab/state/executionHistory.slice';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
+import { selectExecutionHistoryByDTName } from 'store/selectors/executionHistory.selectors';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
 
-interface StartStopButtonProps {
+interface StartButtonProps {
   assetName: string;
-  setLogButtonDisabled: Dispatch<SetStateAction<boolean>>;
+  setHistoryButtonDisabled: Dispatch<SetStateAction<boolean>>;
 }
 
-function StartStopButton({
+function StartButton({
   assetName,
-  setLogButtonDisabled,
-}: StartStopButtonProps) {
+  setHistoryButtonDisabled,
+}: StartButtonProps) {
   const dispatch = useDispatch();
   const digitalTwin = useSelector(selectDigitalTwinByName(assetName));
   const executions =
     useSelector(selectExecutionHistoryByDTName(assetName)) || [];
 
-  // Debouncing state to prevent rapid clicking
   const [isDebouncing, setIsDebouncing] = useState(false);
   const DEBOUNCE_TIME = 250;
 
@@ -39,26 +39,35 @@ function StartStopButton({
 
   const runningCount = runningExecutions.length;
 
-  // Debounced click handler
   const handleDebouncedClick = useCallback(async () => {
-    if (isDebouncing) return;
+    if (isDebouncing || !digitalTwin) return;
 
     setIsDebouncing(true);
 
     try {
-      const setButtonText = () => {}; // Dummy function since we don't need to change button text
+      const digitalTwinInstance = await createDigitalTwinFromData(
+        digitalTwin,
+        assetName,
+      );
+
+      const setButtonText = () => {};
       await handleStart(
         'Start',
         setButtonText,
-        digitalTwin,
-        setLogButtonDisabled,
+        digitalTwinInstance,
+        setHistoryButtonDisabled,
         dispatch,
       );
     } finally {
-      // Reset debouncing after delay
       setTimeout(() => setIsDebouncing(false), DEBOUNCE_TIME);
     }
-  }, [isDebouncing, digitalTwin, setLogButtonDisabled, dispatch]);
+  }, [
+    isDebouncing,
+    digitalTwin,
+    assetName,
+    setHistoryButtonDisabled,
+    dispatch,
+  ]);
 
   return (
     <Box display="flex" alignItems="center">
@@ -85,4 +94,4 @@ function StartStopButton({
   );
 }
 
-export default StartStopButton;
+export default StartButton;

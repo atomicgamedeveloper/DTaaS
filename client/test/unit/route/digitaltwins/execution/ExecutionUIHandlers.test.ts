@@ -3,14 +3,14 @@ import {
   startPipeline,
   updatePipelineStateOnCompletion,
   updatePipelineStateOnStop,
-} from 'model/backend/gitlab/execution/pipelineUtils';
-import { stopPipelines } from 'model/backend/gitlab/execution/pipelineHandler';
+} from 'route/digitaltwins/execution/executionUIHandlers';
+import { stopPipelines } from 'route/digitaltwins/execution/executionButtonHandlers';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { JobSchema } from '@gitbeaker/rest';
 import GitlabInstance from 'preview/util/gitlab';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
-describe('PipelineUtils', () => {
+describe('ExecutionsUIHandlers', () => {
   const digitalTwin = mockDigitalTwin;
   const dispatch = jest.fn();
   const setLogButtonDisabled = jest.fn();

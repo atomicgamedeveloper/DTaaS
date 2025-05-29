@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import { getAuthority } from 'util/envUtil';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import GitlabInstance from './gitlab';
 import DigitalTwin from './digitalTwin';
 import { setAsset, setAssets } from '../store/assets.slice';
@@ -84,9 +85,10 @@ export const fetchDigitalTwins = async (
         }),
       );
 
-      digitalTwins.forEach(({ assetName, digitalTwin }) =>
-        dispatch(setDigitalTwin({ assetName, digitalTwin })),
-      );
+      digitalTwins.forEach(({ assetName, digitalTwin }) => {
+        const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+        dispatch(setDigitalTwin({ assetName, digitalTwin: digitalTwinData }));
+      });
     }
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
@@ -96,11 +98,17 @@ export const fetchDigitalTwins = async (
 export async function initDigitalTwin(
   newDigitalTwinName: string,
 ): Promise<DigitalTwin> {
-  const gitlabInstanceDT = new GitlabInstance(
-    sessionStorage.getItem('username') || '',
-    getAuthority(),
-    sessionStorage.getItem('access_token') || '',
-  );
-  await gitlabInstanceDT.init();
-  return new DigitalTwin(newDigitalTwinName, gitlabInstanceDT);
+  try {
+    const gitlabInstanceDT = new GitlabInstance(
+      sessionStorage.getItem('username') || '',
+      getAuthority(),
+      sessionStorage.getItem('access_token') || '',
+    );
+    await gitlabInstanceDT.init();
+    return new DigitalTwin(newDigitalTwinName, gitlabInstanceDT);
+  } catch (error) {
+    throw new Error(
+      `Failed to initialize DigitalTwin for ${newDigitalTwinName}: ${error}`,
+    );
+  }
 }

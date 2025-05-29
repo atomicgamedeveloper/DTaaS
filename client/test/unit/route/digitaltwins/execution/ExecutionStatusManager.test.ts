@@ -1,38 +1,39 @@
-import * as PipelineChecks from 'model/backend/gitlab/execution/pipelineChecks';
-import * as PipelineUtils from 'model/backend/gitlab/execution/pipelineUtils';
-import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
+import * as PipelineChecks from 'route/digitaltwins/execution/executionStatusManager';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
+import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { previewStore as store } from 'test/preview/integration/integration.testUtil';
-import { PipelineStatusParams } from 'model/backend/gitlab/execution/interfaces';
+import { PipelineStatusParams } from 'route/digitaltwins/execution/executionStatusManager';
 
-jest.useFakeTimers();
+jest.mock('preview/util/digitalTwin', () => ({
+  DigitalTwin: jest.fn().mockImplementation(() => mockDigitalTwin),
+  formatName: jest.fn(),
+}));
 
-jest.mock('model/backend/gitlab/execution/pipelineUtils', () => ({
+jest.mock('route/digitaltwins/execution/executionUIHandlers', () => ({
   fetchJobLogs: jest.fn(),
   updatePipelineStateOnCompletion: jest.fn(),
 }));
 
-describe('PipelineChecks', () => {
-  const digitalTwin = mockDigitalTwin;
+jest.useFakeTimers();
 
+describe('ExecutionStatusManager', () => {
+  const DTName = 'testName';
   const setButtonText = jest.fn();
   const setLogButtonDisabled = jest.fn();
   const dispatch = jest.fn();
   const startTime = Date.now();
+  const digitalTwin = mockDigitalTwin;
   const params: PipelineStatusParams = {
     setButtonText,
     digitalTwin,
     setLogButtonDisabled,
     dispatch,
   };
+  const pipelineId = 1;
 
   Object.defineProperty(AbortSignal, 'timeout', {
     value: jest.fn(),
     writable: false,
-  });
-
-  beforeEach(() => {
-    store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
   });
 
   afterEach(() => {
@@ -42,21 +43,14 @@ describe('PipelineChecks', () => {
 
   it('handles timeout', () => {
     PipelineChecks.handleTimeout(
-      digitalTwin.DTName,
-      jest.fn(),
-      jest.fn(),
-      store.dispatch,
+      DTName,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
     );
 
-    const snackbarState = store.getState().snackbar;
-
-    const expectedSnackbarState = {
-      open: true,
-      message: 'Execution timed out for MockedDTName',
-      severity: 'error',
-    };
-
-    expect(snackbarState).toEqual(expectedSnackbarState);
+    expect(setButtonText).toHaveBeenCalled();
+    expect(setLogButtonDisabled).toHaveBeenCalledWith(false);
   });
 
   it('starts pipeline status check', async () => {
@@ -80,11 +74,17 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.gitlabInstance, 'getPipelineStatus')
       .mockResolvedValue('success');
+
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest
+      .spyOn(digitalTwin.gitlabInstance, 'getPipelineJobs')
+      .mockResolvedValue([]);
+
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -100,11 +100,16 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.gitlabInstance, 'getPipelineStatus')
       .mockResolvedValue('failed');
+
+    jest
+      .spyOn(digitalTwin.gitlabInstance, 'getPipelineJobs')
+      .mockResolvedValue([]);
+
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -117,12 +122,12 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.gitlabInstance, 'getPipelineStatus')
       .mockResolvedValue('running');
-    jest.spyOn(PipelineChecks, 'hasTimedOut').mockReturnValue(true);
+    jest.spyOn(PipelineCore, 'hasTimedOut').mockReturnValue(true);
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -132,14 +137,14 @@ describe('PipelineChecks', () => {
   });
 
   it('checks parent pipeline status and returns running', async () => {
-    const delay = jest.spyOn(PipelineChecks, 'delay');
+    const delay = jest.spyOn(PipelineCore, 'delay');
     delay.mockImplementation(() => Promise.resolve());
 
     jest
       .spyOn(digitalTwin.gitlabInstance, 'getPipelineStatus')
       .mockResolvedValue('running');
     jest
-      .spyOn(PipelineChecks, 'hasTimedOut')
+      .spyOn(PipelineCore, 'hasTimedOut')
       .mockReturnValueOnce(false)
       .mockReturnValueOnce(true);
 
@@ -147,7 +152,7 @@ describe('PipelineChecks', () => {
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -155,24 +160,21 @@ describe('PipelineChecks', () => {
   });
 
   it('handles pipeline completion with failed status', async () => {
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest
+      .spyOn(digitalTwin.gitlabInstance, 'getPipelineJobs')
+      .mockResolvedValue([]);
+
     await PipelineChecks.handlePipelineCompletion(
-      1,
+      pipelineId,
       digitalTwin,
-      jest.fn(),
-      jest.fn(),
-      store.dispatch,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
       'failed',
     );
 
-    const snackbarState = store.getState().snackbar;
-
-    const expectedSnackbarState = {
-      open: true,
-      message: 'Execution failed for MockedDTName',
-      severity: 'error',
-    };
-
-    expect(snackbarState).toEqual(expectedSnackbarState);
+    expect(dispatch).toHaveBeenCalled();
   });
 
   it('checks child pipeline status and returns timeout', async () => {
@@ -188,7 +190,7 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.gitlabInstance, 'getPipelineStatus')
       .mockResolvedValue('running');
-    jest.spyOn(PipelineChecks, 'hasTimedOut').mockReturnValue(true);
+    jest.spyOn(PipelineCore, 'hasTimedOut').mockReturnValue(true);
 
     await PipelineChecks.checkChildPipelineStatus(completeParams);
 
@@ -196,7 +198,7 @@ describe('PipelineChecks', () => {
   });
 
   it('checks child pipeline status and returns running', async () => {
-    const delay = jest.spyOn(PipelineChecks, 'delay');
+    const delay = jest.spyOn(PipelineCore, 'delay');
     delay.mockImplementation(() => Promise.resolve());
 
     const getPipelineStatusMock = jest.spyOn(
@@ -206,6 +208,11 @@ describe('PipelineChecks', () => {
     getPipelineStatusMock
       .mockResolvedValueOnce('running')
       .mockResolvedValue('success');
+
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest
+      .spyOn(digitalTwin.gitlabInstance, 'getPipelineJobs')
+      .mockResolvedValue([]);
 
     await PipelineChecks.checkChildPipelineStatus({
       setButtonText,

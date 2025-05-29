@@ -17,15 +17,14 @@ import {
   removeAllModifiedLibraryFiles,
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
+import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import {
   FileState,
   removeAllModifiedFiles,
   selectModifiedFiles,
 } from '../../../store/file.slice';
-import {
-  selectDigitalTwinByName,
-  updateDescription,
-} from '../../../../model/backend/gitlab/state/digitalTwin.slice';
+import { updateDescription } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import { showSnackbar } from '../../../store/snackbar.slice';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import Editor from '../editor/Editor';
@@ -55,7 +54,7 @@ function ReconfigureDialog({
   const [libraryAssetPath, setLibraryAssetPath] = useState<string>('');
   const [openSaveDialog, setOpenSaveDialog] = useState(false);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
-  const digitalTwin = useSelector(selectDigitalTwinByName(name));
+  const digitalTwinData = useSelector(selectDigitalTwinByName(name));
   const modifiedFiles = useSelector(selectModifiedFiles);
   const modifiedLibraryFiles = useSelector(selectModifiedLibraryFiles);
   const dispatch = useDispatch();
@@ -66,13 +65,19 @@ function ReconfigureDialog({
   const handleCloseCancelDialog = () => setOpenCancelDialog(false);
 
   const handleConfirmSave = async () => {
-    await saveChanges(
-      modifiedFiles,
-      modifiedLibraryFiles,
-      digitalTwin,
-      dispatch,
-      name,
-    );
+    if (digitalTwinData) {
+      const digitalTwinInstance = await createDigitalTwinFromData(
+        digitalTwinData,
+        name,
+      );
+      await saveChanges(
+        modifiedFiles,
+        modifiedLibraryFiles,
+        digitalTwinInstance,
+        dispatch,
+        name,
+      );
+    }
     setOpenSaveDialog(false);
     setShowDialog(false);
   };

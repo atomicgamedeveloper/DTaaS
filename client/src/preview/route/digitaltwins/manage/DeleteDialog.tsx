@@ -8,7 +8,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
+import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import { showSnackbar } from '../../../store/snackbar.slice';
 
@@ -49,7 +50,7 @@ function DeleteDialog({
   onDelete,
 }: DeleteDialogProps) {
   const dispatch = useDispatch();
-  const digitalTwin = useSelector(selectDigitalTwinByName(name));
+  const digitalTwinData = useSelector(selectDigitalTwinByName(name));
   return (
     <Dialog open={showDialog} maxWidth="md">
       <DialogContent>
@@ -67,9 +68,42 @@ function DeleteDialog({
         </Button>
         <Button
           color="primary"
-          onClick={() =>
-            handleDelete(digitalTwin, setShowDialog, onDelete, dispatch)
-          }
+          onClick={async () => {
+            if (digitalTwinData) {
+              try {
+                const digitalTwinInstance = await createDigitalTwinFromData(
+                  digitalTwinData,
+                  name,
+                );
+
+                if (!digitalTwinInstance) {
+                  dispatch(
+                    showSnackbar({
+                      message: `Error: Failed to initialize digital twin ${name}`,
+                      severity: 'error',
+                    }),
+                  );
+                  setShowDialog(false);
+                  return;
+                }
+
+                handleDelete(
+                  digitalTwinInstance,
+                  setShowDialog,
+                  onDelete,
+                  dispatch,
+                );
+              } catch (error) {
+                dispatch(
+                  showSnackbar({
+                    message: `Error: Failed to delete digital twin ${name}: ${error}`,
+                    severity: 'error',
+                  }),
+                );
+                setShowDialog(false);
+              }
+            }
+          }}
         >
           Yes
         </Button>

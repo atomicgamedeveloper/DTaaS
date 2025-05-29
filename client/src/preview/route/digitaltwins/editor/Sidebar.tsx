@@ -6,8 +6,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
 import { getFilteredFileNames } from 'preview/util/fileUtils';
+import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import DigitalTwin from 'preview/util/digitalTwin';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { FileState } from '../../../store/file.slice';
-import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import { fetchData } from './sidebarFetchers';
 import { handleAddFileClick } from './sidebarFunctions';
 import { renderFileTreeItems, renderFileSection } from './sidebarRendering';
@@ -47,8 +49,10 @@ const Sidebar = ({
   const [newFileName, setNewFileName] = useState('');
   const [isFileNameDialogOpen, setIsFileNameDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [digitalTwinInstance, setDigitalTwinInstance] =
+    useState<DigitalTwin | null>(null);
 
-  const digitalTwin = useSelector((state: RootState) =>
+  const digitalTwinData = useSelector((state: RootState) =>
     name ? selectDigitalTwinByName(name)(state) : null,
   );
   const files: FileState[] = useSelector((state: RootState) => state.files);
@@ -62,8 +66,19 @@ const Sidebar = ({
 
   useEffect(() => {
     const loadFiles = async () => {
-      if (name && digitalTwin) {
-        await fetchData(digitalTwin);
+      if (name && digitalTwinData) {
+        try {
+          const instance = await createDigitalTwinFromData(
+            digitalTwinData,
+            name,
+          );
+          setDigitalTwinInstance(instance);
+          await fetchData(instance);
+        } catch {
+          setDigitalTwinInstance(null);
+        }
+      } else {
+        setDigitalTwinInstance(null);
       }
 
       if (tab === 'create') {
@@ -91,7 +106,7 @@ const Sidebar = ({
     };
 
     loadFiles();
-  }, [name, digitalTwin, assets, dispatch, tab]);
+  }, [name, digitalTwinData, assets, dispatch, tab]);
 
   if (isLoading) {
     return (
@@ -161,12 +176,12 @@ const Sidebar = ({
       />
 
       <SimpleTreeView>
-        {name ? (
+        {name && digitalTwinInstance ? (
           <React.Fragment key="reconfigure-page">
             {renderFileTreeItems(
               'Description',
-              digitalTwin!.descriptionFiles,
-              digitalTwin!,
+              digitalTwinInstance.descriptionFiles,
+              digitalTwinInstance,
               setFileName,
               setFileContent,
               setFileType,
@@ -179,8 +194,8 @@ const Sidebar = ({
             )}
             {renderFileTreeItems(
               'Configuration',
-              digitalTwin!.configFiles,
-              digitalTwin!,
+              digitalTwinInstance.configFiles,
+              digitalTwinInstance,
               setFileName,
               setFileContent,
               setFileType,
@@ -193,8 +208,8 @@ const Sidebar = ({
             )}
             {renderFileTreeItems(
               'Lifecycle',
-              digitalTwin!.lifecycleFiles,
-              digitalTwin!,
+              digitalTwinInstance.lifecycleFiles,
+              digitalTwinInstance,
               setFileName,
               setFileContent,
               setFileType,
@@ -205,24 +220,25 @@ const Sidebar = ({
               setIsLibraryFile,
               setLibraryAssetPath,
             )}
-            {digitalTwin!.assetFiles.map((assetFolder) =>
-              renderFileTreeItems(
-                `${assetFolder.assetPath} configuration`,
-                assetFolder.fileNames,
-                digitalTwin!,
-                setFileName,
-                setFileContent,
-                setFileType,
-                setFilePrivacy,
-                files,
-                tab,
-                dispatch,
-                setIsLibraryFile,
-                setLibraryAssetPath,
-                true,
-                libraryFiles,
-                assetFolder.assetPath,
-              ),
+            {digitalTwinInstance.assetFiles.map(
+              (assetFolder: { assetPath: string; fileNames: string[] }) =>
+                renderFileTreeItems(
+                  `${assetFolder.assetPath} configuration`,
+                  assetFolder.fileNames,
+                  digitalTwinInstance,
+                  setFileName,
+                  setFileContent,
+                  setFileType,
+                  setFilePrivacy,
+                  files,
+                  tab,
+                  dispatch,
+                  setIsLibraryFile,
+                  setLibraryAssetPath,
+                  true,
+                  libraryFiles,
+                  assetFolder.assetPath,
+                ),
             )}
           </React.Fragment>
         ) : (
@@ -231,7 +247,7 @@ const Sidebar = ({
               'Description',
               'description',
               getFilteredFileNames('description', files),
-              digitalTwin!,
+              digitalTwinInstance!,
               setFileName,
               setFileContent,
               setFileType,
@@ -246,7 +262,7 @@ const Sidebar = ({
               'Configuration',
               'config',
               getFilteredFileNames('config', files),
-              digitalTwin!,
+              digitalTwinInstance!,
               setFileName,
               setFileContent,
               setFileType,
@@ -261,7 +277,7 @@ const Sidebar = ({
               'Lifecycle',
               'lifecycle',
               getFilteredFileNames('lifecycle', files),
-              digitalTwin!,
+              digitalTwinInstance!,
               setFileName,
               setFileContent,
               setFileType,

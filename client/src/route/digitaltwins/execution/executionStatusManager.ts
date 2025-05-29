@@ -2,28 +2,37 @@ import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import indexedDBService from 'database/digitalTwins';
-import {
-  fetchJobLogs,
-  updatePipelineStateOnCompletion,
-} from 'model/backend/gitlab/execution/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
+import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/constants';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   setPipelineCompleted,
   setPipelineLoading,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { PipelineStatusParams } from './interfaces';
+import {
+  delay,
+  hasTimedOut,
+} from 'model/backend/gitlab/execution/pipelineCore';
+import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
+import { updatePipelineStateOnCompletion } from './executionUIHandlers';
 
-export const delay = (ms: number) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+export interface PipelineStatusParams {
+  setButtonText: Dispatch<SetStateAction<string>>;
+  digitalTwin: DigitalTwin;
+  setLogButtonDisabled: Dispatch<SetStateAction<boolean>>;
+  dispatch: ReturnType<typeof useDispatch>;
+  executionId?: string;
+}
 
-export const hasTimedOut = (startTime: number) =>
-  Date.now() - startTime > MAX_EXECUTION_TIME;
-
+/**
+ * Handles execution timeout with UI feedback
+ * @param DTName Digital twin name
+ * @param setButtonText React state setter for button text
+ * @param setLogButtonDisabled React state setter for log button
+ * @param dispatch Redux dispatch function
+ * @param executionId Optional execution ID
+ */
 export const handleTimeout = async (
   DTName: string,
   setButtonText: Dispatch<SetStateAction<string>>,
@@ -39,11 +48,10 @@ export const handleTimeout = async (
   );
 
   if (executionId) {
-    const execution =
-      await indexedDBService.getExecutionHistoryById(executionId);
+    const execution = await indexedDBService.getById(executionId);
     if (execution) {
       execution.status = ExecutionStatus.TIMEOUT;
-      await indexedDBService.updateExecutionHistory(execution);
+      await indexedDBService.update(execution);
     }
 
     dispatch(
@@ -58,11 +66,19 @@ export const handleTimeout = async (
   setLogButtonDisabled(false);
 };
 
+/**
+ * Starts pipeline status checking process
+ * @param params Pipeline status parameters
+ */
 export const startPipelineStatusCheck = (params: PipelineStatusParams) => {
   const startTime = Date.now();
   checkParentPipelineStatus({ ...params, startTime });
 };
 
+/**
+ * Checks parent pipeline status and handles transitions
+ * @param params Pipeline status parameters with start time
+ */
 export const checkParentPipelineStatus = async ({
   setButtonText,
   digitalTwin,
@@ -110,7 +126,7 @@ export const checkParentPipelineStatus = async ({
       executionId,
     );
   } else {
-    await delay(5000);
+    await delay(PIPELINE_POLL_INTERVAL);
     checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
@@ -122,6 +138,16 @@ export const checkParentPipelineStatus = async ({
   }
 };
 
+/**
+ * Handles pipeline completion with UI feedback
+ * @param pipelineId Pipeline ID that completed
+ * @param digitalTwin Digital twin instance
+ * @param setButtonText React state setter for button text
+ * @param setLogButtonDisabled React state setter for log button
+ * @param dispatch Redux dispatch function
+ * @param pipelineStatus Pipeline completion status
+ * @param executionId Optional execution ID
+ */
 export const handlePipelineCompletion = async (
   pipelineId: number,
   digitalTwin: DigitalTwin,
@@ -137,7 +163,6 @@ export const handlePipelineCompletion = async (
       : ExecutionStatus.FAILED;
 
   if (!executionId) {
-    // For backward compatibility
     const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
     await updatePipelineStateOnCompletion(
       digitalTwin,
@@ -149,10 +174,10 @@ export const handlePipelineCompletion = async (
       status,
     );
   } else {
-    // For concurrent executions, use the new helper function
-    const { fetchLogsAndUpdateExecution } = await import('./pipelineUtils');
+    const { fetchLogsAndUpdateExecution } = await import(
+      './executionUIHandlers'
+    );
 
-    // Fetch logs and update execution
     const logsUpdated = await fetchLogsAndUpdateExecution(
       digitalTwin,
       pipelineId,
@@ -174,7 +199,6 @@ export const handlePipelineCompletion = async (
     setButtonText('Start');
     setLogButtonDisabled(false);
 
-    // For backward compatibility
     dispatch(
       setPipelineCompleted({
         assetName: digitalTwin.DTName,
@@ -206,6 +230,10 @@ export const handlePipelineCompletion = async (
   }
 };
 
+/**
+ * Checks child pipeline status and handles completion
+ * @param params Pipeline status parameters with start time
+ */
 export const checkChildPipelineStatus = async ({
   setButtonText,
   digitalTwin,
@@ -251,7 +279,7 @@ export const checkChildPipelineStatus = async ({
       executionId,
     );
   } else {
-    await delay(5000);
+    await delay(PIPELINE_POLL_INTERVAL);
     await checkChildPipelineStatus({
       setButtonText,
       digitalTwin,

@@ -21,7 +21,7 @@ jest.mock('model/backend/gitlab/state/executionHistory.slice', () => ({
   ),
 }));
 
-jest.mock('preview/components/execution/ExecutionHistoryList', () => {
+jest.mock('components/execution/ExecutionHistoryList', () => {
   const ExecutionHistoryListMock = ({
     dtName,
     onViewLogs,

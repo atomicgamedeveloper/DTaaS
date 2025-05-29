@@ -7,7 +7,7 @@ import 'katex/dist/katex.min.css';
 import * as RemarkableKatex from 'remarkable-katex';
 import { useSelector } from 'react-redux';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import { selectDigitalTwinByName } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 
 interface DetailsDialogProps {
   showDialog: boolean;
@@ -49,7 +49,7 @@ function DetailsDialog({
       <DialogContent dividers>
         <div
           dangerouslySetInnerHTML={{
-            __html: md.render(asset!.fullDescription),
+            __html: md.render(asset!.description),
           }}
           style={{
             maxWidth: '100%',

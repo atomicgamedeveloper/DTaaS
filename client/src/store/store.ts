@@ -28,31 +28,14 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
-          // Digital Twin actions that contain class instances
-          'digitalTwin/setDigitalTwin',
-          'digitalTwin/setJobLogs',
-          'digitalTwin/setPipelineCompleted',
-          'digitalTwin/setPipelineLoading',
-          'digitalTwin/setShouldFetchDigitalTwins',
           // Asset actions that contain LibraryAsset class instances
           'assets/setAssets',
           'assets/setAsset',
           'assets/deleteAsset',
-          // Execution history actions
-          'executionHistory/addExecutionHistoryEntry',
-          'executionHistory/updateExecutionHistoryEntry',
-          'executionHistory/setExecutionHistoryEntries',
-          'executionHistory/updateExecutionLogs',
-          'executionHistory/updateExecutionStatus',
-          'executionHistory/setLoading',
-          'executionHistory/setError',
-          'executionHistory/setSelectedExecutionId',
         ],
         ignoredPaths: [
           // Ignore the entire assets state as it contains LibraryAsset class instances
           'assets.items',
-          // Ignore digital twin state as it contains class instances
-          'digitalTwin.digitalTwin',
         ],
       },
     }),

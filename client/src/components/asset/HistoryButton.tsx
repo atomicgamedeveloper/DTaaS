@@ -2,30 +2,28 @@ import * as React from 'react';
 import { Dispatch, SetStateAction } from 'react';
 import { Button, Badge } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { selectExecutionHistoryByDTName } from 'model/backend/gitlab/state/executionHistory.slice';
+import { selectExecutionHistoryByDTName } from 'store/selectors/executionHistory.selectors';
 
-interface LogButtonProps {
+interface HistoryButtonProps {
   setShowLog: Dispatch<React.SetStateAction<boolean>>;
-  logButtonDisabled: boolean;
+  historyButtonDisabled: boolean;
   assetName: string;
 }
 
-export const handleToggleLog = (
+export const handleToggleHistory = (
   setShowLog: Dispatch<SetStateAction<boolean>>,
 ) => {
   setShowLog((prev) => !prev);
 };
 
-function LogButton({
+function HistoryButton({
   setShowLog,
-  logButtonDisabled,
+  historyButtonDisabled,
   assetName,
-}: LogButtonProps) {
-  // Get execution history for this Digital Twin
+}: HistoryButtonProps) {
   const executions =
     useSelector(selectExecutionHistoryByDTName(assetName)) || [];
 
-  // Count of executions with logs
   const executionCount = executions.length;
 
   return (
@@ -39,8 +37,8 @@ function LogButton({
         variant="contained"
         size="small"
         color="primary"
-        onClick={() => handleToggleLog(setShowLog)}
-        disabled={logButtonDisabled && executionCount === 0}
+        onClick={() => handleToggleHistory(setShowLog)}
+        disabled={historyButtonDisabled && executionCount === 0}
       >
         History
       </Button>
@@ -48,4 +46,4 @@ function LogButton({
   );
 }
 
-export default LogButton;
+export default HistoryButton;

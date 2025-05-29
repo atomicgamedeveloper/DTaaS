@@ -12,19 +12,24 @@ import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
+  DigitalTwinData,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import executionHistoryReducer, {
   setExecutionHistoryEntries,
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 
 jest.mock('database/digitalTwins', () => ({
-  getExecutionHistoryByDTName: jest.fn().mockResolvedValue([]),
-  getAllExecutionHistory: jest.fn().mockResolvedValue([]),
-  addExecutionHistory: jest.fn().mockResolvedValue(undefined),
-  updateExecutionHistory: jest.fn().mockResolvedValue(undefined),
-  deleteExecutionHistory: jest.fn().mockResolvedValue(undefined),
+  __esModule: true,
+  default: {
+    getByDTName: jest.fn().mockResolvedValue([]),
+    getAll: jest.fn().mockResolvedValue([]),
+    add: jest.fn().mockResolvedValue(undefined),
+    update: jest.fn().mockResolvedValue(undefined),
+    delete: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
 const store = configureStore({
@@ -61,10 +66,13 @@ describe('LogDialog', () => {
   };
 
   beforeEach(() => {
+    const digitalTwinData: DigitalTwinData =
+      extractDataFromDigitalTwin(mockDigitalTwin);
+
     store.dispatch(
       setDigitalTwin({
         assetName: 'mockedDTName',
-        digitalTwin: mockDigitalTwin,
+        digitalTwin: digitalTwinData,
       }),
     );
   });

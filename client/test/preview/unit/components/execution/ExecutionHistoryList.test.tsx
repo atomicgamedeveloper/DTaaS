@@ -1,15 +1,22 @@
 import * as React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ExecutionHistoryList from 'preview/components/execution/ExecutionHistoryList';
+import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import {
-  ExecutionHistoryEntry,
+  DTExecutionResult,
   ExecutionStatus,
 } from 'model/backend/gitlab/types/executionHistory';
-import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
+import digitalTwinReducer, {
+  DigitalTwinData,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import executionHistoryReducer, {
   setLoading,
@@ -21,6 +28,8 @@ import executionHistoryReducer, {
   updateExecutionLogs,
   removeExecutionHistoryEntry,
   setSelectedExecutionId,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import {
   selectExecutionHistoryEntries,
   selectExecutionHistoryById,
   selectSelectedExecutionId,
@@ -28,10 +37,22 @@ import executionHistoryReducer, {
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'store/selectors/executionHistory.selectors';
 
 // Mock the pipelineHandler module
-jest.mock('model/backend/gitlab/execution/pipelineHandler');
+jest.mock('route/digitaltwins/execution/executionButtonHandlers');
+jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  const actual = jest.requireActual(
+    'route/digitaltwins/execution/digitalTwinAdapter',
+  );
+  return {
+    ...adapterMocks.ADAPTER_MOCKS,
+    extractDataFromDigitalTwin: actual.extractDataFromDigitalTwin,
+  };
+});
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -40,11 +61,14 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('database/digitalTwins', () => ({
-  getExecutionHistoryByDTName: jest.fn(),
-  deleteExecutionHistory: jest.fn(),
-  updateExecutionHistory: jest.fn(),
-  addExecutionHistory: jest.fn(),
-  getAllExecutionHistory: jest.fn(),
+  __esModule: true,
+  default: {
+    getByDTName: jest.fn(),
+    delete: jest.fn(),
+    update: jest.fn(),
+    add: jest.fn(),
+    getAll: jest.fn(),
+  },
 }));
 
 const mockExecutions = [
@@ -93,14 +117,14 @@ const mockExecutions = [
 // Define the state structure for the test store
 interface TestState {
   executionHistory: {
-    entries: ExecutionHistoryEntry[];
+    entries: DTExecutionResult[];
     selectedExecutionId: string | null;
     loading: boolean;
     error: string | null;
   };
   digitalTwin: {
     digitalTwin: {
-      [key: string]: unknown;
+      [key: string]: DigitalTwinData;
     };
     shouldFetchDigitalTwins: boolean;
   };
@@ -111,11 +135,23 @@ type TestStore = ReturnType<typeof configureStore> & {
 };
 
 const createTestStore = (
-  initialEntries: ExecutionHistoryEntry[] = [],
+  initialEntries: DTExecutionResult[] = [],
   loading = false,
   error: string | null = null,
-): TestStore =>
-  configureStore({
+): TestStore => {
+  const digitalTwinData: DigitalTwinData = {
+    DTName: 'test-dt',
+    description: 'Test Digital Twin Description',
+    jobLogs: [],
+    pipelineCompleted: false,
+    pipelineLoading: false,
+    pipelineId: undefined,
+    currentExecutionId: undefined,
+    lastExecutionStatus: undefined,
+    gitlabProjectId: 123,
+  };
+
+  return configureStore({
     reducer: {
       executionHistory: executionHistoryReducer,
       digitalTwin: digitalTwinReducer,
@@ -129,12 +165,13 @@ const createTestStore = (
       },
       digitalTwin: {
         digitalTwin: {
-          'test-dt': mockDigitalTwin,
+          'test-dt': digitalTwinData,
         },
         shouldFetchDigitalTwins: false,
       },
     },
   }) as TestStore;
+};
 
 describe('ExecutionHistoryList', () => {
   const dtName = 'test-dt';
@@ -173,10 +210,16 @@ describe('ExecutionHistoryList', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReset();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks();
     mockOnViewLogs.mockClear();
     testStore = createTestStore([]);
+
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+    });
   });
 
   it('renders loading state correctly', () => {
@@ -310,11 +353,28 @@ describe('ExecutionHistoryList', () => {
   });
 
   it('handles stop execution correctly', async () => {
-    // Clear mocks before test
     mockDispatch.mockClear();
 
+    // Ensure the adapter mock has the correct implementation
     // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
-    const pipelineHandler = require('model/backend/gitlab/execution/pipelineHandler');
+    const adapter = require('route/digitaltwins/execution/digitalTwinAdapter');
+
+    adapter.createDigitalTwinFromData.mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async (digitalTwinData: any, name: any) => ({
+        DTName: name || digitalTwinData.DTName || 'test-dt',
+        delete: jest.fn().mockResolvedValue('Deleted successfully'),
+        execute: jest.fn().mockResolvedValue(123),
+        stop: jest.fn().mockResolvedValue(undefined),
+        getFullDescription: jest
+          .fn()
+          .mockResolvedValue('Test Digital Twin Description'),
+        reconfigure: jest.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    const pipelineHandler = require('route/digitaltwins/execution/executionButtonHandlers');
     const handleStopSpy = jest
       .spyOn(pipelineHandler, 'handleStop')
       .mockImplementation(
@@ -359,16 +419,27 @@ describe('ExecutionHistoryList', () => {
     const stopButton = screen.getByLabelText('stop');
     expect(stopButton).toBeInTheDocument();
 
-    fireEvent.click(stopButton);
+    await act(async () => {
+      fireEvent.click(stopButton);
+    });
 
-    expect(handleStopSpy).toHaveBeenCalledWith(
-      expect.anything(), // digitalTwin
-      expect.any(Function), // setButtonText
-      mockDispatch, // dispatch
-      'exec3', // executionId
-    );
+    await waitFor(() => {
+      expect(handleStopSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          DTName: expect.any(String),
+        }), // digitalTwin
+        expect.any(Function), // setButtonText
+        mockDispatch, // dispatch
+        'exec3', // executionId
+      );
+    });
 
     expect(mockDispatch).toHaveBeenCalled();
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    });
 
     handleStopSpy.mockRestore();
   });

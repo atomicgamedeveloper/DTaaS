@@ -1,17 +1,16 @@
-import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
 import * as React from 'react';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { Provider } from 'react-redux';
 import { act, render, screen } from '@testing-library/react';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import PreviewTab from 'preview/route/digitaltwins/editor/PreviewTab';
 
 describe('PreviewTab', () => {
-  let store: ReturnType<typeof createStore>;
+  let store: ReturnType<typeof configureStore>;
 
   beforeEach(async () => {
     await React.act(async () => {
@@ -26,15 +25,12 @@ describe('PreviewTab', () => {
           }),
       });
 
-      const digitalTwin = new DigitalTwin('Asset 1', mockGitlabInstance);
-      digitalTwin.descriptionFiles = ['file1.md', 'file2.md'];
-      digitalTwin.configFiles = ['config1.json', 'config2.json'];
-      digitalTwin.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt'];
+      const digitalTwinData = createMockDigitalTwinData('Asset 1');
 
       store.dispatch(
         setDigitalTwin({
           assetName: 'Asset 1',
-          digitalTwin,
+          digitalTwin: digitalTwinData,
         }),
       );
     });

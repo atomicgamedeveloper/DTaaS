@@ -10,6 +10,7 @@ import digitalTwinReducer, {
   setPipelineLoading,
   updateDescription,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import DigitalTwin from 'preview/util/digitalTwin';
 import GitlabInstance from 'preview/util/gitlab';
 import snackbarSlice, {
@@ -120,9 +121,28 @@ describe('reducers', () => {
     it('should handle setDigitalTwin', () => {
       const newState = digitalTwinReducer(
         initialState,
-        setDigitalTwin({ assetName: 'asset1', digitalTwin }),
+        setDigitalTwin({
+          assetName: 'asset1',
+          digitalTwin: extractDataFromDigitalTwin(digitalTwin),
+        }),
       );
-      expect(newState.digitalTwin.asset1).toEqual(digitalTwin);
+      const expectedData = extractDataFromDigitalTwin(digitalTwin);
+      const actualData = newState.digitalTwin.asset1;
+
+      expect(actualData.DTName).toEqual(expectedData.DTName);
+      expect(actualData.description).toEqual(expectedData.description);
+      expect(actualData.pipelineId).toEqual(expectedData.pipelineId);
+      expect(actualData.lastExecutionStatus).toEqual(
+        expectedData.lastExecutionStatus,
+      );
+      expect(actualData.jobLogs).toEqual(expectedData.jobLogs);
+      expect(actualData.pipelineCompleted).toEqual(
+        expectedData.pipelineCompleted,
+      );
+      expect(actualData.pipelineLoading).toEqual(expectedData.pipelineLoading);
+      expect(actualData.currentExecutionId).toEqual(
+        expectedData.currentExecutionId,
+      );
     });
 
     it('should handle setPipelineCompleted', () => {
@@ -134,7 +154,7 @@ describe('reducers', () => {
 
       const updatedState = {
         digitalTwin: {
-          asset1: updatedDigitalTwin,
+          asset1: extractDataFromDigitalTwin(updatedDigitalTwin),
         },
         shouldFetchDigitalTwins: true,
       };
@@ -156,7 +176,7 @@ describe('reducers', () => {
 
       const updatedState = {
         ...initialState,
-        digitalTwin: { asset1: updatedDigitalTwin },
+        digitalTwin: { asset1: extractDataFromDigitalTwin(updatedDigitalTwin) },
       };
 
       const newState = digitalTwinReducer(
@@ -176,7 +196,7 @@ describe('reducers', () => {
 
       const updatedState = {
         ...initialState,
-        digitalTwin: { asset1: updatedDigitalTwin },
+        digitalTwin: { asset1: extractDataFromDigitalTwin(updatedDigitalTwin) },
       };
 
       const description = 'new description';

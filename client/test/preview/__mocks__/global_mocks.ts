@@ -4,6 +4,7 @@ import DigitalTwin from 'preview/util/digitalTwin';
 import FileHandler from 'preview/util/fileHandler';
 import DTAssets from 'preview/util/DTAssets';
 import LibraryManager from 'preview/util/libraryManager';
+import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
 
 export const mockAppURL = 'https://example.com/';
 export const mockURLforDT = 'https://example.com/URL_DT';
@@ -181,20 +182,18 @@ export const mockExecutionHistoryEntry = {
 // Mock for indexedDBService
 export const mockIndexedDBService = {
   init: jest.fn().mockResolvedValue(undefined),
-  addExecutionHistory: jest
-    .fn()
-    .mockImplementation((entry) => Promise.resolve(entry.id)),
-  updateExecutionHistory: jest.fn().mockResolvedValue(undefined),
-  getExecutionHistoryByDTName: jest.fn().mockResolvedValue([]),
-  getAllExecutionHistory: jest.fn().mockResolvedValue([]),
-  getExecutionHistoryById: jest.fn().mockImplementation((id) =>
+  add: jest.fn().mockImplementation((entry) => Promise.resolve(entry.id)),
+  update: jest.fn().mockResolvedValue(undefined),
+  getByDTName: jest.fn().mockResolvedValue([]),
+  getAll: jest.fn().mockResolvedValue([]),
+  getById: jest.fn().mockImplementation((id) =>
     Promise.resolve({
       ...mockExecutionHistoryEntry,
       id,
     }),
   ),
-  deleteExecutionHistory: jest.fn().mockResolvedValue(undefined),
-  deleteExecutionHistoryByDTName: jest.fn().mockResolvedValue(undefined),
+  delete: jest.fn().mockResolvedValue(undefined),
+  deleteByDTName: jest.fn().mockResolvedValue(undefined),
 };
 
 // Helper function to reset all indexedDBService mocks
@@ -205,6 +204,23 @@ export const resetIndexedDBServiceMocks = () => {
     }
   });
 };
+
+/**
+ * Creates mock DigitalTwinData for Redux state following the adapter pattern
+ * This creates clean serializable data for Redux, not DigitalTwin instances
+ */
+export const createMockDigitalTwinData = (dtName: string): DigitalTwinData => ({
+  DTName: dtName,
+  description: 'Test Digital Twin Description',
+  jobLogs: [],
+  pipelineCompleted: false,
+  pipelineLoading: false,
+  pipelineId: undefined,
+  currentExecutionId: undefined,
+  lastExecutionStatus: undefined,
+  // Store only serializable data
+  gitlabProjectId: 123,
+});
 
 jest.mock('util/envUtil', () => ({
   ...jest.requireActual('util/envUtil'),
@@ -222,6 +238,31 @@ jest.mock('util/envUtil', () => ({
     { key: '2', link: 'link2' },
     { key: '3', link: 'link3' },
   ],
+}));
+
+// Mock sessionStorage for tests
+Object.defineProperty(window, 'sessionStorage', {
+  value: {
+    getItem: jest.fn((key: string) => {
+      const mockValues: { [key: string]: string } = {
+        username: 'testuser',
+        access_token: 'test_token',
+      };
+      return mockValues[key] || null;
+    }),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn(),
+  },
+  writable: true,
+});
+
+// Mock the initDigitalTwin function
+jest.mock('preview/util/init', () => ({
+  ...jest.requireActual('preview/util/init'),
+  initDigitalTwin: jest.fn().mockResolvedValue(mockDigitalTwin),
+  fetchLibraryAssets: jest.fn(),
+  fetchDigitalTwins: jest.fn(),
 }));
 
 window.env = {

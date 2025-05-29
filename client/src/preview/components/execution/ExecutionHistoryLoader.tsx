@@ -7,11 +7,8 @@ import {
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
+import { EXECUTION_CHECK_INTERVAL } from 'model/backend/gitlab/constants';
 
-/**
- * Component that loads execution history when the application starts
- * This component doesn't render anything, it just loads data
- */
 const ExecutionHistoryLoader: React.FC = () => {
   const dispatch =
     useDispatch<ThunkDispatch<RootState, unknown, Action<string>>>();
@@ -21,7 +18,7 @@ const ExecutionHistoryLoader: React.FC = () => {
 
     const intervalId = setInterval(() => {
       dispatch(checkRunningExecutions());
-    }, 10000); // Check every 10 seconds
+    }, EXECUTION_CHECK_INTERVAL);
 
     return () => {
       clearInterval(intervalId);

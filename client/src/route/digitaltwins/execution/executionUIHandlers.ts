@@ -1,27 +1,33 @@
 import { Dispatch, SetStateAction } from 'react';
+import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import GitlabInstance from 'preview/util/gitlab';
-import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setJobLogs,
   setPipelineCompleted,
   setPipelineLoading,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { useDispatch } from 'react-redux';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import {
+  ExecutionStatus,
+  JobLog,
+} from 'model/backend/gitlab/types/executionHistory';
 import {
   updateExecutionLogs,
   updateExecutionStatus,
   setSelectedExecutionId,
 } from 'model/backend/gitlab/state/executionHistory.slice';
-import { JobLog } from './interfaces';
+import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 
-export const delay = (ms: number) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+// Re-export for test compatibility
+export { fetchJobLogs };
 
+/**
+ * Starts a digital twin pipeline execution with UI feedback
+ * @param digitalTwin Digital twin instance
+ * @param dispatch Redux dispatch function
+ * @param setLogButtonDisabled React state setter for log button
+ * @returns Execution ID if successful, null otherwise
+ */
 export const startPipeline = async (
   digitalTwin: DigitalTwin,
   dispatch: ReturnType<typeof useDispatch>,
@@ -49,12 +55,17 @@ export const startPipeline = async (
   );
 
   dispatch(setSelectedExecutionId(digitalTwin.currentExecutionId));
-
   setLogButtonDisabled(false);
 
   return digitalTwin.currentExecutionId;
 };
 
+/**
+ * Updates pipeline state when execution starts
+ * @param digitalTwin Digital twin instance
+ * @param dispatch Redux dispatch function
+ * @param executionId Optional execution ID for concurrent executions
+ */
 export const updatePipelineState = (
   digitalTwin: DigitalTwin,
   dispatch: ReturnType<typeof useDispatch>,
@@ -84,11 +95,21 @@ export const updatePipelineState = (
   }
 };
 
+/**
+ * Updates pipeline state when execution completes
+ * @param digitalTwin Digital twin instance
+ * @param jobLogs Job logs from the execution
+ * @param setButtonText React state setter for button text
+ * @param _setLogButtonDisabled React state setter for log button (unused)
+ * @param dispatch Redux dispatch function
+ * @param executionId Optional execution ID for concurrent executions
+ * @param status Execution status
+ */
 export const updatePipelineStateOnCompletion = async (
   digitalTwin: DigitalTwin,
   jobLogs: JobLog[],
   setButtonText: Dispatch<SetStateAction<string>>,
-  setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
+  _setLogButtonDisabled: Dispatch<SetStateAction<boolean>>,
   dispatch: ReturnType<typeof useDispatch>,
   executionId?: string,
   status: ExecutionStatus = ExecutionStatus.COMPLETED,
@@ -129,6 +150,13 @@ export const updatePipelineStateOnCompletion = async (
   setButtonText('Start');
 };
 
+/**
+ * Updates pipeline state when execution is stopped
+ * @param digitalTwin Digital twin instance
+ * @param setButtonText React state setter for button text
+ * @param dispatch Redux dispatch function
+ * @param executionId Optional execution ID for concurrent executions
+ */
 export const updatePipelineStateOnStop = (
   digitalTwin: DigitalTwin,
   setButtonText: Dispatch<SetStateAction<string>>,
@@ -162,45 +190,15 @@ export const updatePipelineStateOnStop = (
   }
 };
 
-export const fetchJobLogs = async (
-  gitlabInstance: GitlabInstance,
-  pipelineId: number,
-): Promise<JobLog[]> => {
-  const { projectId } = gitlabInstance;
-  if (!projectId) {
-    return [];
-  }
-
-  const jobs = await gitlabInstance.getPipelineJobs(projectId, pipelineId);
-
-  const logPromises = jobs.map(async (job) => {
-    if (!job || typeof job.id === 'undefined') {
-      return { jobName: 'Unknown', log: 'Job ID not available' };
-    }
-
-    try {
-      let log = await gitlabInstance.getJobTrace(projectId, job.id);
-
-      if (typeof log === 'string') {
-        log = cleanLog(log);
-      } else {
-        log = '';
-      }
-
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log,
-      };
-    } catch (_e) {
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log: 'Error fetching log content',
-      };
-    }
-  });
-  return (await Promise.all(logPromises)).reverse();
-};
-
+/**
+ * Fetches logs and updates execution with UI feedback
+ * @param digitalTwin Digital twin instance
+ * @param pipelineId Pipeline ID to fetch logs for
+ * @param executionId Execution ID to update
+ * @param status Execution status to set
+ * @param dispatch Redux dispatch function
+ * @returns True if logs were successfully fetched and updated
+ */
 export const fetchLogsAndUpdateExecution = async (
   digitalTwin: DigitalTwin,
   pipelineId: number,
@@ -219,7 +217,6 @@ export const fetchLogsAndUpdateExecution = async (
     }
 
     await digitalTwin.updateExecutionLogs(executionId, jobLogs);
-
     await digitalTwin.updateExecutionStatus(executionId, status);
 
     dispatch(

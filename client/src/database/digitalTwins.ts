@@ -1,31 +1,32 @@
-import {
-  DB_CONFIG,
-  ExecutionHistoryEntry,
-} from '../model/backend/gitlab/types/executionHistory';
+import { DTExecutionResult } from '../model/backend/gitlab/types/executionHistory';
+import { DB_CONFIG } from './types';
 
 /**
- * Interface for IndexedDB operations
+ * Interface for execution history operations
+ * Abstracts away the underlying storage implementation
  */
-export interface IIndexedDBService {
+export interface IExecutionHistory {
   init(): Promise<void>;
-  addExecutionHistory(entry: ExecutionHistoryEntry): Promise<string>;
-  updateExecutionHistory(entry: ExecutionHistoryEntry): Promise<void>;
-  getExecutionHistoryById(id: string): Promise<ExecutionHistoryEntry | null>;
-  getExecutionHistoryByDTName(dtName: string): Promise<ExecutionHistoryEntry[]>;
-  getAllExecutionHistory(): Promise<ExecutionHistoryEntry[]>;
-  deleteExecutionHistory(id: string): Promise<void>;
-  deleteExecutionHistoryByDTName(dtName: string): Promise<void>;
+  add(entry: DTExecutionResult): Promise<string>;
+  update(entry: DTExecutionResult): Promise<void>;
+  getById(id: string): Promise<DTExecutionResult | null>;
+  getByDTName(dtName: string): Promise<DTExecutionResult[]>;
+  getAll(): Promise<DTExecutionResult[]>;
+  delete(id: string): Promise<void>;
+  deleteByDTName(dtName: string): Promise<void>;
 }
 
 /**
  * For interacting with IndexedDB
  */
-class IndexedDBService implements IIndexedDBService {
-  private db: IDBDatabase | null = null;
+class IndexedDBService implements IExecutionHistory {
+  private db: IDBDatabase | undefined;
 
   private dbName: string;
 
   private dbVersion: number;
+
+  private initPromise: Promise<void> | undefined;
 
   constructor() {
     this.dbName = DB_CONFIG.name;
@@ -41,34 +42,40 @@ class IndexedDBService implements IIndexedDBService {
       return Promise.resolve();
     }
 
-    return new Promise((resolve, reject) => {
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    this.initPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
 
       request.onerror = () => {
+        this.initPromise = undefined;
         reject(new Error('Failed to open IndexedDB'));
       };
 
       request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
+        this.initPromise = undefined;
         resolve();
       };
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-        // Create object stores and indexes
         if (!db.objectStoreNames.contains('executionHistory')) {
           const store = db.createObjectStore('executionHistory', {
             keyPath: DB_CONFIG.stores.executionHistory.keyPath,
           });
 
-          // Create indexes
           DB_CONFIG.stores.executionHistory.indexes.forEach((index) => {
             store.createIndex(index.name, index.keyPath);
           });
         }
       };
     });
+
+    return this.initPromise;
   }
 
   /**
@@ -76,14 +83,15 @@ class IndexedDBService implements IIndexedDBService {
    * @param entry The execution history entry to add
    * @returns Promise that resolves with the ID of the added entry
    */
-  public async addExecutionHistory(
-    entry: ExecutionHistoryEntry,
-  ): Promise<string> {
+  public async add(entry: DTExecutionResult): Promise<string> {
     await this.init();
 
     return new Promise((resolve, reject) => {
+      // After init(), db is guaranteed to be defined
       if (!this.db) {
-        reject(new Error('Database not initialized'));
+        reject(
+          new Error('Database not initialized - init() must be called first'),
+        );
         return;
       }
 
@@ -109,9 +117,7 @@ class IndexedDBService implements IIndexedDBService {
    * @param entry The execution history entry to update
    * @returns Promise that resolves when the entry is updated
    */
-  public async updateExecutionHistory(
-    entry: ExecutionHistoryEntry,
-  ): Promise<void> {
+  public async update(entry: DTExecutionResult): Promise<void> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -142,9 +148,7 @@ class IndexedDBService implements IIndexedDBService {
    * @param id The ID of the execution history entry
    * @returns Promise that resolves with the execution history entry
    */
-  public async getExecutionHistoryById(
-    id: string,
-  ): Promise<ExecutionHistoryEntry | null> {
+  public async getById(id: string): Promise<DTExecutionResult | null> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -172,9 +176,7 @@ class IndexedDBService implements IIndexedDBService {
    * @param dtName The name of the Digital Twin
    * @returns Promise that resolves with an array of execution history entries
    */
-  public async getExecutionHistoryByDTName(
-    dtName: string,
-  ): Promise<ExecutionHistoryEntry[]> {
+  public async getByDTName(dtName: string): Promise<DTExecutionResult[]> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -202,7 +204,7 @@ class IndexedDBService implements IIndexedDBService {
    * Get all execution history entries
    * @returns Promise that resolves with an array of all execution history entries
    */
-  public async getAllExecutionHistory(): Promise<ExecutionHistoryEntry[]> {
+  public async getAll(): Promise<DTExecutionResult[]> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -230,7 +232,7 @@ class IndexedDBService implements IIndexedDBService {
    * @param id The ID of the execution history entry to delete
    * @returns Promise that resolves when the entry is deleted
    */
-  public async deleteExecutionHistory(id: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -261,7 +263,7 @@ class IndexedDBService implements IIndexedDBService {
    * @param dtName The name of the Digital Twin
    * @returns Promise that resolves when all entries are deleted
    */
-  public async deleteExecutionHistoryByDTName(dtName: string): Promise<void> {
+  public async deleteByDTName(dtName: string): Promise<void> {
     await this.init();
 
     return new Promise((resolve, reject) => {
@@ -295,8 +297,6 @@ class IndexedDBService implements IIndexedDBService {
   }
 }
 
-// Create a singleton instance
 const indexedDBService = new IndexedDBService();
 
-// Export the singleton instance as default
 export default indexedDBService;

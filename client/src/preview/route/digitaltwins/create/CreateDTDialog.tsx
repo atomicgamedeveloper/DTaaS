@@ -27,6 +27,7 @@ import { initDigitalTwin } from 'preview/util/init';
 import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 
 interface CreateDTDialogProps {
   open: boolean;
@@ -59,7 +60,13 @@ const handleSuccess = (
       severity: 'success',
     }),
   );
-  dispatch(setDigitalTwin({ assetName: newDigitalTwinName, digitalTwin }));
+  const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+  dispatch(
+    setDigitalTwin({
+      assetName: newDigitalTwinName,
+      digitalTwin: digitalTwinData,
+    }),
+  );
   dispatch(setShouldFetchDigitalTwins(true));
   dispatch(removeAllCreationFiles());
 

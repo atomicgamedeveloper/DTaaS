@@ -1,9 +1,11 @@
-import * as PipelineHandlers from 'model/backend/gitlab/execution/pipelineHandler';
+import * as PipelineHandlers from 'route/digitaltwins/execution/executionButtonHandlers';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
+  DigitalTwinData,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import snackbarSlice, { SnackbarState } from 'preview/store/snackbar.slice';
 import { formatName } from 'preview/util/digitalTwin';
 
@@ -22,7 +24,15 @@ describe('PipelineHandler Integration Tests', () => {
   const digitalTwin = mockDigitalTwin;
 
   beforeEach(() => {
-    store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
+    // Convert DigitalTwin instance to DigitalTwinData using the adapter
+    const digitalTwinData: DigitalTwinData =
+      extractDataFromDigitalTwin(digitalTwin);
+    store.dispatch(
+      setDigitalTwin({
+        assetName: 'mockedDTName',
+        digitalTwin: digitalTwinData,
+      }),
+    );
   });
 
   afterEach(() => {

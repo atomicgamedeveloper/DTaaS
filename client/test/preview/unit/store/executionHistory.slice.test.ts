@@ -12,6 +12,8 @@ import executionHistoryReducer, {
   clearEntries,
   fetchExecutionHistory,
   removeExecution,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import {
   selectExecutionHistoryEntries,
   selectExecutionHistoryByDTName,
   selectExecutionHistoryById,
@@ -19,9 +21,9 @@ import executionHistoryReducer, {
   selectSelectedExecution,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'store/selectors/executionHistory.selectors';
 import {
-  ExecutionHistoryEntry,
+  DTExecutionResult,
   ExecutionStatus,
 } from 'model/backend/gitlab/types/executionHistory';
 import { configureStore } from '@reduxjs/toolkit';
@@ -31,11 +33,11 @@ import { RootState } from 'store/store';
 jest.mock('database/digitalTwins', () => ({
   __esModule: true,
   default: {
-    getExecutionHistoryByDTName: jest.fn(),
-    deleteExecutionHistory: jest.fn(),
-    getAllExecutionHistory: jest.fn(),
-    addExecutionHistory: jest.fn(),
-    updateExecutionHistory: jest.fn(),
+    getByDTName: jest.fn(),
+    delete: jest.fn(),
+    getAll: jest.fn(),
+    add: jest.fn(),
+    update: jest.fn(),
   },
 }));
 
@@ -153,13 +155,13 @@ describe('executionHistory slice', () => {
       expect(stateEntries.length).toBe(1);
       expect(stateEntries).toEqual(entriesDT2);
       expect(
-        stateEntries.find((e: ExecutionHistoryEntry) => e.id === '1'),
+        stateEntries.find((e: DTExecutionResult) => e.id === '1'),
       ).toBeUndefined();
       expect(
-        stateEntries.find((e: ExecutionHistoryEntry) => e.id === '2'),
+        stateEntries.find((e: DTExecutionResult) => e.id === '2'),
       ).toBeUndefined();
       expect(
-        stateEntries.find((e: ExecutionHistoryEntry) => e.id === '3'),
+        stateEntries.find((e: DTExecutionResult) => e.id === '3'),
       ).toBeDefined();
     });
 
@@ -216,9 +218,7 @@ describe('executionHistory slice', () => {
 
       const updatedEntry = store
         .getState()
-        .executionHistory.entries.find(
-          (e: ExecutionHistoryEntry) => e.id === '1',
-        );
+        .executionHistory.entries.find((e: DTExecutionResult) => e.id === '1');
       expect(updatedEntry?.status).toBe(ExecutionStatus.COMPLETED);
     });
 
@@ -239,9 +239,7 @@ describe('executionHistory slice', () => {
 
       const updatedEntry = store
         .getState()
-        .executionHistory.entries.find(
-          (e: ExecutionHistoryEntry) => e.id === '1',
-        );
+        .executionHistory.entries.find((e: DTExecutionResult) => e.id === '1');
       expect(updatedEntry?.jobLogs).toEqual(logs);
     });
 
@@ -453,9 +451,7 @@ describe('executionHistory slice', () => {
         },
       ];
 
-      mockIndexedDBService.getExecutionHistoryByDTName.mockResolvedValue(
-        mockEntries,
-      );
+      mockIndexedDBService.getByDTName.mockResolvedValue(mockEntries);
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         fetchExecutionHistory('test-dt'),
@@ -469,7 +465,7 @@ describe('executionHistory slice', () => {
 
     it('should handle fetchExecutionHistory error', async () => {
       const errorMessage = 'Database error';
-      mockIndexedDBService.getExecutionHistoryByDTName.mockRejectedValue(
+      mockIndexedDBService.getByDTName.mockRejectedValue(
         new Error(errorMessage),
       );
 
@@ -495,7 +491,7 @@ describe('executionHistory slice', () => {
       };
 
       store.dispatch(addExecutionHistoryEntry(entry));
-      mockIndexedDBService.deleteExecutionHistory.mockResolvedValue(undefined);
+      mockIndexedDBService.delete.mockResolvedValue(undefined);
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         removeExecution('1'),
@@ -518,9 +514,7 @@ describe('executionHistory slice', () => {
 
       store.dispatch(addExecutionHistoryEntry(entry));
       const errorMessage = 'Delete failed';
-      mockIndexedDBService.deleteExecutionHistory.mockRejectedValue(
-        new Error(errorMessage),
-      );
+      mockIndexedDBService.delete.mockRejectedValue(new Error(errorMessage));
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         removeExecution('1'),

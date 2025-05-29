@@ -1,6 +1,6 @@
 import { screen, render, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LogButton from 'preview/components/asset/LogButton';
+import HistoryButton from 'components/asset/HistoryButton';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -9,7 +9,6 @@ import executionHistoryReducer, {
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
-// Create a test store with the executionHistory reducer
 const createTestStore = () =>
   configureStore({
     reducer: combineReducers({
@@ -31,15 +30,15 @@ describe('LogButton Integration Test', () => {
 
   const renderLogButton = (
     setShowLog: jest.Mock = jest.fn(),
-    logButtonDisabled = false,
+    historyButtonDisabled = false,
     testAssetName = assetName,
   ) =>
     act(() => {
       render(
         <Provider store={store}>
-          <LogButton
+          <HistoryButton
             setShowLog={setShowLog}
-            logButtonDisabled={logButtonDisabled}
+            historyButtonDisabled={historyButtonDisabled}
             assetName={testAssetName}
           />
         </Provider>,
@@ -97,7 +96,6 @@ describe('LogButton Integration Test', () => {
   });
 
   it('shows badge with execution count when executions exist', async () => {
-    // Add executions to the store
     await act(async () => {
       store.dispatch(
         addExecutionHistoryEntry({
@@ -127,8 +125,7 @@ describe('LogButton Integration Test', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('enables button when logButtonDisabled is true but executions exist', async () => {
-    // Add an execution to the store
+  it('enables button when historyButtonDisabled is true but executions exist', async () => {
     await act(async () => {
       store.dispatch(
         addExecutionHistoryEntry({

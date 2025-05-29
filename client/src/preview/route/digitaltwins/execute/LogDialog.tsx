@@ -10,7 +10,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { formatName } from 'preview/util/digitalTwin';
 import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
-import ExecutionHistoryList from 'preview/components/execution/ExecutionHistoryList';
+import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 

@@ -60,21 +60,24 @@ test.describe('Digital Twin Log Cleaning', () => {
       page.getByRole('heading', { name: /Hello world Execution History/ }),
     ).toBeVisible();
 
-    // This is more stable than a polling loop
+    // Wait for execution to complete using dynamic waiting instead of fixed timeout
+    await expect(async () => {
+      const completedExecutions = historyDialog
+        .locator('[role="button"][aria-controls*="execution-"]')
+        .filter({ hasText: /Status: Completed|Failed|Canceled/ });
+      const completedCount = await completedExecutions.count();
+      expect(completedCount).toBeGreaterThanOrEqual(1);
+    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
+
     const completedExecution = historyDialog
       .locator('[role="button"][aria-controls*="execution-"]')
       .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
 
-    await completedExecution.waitFor({ timeout: 35000 });
-
     // Expand the accordion to view the logs for the completed execution
     await completedExecution.click();
 
-    // Wait for accordion to expand and show logs
-    await page.waitForTimeout(1000);
-
-    // Verify logs content is loaded and properly cleaned in the expanded accordion
+    // Wait for logs content to be loaded and properly cleaned in the expanded accordion
     const logsPanel = historyDialog
       .locator('[role="region"][aria-labelledby*="execution-"]')
       .filter({ hasText: /Running with gitlab-runner|No logs available/ });

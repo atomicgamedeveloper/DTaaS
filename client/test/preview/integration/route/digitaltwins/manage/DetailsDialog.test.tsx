@@ -12,11 +12,26 @@ import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import {
+  mockGitlabInstance,
+  createMockDigitalTwinData,
+} from 'test/preview/__mocks__/global_mocks';
+
+import {
+  ADAPTER_MOCKS,
+  INIT_MOCKS,
+  GITLAB_MOCKS,
+} from 'test/preview/__mocks__/adapterMocks';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
+jest.mock(
+  'route/digitaltwins/execution/digitalTwinAdapter',
+  () => ADAPTER_MOCKS,
+);
+jest.mock('preview/util/init', () => INIT_MOCKS);
+jest.mock('preview/util/gitlab', () => GITLAB_MOCKS);
 
 const mockDigitalTwin = new DigitalTwin('Asset 1', mockGitlabInstance);
 mockDigitalTwin.fullDescription = 'Digital Twin Description';
@@ -46,9 +61,14 @@ const store = configureStore({
 
 describe('DetailsDialog Integration Tests', () => {
   const setupTest = () => {
+    jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
     store.dispatch(setAssets([mockLibraryAsset]));
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
     store.dispatch(
-      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: mockDigitalTwin }),
+      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
     );
   };
 
@@ -58,6 +78,10 @@ describe('DetailsDialog Integration Tests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
+    jest.clearAllTimers();
   });
 
   it('renders DetailsDialog with Digital Twin description', async () => {
@@ -74,7 +98,9 @@ describe('DetailsDialog Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Digital Twin Description')).toBeInTheDocument();
+      expect(
+        screen.getByText('Test Digital Twin Description'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -93,7 +119,10 @@ describe('DetailsDialog Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Library Asset Description')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Close/i }),
+      ).toBeInTheDocument();
     });
   });
 

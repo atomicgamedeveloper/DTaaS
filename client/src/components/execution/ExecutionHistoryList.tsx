@@ -34,13 +34,16 @@ import {
 import {
   fetchExecutionHistory,
   removeExecution,
+  setSelectedExecutionId,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import {
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
-  setSelectedExecutionId,
   selectSelectedExecution,
-} from 'model/backend/gitlab/state/executionHistory.slice';
-import { selectDigitalTwinByName } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { handleStop } from 'model/backend/gitlab/execution/pipelineHandler';
+} from 'store/selectors/executionHistory.selectors';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
+import { handleStop } from 'route/digitaltwins/execution/executionButtonHandlers';
+import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 
@@ -187,17 +190,22 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
     onViewLogs(executionId);
   };
 
-  const handleStopExecution = (
+  const handleStopExecution = async (
     executionId: string,
     event?: React.MouseEvent,
   ) => {
     if (event) {
-      event.stopPropagation(); // Prevent accordion from toggling
+      event.stopPropagation();
     }
     if (digitalTwin) {
+      const digitalTwinInstance = await createDigitalTwinFromData(
+        digitalTwin,
+        digitalTwin.DTName,
+      );
+
       // Dummy function since we don't need to change button text
       const setButtonText = () => {};
-      handleStop(digitalTwin, setButtonText, dispatch, executionId);
+      handleStop(digitalTwinInstance, setButtonText, dispatch, executionId);
     }
   };
 

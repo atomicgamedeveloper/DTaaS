@@ -72,10 +72,10 @@ describe('DigitalTwin', () => {
 
     jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 
-    mockedIndexedDBService.addExecutionHistory.mockResolvedValue(undefined);
-    mockedIndexedDBService.getExecutionHistoryByDTName.mockResolvedValue([]);
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(null);
-    mockedIndexedDBService.updateExecutionHistory.mockResolvedValue(undefined);
+    mockedIndexedDBService.add.mockResolvedValue('mock-id');
+    mockedIndexedDBService.getByDTName.mockResolvedValue([]);
+    mockedIndexedDBService.getById.mockResolvedValue(null);
+    mockedIndexedDBService.update.mockResolvedValue(undefined);
   });
 
   it('should get description', async () => {
@@ -351,74 +351,91 @@ describe('DigitalTwin', () => {
 
   it('should get execution history for a digital twin', async () => {
     const mockExecutions = [
-      { id: 'exec1', dtName: 'test-DTName', status: ExecutionStatus.COMPLETED },
-      { id: 'exec2', dtName: 'test-DTName', status: ExecutionStatus.RUNNING },
+      {
+        id: 'exec1',
+        dtName: 'test-DTName',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.COMPLETED,
+        jobLogs: [],
+      },
+      {
+        id: 'exec2',
+        dtName: 'test-DTName',
+        pipelineId: 124,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      },
     ];
-    mockedIndexedDBService.getExecutionHistoryByDTName.mockResolvedValue(
-      mockExecutions,
-    );
+    mockedIndexedDBService.getByDTName.mockResolvedValue(mockExecutions);
 
     const result = await dt.getExecutionHistory();
 
     expect(result).toEqual(mockExecutions);
-    expect(
-      mockedIndexedDBService.getExecutionHistoryByDTName,
-    ).toHaveBeenCalledWith('test-DTName');
+    expect(mockedIndexedDBService.getByDTName).toHaveBeenCalledWith(
+      'test-DTName',
+    );
   });
 
   it('should get execution history by ID', async () => {
     const mockExecution = {
       id: 'exec1',
       dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
       status: ExecutionStatus.COMPLETED,
+      jobLogs: [],
     };
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
 
     const result = await dt.getExecutionHistoryById('exec1');
 
     expect(result).toEqual(mockExecution);
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
   });
 
   it('should return undefined when execution history by ID is not found', async () => {
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(null);
+    mockedIndexedDBService.getById.mockResolvedValue(null);
 
     const result = await dt.getExecutionHistoryById('exec1');
 
     expect(result).toBeUndefined();
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
   });
 
   it('should update execution logs', async () => {
-    const mockExecution = { id: 'exec1', dtName: 'test-DTName', jobLogs: [] };
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
     const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
 
     await dt.updateExecutionLogs('exec1', newJobLogs);
 
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
-    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
       ...mockExecution,
       jobLogs: newJobLogs,
     });
   });
 
   it('should update instance job logs when executionId matches currentExecutionId', async () => {
-    const mockExecution = { id: 'exec1', dtName: 'test-DTName', jobLogs: [] };
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
     const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
 
     dt.currentExecutionId = 'exec1';
     await dt.updateExecutionLogs('exec1', newJobLogs);
@@ -430,18 +447,17 @@ describe('DigitalTwin', () => {
     const mockExecution = {
       id: 'exec1',
       dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
       status: ExecutionStatus.RUNNING,
+      jobLogs: [],
     };
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
 
     await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
 
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
-    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
       ...mockExecution,
       status: ExecutionStatus.COMPLETED,
     });
@@ -451,11 +467,12 @@ describe('DigitalTwin', () => {
     const mockExecution = {
       id: 'exec1',
       dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
       status: ExecutionStatus.RUNNING,
+      jobLogs: [],
     };
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
 
     dt.currentExecutionId = 'exec1';
     await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
@@ -468,20 +485,18 @@ describe('DigitalTwin', () => {
       id: 'exec1',
       dtName: 'test-DTName',
       pipelineId: 123,
+      timestamp: Date.now(),
       status: ExecutionStatus.RUNNING,
+      jobLogs: [],
     };
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
     (mockApi.Pipelines.cancel as jest.Mock).mockResolvedValue({});
 
     await dt.stop(1, 'parentPipeline', 'exec1');
 
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
     expect(mockApi.Pipelines.cancel).toHaveBeenCalledWith(1, 123);
-    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
       ...mockExecution,
       status: ExecutionStatus.CANCELED,
     });
@@ -492,20 +507,18 @@ describe('DigitalTwin', () => {
       id: 'exec1',
       dtName: 'test-DTName',
       pipelineId: 123,
+      timestamp: Date.now(),
       status: ExecutionStatus.RUNNING,
+      jobLogs: [],
     };
-    mockedIndexedDBService.getExecutionHistoryById.mockResolvedValue(
-      mockExecution,
-    );
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
     (mockApi.Pipelines.cancel as jest.Mock).mockResolvedValue({});
 
     await dt.stop(1, 'childPipeline', 'exec1');
 
-    expect(mockedIndexedDBService.getExecutionHistoryById).toHaveBeenCalledWith(
-      'exec1',
-    );
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
     expect(mockApi.Pipelines.cancel).toHaveBeenCalledWith(1, 124); // pipelineId + 1
-    expect(mockedIndexedDBService.updateExecutionHistory).toHaveBeenCalledWith({
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
       ...mockExecution,
       status: ExecutionStatus.CANCELED,
     });

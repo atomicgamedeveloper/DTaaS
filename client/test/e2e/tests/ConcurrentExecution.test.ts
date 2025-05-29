@@ -67,23 +67,24 @@ test.describe('Concurrent Execution', () => {
     await expect(
       page.getByRole('heading', { name: /Hello world Execution History/ }),
     ).toBeVisible();
-
-    // Verify that there are at least 2 executions in the history (accordion items)
     const executionAccordions = historyDialog.locator(
       '[role="button"][aria-controls*="execution-"]',
     );
-    const count = await executionAccordions.count();
-    expect(count).toBeGreaterThanOrEqual(2);
+    await expect(async () => {
+      const count = await executionAccordions.count();
+      expect(count).toBeGreaterThanOrEqual(2);
+    }).toPass({ timeout: 10000 });
 
     // Wait for at least one execution to complete
     // This may take some time as it depends on the GitLab pipeline
-
-    const completedSelector = historyDialog
-      .locator('[role="button"][aria-controls*="execution-"]')
-      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
-      .first();
-
-    await completedSelector.waitFor({ timeout: 35000 });
+    // Use dynamic waiting instead of fixed timeout
+    await expect(async () => {
+      const completedExecutions = historyDialog
+        .locator('[role="button"][aria-controls*="execution-"]')
+        .filter({ hasText: /Status: Completed|Failed|Canceled/ });
+      const completedCount = await completedExecutions.count();
+      expect(completedCount).toBeGreaterThanOrEqual(1);
+    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
 
     // For the first completed execution, expand the accordion to view the logs
     const firstCompletedExecution = historyDialog
@@ -93,10 +94,7 @@ test.describe('Concurrent Execution', () => {
 
     await firstCompletedExecution.click();
 
-    // Wait for accordion to expand and show logs
-    await page.waitForTimeout(1000);
-
-    // Verify logs content is loaded
+    // Wait for accordion to expand and logs to be visible
     const logsContent = historyDialog
       .locator('[role="region"][aria-labelledby*="execution-"]')
       .filter({ hasText: /Running with gitlab-runner|No logs available/ });
@@ -114,10 +112,7 @@ test.describe('Concurrent Execution', () => {
     if ((await secondExecution.count()) > 0) {
       await secondExecution.click();
 
-      // Wait for accordion to expand
-      await page.waitForTimeout(1000);
-
-      // Verify logs for second execution
+      // Verify logs for second execution (wait for them to be visible)
       const secondLogsContent = historyDialog
         .locator('[role="region"][aria-labelledby*="execution-"]')
         .filter({ hasText: /Running with gitlab-runner|No logs available/ });
@@ -232,13 +227,19 @@ test.describe('Concurrent Execution', () => {
     const postReloadCount = await postReloadExecutionItems.count();
     expect(postReloadCount).toBeGreaterThanOrEqual(1);
 
-    // Wait for the execution to complete
+    // Wait for the execution to complete using dynamic waiting
+    await expect(async () => {
+      const completedExecutions = postReloadHistoryDialog
+        .locator('[role="button"][aria-controls*="execution-"]')
+        .filter({ hasText: /Status: Completed|Failed|Canceled/ });
+      const completedCount = await completedExecutions.count();
+      expect(completedCount).toBeGreaterThanOrEqual(1);
+    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
+
     const completedSelector = postReloadHistoryDialog
       .locator('[role="button"][aria-controls*="execution-"]')
       .filter({ hasText: /Status: Completed|Failed|Canceled/ })
       .first();
-
-    await completedSelector.waitFor({ timeout: 35000 });
 
     // Clean up by deleting the execution
     const deleteButton = completedSelector.locator('[aria-label="delete"]');

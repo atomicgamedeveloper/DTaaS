@@ -11,26 +11,45 @@ import digitalTwinReducer, {
 import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import {
-  mockGitlabInstance,
   mockLibraryAsset,
+  createMockDigitalTwinData,
 } from 'test/preview/__mocks__/global_mocks';
 import fileSlice, {
   FileState,
   addOrUpdateFile,
 } from 'preview/store/file.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
+import '@testing-library/jest-dom';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
 
-jest.mock('preview/util/init', () => ({
-  fetchDigitalTwins: jest.fn(),
-}));
+jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.ADAPTER_MOCKS;
+});
+jest.mock('preview/util/init', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.INIT_MOCKS;
+});
+jest.mock('preview/util/gitlab', () => {
+  const adapterMocks = jest.requireActual(
+    'test/preview/__mocks__/adapterMocks',
+  );
+  return adapterMocks.GITLAB_MOCKS;
+});
 
 jest.useFakeTimers();
+
+beforeAll(() => {});
+
+afterAll(() => {});
 
 const asset1 = mockLibraryAsset;
 asset1.name = 'Asset 1';
@@ -64,12 +83,19 @@ const store = configureStore({
 });
 
 describe('AssetBoard Integration Tests', () => {
+  jest.setTimeout(30000);
+
   const setupTest = () => {
+    jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
     store.dispatch(setAssets(preSetItems));
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
     store.dispatch(
       setDigitalTwin({
         assetName: 'Asset 1',
-        digitalTwin: new DigitalTwin('Asset 1', mockGitlabInstance),
+        digitalTwin: digitalTwinData,
       }),
     );
     store.dispatch(addOrUpdateFile(files[0]));
@@ -82,6 +108,10 @@ describe('AssetBoard Integration Tests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
+    jest.clearAllTimers();
   });
 
   it('renders AssetBoard with AssetCardExecute', async () => {
@@ -142,7 +172,9 @@ describe('AssetBoard Integration Tests', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText('Asset 1')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Details/i }),
+      ).not.toBeInTheDocument();
     });
   });
 });

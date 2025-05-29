@@ -1,6 +1,10 @@
-import * as PipelineUtils from 'model/backend/gitlab/execution/pipelineUtils';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
 import cleanLog from 'model/backend/gitlab/cleanLog';
-import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
+import {
+  setDigitalTwin,
+  DigitalTwinData,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
@@ -11,7 +15,15 @@ describe('PipelineUtils', () => {
 
   beforeEach(() => {
     digitalTwin = new DigitalTwin('mockedDTName', mockGitlabInstance);
-    store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
+
+    const digitalTwinData: DigitalTwinData =
+      extractDataFromDigitalTwin(digitalTwin);
+    store.dispatch(
+      setDigitalTwin({
+        assetName: 'mockedDTName',
+        digitalTwin: digitalTwinData,
+      }),
+    );
 
     digitalTwin.execute = jest.fn().mockImplementation(async () => {
       digitalTwin.lastExecutionStatus = 'success';
