@@ -93,15 +93,11 @@ export const updatePipelineStateOnStop = (
 };
 
 export const fetchJobLogs = async (
-  gitlabInstance: BackendInterface,
+  backend: BackendInterface,
   pipelineId: number,
 ): Promise<Array<{ jobName: string; log: string }>> => {
-  const { projectId } = gitlabInstance;
-  if (!projectId) {
-    return [];
-  }
-
-  const jobs = await gitlabInstance.getPipelineJobs(projectId, pipelineId);
+  const projectId = backend.getProjectId();
+  const jobs = await backend.getPipelineJobs(projectId, pipelineId);
 
   const logPromises = jobs.map(async (job) => {
     if (!job || typeof job.id === 'undefined') {
@@ -109,7 +105,7 @@ export const fetchJobLogs = async (
     }
 
     try {
-      let log = await gitlabInstance.getJobTrace(projectId, job.id);
+      let log = await backend.getJobTrace(projectId, job.id);
 
       if (typeof log === 'string') {
         log = cleanLog(log);
