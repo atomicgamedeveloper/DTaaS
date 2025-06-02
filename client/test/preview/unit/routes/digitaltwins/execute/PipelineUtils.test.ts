@@ -5,7 +5,6 @@ import {
 } from 'preview/route/digitaltwins/execute/pipelineUtils';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { JobSchema } from '@gitbeaker/rest';
-/* import GitlabInstance from 'model/backend/gitlab/gitlab'; */
 
 describe('PipelineUtils', () => {
   const digitalTwin = mockDigitalTwin;
