@@ -7,6 +7,7 @@ import {
 } from 'preview/route/digitaltwins/execute/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
+import { ProjectId } from 'model/backend/gitlab/interfaces';
 
 interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;
@@ -53,7 +54,7 @@ export const checkParentPipelineStatus = async ({
 }: PipelineStatusParams & {
   startTime: number;
 }) => {
-  const projectId: number = digitalTwin.backend.getProjectId();
+  const projectId: ProjectId = digitalTwin.backend.getProjectId();
   const pipelineStatus = await digitalTwin.backend.getPipelineStatus(
     projectId,
     digitalTwin.pipelineId!,
@@ -134,7 +135,7 @@ export const checkChildPipelineStatus = async ({
   startTime: number;
 }) => {
   const pipelineId = digitalTwin.pipelineId! + 1;
-  const projectId: number = digitalTwin.backend.getProjectId();
+  const projectId: ProjectId = digitalTwin.backend.getProjectId();
   const pipelineStatus = await digitalTwin.backend.getPipelineStatus(
     projectId,
     pipelineId,
