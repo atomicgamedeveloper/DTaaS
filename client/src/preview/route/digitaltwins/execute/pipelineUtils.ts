@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import { BackendInterface } from 'model/backend/gitlab/interfaces';
+import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setJobLogs,
@@ -100,7 +100,9 @@ export const fetchJobLogs = async (
   const jobs = await backend.getPipelineJobs(projectId, pipelineId);
 
   const logPromises = jobs.map(async (job) => {
-    if (!job || typeof job.id === 'undefined') {
+    const jobId = job?.id;
+
+    if (typeof jobId === 'undefined') {
       return { jobName: 'Unknown', log: 'Job ID not available' };
     }
 

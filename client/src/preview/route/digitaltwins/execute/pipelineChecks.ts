@@ -7,7 +7,7 @@ import {
 } from 'preview/route/digitaltwins/execute/pipelineUtils';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import { MAX_EXECUTION_TIME } from 'model/backend/gitlab/constants';
-import { ProjectId } from 'model/backend/gitlab/interfaces';
+import { ProjectId } from 'model/backend/gitlab/UtilityInterfaces';
 
 interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;
