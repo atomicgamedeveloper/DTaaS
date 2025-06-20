@@ -52,3 +52,5 @@ export const getRunnerTag = (): string => store.getState().settings.RUNNER_TAG;
 
 // route/digitaltwins/execute/pipelineChecks.ts
 export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
+
+export const PIPELINE_POLL_INTERVAL = 5000; // 5 seconds - for pipeline status checks
