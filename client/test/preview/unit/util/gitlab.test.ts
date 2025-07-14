@@ -8,7 +8,9 @@ import {
 
 // Mock the constants module
 jest.mock('model/backend/gitlab/constants', () => {
-  const createConstantsMock = jest.requireActual('../../../preview/__mocks__/constants.mock').default;
+  const createConstantsMock = jest.requireActual(
+    '../../../preview/__mocks__/constants.mock',
+  ).default;
   return createConstantsMock();
 });
 jest.mock('@gitbeaker/rest');

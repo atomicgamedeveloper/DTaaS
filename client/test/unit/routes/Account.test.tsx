@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Account from 'route/auth/Account';
+import Account from 'route/account/Account';
 import { render, screen } from '@testing-library/react';
 import { useAuth } from 'react-oidc-context';
 import { mockUser } from 'test/__mocks__/global_mocks';
@@ -7,6 +7,7 @@ import {
   testAccountSettings,
   testStaticAccountProfile,
 } from 'test/unit/unit.testUtil';
+import * as reactRedux from 'react-redux';
 
 jest.mock('react-oidc-context');
 
@@ -20,6 +21,14 @@ describe('AccountTabs', () => {
     render(<Account />);
   }
 
+  beforeEach(() => {
+    jest.spyOn(reactRedux, 'useSelector').mockReturnValue({
+      GROUP_NAME: 'mock-group',
+      DT_DIRECTORY: 'mock-dir',
+      COMMON_LIBRARY_PROJECT_ID: 123,
+      RUNNER_TAG: 'linux',
+    });
+  });
   afterEach(() => {
     jest.clearAllMocks();
     accountMockUser = mockUser;

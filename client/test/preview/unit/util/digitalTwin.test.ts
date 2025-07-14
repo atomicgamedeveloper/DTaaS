@@ -7,7 +7,9 @@ import * as envUtil from 'util/envUtil';
 // Mock the constants module
 jest.mock('model/backend/gitlab/constants', () => {
   // Import the mock factory using import-like syntax to maintain ESLint compliance
-  const { default: createConstantsMock } = jest.requireActual('../../../preview/__mocks__/constants.mock');
+  const { default: createConstantsMock } = jest.requireActual(
+    '../../../preview/__mocks__/constants.mock',
+  );
   return createConstantsMock();
 });
 
@@ -66,7 +68,9 @@ describe('DigitalTwin', () => {
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
 
     // Re-apply the mock for getAuthority - without using require()
-    (envUtil.getAuthority as jest.Mock).mockReturnValue('https://example.com/AUTHORITY');
+    (envUtil.getAuthority as jest.Mock).mockReturnValue(
+      'https://example.com/AUTHORITY',
+    );
 
     // Mock sessionStorage for tests that need it
     Object.defineProperty(window, 'sessionStorage', {
