@@ -60,9 +60,11 @@ function ProfileTab() {
       <h2>Profile</h2>
       <img src={pfp} alt="Avatar" data-testid="profile-picture" />
       <p>
-        The username is <b>{name}</b>. See more details on{' '}
+        The username is <b>{name}</b>. You can edit your profile details on{' '}
         <b>
-          <a href={profileUrl}>SSO OAuth Provider.</a>
+          <a href={profileUrl} target="_blank" rel="noreferrer">
+            SSO OAuth Provider.
+          </a>
         </b>
       </p>
       {groupParagraph}

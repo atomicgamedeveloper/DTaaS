@@ -23,7 +23,6 @@ import {
   Stack,
 } from '@mui/material';
 import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
-import { useAuth } from 'react-oidc-context';
 
 const SettingsForm: React.FC = () => {
   const dispatch = useDispatch();
@@ -109,27 +108,8 @@ const SettingsForm: React.FC = () => {
     setShowNotification(true);
   };
 
-  const { user } = useAuth();
-  const profileUrl = user?.profile.profile;
-
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      {/* Account Profile Section */}
-      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Account Profile
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Typography variant="body1" paragraph>
-          You can edit your profile details on{' '}
-          <b>
-            <a href={profileUrl} target="_blank" rel="noreferrer">
-              SSO OAuth Provider
-            </a>
-          </b>
-        </Typography>
-      </Paper>
-
       {/* Application Settings Section */}
       <Paper elevation={2} sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>

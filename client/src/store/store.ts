@@ -54,7 +54,8 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['digitalTwin/setDigitalTwin'],
+        ignoredActions: ['digitalTwin/setDigitalTwin', 'assets/setAsset'],
+        ignoredPaths: ['digitalTwin.digitalTwin', 'assets.items'], // Suppress non-serializable check for GitlabAPI
       },
     }).concat(settingsPersistMiddleware),
 });
