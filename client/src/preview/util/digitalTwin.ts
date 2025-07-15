@@ -90,7 +90,7 @@ class DigitalTwin {
     const variables = { DTName: this.DTName, RunnerTag: runnerTag };
     return this.gitlabInstance.api.PipelineTriggerTokens.trigger(
       this.gitlabInstance.projectId!,
-      'main',
+      'master',
       this.gitlabInstance.triggerToken!,
       { variables },
     );

@@ -132,7 +132,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
-      'main',
+      'master',
     );
   });
 
@@ -148,7 +148,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
-      'main',
+      'master',
     );
   });
 
@@ -161,7 +161,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.edit).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
-      'main',
+      'master',
       'Test file content',
       'Update test-file.md content',
     );
@@ -179,7 +179,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.edit).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
-      'main',
+      'master',
       'Lifecycle file content',
       'Update lifecycle-file content',
     );

@@ -49,7 +49,7 @@ class FileHandler implements IFile {
     await this.gitlabInstance.api.RepositoryFiles.create(
       projectToUse!,
       `${filePath}/${file.name}`,
-      'main',
+      'master',
       file.content,
       commitMessage,
     );
@@ -63,7 +63,7 @@ class FileHandler implements IFile {
     await this.gitlabInstance.api.RepositoryFiles.edit(
       this.gitlabInstance.projectId!,
       filePath,
-      'main',
+      'master',
       updatedContent,
       commitMessage,
     );
@@ -73,7 +73,7 @@ class FileHandler implements IFile {
     await this.gitlabInstance.api.RepositoryFiles.remove(
       this.gitlabInstance.projectId!,
       digitalTwinPath,
-      'main',
+      'master',
       `Removing ${this.name} digital twin`,
     );
   }
@@ -87,7 +87,7 @@ class FileHandler implements IFile {
     const response = await this.gitlabInstance.api.RepositoryFiles.show(
       projectToUse!,
       filePath,
-      'main',
+      'master',
     );
     return atob(response.content);
   }

@@ -47,7 +47,7 @@ describe('FileHandler', () => {
     expect(mockApi.RepositoryFiles.create).toHaveBeenCalledWith(
       1,
       'path/file',
-      'main',
+      'master',
       'content',
       'commit message',
     );
@@ -58,7 +58,7 @@ describe('FileHandler', () => {
     expect(mockApi.RepositoryFiles.edit).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      'master',
       'updated content',
       'commit message',
     );
@@ -69,7 +69,7 @@ describe('FileHandler', () => {
     expect(mockApi.RepositoryFiles.remove).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      'master',
       'Removing DTName digital twin',
     );
   });
@@ -83,7 +83,7 @@ describe('FileHandler', () => {
     expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      'master',
     );
   });
 

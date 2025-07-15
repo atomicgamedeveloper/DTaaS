@@ -97,7 +97,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/description.md',
-      'main',
+      'master',
     );
   });
 
@@ -122,7 +122,7 @@ describe('DigitalTwin', () => {
         if (
           projectId === 1 &&
           filePath === 'digital_twins/test-DTName/README.md' &&
-          ref === 'main'
+          ref === 'master'
         ) {
           return { content: mockContent };
         }
@@ -139,7 +139,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/README.md',
-      'main',
+      'master',
     );
   });
 
@@ -175,7 +175,7 @@ describe('DigitalTwin', () => {
     expect(dt.lastExecutionStatus).toBe('success');
     expect(mockApi.PipelineTriggerTokens.trigger).toHaveBeenCalledWith(
       1,
-      'main',
+      'master',
       'test-token',
       { variables: { DTName: 'test-DTName', RunnerTag: getRunnerTag() } },
     );
@@ -284,7 +284,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.RepositoryFiles.remove).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName',
-      'main',
+      'master',
       'Removing test-DTName digital twin',
     );
   });
