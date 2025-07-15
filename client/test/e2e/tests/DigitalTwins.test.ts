@@ -22,8 +22,10 @@ test.describe('Digital Twin Execution Log Cleaning', () => {
     await page.waitForLoadState('networkidle');
 
     const helloWorldCard = page
-      .locator('.MuiPaper-root:has-text("Hello world")')
+      .locator('.MuiPaper-root')
+      .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
+
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
     const startButton = helloWorldCard.locator('button:has-text("Start")');
