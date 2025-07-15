@@ -30,8 +30,11 @@ test.describe('Digital Twin Log Cleaning', () => {
   test('Execute Digital Twin and verify log cleaning', async ({ page }) => {
     // Find the Hello world Digital Twin card
     const helloWorldCard = page
-      .locator('.MuiPaper-root:has-text("Hello world")')
+      .locator('.MuiPaper-root')
+      .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
+
+
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
     // Get the Start button

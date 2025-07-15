@@ -32,7 +32,8 @@ test.describe('Concurrent Execution', () => {
   }) => {
     // Find the Hello world Digital Twin card
     const helloWorldCard = page
-      .locator('.MuiPaper-root:has-text("Hello world")')
+      .locator('.MuiPaper-root')
+      .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
@@ -178,8 +179,9 @@ test.describe('Concurrent Execution', () => {
     page,
   }) => {
     // Find the Hello world Digital Twin card
-    const helloWorldCard = page
-      .locator('.MuiPaper-root:has-text("Hello world")')
+    let helloWorldCard = page
+      .locator('.MuiPaper-root')
+      .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
@@ -207,6 +209,10 @@ test.describe('Concurrent Execution', () => {
     await page.getByRole('tab', { name: 'Execute' }).click();
 
     // Wait for the Digital Twin card to be visible
+    helloWorldCard = page
+    .locator('.MuiPaper-root')
+    .filter({ has: page.getByText('Hello world', { exact: true }) })
+    .first();
     await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
 
     // Click the History button
@@ -224,6 +230,7 @@ test.describe('Concurrent Execution', () => {
     const postReloadExecutionItems = postReloadHistoryDialog.locator(
       '[role="button"][aria-controls*="execution-"]',
     );
+    await expect(postReloadExecutionItems.first()).toBeVisible({ timeout: 10000 });
     const postReloadCount = await postReloadExecutionItems.count();
     expect(postReloadCount).toBeGreaterThanOrEqual(1);
 
