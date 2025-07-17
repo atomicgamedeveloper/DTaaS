@@ -13,12 +13,14 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LibraryConfigFile,
   removeAllModifiedLibraryFiles,
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
 import {
+  LibraryConfigFile,
   FileState,
+} from 'model/backend/gitlab/UtilityInterfaces';
+import {
   removeAllModifiedFiles,
   selectModifiedFiles,
 } from '../../../store/file.slice';

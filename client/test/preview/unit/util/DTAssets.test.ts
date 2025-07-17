@@ -1,8 +1,6 @@
 import DTAssets from 'preview/util/DTAssets';
-import {
-  mockFileHandler,
-  mockGitlabInstance,
-} from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import { mockFileHandler } from 'test/preview/__mocks__/global_mocks';
 
 jest.mock('preview/util/fileHandler', () => ({
   default: jest.fn().mockImplementation(() => mockFileHandler),
@@ -30,7 +28,7 @@ describe('DTAssets', () => {
   const commitMessage = `Update ${fileName} content`;
 
   beforeEach(() => {
-    dtAssets = new DTAssets('DTName', mockGitlabInstance);
+    dtAssets = new DTAssets('DTName', mockBackendInstance);
     dtAssets.fileHandler = mockFileHandler;
   });
 

@@ -1,29 +1,15 @@
-import GitlabInstance from 'preview/util/gitlab';
+import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin from 'preview/util/digitalTwin';
+import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
-const mockApi = {
-  RepositoryFiles: {
-    show: jest.fn(),
-    remove: jest.fn(),
-    edit: jest.fn(),
-  },
-  Repositories: {
-    allRepositoryTrees: jest.fn(),
-  },
-  PipelineTriggerTokens: {
-    trigger: jest.fn(),
-  },
-  Pipelines: {
-    cancel: jest.fn(),
-  },
-};
+const mockApi = mockBackendAPI;
 
 const mockGitlabInstance = {
   api: mockApi as unknown as GitlabInstance['api'],
-  projectId: 1,
   triggerToken: 'test-token',
   logs: [] as { jobName: string; log: string }[],
-  getProjectId: jest.fn(),
+  getProjectId: jest.fn().mockReturnValue(1),
+  getCommonProjectId: jest.fn().mockReturnValue(2),
   getTriggerToken: jest.fn(),
 } as unknown as GitlabInstance;
 
@@ -42,7 +28,7 @@ describe('DigitalTwin', () => {
     fetchMethod: () => Promise<void>,
     resultArray: string[],
   ) => {
-    (mockApi.Repositories.allRepositoryTrees as jest.Mock).mockRejectedValue(
+    (mockApi.listRepositoryFiles as jest.Mock).mockRejectedValue(
       new Error(errorMessage),
     );
     await fetchMethod();
@@ -57,19 +43,20 @@ describe('DigitalTwin', () => {
       ? 'digital_twins/test-DTName/lifecycle'
       : 'digital_twins/test-DTName';
 
-    expect(mockApi.Repositories.allRepositoryTrees).toHaveBeenCalledWith(1, {
+    expect(mockApi.listRepositoryFiles).toHaveBeenCalledWith(
+      1,
       path,
+      undefined,
       recursive,
-    });
+    );
   };
 
   beforeEach(() => {
-    mockGitlabInstance.projectId = 1;
+    mockGitlabInstance.getProjectId = jest.fn().mockReturnValue(1);
+    mockGitlabInstance.getCommonProjectId = jest.fn().mockReturnValue(2);
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
 
-    (mockApi.Repositories.allRepositoryTrees as jest.Mock).mockResolvedValue(
-      mockResponse,
-    );
+    (mockApi.listRepositoryFiles as jest.Mock).mockResolvedValue(mockResponse);
   });
 
   it('should get description files', async () => {
@@ -121,15 +108,15 @@ describe('DigitalTwin', () => {
   });
 
   it('should get file content for a file with an extension', async () => {
-    const mockContent = btoa('Test file content');
-    (mockApi.RepositoryFiles.show as jest.Mock).mockResolvedValue({
+    const mockContent = 'Test file content';
+    (mockApi.getRepositoryFileContent as jest.Mock).mockResolvedValue({
       content: mockContent,
     });
 
     const content = await dt.DTAssets.getFileContent('test-file.md');
 
     expect(content).toBe('Test file content');
-    expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
+    expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
       'main',
@@ -137,15 +124,15 @@ describe('DigitalTwin', () => {
   });
 
   it('should get file content for a file without an extension (lifecycle folder)', async () => {
-    const mockContent = btoa('Test lifecycle content');
-    (mockApi.RepositoryFiles.show as jest.Mock).mockResolvedValue({
+    const mockContent = 'Test lifecycle content';
+    (mockApi.getRepositoryFileContent as jest.Mock).mockResolvedValue({
       content: mockContent,
     });
 
     const content = await dt.DTAssets.getFileContent('lifecycle-file');
 
     expect(content).toBe('Test lifecycle content');
-    expect(mockApi.RepositoryFiles.show).toHaveBeenCalledWith(
+    expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
       'main',
@@ -154,11 +141,11 @@ describe('DigitalTwin', () => {
 
   it('should update file content for a file with an extension', async () => {
     const mockEdit = jest.fn();
-    mockApi.RepositoryFiles.edit = mockEdit;
+    mockApi.editRepositoryFile = mockEdit;
 
     await dt.DTAssets.updateFileContent('test-file.md', 'Test file content');
 
-    expect(mockApi.RepositoryFiles.edit).toHaveBeenCalledWith(
+    expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
       'main',
@@ -169,14 +156,14 @@ describe('DigitalTwin', () => {
 
   it('should update file content for a file without an extension (lifecycle folder)', async () => {
     const mockEdit = jest.fn();
-    mockApi.RepositoryFiles.edit = mockEdit;
+    mockApi.editRepositoryFile = mockEdit;
 
     await dt.DTAssets.updateFileContent(
       'lifecycle-file',
       'Lifecycle file content',
     );
 
-    expect(mockApi.RepositoryFiles.edit).toHaveBeenCalledWith(
+    expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
       'main',

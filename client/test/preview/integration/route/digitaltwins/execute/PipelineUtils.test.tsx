@@ -1,21 +1,22 @@
 import * as PipelineUtils from 'preview/route/digitaltwins/execute/pipelineUtils';
-import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import { setDigitalTwin } from 'preview/store/digitalTwin.slice';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'preview/util/digitalTwin';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
 describe('PipelineUtils', () => {
   let digitalTwin: DigitalTwin;
 
   beforeEach(() => {
-    digitalTwin = new DigitalTwin('mockedDTName', mockGitlabInstance);
+    (mockBackendInstance.getProjectId as jest.Mock).mockReturnValue(1234);
+    digitalTwin = new DigitalTwin('mockedDTName', mockBackendInstance);
     store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
 
     digitalTwin.execute = jest.fn().mockImplementation(async () => {
-      digitalTwin.lastExecutionStatus = 'success';
+      digitalTwin.lastExecutionStatus = ExecutionStatus.SUCCESS;
       return Promise.resolve();
     });
   });
@@ -56,25 +57,15 @@ describe('PipelineUtils', () => {
   it('fetches job logs', async () => {
     const mockJob = { id: 1, name: 'job1' } as JobSchema;
 
-    const mockGetPipelineJobs = jest.spyOn(
-      mockGitlabInstance,
-      'getPipelineJobs',
-    );
-    mockGetPipelineJobs.mockResolvedValue([mockJob]);
+    (mockBackendInstance.getPipelineJobs as jest.Mock).mockResolvedValue([
+      mockJob,
+    ]);
+    (mockBackendInstance.getJobTrace as jest.Mock).mockResolvedValue('log1');
 
-    const mockGetJobTrace = jest.spyOn(mockGitlabInstance, 'getJobTrace');
-    mockGetJobTrace.mockResolvedValue('log1');
+    const result = await PipelineUtils.fetchJobLogs(mockBackendInstance, 1);
 
-    const result = await fetchJobLogs(mockGitlabInstance, 1);
-
-    expect(mockGetPipelineJobs).toHaveBeenCalledWith(
-      mockGitlabInstance.projectId,
-      1,
-    );
-    expect(mockGetJobTrace).toHaveBeenCalledWith(
-      mockGitlabInstance.projectId,
-      1,
-    );
+    expect(mockBackendInstance.getPipelineJobs).toHaveBeenCalledWith(1234, 1);
+    expect(mockBackendInstance.getJobTrace).toHaveBeenCalledWith(1234, 1);
     expect(result).toEqual([{ jobName: 'job1', log: 'log1' }]);
   });
 
@@ -85,16 +76,13 @@ describe('PipelineUtils', () => {
 
     const mockJob = { id: 123, name: 'test-job' } as JobSchema;
 
-    const mockGetPipelineJobs = jest.spyOn(
-      mockGitlabInstance,
-      'getPipelineJobs',
-    );
-    mockGetPipelineJobs.mockResolvedValue([mockJob]);
+    (mockBackendInstance.getPipelineJobs as jest.Mock).mockResolvedValue([
+      mockJob,
+    ]);
 
-    const mockGetJobTrace = jest.spyOn(mockGitlabInstance, 'getJobTrace');
-    mockGetJobTrace.mockResolvedValue(rawLog);
+    (mockBackendInstance.getJobTrace as jest.Mock).mockResolvedValue(rawLog);
 
-    const logs = await fetchJobLogs(mockGitlabInstance, 456);
+    const logs = await PipelineUtils.fetchJobLogs(mockBackendInstance, 456);
 
     expect(logs).toHaveLength(1);
     expect(logs[0].jobName).toBe('test-job');

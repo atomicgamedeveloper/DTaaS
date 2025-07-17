@@ -1,25 +1,20 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
+import { AssetTypes } from 'model/backend/gitlab/constants';
 import { getAuthority } from 'util/envUtil';
-import GitlabInstance from './gitlab';
 import DigitalTwin from './digitalTwin';
-import { setAsset, setAssets } from '../store/assets.slice';
+import { setAsset } from '../store/assets.slice';
 import { setDigitalTwin } from '../store/digitalTwin.slice';
-import LibraryAsset from './libraryAsset';
+import LibraryAsset, { getLibrarySubfolders } from './libraryAsset';
+import { getDTSubfolders } from './digitalTwinUtils';
+import { createGitlabInstance } from '../../model/backend/gitlab/gitlabFactory';
+import LibraryManager from './libraryManager';
 
-const initialGitlabInstance = new GitlabInstance(
+const initialGitlabInstance = createGitlabInstance(
   sessionStorage.getItem('username') || '',
-  getAuthority(),
   sessionStorage.getItem('access_token') || '',
+  getAuthority(),
 );
-
-function createGitlabInstance(): GitlabInstance {
-  const username = sessionStorage.getItem('username') || '';
-  const authority = getAuthority();
-  const accessToken = sessionStorage.getItem('access_token') || '';
-
-  return new GitlabInstance(username, authority, accessToken);
-}
 
 export const fetchLibraryAssets = async (
   dispatch: ReturnType<typeof useDispatch>,
@@ -29,32 +24,35 @@ export const fetchLibraryAssets = async (
 ) => {
   try {
     await initialGitlabInstance.init();
-    if (initialGitlabInstance.projectId) {
-      const subfolders = await initialGitlabInstance.getLibrarySubfolders(
-        initialGitlabInstance.projectId,
-        type,
-        isPrivate,
-      );
+    const subfolders = await getLibrarySubfolders(
+      initialGitlabInstance.getProjectId(),
+      type as keyof typeof AssetTypes,
+      initialGitlabInstance,
+    );
 
-      const assets = await Promise.all(
-        subfolders.map(async (subfolder) => {
-          const gitlabInstance = createGitlabInstance();
-          await gitlabInstance.init();
-          const libraryAsset = new LibraryAsset(
-            subfolder.name,
-            subfolder.path,
-            isPrivate,
-            type,
-            gitlabInstance,
-          );
-          await libraryAsset.getDescription();
-          return libraryAsset;
-        }),
-      );
-      assets.forEach((asset) => dispatch(setAsset(asset)));
-    } else {
-      dispatch(setAssets([]));
-    }
+    const assets = await Promise.all(
+      subfolders.map(async (subfolder) => {
+        const gitlabInstance = createGitlabInstance(
+          sessionStorage.getItem('username') || '',
+          sessionStorage.getItem('access_token') || '',
+          getAuthority(),
+        );
+        await gitlabInstance.init();
+        const libraryManager = new LibraryManager(
+          subfolder.name,
+          gitlabInstance,
+        );
+        const libraryAsset = new LibraryAsset(
+          libraryManager,
+          subfolder.path,
+          isPrivate,
+          type,
+        );
+        await libraryAsset.getDescription();
+        return libraryAsset;
+      }),
+    );
+    assets.forEach((asset) => dispatch(setAsset(asset)));
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }
@@ -67,27 +65,28 @@ export const fetchDigitalTwins = async (
   try {
     await initialGitlabInstance.init();
 
-    if (initialGitlabInstance.projectId) {
-      const subfolders = await initialGitlabInstance.getDTSubfolders(
-        initialGitlabInstance.projectId,
-      );
+    const subfolders = await getDTSubfolders(
+      initialGitlabInstance.getProjectId(),
+      initialGitlabInstance.api,
+    );
 
-      await fetchLibraryAssets(dispatch, setError, 'Digital Twins', true);
-
-      const digitalTwins = await Promise.all(
-        subfolders.map(async (asset) => {
-          const gitlabInstance = createGitlabInstance();
-          await gitlabInstance.init();
-          const digitalTwin = new DigitalTwin(asset.name, gitlabInstance);
-          await digitalTwin.getDescription();
-          return { assetName: asset.name, digitalTwin };
-        }),
-      );
-
-      digitalTwins.forEach(({ assetName, digitalTwin }) =>
-        dispatch(setDigitalTwin({ assetName, digitalTwin })),
-      );
-    }
+    await fetchLibraryAssets(dispatch, setError, 'Digital Twins', true);
+    const digitalTwins = await Promise.all(
+      subfolders.map(async (asset) => {
+        const gitlabInstance = createGitlabInstance(
+          sessionStorage.getItem('username') || '',
+          sessionStorage.getItem('access_token') || '',
+          getAuthority(),
+        );
+        await gitlabInstance.init();
+        const digitalTwin = new DigitalTwin(asset.name, gitlabInstance);
+        await digitalTwin.getDescription();
+        return { assetName: asset.name, digitalTwin };
+      }),
+    );
+    digitalTwins.forEach(({ assetName, digitalTwin }) =>
+      dispatch(setDigitalTwin({ assetName, digitalTwin })),
+    );
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }
@@ -96,11 +95,11 @@ export const fetchDigitalTwins = async (
 export async function initDigitalTwin(
   newDigitalTwinName: string,
 ): Promise<DigitalTwin> {
-  const gitlabInstanceDT = new GitlabInstance(
+  const digitalTwinGitlabInstance = createGitlabInstance(
     sessionStorage.getItem('username') || '',
-    getAuthority(),
     sessionStorage.getItem('access_token') || '',
+    getAuthority(),
   );
-  await gitlabInstanceDT.init();
-  return new DigitalTwin(newDigitalTwinName, gitlabInstanceDT);
+  await digitalTwinGitlabInstance.init();
+  return new DigitalTwin(newDigitalTwinName, digitalTwinGitlabInstance);
 }

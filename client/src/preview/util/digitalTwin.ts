@@ -2,36 +2,47 @@
 /* eslint-disable no-await-in-loop */
 
 import { getAuthority } from 'util/envUtil';
-import { FileState } from 'preview/store/file.slice';
-import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
-import { RUNNER_TAG } from 'model/backend/gitlab/constants';
-import GitlabInstance from './gitlab';
+import {
+  DigitalTwinInterface,
+  FileState,
+  LibraryConfigFile,
+  BackendInterface,
+  DTAssetsInterface,
+  ProjectId,
+} from 'model/backend/gitlab/UtilityInterfaces';
+import {
+  RUNNER_TAG,
+  FileType,
+  GROUP_NAME,
+  DT_DIRECTORY,
+} from 'model/backend/gitlab/constants';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import {
   isValidInstance,
   logError,
   logSuccess,
   getUpdatedLibraryFile,
 } from './digitalTwinUtils';
-import DTAssets, { FileType } from './DTAssets';
+import DTAssets from './DTAssets';
 import LibraryAsset from './libraryAsset';
 
 export const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
 
-class DigitalTwin {
+class DigitalTwin implements DigitalTwinInterface {
   public DTName: string;
 
   public description: string | undefined = '';
 
   public fullDescription: string = '';
 
-  public gitlabInstance: GitlabInstance;
+  public backend: BackendInterface;
 
-  public DTAssets: DTAssets;
+  public DTAssets: DTAssetsInterface;
 
   public pipelineId: number | null = null;
 
-  public lastExecutionStatus: string | null = null;
+  public lastExecutionStatus!: ExecutionStatus | null;
 
   public jobLogs: { jobName: string; log: string }[] = [];
 
@@ -47,51 +58,43 @@ class DigitalTwin {
 
   public assetFiles: { assetPath: string; fileNames: string[] }[] = [];
 
-  constructor(DTName: string, gitlabInstance: GitlabInstance) {
+  constructor(DTName: string, backend: BackendInterface) {
     this.DTName = DTName;
-    this.gitlabInstance = gitlabInstance;
-    this.DTAssets = new DTAssets(DTName, this.gitlabInstance);
+    this.backend = backend;
+    this.DTAssets = new DTAssets(DTName, this.backend);
   }
 
   async getDescription(): Promise<void> {
-    if (this.gitlabInstance.projectId) {
-      try {
-        const fileContent =
-          await this.DTAssets.getFileContent('description.md');
-        this.description = fileContent;
-      } catch (_error) {
-        this.description = `There is no description.md file`;
-      }
+    try {
+      const fileContent = await this.DTAssets.getFileContent('description.md');
+      this.description = fileContent;
+    } catch (_error) {
+      this.description = `There is no description.md file`;
     }
   }
 
   async getFullDescription(): Promise<void> {
-    if (this.gitlabInstance.projectId) {
-      const imagesPath = `digital_twins/${this.DTName}/`;
-      try {
-        const fileContent = await this.DTAssets.getFileContent('README.md');
-        this.fullDescription = fileContent.replace(
-          /(!\[[^\]]*\])\(([^)]+)\)/g,
-          (match, altText, imagePath) => {
-            const fullUrl = `${getAuthority()}/dtaas/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
-            return `${altText}(${fullUrl})`;
-          },
-        );
-      } catch (_error) {
-        this.fullDescription = `There is no README.md file`;
-      }
-    } else {
-      this.fullDescription = 'Error fetching description, retry.';
+    const imagesPath = `${DT_DIRECTORY}/${this.DTName}/`;
+    try {
+      const fileContent = await this.DTAssets.getFileContent('README.md');
+      this.fullDescription = fileContent.replace(
+        /(!\[[^\]]*\])\(([^)]+)\)/g,
+        (match, altText, imagePath) => {
+          const fullUrl = `${getAuthority()}/${GROUP_NAME}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
+          return `${altText}(${fullUrl})`;
+        },
+      );
+    } catch (_error) {
+      this.fullDescription = `There is no README.md file`;
     }
   }
 
   private async triggerPipeline() {
     const variables = { DTName: this.DTName, RunnerTag: RUNNER_TAG };
-    return this.gitlabInstance.api.PipelineTriggerTokens.trigger(
-      this.gitlabInstance.projectId!,
+    return this.backend.startPipeline(
+      this.backend.getProjectId(),
       'main',
-      this.gitlabInstance.triggerToken!,
-      { variables },
+      variables,
     );
   }
 
@@ -112,25 +115,25 @@ class DigitalTwin {
     }
   }
 
-  async stop(projectId: number, pipeline: string): Promise<void> {
+  async stop(projectId: ProjectId, pipeline: string): Promise<void> {
     const pipelineId =
       pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
     try {
-      await this.gitlabInstance.api.Pipelines.cancel(projectId, pipelineId!);
-      this.gitlabInstance.logs.push({
+      await this.backend.api.cancelPipeline(projectId, pipelineId!);
+      this.backend.logs.push({
         status: 'canceled',
         DTName: this.DTName,
         runnerTag: RUNNER_TAG,
       });
-      this.lastExecutionStatus = 'canceled';
+      this.lastExecutionStatus = ExecutionStatus.CANCELED;
     } catch (error) {
-      this.gitlabInstance.logs.push({
+      this.backend.logs.push({
         status: 'error',
         error: new Error(String(error)),
         DTName: this.DTName,
         runnerTag: RUNNER_TAG,
       });
-      this.lastExecutionStatus = 'error';
+      this.lastExecutionStatus = ExecutionStatus.ERROR;
     }
   }
 
@@ -139,10 +142,6 @@ class DigitalTwin {
     cartAssets: LibraryAsset[],
     libraryFiles: LibraryConfigFile[],
   ): Promise<string> {
-    if (!this.gitlabInstance.projectId) {
-      return `Error creating ${this.DTName} digital twin: no project id`;
-    }
-
     const mainFolderPath = `digital_twins/${this.DTName}`;
     const lifecycleFolderPath = `${mainFolderPath}/lifecycle`;
 
@@ -175,16 +174,13 @@ class DigitalTwin {
   }
 
   async delete() {
-    if (this.gitlabInstance.projectId) {
-      try {
-        await this.DTAssets.delete();
+    try {
+      await this.DTAssets.delete();
 
-        return `${this.DTName} deleted successfully`;
-      } catch (_error) {
-        return `Error deleting ${this.DTName} digital twin`;
-      }
+      return `${this.DTName} deleted successfully`;
+    } catch (_error) {
+      return `Error deleting ${this.DTName} digital twin`;
     }
-    return `Error deleting ${this.DTName} digital twin: no project id`;
   }
 
   async getDescriptionFiles() {

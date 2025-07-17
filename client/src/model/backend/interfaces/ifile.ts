@@ -1,5 +1,5 @@
-import { FileState } from 'preview/store/file.slice';
-import { FileType } from './DTAssets';
+import { FileType } from '../gitlab/constants';
+import { FileState } from '../gitlab/UtilityInterfaces';
 
 export interface IFile {
   createFile(

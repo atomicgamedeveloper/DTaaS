@@ -1,27 +1,43 @@
-import LibraryAsset from 'preview/util/libraryAsset';
-import GitlabInstance from 'preview/util/gitlab';
+import LibraryAsset, { getLibrarySubfolders } from 'preview/util/libraryAsset';
+import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
 import LibraryManager from 'preview/util/libraryManager';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import { AssetTypes, GROUP_NAME } from 'model/backend/gitlab/constants';
 
 jest.mock('preview/util/libraryManager');
-jest.mock('preview/util/gitlab');
 
 describe('LibraryAsset', () => {
-  let gitlabInstance: GitlabInstance;
+  let backend: BackendInterface;
   let libraryManager: LibraryManager;
   let libraryAsset: LibraryAsset;
 
   beforeEach(() => {
-    gitlabInstance = mockGitlabInstance;
-    libraryManager = new LibraryManager('test', gitlabInstance);
+    backend = {
+      projectName: 'mockedUsername',
+      api: {
+        listRepositoryFiles: jest.fn(),
+      },
+      logs: [],
+      triggerToken: 'mock trigger token',
+      init: jest.fn(),
+      setProjectIds: jest.fn(),
+      getProjectId: jest.fn().mockReturnValue(1),
+      getCommonProjectId: jest.fn().mockReturnValue(3),
+      getTriggerToken: jest.fn(),
+      getExecutionLogs: jest.fn(),
+      getPipelineJobs: jest.fn(),
+      getJobTrace: jest.fn(),
+      getPipelineStatus: jest.fn(),
+    } as unknown as BackendInterface;
+
+    libraryManager = new LibraryManager('test', backend);
+    libraryManager.assetName = 'test';
+    libraryManager.backend = backend;
     libraryAsset = new LibraryAsset(
-      'test',
+      libraryManager,
       'path/to/library',
       true,
       'type',
-      gitlabInstance,
     );
-    libraryAsset.libraryManager = libraryManager;
   });
 
   it('should initialize correctly', () => {
@@ -29,7 +45,7 @@ describe('LibraryAsset', () => {
     expect(libraryAsset.path).toBe('path/to/library');
     expect(libraryAsset.isPrivate).toBe(true);
     expect(libraryAsset.type).toBe('type');
-    expect(libraryAsset.gitlabInstance).toBe(gitlabInstance);
+    expect(libraryAsset.backend).toBe(backend);
     expect(libraryAsset.libraryManager).toBe(libraryManager);
   });
 
@@ -53,7 +69,7 @@ describe('LibraryAsset', () => {
     sessionStorage.setItem('username', 'user');
     await libraryAsset.getFullDescription();
     expect(libraryAsset.fullDescription).toBe(
-      '![alt text](https://example.com/AUTHORITY/dtaas/user/-/raw/main/path/to/library/image.png)',
+      `![alt text](https://example.com/AUTHORITY/${GROUP_NAME}/user/-/raw/main/path/to/library/image.png)`,
     );
   });
 
@@ -70,5 +86,33 @@ describe('LibraryAsset', () => {
     libraryManager.getFileNames = jest.fn().mockResolvedValue(fileNames);
     await libraryAsset.getConfigFiles();
     expect(libraryAsset.configFiles).toEqual(fileNames);
+  });
+
+  it('should fetch common library subfolders succesfully', async () => {
+    const files = [
+      { name: 'subfolder1', path: 'tools/subfolder1', type: 'tree' },
+    ];
+
+    (backend.api.listRepositoryFiles as jest.Mock).mockResolvedValue(files);
+
+    const type = 'Tools' as keyof typeof AssetTypes;
+    const subfolders = await getLibrarySubfolders(
+      backend.getCommonProjectId(),
+      type,
+      backend,
+    );
+
+    expect(subfolders).toHaveLength(1);
+
+    expect(backend.api.listRepositoryFiles).toHaveBeenCalledWith(
+      backend.getCommonProjectId(),
+      AssetTypes[type], // recursive is false by default
+    );
+  });
+
+  it('should throw error when fetching invalid library asset type', async () => {
+    await expect(
+      getLibrarySubfolders(3, 'Foo' as keyof typeof AssetTypes, backend),
+    ).rejects.toThrow('Invalid asset type: Foo');
   });
 });

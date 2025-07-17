@@ -9,14 +9,10 @@ import digitalTwinReducer, {
   setShouldFetchDigitalTwins,
 } from 'preview/store/digitalTwin.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
-import {
-  mockGitlabInstance,
-  mockLibraryAsset,
-} from 'test/preview/__mocks__/global_mocks';
-import fileSlice, {
-  FileState,
-  addOrUpdateFile,
-} from 'preview/store/file.slice';
+import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
+import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
@@ -59,7 +55,7 @@ describe('AssetBoard Integration Tests', () => {
     store.dispatch(
       setDigitalTwin({
         assetName: 'Asset 1',
-        digitalTwin: new DigitalTwin('Asset 1', mockGitlabInstance),
+        digitalTwin: new DigitalTwin('Asset 1', mockBackendInstance),
       }),
     );
     store.dispatch(addOrUpdateFile(files[0]));

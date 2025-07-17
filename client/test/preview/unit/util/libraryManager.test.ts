@@ -2,29 +2,31 @@ import LibraryManager, {
   getFilePath,
   FileType,
 } from 'preview/util/libraryManager';
-import GitlabInstance from 'preview/util/gitlab';
+import {
+  BackendInterface,
+  FileState,
+} from 'model/backend/gitlab/UtilityInterfaces';
 import FileHandler from 'preview/util/fileHandler';
-import { FileState } from 'preview/store/file.slice';
-import { mockGitlabInstance } from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 
 jest.mock('preview/util/fileHandler');
-jest.mock('preview/util/gitlab');
+jest.mock('model/backend/gitlab/UtilityInterfaces');
 
 describe('LibraryManager', () => {
-  let gitlabInstance: GitlabInstance;
+  let backend: BackendInterface;
   let fileHandler: FileHandler;
   let libraryManager: LibraryManager;
 
   beforeEach(() => {
-    gitlabInstance = mockGitlabInstance;
-    fileHandler = new FileHandler('testAsset', gitlabInstance);
-    libraryManager = new LibraryManager('testAsset', gitlabInstance);
+    backend = mockBackendInstance;
+    fileHandler = new FileHandler('testAsset', backend);
+    libraryManager = new LibraryManager('testAsset', backend);
     libraryManager.fileHandler = fileHandler;
   });
 
   it('should initialize correctly', () => {
     expect(libraryManager.assetName).toBe('testAsset');
-    expect(libraryManager.gitlabInstance).toBe(gitlabInstance);
+    expect(libraryManager.backend).toBe(backend);
     expect(libraryManager.fileHandler).toBe(fileHandler);
   });
 

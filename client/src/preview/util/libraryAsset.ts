@@ -1,8 +1,14 @@
 import { getAuthority } from 'util/envUtil';
-import GitlabInstance from './gitlab';
+import { AssetTypes, GROUP_NAME } from 'model/backend/gitlab/constants';
+import { Asset } from 'preview/components/asset/Asset';
+import {
+  BackendInterface,
+  LibraryAssetInterface,
+  ProjectId,
+} from 'model/backend/gitlab/UtilityInterfaces';
 import LibraryManager from './libraryManager';
 
-class LibraryAsset {
+class LibraryAsset implements LibraryAssetInterface {
   public name: string;
 
   public path: string;
@@ -11,7 +17,7 @@ class LibraryAsset {
 
   public isPrivate: boolean;
 
-  public gitlabInstance: GitlabInstance;
+  public backend: BackendInterface;
 
   public description: string = '';
 
@@ -22,22 +28,21 @@ class LibraryAsset {
   public configFiles: string[] = [];
 
   constructor(
-    name: string,
+    libraryManager: LibraryManager,
     path: string,
     isPrivate: boolean,
     type: string,
-    gitlabInstance: GitlabInstance,
   ) {
-    this.name = name;
     this.path = path;
     this.isPrivate = isPrivate;
     this.type = type;
-    this.gitlabInstance = gitlabInstance;
-    this.libraryManager = new LibraryManager(name, this.gitlabInstance);
+    this.libraryManager = libraryManager;
+    this.name = libraryManager.assetName;
+    this.backend = libraryManager.backend;
   }
 
   async getDescription(): Promise<void> {
-    if (this.gitlabInstance.projectId) {
+    if (this.backend?.getProjectId()) {
       try {
         const fileContent = await this.libraryManager.getFileContent(
           this.isPrivate,
@@ -52,7 +57,7 @@ class LibraryAsset {
   }
 
   async getFullDescription(): Promise<void> {
-    if (this.gitlabInstance.projectId) {
+    if (this.backend?.getProjectId()) {
       const imagesPath = this.path;
       try {
         const fileContent = await this.libraryManager.getFileContent(
@@ -63,7 +68,7 @@ class LibraryAsset {
         this.fullDescription = fileContent.replace(
           /(!\[[^\]]*\])\(([^)]+)\)/g,
           (match, altText, imagePath) => {
-            const fullUrl = `${getAuthority()}/dtaas/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+            const fullUrl = `${getAuthority()}/${GROUP_NAME}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
         );
@@ -81,6 +86,34 @@ class LibraryAsset {
       this.path,
     );
   }
+}
+
+export async function getLibrarySubfolders(
+  projectId: ProjectId,
+  type: keyof typeof AssetTypes,
+  backend: BackendInterface,
+): Promise<Asset[]> {
+  const mappedPath = AssetTypes[type];
+  if (!mappedPath) {
+    throw new Error(`Invalid asset type: ${type}`);
+  }
+
+  const isPrivate = projectId === backend.getProjectId();
+
+  const { api } = backend;
+  const files = await api.listRepositoryFiles(projectId, mappedPath);
+
+  const subfolders: Asset[] = await Promise.all(
+    files
+      .filter((file) => file.type === 'tree' && file.path !== mappedPath)
+      .map(async (file) => ({
+        name: file.name,
+        path: file.path,
+        type,
+        isPrivate,
+      })),
+  );
+  return subfolders;
 }
 
 export default LibraryAsset;

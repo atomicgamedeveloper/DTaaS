@@ -13,10 +13,8 @@ import {
 } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import * as React from 'react';
-import {
-  mockGitlabInstance,
-  mockLibraryAsset,
-} from 'test/preview/__mocks__/global_mocks';
+import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
@@ -33,7 +31,7 @@ describe('Sidebar', () => {
   let digitalTwin: DigitalTwin;
 
   const setupDigitalTwin = (assetName: string) => {
-    digitalTwin = new DigitalTwin(assetName, mockGitlabInstance);
+    digitalTwin = new DigitalTwin(assetName, mockBackendInstance);
     digitalTwin.descriptionFiles = ['file1.md', 'file2.md'];
     digitalTwin.configFiles = ['config1.json', 'config2.json'];
     digitalTwin.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt'];
