@@ -1,9 +1,8 @@
+import { addOrUpdateFile, renameFile } from 'preview/store/file.slice';
 import {
-  addOrUpdateFile,
   FileState,
-  renameFile,
-} from 'preview/store/file.slice';
-import { LibraryConfigFile } from 'preview/store/libraryConfigFiles.slice';
+  LibraryConfigFile,
+} from 'model/backend/gitlab/UtilityInterfaces';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -11,12 +10,6 @@ export const isFileModifiable = (fileName: string) =>
   !['README.md', 'description.md', '.gitlab-ci.yml'].includes(fileName);
 export const isFileDeletable = (fileName: string) =>
   !['.gitlab-ci.yml'].includes(fileName);
-
-export const defaultFiles = [
-  { name: 'description.md', type: 'description' },
-  { name: 'README.md', type: 'description' },
-  { name: '.gitlab-ci.yml', type: 'config' },
-];
 
 export const getExtension = (filename: string): string => {
   const parts = filename.split('.');

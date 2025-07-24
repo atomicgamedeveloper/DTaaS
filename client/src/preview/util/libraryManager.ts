@@ -1,8 +1,11 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-import { FileState } from 'preview/store/file.slice';
-import GitlabInstance from './gitlab';
+import {
+  FileState,
+  BackendInterface,
+  LibraryManagerInterface,
+} from 'model/backend/gitlab/UtilityInterfaces';
 import FileHandler from './fileHandler';
 
 export enum FileType {
@@ -19,17 +22,17 @@ export function getFilePath(
   return file.type === 'lifecycle' ? lifecycleFolderPath : mainFolderPath;
 }
 
-class LibraryManager {
+class LibraryManager implements LibraryManagerInterface {
   public assetName: string;
 
-  public gitlabInstance: GitlabInstance;
+  public backend: BackendInterface;
 
   public fileHandler: FileHandler;
 
-  constructor(assetName: string, gitlabInstance: GitlabInstance) {
+  constructor(assetName: string, backend: BackendInterface) {
     this.assetName = assetName;
-    this.gitlabInstance = gitlabInstance;
-    this.fileHandler = new FileHandler(assetName, gitlabInstance);
+    this.backend = backend;
+    this.fileHandler = new FileHandler(assetName, backend);
   }
 
   async getFileContent(

@@ -1,11 +1,14 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-import { FileState } from 'preview/store/file.slice';
-import { getCommonLibraryProjectId } from 'model/backend/gitlab/constants';
-import GitlabInstance from './gitlab';
-import { IFile } from './ifile';
-import { FileType } from './DTAssets';
+import { FileType } from 'model/backend/gitlab/constants';
+/* import GitlabInstance from './gitlab';
+import { IFile } from './ifile'; */
+import {
+  FileState,
+  BackendInterface,
+  FileHandlerInterface,
+} from 'model/backend/gitlab/UtilityInterfaces';
 
 export function isValidFileType(
   item: { type: string; name: string; path: string },
@@ -27,14 +30,14 @@ export function isImageFile(fileName: string): boolean {
   return imageExtensions.some((ext) => fileName.toLowerCase().endsWith(ext));
 }
 
-class FileHandler implements IFile {
+class FileHandler implements FileHandlerInterface {
   public name: string;
 
-  public gitlabInstance: GitlabInstance;
+  public backend: BackendInterface;
 
-  constructor(name: string, gitlabInstance: GitlabInstance) {
+  constructor(name: string, backend: BackendInterface) {
     this.name = name;
-    this.gitlabInstance = gitlabInstance;
+    this.backend = backend;
   }
 
   async createFile(
@@ -44,10 +47,10 @@ class FileHandler implements IFile {
     commonProject?: boolean,
   ): Promise<void> {
     const projectToUse = commonProject
-      ? getCommonLibraryProjectId()
-      : this.gitlabInstance.projectId;
-    await this.gitlabInstance.api.RepositoryFiles.create(
-      projectToUse!,
+      ? this.backend.getCommonProjectId()
+      : this.backend.getProjectId();
+    await this.backend.api.createRepositoryFile(
+      projectToUse,
       `${filePath}/${file.name}`,
       'master',
       file.content,
@@ -60,8 +63,8 @@ class FileHandler implements IFile {
     updatedContent: string,
     commitMessage: string,
   ): Promise<void> {
-    await this.gitlabInstance.api.RepositoryFiles.edit(
-      this.gitlabInstance.projectId!,
+    await this.backend.api.editRepositoryFile(
+      this.backend.getProjectId(),
       filePath,
       'master',
       updatedContent,
@@ -70,8 +73,8 @@ class FileHandler implements IFile {
   }
 
   async deleteDT(digitalTwinPath: string): Promise<void> {
-    await this.gitlabInstance.api.RepositoryFiles.remove(
-      this.gitlabInstance.projectId!,
+    await this.backend.api.removeRepositoryFile(
+      this.backend.getProjectId(),
       digitalTwinPath,
       'master',
       `Removing ${this.name} digital twin`,
@@ -81,15 +84,14 @@ class FileHandler implements IFile {
   async getFileContent(filePath: string, isPrivate?: boolean): Promise<string> {
     const projectToUse =
       isPrivate === false
-        ? getCommonLibraryProjectId()
-        : this.gitlabInstance.projectId;
-
-    const response = await this.gitlabInstance.api.RepositoryFiles.show(
-      projectToUse!,
+        ? this.backend.getCommonProjectId()
+        : this.backend.getProjectId();
+    const response = await this.backend.api.getRepositoryFileContent(
+      projectToUse,
       filePath,
       'master',
     );
-    return atob(response.content);
+    return response.content;
   }
 
   async getFileNames(fileType: FileType): Promise<string[]> {
@@ -100,14 +102,12 @@ class FileHandler implements IFile {
     };
 
     try {
-      const response =
-        await this.gitlabInstance.api.Repositories.allRepositoryTrees(
-          this.gitlabInstance.projectId!,
-          {
-            path: pathMap[fileType],
-            recursive: fileType === FileType.LIFECYCLE,
-          },
-        );
+      const response = await this.backend.api.listRepositoryFiles(
+        this.backend.getProjectId(),
+        pathMap[fileType],
+        undefined,
+        fileType === FileType.LIFECYCLE,
+      );
 
       return response
         .filter((item) => isValidFileType(item, fileType))
@@ -122,18 +122,16 @@ class FileHandler implements IFile {
     isPrivate: boolean,
   ): Promise<string[]> {
     const projectToUse = isPrivate
-      ? this.gitlabInstance.projectId
-      : getCommonLibraryProjectId();
+      ? this.backend.getProjectId()
+      : this.backend.getCommonProjectId();
 
     try {
-      const response =
-        await this.gitlabInstance.api.Repositories.allRepositoryTrees(
-          projectToUse!,
-          {
-            path: filePath,
-            recursive: false,
-          },
-        );
+      const response = await this.backend.api.listRepositoryFiles(
+        projectToUse,
+        filePath,
+        undefined,
+        false,
+      );
 
       const fileNames: string[] = [];
       for (const file of response) {
@@ -161,20 +159,18 @@ class FileHandler implements IFile {
     isPrivate: boolean,
   ): Promise<string[]> {
     const projectToUse = isPrivate
-      ? this.gitlabInstance.projectId
-      : getCommonLibraryProjectId();
+      ? this.backend.getProjectId()
+      : this.backend.getCommonProjectId();
 
     const shouldBeRecursive = filePath.includes('common/');
 
     try {
-      const response =
-        await this.gitlabInstance.api.Repositories.allRepositoryTrees(
-          projectToUse!,
-          {
-            path: filePath,
-            recursive: shouldBeRecursive,
-          },
-        );
+      const response = await this.backend.api.listRepositoryFiles(
+        projectToUse,
+        filePath,
+        undefined,
+        shouldBeRecursive,
+      );
 
       return response
         .filter((item) => isValidFileType(item, FileType.CONFIGURATION))
@@ -186,11 +182,12 @@ class FileHandler implements IFile {
 
   async getFolders(path: string): Promise<string[]> {
     try {
-      const response =
-        await this.gitlabInstance.api.Repositories.allRepositoryTrees(
-          this.gitlabInstance.projectId!,
-          { path, recursive: false },
-        );
+      const response = await this.backend.api.listRepositoryFiles(
+        this.backend.getProjectId(),
+        path,
+        undefined,
+        false,
+      );
 
       return response
         .filter((item: { type: string }) => item.type === 'tree')

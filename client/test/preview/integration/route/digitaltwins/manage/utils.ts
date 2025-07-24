@@ -1,17 +1,13 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import fileSlice, {
-  FileState,
-  addOrUpdateFile,
-} from 'preview/store/file.slice';
+import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
+import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'preview/store/digitalTwin.slice';
 import snackbarReducer from 'preview/store/snackbar.slice';
-import {
-  mockGitlabInstance,
-  mockLibraryAsset,
-} from 'test/preview/__mocks__/global_mocks';
+import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 
@@ -34,7 +30,7 @@ const setupStore = () => {
       }),
   });
 
-  const digitalTwin = new DigitalTwin('Asset 1', mockGitlabInstance);
+  const digitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
   digitalTwin.descriptionFiles = ['description.md'];
 
   store.dispatch(setAssets(preSetItems));

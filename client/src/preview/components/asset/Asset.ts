@@ -1,10 +1,10 @@
-import GitlabInstance from 'preview/util/gitlab';
+import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
 
 export interface Asset {
   name: string;
   path: string;
   type: string;
   isPrivate: boolean;
-  gitlabInstance?: GitlabInstance;
+  backendInstance?: BackendInterface;
   fullDescription?: string;
 }
