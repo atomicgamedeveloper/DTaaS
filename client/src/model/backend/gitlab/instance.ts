@@ -5,7 +5,7 @@
  */
 import {
   getGroupName,
-  COMMON_LIBRARY_PROJECT_NAME,
+  getCommonLibraryProjectName,
 } from 'model/backend/gitlab/constants';
 import {
   BackendInterface,
@@ -61,7 +61,7 @@ export class GitlabInstance implements BackendInterface {
     const project =
       projects.find((proj) => proj.name === this.projectName) ?? null;
     const commonProject =
-      projects.find((proj) => proj.name === COMMON_LIBRARY_PROJECT_NAME) ??
+      projects.find((proj) => proj.name === getCommonLibraryProjectName()) ??
       null;
 
     if (!project) {
@@ -70,7 +70,7 @@ export class GitlabInstance implements BackendInterface {
 
     if (!commonProject) {
       throw new Error(
-        `Common project ${COMMON_LIBRARY_PROJECT_NAME} not found`,
+        `Common project ${getCommonLibraryProjectName()} not found`,
       );
     }
 

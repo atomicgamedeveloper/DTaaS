@@ -26,14 +26,14 @@ import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
 
 const SettingsForm: React.FC = () => {
   const dispatch = useDispatch();
-  const { GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_ID, RUNNER_TAG } =
+  const { GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_NAME, RUNNER_TAG } =
     useSelector((state: RootState) => state.settings);
 
   // Local state for form values - prevents saving on each keystroke
   const [formValues, setFormValues] = useState({
     groupName: GROUP_NAME,
     dtDirectory: DT_DIRECTORY,
-    commonLibraryProjectId: COMMON_LIBRARY_PROJECT_ID,
+    commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
     runnerTag: RUNNER_TAG,
   });
 
@@ -48,10 +48,10 @@ const SettingsForm: React.FC = () => {
     setFormValues({
       groupName: GROUP_NAME,
       dtDirectory: DT_DIRECTORY,
-      commonLibraryProjectId: COMMON_LIBRARY_PROJECT_ID,
+      commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: RUNNER_TAG,
     });
-  }, [GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_ID, RUNNER_TAG]);
+  }, [GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_NAME, RUNNER_TAG]);
 
   // Handle local form changes without dispatching to Redux
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,8 +64,8 @@ const SettingsForm: React.FC = () => {
       if (id === 'dtDirectory') {
         return { ...prev, dtDirectory: value };
       }
-      if (id === 'commonLibraryProjectId') {
-        return { ...prev, commonLibraryProjectId: Number(value) };
+      if (id === 'commonLibraryProjectName') {
+        return { ...prev, commonLibraryProjectName: value };
       }
       return { ...prev, runnerTag: value };
     });
@@ -76,7 +76,7 @@ const SettingsForm: React.FC = () => {
     setFormValues({
       groupName: DEFAULT_SETTINGS.GROUP_NAME,
       dtDirectory: DEFAULT_SETTINGS.DT_DIRECTORY,
-      commonLibraryProjectId: DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_ID,
+      commonLibraryProjectName: DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: DEFAULT_SETTINGS.RUNNER_TAG,
     });
 
@@ -96,8 +96,8 @@ const SettingsForm: React.FC = () => {
       dispatch(setDTDirectory(formValues.dtDirectory));
     }
 
-    if (formValues.commonLibraryProjectId !== COMMON_LIBRARY_PROJECT_ID) {
-      dispatch(setCommonLibraryProjectId(formValues.commonLibraryProjectId));
+    if (formValues.commonLibraryProjectName !== COMMON_LIBRARY_PROJECT_NAME) {
+      dispatch(setCommonLibraryProjectId(formValues.commonLibraryProjectName));
     }
 
     if (formValues.runnerTag !== RUNNER_TAG) {
@@ -145,13 +145,12 @@ const SettingsForm: React.FC = () => {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              id="commonLibraryProjectId"
-              label="Common Library Project ID"
+              id="commonLibraryProjectName"
+              label="Common Library Project name"
               variant="outlined"
-              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-              value={formValues.commonLibraryProjectId}
+              value={formValues.commonLibraryProjectName}
               onChange={handleInputChange}
-              helperText="Project ID for the common library"
+              helperText="Project name for the common library"
             />
           </Grid>
 

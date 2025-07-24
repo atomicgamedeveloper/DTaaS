@@ -7,7 +7,7 @@
 const DEFAULT_MOCK_VALUES = {
   GROUP_NAME: 'DTaaS',
   DT_DIRECTORY: 'digital_twins',
-  COMMON_LIBRARY_PROJECT_ID: 3,
+  COMMON_LIBRARY_PROJECT_NAME: 'common',
   RUNNER_TAG: 'linux',
 };
 
@@ -25,7 +25,7 @@ const createConstantsMock = (overrides = {}) => {
     getDTDirectory: jest.fn().mockReturnValue(mockValues.DT_DIRECTORY),
     getCommonLibraryProjectId: jest
       .fn()
-      .mockReturnValue(mockValues.COMMON_LIBRARY_PROJECT_ID),
+      .mockReturnValue(mockValues.COMMON_LIBRARY_PROJECT_NAME),
     getRunnerTag: jest.fn().mockReturnValue(mockValues.RUNNER_TAG),
 
     // Hook versions if needed
@@ -33,7 +33,7 @@ const createConstantsMock = (overrides = {}) => {
     useDTDirectory: jest.fn().mockReturnValue(mockValues.DT_DIRECTORY),
     useCommonLibraryProjectId: jest
       .fn()
-      .mockReturnValue(mockValues.COMMON_LIBRARY_PROJECT_ID),
+      .mockReturnValue(mockValues.COMMON_LIBRARY_PROJECT_NAME),
     useRunnerTag: jest.fn().mockReturnValue(mockValues.RUNNER_TAG),
   };
 };

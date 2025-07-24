@@ -26,17 +26,17 @@ export const useDTDirectory = (): string => {
 export const getDTDirectory = (): string =>
   store.getState().settings.DT_DIRECTORY;
 
-export const useCommonLibraryProjectId = (): number => {
-  // Reads COMMON_LIBRARY_PROJECT_ID from the Redux store.
-  const COMMON_LIBRARY_PROJECT_ID = useSelector(
-    (state: RootState) => state.settings.COMMON_LIBRARY_PROJECT_ID,
+export const useCommonLibraryProjectName = (): string => {
+  // Reads COMMON_LIBRARY_PROJECT_NAME from the Redux store.
+  const COMMON_LIBRARY_PROJECT_NAME = useSelector(
+    (state: RootState) => state.settings.COMMON_LIBRARY_PROJECT_NAME,
   );
-  return COMMON_LIBRARY_PROJECT_ID;
+  return COMMON_LIBRARY_PROJECT_NAME;
 };
 
 // Non-hook version for use in classes and other non-React contexts
-export const getCommonLibraryProjectId = (): number =>
-  store.getState().settings.COMMON_LIBRARY_PROJECT_ID;
+export const getCommonLibraryProjectName = (): string =>
+  store.getState().settings.COMMON_LIBRARY_PROJECT_NAME;
 
 // util/digitalTwin.ts
 export const useRunnerTag = (): string => {
@@ -49,8 +49,6 @@ export const useRunnerTag = (): string => {
 
 // Non-hook version for use in classes and other non-React contexts
 export const getRunnerTag = (): string => store.getState().settings.RUNNER_TAG;
-
-export const COMMON_LIBRARY_PROJECT_NAME = 'common';
 
 export enum AssetTypes {
   'Functions' = 'functions',

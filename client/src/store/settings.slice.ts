@@ -3,14 +3,14 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export const DEFAULT_SETTINGS = {
   GROUP_NAME: 'DTaaS',
   DT_DIRECTORY: 'digital_twins',
-  COMMON_LIBRARY_PROJECT_ID: 3,
+  COMMON_LIBRARY_PROJECT_NAME: 'common',
   RUNNER_TAG: 'linux',
 };
 
 interface SettingsState {
   GROUP_NAME: string;
   DT_DIRECTORY: string;
-  COMMON_LIBRARY_PROJECT_ID: number;
+  COMMON_LIBRARY_PROJECT_NAME: string;
   RUNNER_TAG: string;
 }
 
@@ -52,8 +52,8 @@ export const settingsSlice = createSlice({
       state.DT_DIRECTORY = action.payload;
       saveSettingsToLocalStorage({ ...state });
     },
-    setCommonLibraryProjectId: (state, action: PayloadAction<number>) => {
-      state.COMMON_LIBRARY_PROJECT_ID = action.payload;
+    setCommonLibraryProjectId: (state, action: PayloadAction<string>) => {
+      state.COMMON_LIBRARY_PROJECT_NAME = action.payload;
       saveSettingsToLocalStorage({ ...state });
     },
     setRunnerTag: (state, action: PayloadAction<string>) => {

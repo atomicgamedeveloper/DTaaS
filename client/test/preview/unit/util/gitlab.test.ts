@@ -2,10 +2,9 @@ import GitlabInstance from 'model/backend/gitlab/instance';
 import GitlabAPI from 'model/backend/gitlab/backend';
 import { JobSummary } from 'model/backend/gitlab/UtilityInterfaces';
 import {
-  COMMON_LIBRARY_PROJECT_NAME,
+  getCommonLibraryProjectName,
   getGroupName,
   getDTDirectory,
-  getCommonLibraryProjectId,
 } from 'model/backend/gitlab/constants';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
@@ -130,7 +129,7 @@ describe('GitlabInstance', () => {
       .mockResolvedValue([{ id: 1, name: 'user1' }]);
 
     await expect(gitlab.init()).rejects.toThrow(
-      `Common project ${COMMON_LIBRARY_PROJECT_NAME} not found`,
+      `Common project ${getCommonLibraryProjectName()} not found`,
     );
 
     expect(mockApi.getGroupByName).toHaveBeenCalledWith(getGroupName());
@@ -246,7 +245,7 @@ describe('GitlabInstance', () => {
   });
 
   it('should fetch DT subfolders successfully', async () => {
-    const projectId = getCommonLibraryProjectId();
+    const projectId = gitlab.getCommonProjectId();
     const files = [
       { name: 'subfolder1', path: 'digital_twins/subfolder1', type: 'tree' },
       { name: 'subfolder2', path: 'digital_twins/subfolder2', type: 'tree' },
