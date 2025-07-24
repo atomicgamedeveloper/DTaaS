@@ -57,6 +57,23 @@ describe('FileHandler', () => {
     );
   });
 
+  it('should create a common project file', async () => {
+    const fileState = {
+      name: 'file',
+      content: 'content',
+      isNew: true,
+      isModified: false,
+    };
+    await fileHandler.createFile(fileState, 'path', 'commit message', true);
+    expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
+      2,
+      'path/file',
+      'master',
+      'content',
+      'commit message',
+    );
+  });
+
   it('should update a file', async () => {
     await fileHandler.updateFile('path', 'updated content', 'commit message');
     expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
@@ -86,6 +103,19 @@ describe('FileHandler', () => {
     expect(content).toBe('existing content');
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
+      'path',
+      'master',
+    );
+  });
+
+  it('should get file content from common project', async () => {
+    jest
+      .spyOn(mockApi, 'getRepositoryFileContent')
+      .mockResolvedValue({ content: 'existing content' });
+    const content = await fileHandler.getFileContent('path', false);
+    expect(content).toBe('existing content');
+    expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
+      2,
       'path',
       'master',
     );

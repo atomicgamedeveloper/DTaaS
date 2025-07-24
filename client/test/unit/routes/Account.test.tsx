@@ -13,6 +13,10 @@ jest.mock('components/tab/TabComponent', () => ({
   ...jest.requireActual('components/tab/TabComponent'),
 }));
 
+jest.mock('components/tab/TabComponent', () => ({
+  ...jest.requireActual('components/tab/TabComponent'),
+}));
+
 jest.mock('react-oidc-context');
 
 describe('AccountTabs', () => {
