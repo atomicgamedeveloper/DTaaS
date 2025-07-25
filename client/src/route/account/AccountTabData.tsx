@@ -16,7 +16,7 @@ function ListGroups(groups: string[]): React.ReactNode[] {
   const groupListing: React.ReactNode[] = [];
   boldGroups
     .slice(0, -1)
-    .map((groupElement) => groupListing.push(groupElement, ', '));
+    .forEach((groupElement) => groupListing.push(groupElement, ', '));
   groupListing.splice(groupListing.length - 1, 1, [
     ' and ',
     boldGroups.slice(-1),

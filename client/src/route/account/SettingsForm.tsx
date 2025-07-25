@@ -5,7 +5,7 @@ import { RootState } from 'store/store';
 import {
   setGroupName,
   setDTDirectory,
-  setCommonLibraryProjectId,
+  setCommonLibraryProjectName,
   setRunnerTag,
   resetToDefaults,
   DEFAULT_SETTINGS,
@@ -97,7 +97,9 @@ const SettingsForm: React.FC = () => {
     }
 
     if (formValues.commonLibraryProjectName !== COMMON_LIBRARY_PROJECT_NAME) {
-      dispatch(setCommonLibraryProjectId(formValues.commonLibraryProjectName));
+      dispatch(
+        setCommonLibraryProjectName(formValues.commonLibraryProjectName),
+      );
     }
 
     if (formValues.runnerTag !== RUNNER_TAG) {

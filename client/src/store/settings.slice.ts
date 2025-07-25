@@ -52,7 +52,7 @@ export const settingsSlice = createSlice({
       state.DT_DIRECTORY = action.payload;
       saveSettingsToLocalStorage({ ...state });
     },
-    setCommonLibraryProjectId: (state, action: PayloadAction<string>) => {
+    setCommonLibraryProjectName: (state, action: PayloadAction<string>) => {
       state.COMMON_LIBRARY_PROJECT_NAME = action.payload;
       saveSettingsToLocalStorage({ ...state });
     },
@@ -70,7 +70,7 @@ export const settingsSlice = createSlice({
 export const {
   setGroupName,
   setDTDirectory,
-  setCommonLibraryProjectId,
+  setCommonLibraryProjectName,
   setRunnerTag,
   resetToDefaults,
 } = settingsSlice.actions;
