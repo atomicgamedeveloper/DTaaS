@@ -251,4 +251,18 @@ export async function testAccountSettings(mockUser: mockUserType) {
       `Edit the profile on <b><a href="${mockUser.profile.profile}">SSO OAuth Provider.</a></b>`,
     );
   });
+
+  expect(screen.getByLabelText(/group name/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/dt directory/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/common library/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/runner tag/i)).toBeInTheDocument();
+
+  const groupNameInput = screen.getByLabelText(/group name/i);
+  fireEvent.change(groupNameInput, { target: { value: 'testGroup' } });
+  expect(groupNameInput).toHaveValue('testGroup');
+
+  fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+  expect(await screen.findByText(/settings saved successfully/i)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
 }

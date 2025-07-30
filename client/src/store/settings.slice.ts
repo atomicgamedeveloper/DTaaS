@@ -15,27 +15,19 @@ interface SettingsState {
 }
 
 const saveSettingsToLocalStorage = (settings: SettingsState) => {
-  try {
-    localStorage.setItem('dtaas_settings', JSON.stringify(settings));
-  } catch (_error) {
-    /* empty */
-  }
+  localStorage.setItem('dtaas_settings', JSON.stringify(settings));
 };
 
 const loadInitialSettings = (): SettingsState => {
-  try {
-    const settings = localStorage.getItem('dtaas_settings');
-    if (settings) {
-      const parsedSettings = JSON.parse(settings);
-      if (parsedSettings && typeof parsedSettings === 'object') {
-        return {
-          ...DEFAULT_SETTINGS,
-          ...parsedSettings,
-        };
-      }
+  const settings = localStorage.getItem('dtaas_settings');
+  if (settings) {
+    const parsedSettings = JSON.parse(settings);
+    if (parsedSettings && typeof parsedSettings === 'object') {
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsedSettings,
+      };
     }
-  } catch (_error) {
-    /* empty */
   }
   return { ...DEFAULT_SETTINGS };
 };

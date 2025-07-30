@@ -2,8 +2,6 @@
 /* eslint-disable no-await-in-loop */
 
 import { FileType } from 'model/backend/gitlab/constants';
-/* import GitlabInstance from './gitlab';
-import { IFile } from './ifile'; */
 import {
   FileState,
   BackendInterface,

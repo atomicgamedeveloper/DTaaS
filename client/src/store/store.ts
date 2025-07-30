@@ -11,12 +11,8 @@ import authSlice from './auth.slice';
 import settingsSlice from './settings.slice';
 
 const loadSettings = () => {
-  try {
-    const serializedSettings = localStorage.getItem('settings');
-    return serializedSettings ? JSON.parse(serializedSettings) : undefined;
-  } catch (_error) {
-    return undefined;
-  }
+  const serializedSettings = localStorage.getItem('settings');
+  return serializedSettings ? JSON.parse(serializedSettings) : undefined;
 };
 
 const rootReducer = combineReducers({

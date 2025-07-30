@@ -1,4 +1,4 @@
-import reducer, {
+import settingsReducer, {
   setGroupName,
   setDTDirectory,
   setCommonLibraryProjectName,
@@ -17,19 +17,19 @@ describe('settingsSlice', () => {
 
   it('should handle setGroupName', () => {
     const action = setGroupName('testGroup');
-    const state = reducer(initialState, action);
+    const state = settingsReducer(initialState, action);
     expect(state.GROUP_NAME).toBe('testGroup');
   });
 
   it('should handle setDTDirectory', () => {
     const action = setDTDirectory('testDTDirectory');
-    const state = reducer(initialState, action);
+    const state = settingsReducer(initialState, action);
     expect(state.DT_DIRECTORY).toBe('testDTDirectory');
   });
 
   it('should handle setCommonLibraryProjectName', () => {
     const action = setCommonLibraryProjectName('testCommonLibraryProjectName');
-    const state = reducer(initialState, action);
+    const state = settingsReducer(initialState, action);
     expect(state.COMMON_LIBRARY_PROJECT_NAME).toBe(
       'testCommonLibraryProjectName',
     );
@@ -37,7 +37,7 @@ describe('settingsSlice', () => {
 
   it('should handle setRunnerTag', () => {
     const action = setRunnerTag('testRunnerTag');
-    const state = reducer(initialState, action);
+    const state = settingsReducer(initialState, action);
     expect(state.RUNNER_TAG).toBe('testRunnerTag');
   });
 
@@ -48,7 +48,7 @@ describe('settingsSlice', () => {
       COMMON_LIBRARY_PROJECT_NAME: 'testCommonLibraryProjectName',
       RUNNER_TAG: 'testRunnerTag',
     };
-    const state = reducer(modified, resetToDefaults());
+    const state = settingsReducer(modified, resetToDefaults());
     expect(state).toEqual(DEFAULT_SETTINGS);
   });
 });

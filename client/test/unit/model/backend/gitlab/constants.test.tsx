@@ -17,76 +17,76 @@ import {
   DEFAULT_SETTINGS,
 } from 'store/settings.slice';
 import { renderHook } from '@testing-library/react';
-import * as reactRedux from 'react-redux';
+import { useSelector } from 'react-redux';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
 }));
 
-const mockUseSelector = reactRedux.useSelector as unknown as jest.Mock;
+function updateSettingsMock(
+  key: keyof typeof DEFAULT_SETTINGS,
+  value: string,
+) {
+  mockedUseSelector.mockImplementationOnce((selector) =>
+    selector({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        [key]: value,
+      },
+    }),
+  );
+}
+
+const mockedUseSelector = useSelector as unknown as jest.Mock;
 
 describe('Constants', () => {
-  describe('hooks', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      mockUseSelector.mockImplementation((selector) =>
-        selector({ settings: DEFAULT_SETTINGS }),
-      );
-    });
-
-    const testHook = (
-      hook: () => string,
-      settingKey: keyof typeof DEFAULT_SETTINGS,
-      customValue: string,
-    ) => {
-      it(`returns default ${settingKey}`, () => {
-        const { result } = renderHook(() => hook());
-        expect(result.current).toBe(DEFAULT_SETTINGS[settingKey]);
-      });
-
-      it(`returns custom ${settingKey}`, () => {
-        mockUseSelector.mockImplementationOnce((selector) =>
-          selector({
-            settings: {
-              ...DEFAULT_SETTINGS,
-              [settingKey]: customValue,
-            },
-          }),
-        );
-
-        const { result } = renderHook(() => hook());
-        expect(result.current).toBe(customValue);
-      });
-    };
-
-    describe('useRunnerTag', () =>
-      testHook(useRunnerTag, 'RUNNER_TAG', 'custom-runner'));
-
-    describe('useCommonLibraryProjectName', () =>
-      testHook(
-        useCommonLibraryProjectName,
-        'COMMON_LIBRARY_PROJECT_NAME',
-        'custom-lib',
-      ));
-
-    describe('useDTDirectory', () =>
-      testHook(useDTDirectory, 'DT_DIRECTORY', '/custom/dir'));
-
-    describe('useGroupName', () =>
-      testHook(useGroupName, 'GROUP_NAME', 'Custom Group'));
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedUseSelector.mockImplementation((selector) =>
+      selector({ settings: DEFAULT_SETTINGS }),
+    );
   });
-  describe('getters', () => {
-    test('return correct values from global store', () => {
-      store.dispatch(setGroupName('group'));
-      store.dispatch(setCommonLibraryProjectName('common'));
-      store.dispatch(setDTDirectory('DT'));
-      store.dispatch(setRunnerTag('runner'));
 
-      expect(getGroupName()).toBe('group');
-      expect(getCommonLibraryProjectName()).toBe('common');
-      expect(getDTDirectory()).toBe('DT');
-      expect(getRunnerTag()).toBe('runner');
-    });
+  it('useGroupName returns custom', () => {
+    updateSettingsMock('GROUP_NAME', 'testGroup1');
+    updateSettingsMock('COMMON_LIBRARY_PROJECT_NAME', 'testCommon1');
+    updateSettingsMock('DT_DIRECTORY', 'testDT1');
+    updateSettingsMock('RUNNER_TAG', 'testRunner1');
+
+    const groupName = renderHook(() => useGroupName()).result.current;
+    const commonLib = renderHook(() => useCommonLibraryProjectName()).result.current;
+    const dtDir = renderHook(() => useDTDirectory()).result.current;
+    const runnerTag = renderHook(() => useRunnerTag()).result.current;
+
+    expect(groupName).toBe('testGroup1');
+    expect(commonLib).toBe('testCommon1');
+    expect(dtDir).toBe('testDT1');
+    expect(runnerTag).toBe('testRunner1');
+  });
+
+  it('return correct default values from hooks', () => {
+    const groupName = renderHook(() => useGroupName()).result.current;
+    const commonLib = renderHook(() => useCommonLibraryProjectName()).result.current;
+    const dtDir = renderHook(() => useDTDirectory()).result.current;
+    const runnerTag = renderHook(() => useRunnerTag()).result.current;
+
+    expect(groupName).toBe(DEFAULT_SETTINGS.GROUP_NAME);
+    expect(commonLib).toBe(DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME);
+    expect(dtDir).toBe(DEFAULT_SETTINGS.DT_DIRECTORY);
+    expect(runnerTag).toBe(DEFAULT_SETTINGS.RUNNER_TAG);
+  });
+
+
+  it('return correct values from global store', () => {
+    store.dispatch(setGroupName('testGroup'));
+    store.dispatch(setCommonLibraryProjectName('testCommon'));
+    store.dispatch(setDTDirectory('testDT'));
+    store.dispatch(setRunnerTag('testRunner'));
+
+    expect(getGroupName()).toBe('testGroup');
+    expect(getCommonLibraryProjectName()).toBe('testCommon');
+    expect(getDTDirectory()).toBe('testDT');
+    expect(getRunnerTag()).toBe('testRunner');
   });
 });
