@@ -33,17 +33,29 @@ test.describe('Account Settings Form', () => {
     await page.getByRole('tab', { name: 'Settings' }).click();
 
     await expect(page.getByLabel('Group Name')).toHaveValue('DTaaStest');
-    await expect(page.getByLabel('DT Directory')).toHaveValue('digital_twinstest');
-    await expect(page.getByLabel('Common Library Project name')).toHaveValue('foo');
+    await expect(page.getByLabel('DT Directory')).toHaveValue(
+      'digital_twinstest',
+    );
+    await expect(page.getByLabel('Common Library Project name')).toHaveValue(
+      'foo',
+    );
     await expect(page.getByLabel('Runner Tag')).toHaveValue('bar');
   });
 
   test('Should reset to default settings', async ({ page }) => {
     await page.getByRole('button', { name: 'Reset to Defaults' }).click();
 
-    await expect(page.getByLabel('Group Name')).toHaveValue(DEFAULT_SETTINGS.GROUP_NAME);
-    await expect(page.getByLabel('DT Directory')).toHaveValue(DEFAULT_SETTINGS.DT_DIRECTORY);
-    await expect(page.getByLabel('Common Library Project name')).toHaveValue(DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME);
-    await expect(page.getByLabel('Runner Tag')).toHaveValue(DEFAULT_SETTINGS.RUNNER_TAG);
+    await expect(page.getByLabel('Group Name')).toHaveValue(
+      DEFAULT_SETTINGS.GROUP_NAME,
+    );
+    await expect(page.getByLabel('DT Directory')).toHaveValue(
+      DEFAULT_SETTINGS.DT_DIRECTORY,
+    );
+    await expect(page.getByLabel('Common Library Project name')).toHaveValue(
+      DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
+    );
+    await expect(page.getByLabel('Runner Tag')).toHaveValue(
+      DEFAULT_SETTINGS.RUNNER_TAG,
+    );
   });
 });

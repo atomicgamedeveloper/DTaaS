@@ -24,10 +24,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-function updateSettingsMock(
-  key: keyof typeof DEFAULT_SETTINGS,
-  value: string,
-) {
+function updateSettingsMock(key: keyof typeof DEFAULT_SETTINGS, value: string) {
   mockedUseSelector.mockImplementationOnce((selector) =>
     selector({
       settings: {
@@ -55,7 +52,8 @@ describe('Constants', () => {
     updateSettingsMock('RUNNER_TAG', 'testRunner1');
 
     const groupName = renderHook(() => useGroupName()).result.current;
-    const commonLib = renderHook(() => useCommonLibraryProjectName()).result.current;
+    const commonLib = renderHook(() => useCommonLibraryProjectName()).result
+      .current;
     const dtDir = renderHook(() => useDTDirectory()).result.current;
     const runnerTag = renderHook(() => useRunnerTag()).result.current;
 
@@ -67,7 +65,8 @@ describe('Constants', () => {
 
   it('return correct default values from hooks', () => {
     const groupName = renderHook(() => useGroupName()).result.current;
-    const commonLib = renderHook(() => useCommonLibraryProjectName()).result.current;
+    const commonLib = renderHook(() => useCommonLibraryProjectName()).result
+      .current;
     const dtDir = renderHook(() => useDTDirectory()).result.current;
     const runnerTag = renderHook(() => useRunnerTag()).result.current;
 
@@ -76,7 +75,6 @@ describe('Constants', () => {
     expect(dtDir).toBe(DEFAULT_SETTINGS.DT_DIRECTORY);
     expect(runnerTag).toBe(DEFAULT_SETTINGS.RUNNER_TAG);
   });
-
 
   it('return correct values from global store', () => {
     store.dispatch(setGroupName('testGroup'));
