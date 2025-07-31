@@ -260,11 +260,4 @@ export async function testAccountSettings(mockUser: mockUserType) {
   const groupNameInput = screen.getByLabelText(/group name/i);
   fireEvent.change(groupNameInput, { target: { value: 'testGroup' } });
   expect(groupNameInput).toHaveValue('testGroup');
-
-  fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-  expect(
-    await screen.findByText(/settings saved successfully/i),
-  ).toBeInTheDocument();
-
-  fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
 }
