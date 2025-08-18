@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import { AssetTypes } from 'model/backend/gitlab/constants';
+import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
 import DigitalTwin from './digitalTwin';
 import { setAsset } from '../store/assets.slice';

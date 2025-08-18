@@ -12,7 +12,7 @@ const DEFAULT_MOCK_VALUES = {
 };
 
 /**
- * Create a mock for the model/backend/gitlab/constants module
+ * Create a mock for the model/backend/gitlab/settingsUtility module
  * @param overrides - Override specific values from the defaults
  * @returns The mock object that can be used with jest.mock
  */

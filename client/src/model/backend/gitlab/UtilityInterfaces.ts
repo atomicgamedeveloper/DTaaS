@@ -1,4 +1,4 @@
-import { FileType } from './constants';
+import { FileType } from './digitalTwinConfig/constants';
 import { IFile } from '../interfaces/ifile';
 import { DigitalTwinPipelineState } from './types/executionHistory';
 

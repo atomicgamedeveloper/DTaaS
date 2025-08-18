@@ -1,4 +1,4 @@
-import { FileType } from '../gitlab/constants';
+import { FileType } from '../gitlab/digitalTwinConfig/constants';
 import { FileState } from '../gitlab/UtilityInterfaces';
 
 export interface IFile {

@@ -1,4 +1,4 @@
-import { FileType } from 'model/backend/gitlab/constants';
+import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import FileHandler from 'preview/util/fileHandler';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';

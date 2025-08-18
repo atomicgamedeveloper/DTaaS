@@ -5,9 +5,11 @@ import { getAuthority } from 'util/envUtil';
 import {
   getGroupName,
   getRunnerTag,
-  FileType,
   getDTDirectory,
-} from 'model/backend/gitlab/constants';
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  FileType,
+} from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
   DigitalTwinInterface,
   FileState,

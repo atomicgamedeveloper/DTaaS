@@ -7,7 +7,7 @@ import {
   useCommonLibraryProjectName,
   useDTDirectory,
   useRunnerTag,
-} from 'model/backend/gitlab/constants';
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import store from 'store/store';
 import {
   setGroupName,

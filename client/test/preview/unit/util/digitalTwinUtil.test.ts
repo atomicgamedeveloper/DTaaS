@@ -1,5 +1,5 @@
 import { getDTSubfolders } from 'preview/util/digitalTwinUtils';
-import { getDTDirectory } from 'model/backend/gitlab/constants';
+import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 const mockApi = {
   init: jest.fn(),

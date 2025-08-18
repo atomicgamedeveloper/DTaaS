@@ -5,24 +5,26 @@ import {
   getCommonLibraryProjectName,
   getGroupName,
   getDTDirectory,
-} from 'model/backend/gitlab/constants';
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
 jest.mock('@gitbeaker/rest');
 
-// Mock the constants module
-jest.mock('model/backend/gitlab/constants', () => ({
-  ...jest.requireActual('model/backend/gitlab/constants'),
+// Mock the constants modules
+jest.mock('model/backend/gitlab/digitalTwinConfig/settingsUtility', () => ({
+  ...jest.requireActual('model/backend/gitlab/digitalTwinConfig/settingsUtility'),
   getGroupName: jest.fn().mockReturnValue('testGroup'),
 }));
+jest.mock('model/backend/gitlab/digitalTwinConfig/constants');
 jest.mock('@gitbeaker/rest');
 
 describe('GitlabInstance', () => {
   let gitlab: GitlabInstance;
-  const mockApi: GitlabAPI = mockBackendAPI;
+  let  mockApi: GitlabAPI;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockApi = mockBackendAPI;
     gitlab = new GitlabInstance('user1', mockApi);
   });
 

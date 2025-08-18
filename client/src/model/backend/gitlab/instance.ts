@@ -6,7 +6,7 @@
 import {
   getGroupName,
   getCommonLibraryProjectName,
-} from 'model/backend/gitlab/constants';
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import {
   BackendInterface,
   LogEntry,

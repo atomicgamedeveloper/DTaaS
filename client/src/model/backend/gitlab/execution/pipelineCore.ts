@@ -1,7 +1,7 @@
 import {
   MAX_EXECUTION_TIME,
   PIPELINE_POLL_INTERVAL,
-} from 'model/backend/gitlab/constants';
+} from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 /**
  * Creates a delay promise for polling operations

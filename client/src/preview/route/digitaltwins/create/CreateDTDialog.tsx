@@ -23,7 +23,7 @@ import {
   setShouldFetchDigitalTwins,
 } from 'preview/store/digitalTwin.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
-import { defaultFiles } from 'model/backend/gitlab/constants';
+import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';

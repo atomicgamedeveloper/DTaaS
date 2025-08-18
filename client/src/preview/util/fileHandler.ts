@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-import { FileType } from 'model/backend/gitlab/constants';
+import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
   FileState,
   BackendInterface,
