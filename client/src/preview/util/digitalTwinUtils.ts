@@ -7,7 +7,7 @@ import {
 } from 'model/backend/gitlab/UtilityInterfaces';
 import { Asset } from 'preview/components/asset/Asset';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import {  getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import DigitalTwin from './digitalTwin';

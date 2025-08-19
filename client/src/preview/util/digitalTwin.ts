@@ -7,9 +7,7 @@ import {
   getRunnerTag,
   getDTDirectory,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import {
-  FileType,
-} from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
   DigitalTwinInterface,
   FileState,

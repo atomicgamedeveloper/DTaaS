@@ -12,7 +12,9 @@ jest.mock('@gitbeaker/rest');
 
 // Mock the constants modules
 jest.mock('model/backend/gitlab/digitalTwinConfig/settingsUtility', () => ({
-  ...jest.requireActual('model/backend/gitlab/digitalTwinConfig/settingsUtility'),
+  ...jest.requireActual(
+    'model/backend/gitlab/digitalTwinConfig/settingsUtility',
+  ),
   getGroupName: jest.fn().mockReturnValue('testGroup'),
 }));
 jest.mock('model/backend/gitlab/digitalTwinConfig/constants');
@@ -20,7 +22,7 @@ jest.mock('@gitbeaker/rest');
 
 describe('GitlabInstance', () => {
   let gitlab: GitlabInstance;
-  let  mockApi: GitlabAPI;
+  let mockApi: GitlabAPI;
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,14 +1,19 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
-import { getGroupName, getRunnerTag } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  getGroupName,
+  getRunnerTag,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import * as envUtil from 'util/envUtil';
 
 // Mock the constants module
 jest.mock('model/backend/gitlab/digitalTwinConfig/settingsUtility', () => ({
-  ...jest.requireActual('model/backend/gitlab/digitalTwinConfig/settingsUtility'),
+  ...jest.requireActual(
+    'model/backend/gitlab/digitalTwinConfig/settingsUtility',
+  ),
   getGroupName: jest.fn().mockReturnValue('testGroup'),
 }));
 

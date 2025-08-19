@@ -12,7 +12,7 @@ export const RUNNER_TAG = 'linux';
 
 // Pipeline
 export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
-export const PIPELINE_POLL_INTERVAL = 5000; // 5 seconds - for pipeline status checks
+export const PIPELINE_POLL_INTERVAL = 5 * 1000; // 5 seconds - for pipeline status checks
 export const defaultFiles = [
   { name: 'description.md', type: 'description' },
   { name: 'README.md', type: 'description' },

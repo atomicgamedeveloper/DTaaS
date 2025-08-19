@@ -1,6 +1,6 @@
 import { getAuthority } from 'util/envUtil';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import {  getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { Asset } from 'preview/components/asset/Asset';
 import {
   BackendInterface,

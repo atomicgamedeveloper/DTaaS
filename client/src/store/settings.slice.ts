@@ -14,11 +14,11 @@ interface SettingsState {
   RUNNER_TAG: string;
 }
 
-const saveSettingsToLocalStorage = (settings: SettingsState) => {
+export const saveSettingsToLocalStorage = (settings: SettingsState) => {
   localStorage.setItem('dtaas_settings', JSON.stringify(settings));
 };
 
-const loadInitialSettings = (): SettingsState => {
+export const loadInitialSettings = (): SettingsState => {
   const settings = localStorage.getItem('dtaas_settings');
   if (settings) {
     const parsedSettings = JSON.parse(settings);
