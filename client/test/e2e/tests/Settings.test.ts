@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import test from 'test/e2e/setup/fixtures';
 
 const DEFAULT_SETTINGS = {
   GROUP_NAME: 'DTaaS',
@@ -23,23 +24,23 @@ test.describe('Account Settings Form', () => {
   });
 
   test('Should save new settings', async ({ page }) => {
-    await page.getByLabel('Group Name').fill('DTaaStest');
-    await page.getByLabel('DT Directory').fill('digital_twinstest');
-    await page.getByLabel('Common Library Project name').fill('foo');
-    await page.getByLabel('Runner Tag').fill('bar');
+    await page.getByLabel('Group Name').fill('DTaaS-test');
+    await page.getByLabel('DT Directory').fill('digital_twins-test');
+    await page.getByLabel('Common Library Project name').fill('Common-test');
+    await page.getByLabel('Runner Tag').fill('Runner-test');
     await page.getByRole('button', { name: 'Save Settings' }).click();
 
     await page.getByRole('tab', { name: 'Profile' }).click();
     await page.getByRole('tab', { name: 'Settings' }).click();
 
-    await expect(page.getByLabel('Group Name')).toHaveValue('DTaaStest');
+    await expect(page.getByLabel('Group Name')).toHaveValue('DTaaS-test');
     await expect(page.getByLabel('DT Directory')).toHaveValue(
-      'digital_twinstest',
+      'digital_twins-test',
     );
     await expect(page.getByLabel('Common Library Project name')).toHaveValue(
-      'foo',
+      'Common-test',
     );
-    await expect(page.getByLabel('Runner Tag')).toHaveValue('bar');
+    await expect(page.getByLabel('Runner Tag')).toHaveValue('Runner-test');
   });
 
   test('Should reset to default settings', async ({ page }) => {

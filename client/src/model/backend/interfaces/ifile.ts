@@ -1,5 +1,5 @@
-import { FileType } from '../gitlab/digitalTwinConfig/constants';
-import { FileState } from '../gitlab/UtilityInterfaces';
+import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 
 export interface IFile {
   createFile(

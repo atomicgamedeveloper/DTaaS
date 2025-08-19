@@ -81,4 +81,5 @@ export default defineConfig({
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',
   globalTeardown: 'test/e2e/setup/global-teardown.ts',
+  reportSlowTests: null,
 });

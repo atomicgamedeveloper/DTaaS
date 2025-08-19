@@ -3,7 +3,7 @@ import {
   screen,
   fireEvent,
   act,
-  waitFor /* within */,
+  waitFor,
   within,
 } from '@testing-library/react';
 import SettingsForm from 'route/account/SettingsForm';
