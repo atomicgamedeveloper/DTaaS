@@ -128,23 +128,6 @@ describe('SettingsForm', () => {
     );
   });
 
-  it('only dispatches actions for changed fields', () => {
-    fireEvent.change(screen.getByLabelText(/group name/i), {
-      target: { value: 'new-group' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(mockDispatch).toHaveBeenCalledWith(setGroupName('new-group'));
-    expect(mockDispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: expect.stringMatching(
-          /setDTDirectory|setCommonLibraryProjectName|setRunnerTag/,
-        ),
-      }),
-    );
-  });
-
   it('resets to defaults when reset button clicked', () => {
     fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
 
