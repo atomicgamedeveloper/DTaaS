@@ -7,8 +7,12 @@ export enum AssetTypes {
   'Digital Twin' = 'digital_twin',
 }
 
-// Digital Twin
+// Digital Twin (default values)
+export const GROUP_NAME = 'DTaaS';
+export const DT_DIRECTORY = 'digital_twins';
+export const COMMON_LIBRARY_PROJECT_NAME = 'common';
 export const RUNNER_TAG = 'linux';
+export const BRANCH_NAME = 'master';
 
 // Pipeline
 export const MAX_EXECUTION_TIME = 10 * 60 * 1000;

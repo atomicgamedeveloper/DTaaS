@@ -9,6 +9,7 @@ const DEFAULT_MOCK_VALUES = {
   DT_DIRECTORY: 'digital_twins',
   COMMON_LIBRARY_PROJECT_NAME: 'common',
   RUNNER_TAG: 'linux',
+  BRANCH_NAME: 'master',
 };
 
 /**
@@ -35,6 +36,7 @@ const createConstantsMock = (overrides = {}) => {
       .fn()
       .mockReturnValue(mockValues.COMMON_LIBRARY_PROJECT_NAME),
     useRunnerTag: jest.fn().mockReturnValue(mockValues.RUNNER_TAG),
+    useBranchName: jest.fn().mockReturnValue(mockValues.BRANCH_NAME),
   };
 };
 

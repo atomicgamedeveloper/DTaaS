@@ -1,10 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {
+  GROUP_NAME,
+  DT_DIRECTORY,
+  COMMON_LIBRARY_PROJECT_NAME,
+  RUNNER_TAG,
+  BRANCH_NAME,
+} from 'model/backend/gitlab/digitalTwinConfig/constants';
 
+// Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
-  GROUP_NAME: 'DTaaS',
-  DT_DIRECTORY: 'digital_twins',
-  COMMON_LIBRARY_PROJECT_NAME: 'common',
-  RUNNER_TAG: 'linux',
+  GROUP_NAME,
+  DT_DIRECTORY,
+  COMMON_LIBRARY_PROJECT_NAME,
+  RUNNER_TAG,
+  BRANCH_NAME,
 };
 
 interface SettingsState {
@@ -12,6 +21,7 @@ interface SettingsState {
   DT_DIRECTORY: string;
   COMMON_LIBRARY_PROJECT_NAME: string;
   RUNNER_TAG: string;
+  BRANCH_NAME: string;
 }
 
 export const saveSettingsToLocalStorage = (settings: SettingsState) => {
@@ -52,6 +62,10 @@ export const settingsSlice = createSlice({
       state.RUNNER_TAG = action.payload;
       saveSettingsToLocalStorage({ ...state });
     },
+    setBranchName: (state, action: PayloadAction<string>) => {
+      state.BRANCH_NAME = action.payload;
+      saveSettingsToLocalStorage({ ...state });
+    },
     resetToDefaults: (state) => {
       Object.assign(state, DEFAULT_SETTINGS);
       saveSettingsToLocalStorage({ ...DEFAULT_SETTINGS });
@@ -64,6 +78,7 @@ export const {
   setDTDirectory,
   setCommonLibraryProjectName,
   setRunnerTag,
+  setBranchName,
   resetToDefaults,
 } = settingsSlice.actions;
 

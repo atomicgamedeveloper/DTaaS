@@ -13,6 +13,7 @@ import {
   ProjectSummary,
   JobSummary,
 } from './UtilityInterfaces';
+import { getBranchName } from './digitalTwinConfig/settingsUtility';
 
 export class GitlabAPI implements BackendAPI {
   public client: InstanceType<typeof Gitlab>;
@@ -112,7 +113,7 @@ export class GitlabAPI implements BackendAPI {
   public async listRepositoryFiles(
     projectId: ProjectId,
     path = '',
-    ref = 'master',
+    ref = getBranchName(),
     recursive = false,
   ): Promise<RepositoryTreeItem[]> {
     const items = await this.client.Repositories.allRepositoryTrees(projectId, {

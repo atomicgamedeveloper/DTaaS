@@ -9,6 +9,7 @@ import {
   setRunnerTag,
   resetToDefaults,
   DEFAULT_SETTINGS,
+  setBranchName,
 } from 'store/settings.slice';
 import {
   Button,
@@ -26,8 +27,13 @@ import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
 
 const SettingsForm: React.FC = () => {
   const dispatch = useDispatch();
-  const { GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_NAME, RUNNER_TAG } =
-    useSelector((state: RootState) => state.settings);
+  const {
+    GROUP_NAME,
+    DT_DIRECTORY,
+    COMMON_LIBRARY_PROJECT_NAME,
+    RUNNER_TAG,
+    BRANCH_NAME,
+  } = useSelector((state: RootState) => state.settings);
 
   // Local state for form values - prevents saving on each keystroke
   const [formValues, setFormValues] = useState({
@@ -35,6 +41,7 @@ const SettingsForm: React.FC = () => {
     dtDirectory: DT_DIRECTORY,
     commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
     runnerTag: RUNNER_TAG,
+    branchName: BRANCH_NAME,
   });
 
   // Notification state
@@ -50,8 +57,15 @@ const SettingsForm: React.FC = () => {
       dtDirectory: DT_DIRECTORY,
       commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: RUNNER_TAG,
+      branchName: BRANCH_NAME,
     });
-  }, [GROUP_NAME, DT_DIRECTORY, COMMON_LIBRARY_PROJECT_NAME, RUNNER_TAG]);
+  }, [
+    GROUP_NAME,
+    DT_DIRECTORY,
+    COMMON_LIBRARY_PROJECT_NAME,
+    RUNNER_TAG,
+    BRANCH_NAME,
+  ]);
 
   // Handle local form changes without dispatching to Redux
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +81,13 @@ const SettingsForm: React.FC = () => {
       if (id === 'commonLibraryProjectName') {
         return { ...prev, commonLibraryProjectName: value };
       }
-      return { ...prev, runnerTag: value };
+      if (id === 'runnerTag') {
+        return { ...prev, runnerTag: value };
+      }
+      if (id === 'branchName') {
+        return { ...prev, branchName: value };
+      }
+      return prev;
     });
   };
 
@@ -78,6 +98,7 @@ const SettingsForm: React.FC = () => {
       dtDirectory: DEFAULT_SETTINGS.DT_DIRECTORY,
       commonLibraryProjectName: DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: DEFAULT_SETTINGS.RUNNER_TAG,
+      branchName: DEFAULT_SETTINGS.BRANCH_NAME,
     });
 
     dispatch(resetToDefaults());
@@ -104,6 +125,10 @@ const SettingsForm: React.FC = () => {
 
     if (formValues.runnerTag !== RUNNER_TAG) {
       dispatch(setRunnerTag(formValues.runnerTag));
+    }
+
+    if (formValues.branchName !== BRANCH_NAME) {
+      dispatch(setBranchName(formValues.branchName));
     }
 
     setNotificationMessage('Settings saved successfully!');
@@ -165,6 +190,18 @@ const SettingsForm: React.FC = () => {
               value={formValues.runnerTag}
               onChange={handleInputChange}
               helperText="Tag used for GitLab CI runners (e.g., linux, windows)"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              id="branchName"
+              label="Branch Name"
+              variant="outlined"
+              value={formValues.branchName}
+              onChange={handleInputChange}
+              helperText="Default branch name for GitLab projects"
             />
           </Grid>
 

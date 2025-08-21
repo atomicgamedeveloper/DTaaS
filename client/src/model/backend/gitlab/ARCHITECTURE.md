@@ -32,7 +32,7 @@ the backends are connected to key objects:
   await this.backend.api.createRepositoryFile(
       projectToUse,
       `${filePath}/${file.name}`,
-      'master',
+      getBranchName(),
       file.content,
       commitMessage,
   );

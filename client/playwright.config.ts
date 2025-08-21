@@ -51,7 +51,7 @@ export default defineConfig({
   use: {
     baseURL: BASE_URI,
     screenshot: 'only-on-failure',
-    trace: 'on-first-retry', // Wil not record trace on Github actions because of no retries
+    trace: 'on-first-retry', // Will not record trace on Github actions because of no retries
     headless: true,
   },
   projects: [

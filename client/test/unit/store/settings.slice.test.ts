@@ -52,6 +52,7 @@ describe('settingsSlice', () => {
       DT_DIRECTORY: 'testDTDirectory',
       COMMON_LIBRARY_PROJECT_NAME: 'testCommonLibraryProjectName',
       RUNNER_TAG: 'testRunnerTag',
+      BRANCH_NAME: 'testBranchName',
     };
 
     const state = settingsReducer(modified, resetToDefaults());

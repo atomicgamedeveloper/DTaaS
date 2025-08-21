@@ -6,6 +6,7 @@ import {
   getGroupName,
   getRunnerTag,
   getDTDirectory,
+  getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
@@ -94,7 +95,7 @@ class DigitalTwin implements DigitalTwinInterface {
     const variables = { DTName: this.DTName, RunnerTag: runnerTag };
     return this.backend.startPipeline(
       this.backend.getProjectId(),
-      'master',
+      getBranchName(),
       variables,
     );
   }

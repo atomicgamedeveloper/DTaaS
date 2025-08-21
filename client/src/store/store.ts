@@ -11,7 +11,7 @@ import authSlice from './auth.slice';
 import settingsSlice from './settings.slice';
 
 const loadSettings = () => {
-  const serializedSettings = localStorage.getItem('settings');
+  const serializedSettings = localStorage.getItem('dtaas_settings');
   return serializedSettings ? JSON.parse(serializedSettings) : undefined;
 };
 

@@ -35,6 +35,7 @@ describe('AccountTabs', () => {
       DT_DIRECTORY: 'mock-dir',
       COMMON_LIBRARY_PROJECT_ID: 123,
       RUNNER_TAG: 'linux',
+      BRANCH_NAME: 'master',
     });
   });
   afterEach(() => {

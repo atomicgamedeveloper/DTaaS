@@ -2,6 +2,7 @@
 /* eslint-disable no-await-in-loop */
 
 import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import {
   FileState,
   BackendInterface,
@@ -50,7 +51,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.createRepositoryFile(
       projectToUse,
       `${filePath}/${file.name}`,
-      'master',
+      getBranchName(),
       file.content,
       commitMessage,
     );
@@ -64,7 +65,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.editRepositoryFile(
       this.backend.getProjectId(),
       filePath,
-      'master',
+      getBranchName(),
       updatedContent,
       commitMessage,
     );
@@ -74,7 +75,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.removeRepositoryFile(
       this.backend.getProjectId(),
       digitalTwinPath,
-      'master',
+      getBranchName(),
       `Removing ${this.name} digital twin`,
     );
   }
@@ -87,7 +88,7 @@ class FileHandler implements FileHandlerInterface {
     const response = await this.backend.api.getRepositoryFileContent(
       projectToUse,
       filePath,
-      'master',
+      getBranchName(),
     );
     return response.content;
   }

@@ -256,6 +256,7 @@ export async function testAccountSettings(mockUser: mockUserType) {
   expect(screen.getByLabelText(/dt directory/i)).toBeInTheDocument();
   expect(screen.getByLabelText(/common library/i)).toBeInTheDocument();
   expect(screen.getByLabelText(/runner tag/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/branch name/i)).toBeInTheDocument();
 
   const groupNameInput = screen.getByLabelText(/group name/i);
   fireEvent.change(groupNameInput, { target: { value: 'testGroup' } });

@@ -2,6 +2,7 @@ import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
 import {
+  getBranchName,
   getGroupName,
   getRunnerTag,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
@@ -83,7 +84,7 @@ describe('DigitalTwin', () => {
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/description.md',
-      'master',
+      getBranchName(),
     );
   });
 
@@ -122,7 +123,7 @@ describe('DigitalTwin', () => {
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/README.md',
-      'master',
+      getBranchName(),
     );
   });
 
@@ -149,20 +150,19 @@ describe('DigitalTwin', () => {
 
     expect(pipelineId).toBe(123);
     expect(dt.lastExecutionStatus).toBe(ExecutionStatus.SUCCESS);
-    expect(mockGitlabInstance.startPipeline).toHaveBeenCalledWith(1, 'master', {
-      DTName: 'test-DTName',
-      RunnerTag: getRunnerTag(),
-    });
+    expect(mockGitlabInstance.startPipeline).toHaveBeenCalledWith(
+      1,
+      getBranchName(),
+      {
+        DTName: 'test-DTName',
+        RunnerTag: getRunnerTag(),
+      },
+    );
   });
 
   it('should log error and return null when projectId or triggerToken is missing', async () => {
     (dt.backend.getProjectId as jest.Mock).mockReturnValue(null);
-    (mockBackendAPI.getTriggerToken as jest.Mock).mockResolvedValue(
-      'test-token',
-    );
-
     jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(false);
-
     (mockBackendAPI.getTriggerToken as jest.Mock).mockResolvedValue(null);
 
     const pipelineId = await dt.execute();
@@ -258,7 +258,7 @@ describe('DigitalTwin', () => {
     expect(mockBackendAPI.removeRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName',
-      'master',
+      getBranchName(),
       'Removing test-DTName digital twin',
     );
   });

@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   DT_DIRECTORY: 'digital_twins',
   COMMON_LIBRARY_PROJECT_NAME: 'common',
   RUNNER_TAG: 'linux',
+  BRANCH_NAME: 'master',
 };
 
 test.describe('Account Settings Form', () => {
@@ -41,6 +42,7 @@ test.describe('Account Settings Form', () => {
       'Common-test',
     );
     await expect(page.getByLabel('Runner Tag')).toHaveValue('Runner-test');
+    await expect(page.getByLabel('Branch Name')).toHaveValue('master');
   });
 
   test('Should reset to default settings', async ({ page }) => {
@@ -57,6 +59,9 @@ test.describe('Account Settings Form', () => {
     );
     await expect(page.getByLabel('Runner Tag')).toHaveValue(
       DEFAULT_SETTINGS.RUNNER_TAG,
+    );
+    await expect(page.getByLabel('Branch Name')).toHaveValue(
+      DEFAULT_SETTINGS.BRANCH_NAME,
     );
   });
 });
