@@ -6,7 +6,8 @@ import {
   BackendInterface,
   LibraryAssetInterface,
   ProjectId,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/utilityInterfaces';
 import LibraryManager from './libraryManager';
 
 class LibraryAsset implements LibraryAssetInterface {
@@ -106,8 +107,11 @@ export async function getLibrarySubfolders(
 
   const subfolders: Asset[] = await Promise.all(
     files
-      .filter((file) => file.type === 'tree' && file.path !== mappedPath)
-      .map(async (file) => ({
+      .filter(
+        (file: RepositoryTreeItem) =>
+          file.type === 'tree' && file.path !== mappedPath,
+      )
+      .map(async (file: RepositoryTreeItem) => ({
         name: file.name,
         path: file.path,
         type,

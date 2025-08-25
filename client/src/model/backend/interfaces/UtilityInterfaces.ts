@@ -1,6 +1,11 @@
-import { FileType } from './digitalTwinConfig/constants';
-import { IFile } from '../interfaces/ifile';
-import { DigitalTwinPipelineState } from './types/executionHistory';
+import {
+  FileType,
+  FileState,
+  IFile,
+  LibraryAssetDetails,
+  LibraryAssetFiles,
+} from 'model/backend/interfaces/sharedInterfaces';
+import { DigitalTwinPipelineState } from 'model/backend/gitlab/types/executionHistory';
 
 // Instance
 export type LogEntry = {
@@ -308,16 +313,6 @@ export interface DigitalTwinInterface
   DTAssets: DTAssetsInterface;
 }
 
-// ifile.ts
-export type FileState = {
-  name: string;
-  content: string;
-  isNew: boolean;
-  isModified: boolean;
-  type?: string;
-  isFromCommonLibrary?: boolean;
-};
-
 // libraryConfigFile.slice.ts
 export type LibraryConfigFile = {
   assetPath: string;
@@ -455,29 +450,6 @@ export interface FileHandlerInterface
    */
   getFileContent(filePath: string, isPrivate?: boolean): Promise<string>;
 }
-
-// libraryAsset.ts
-export type LibraryAssetDetails = {
-  /**
-   * Name of the library asset
-   */
-  name: string;
-  /**
-   * Path to the library asset in the repository
-   */
-  description: string;
-  /**
-   * Full path to the library asset in the repository
-   */
-  fullDescription: string;
-};
-
-export type LibraryAssetFiles = {
-  path: string;
-  type: string;
-  isPrivate: boolean;
-  configFiles: string[];
-};
 
 export interface LibraryAssetFileProvider {
   getConfigFiles(): Promise<void>;

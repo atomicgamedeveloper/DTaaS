@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import { fetchJobLogs as fetchJobLogsCore } from 'model/backend/gitlab/execution/logFetching';
-import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/utilityInterfaces';
 import {
   setJobLogs,
   setPipelineCompleted,

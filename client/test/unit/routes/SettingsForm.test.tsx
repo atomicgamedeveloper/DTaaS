@@ -14,6 +14,7 @@ import {
   setCommonLibraryProjectName,
   setDTDirectory,
   setRunnerTag,
+  setBranchName,
 } from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from '../unit.testUtil';
@@ -67,6 +68,8 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: 'new-dt-directory' } });
     input = screen.getByLabelText(/runner tag/i);
     fireEvent.change(input, { target: { value: 'new-runner-tag' } });
+    input = screen.getByLabelText(/branch name/i);
+    fireEvent.change(input, { target: { value: 'new-branch-name' } });
 
     // Click the save settings button
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
@@ -80,6 +83,7 @@ describe('SettingsForm', () => {
       setDTDirectory('new-dt-directory'),
     );
     expect(mockDispatch).toHaveBeenCalledWith(setRunnerTag('new-runner-tag'));
+    expect(mockDispatch).toHaveBeenCalledWith(setBranchName('new-branch-name'));
   });
 
   it('shows success notification after save and auto-hides', async () => {

@@ -1,7 +1,7 @@
-import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import FileHandler from 'preview/util/fileHandler';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
+import { FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 const mockApi = mockBackendAPI;
 

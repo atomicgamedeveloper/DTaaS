@@ -1,3 +1,17 @@
+import { FileType } from 'model/backend/interfaces/sharedInterfaces';
+
+// Default project settings
+export const GROUP_NAME = 'DTaaS';
+export const DT_DIRECTORY = 'digital_twins';
+export const COMMON_LIBRARY_PROJECT_NAME = 'common';
+export const RUNNER_TAG = 'linux';
+export const BRANCH_NAME = 'master';
+
+// Pipeline execution settings
+export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
+export const PIPELINE_POLL_INTERVAL = 5 * 1000;
+
+// Maps tabs to project folders (based on asset types)
 export enum AssetTypes {
   'Functions' = 'functions',
   'Models' = 'models',
@@ -7,24 +21,9 @@ export enum AssetTypes {
   'Digital Twin' = 'digital_twin',
 }
 
-// Digital Twin (default values)
-export const GROUP_NAME = 'DTaaS';
-export const DT_DIRECTORY = 'digital_twins';
-export const COMMON_LIBRARY_PROJECT_NAME = 'common';
-export const RUNNER_TAG = 'linux';
-export const BRANCH_NAME = 'master';
-
-// Pipeline
-export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
-export const PIPELINE_POLL_INTERVAL = 5 * 1000; // 5 seconds - for pipeline status checks
+// Default initial files for new digital twins
 export const defaultFiles = [
-  { name: 'description.md', type: 'description' },
-  { name: 'README.md', type: 'description' },
-  { name: '.gitlab-ci.yml', type: 'config' },
+  { name: 'description.md', type: FileType.DESCRIPTION },
+  { name: 'README.md', type: FileType.DESCRIPTION },
+  { name: '.gitlab-ci.yml', type: FileType.CONFIGURATION },
 ];
-
-export enum FileType {
-  DESCRIPTION = 'description',
-  CONFIGURATION = 'configuration',
-  LIFECYCLE = 'lifecycle',
-}

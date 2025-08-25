@@ -1,3 +1,4 @@
+import { FileType } from 'model/backend/interfaces/sharedInterfaces';
 import DTAssets from 'preview/util/DTAssets';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { mockFileHandler } from 'test/preview/__mocks__/global_mocks';
@@ -39,14 +40,14 @@ describe('DTAssets', () => {
         content: 'content',
         isNew: true,
         isModified: false,
-        type: 'digital twin',
+        type: FileType.CONFIGURATION,
       },
       {
         name: 'file2',
         content: 'content2',
         isNew: true,
         isModified: false,
-        type: 'lifecycle',
+        type: FileType.LIFECYCLE,
       },
     ];
     const mainFolderPath = 'path/to/main';
@@ -57,7 +58,7 @@ describe('DTAssets', () => {
     expect(dtAssets.fileHandler.createFile).toHaveBeenCalledWith(
       fileState[0],
       mainFolderPath,
-      'Add file to digital twin folder',
+      'Add file to configuration folder',
     );
 
     expect(dtAssets.fileHandler.createFile).toHaveBeenCalledWith(

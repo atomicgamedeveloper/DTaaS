@@ -12,7 +12,7 @@ import {
   RepositoryTreeItem,
   ProjectSummary,
   JobSummary,
-} from './UtilityInterfaces';
+} from '../interfaces/utilityInterfaces';
 import { getBranchName } from './digitalTwinConfig/settingsUtility';
 
 export class GitlabAPI implements BackendAPI {

@@ -1,6 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
@@ -10,6 +9,7 @@ import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 const setupStore = () => {
   const preSetItems: LibraryAsset[] = [mockLibraryAsset];

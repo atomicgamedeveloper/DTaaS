@@ -1,10 +1,8 @@
 import { addOrUpdateFile, renameFile } from 'preview/store/file.slice';
-import {
-  FileState,
-  LibraryConfigFile,
-} from 'model/backend/gitlab/UtilityInterfaces';
+import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 export const isFileModifiable = (fileName: string) =>
   !['README.md', 'description.md', '.gitlab-ci.yml'].includes(fileName);
@@ -47,7 +45,7 @@ export const validateFiles = (
 };
 
 export const addDefaultFiles = (
-  defaultFilesNames: { name: string; type: string }[],
+  defaultFilesNames: { name: string; type: FileType }[],
   files: FileState[],
   dispatch: ReturnType<typeof useDispatch>,
 ) => {
@@ -100,15 +98,15 @@ export const handleChangeFileName = (
   setOpenChangeFileNameDialog(false);
 };
 
-export const getFileTypeFromExtension = (fileName: string): string => {
+export const getFileTypeFromExtension = (fileName: string): FileType => {
   const extension = fileName.split('.').pop()?.toLowerCase();
-  if (extension === 'md') return 'description';
+  if (extension === 'md') return FileType.DESCRIPTION;
   if (extension === 'json' || extension === 'yaml' || extension === 'yml')
-    return 'config';
-  return 'lifecycle';
+    return FileType.CONFIGURATION;
+  return FileType.LIFECYCLE;
 };
 
-export const getFilteredFileNames = (type: string, files: FileState[]) =>
+export const getFilteredFileNames = (type: FileType, files: FileState[]) =>
   files
     .filter(
       (file) => file.isNew && getFileTypeFromExtension(file.name) === type,

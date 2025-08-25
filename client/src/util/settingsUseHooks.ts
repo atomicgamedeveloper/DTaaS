@@ -1,43 +1,48 @@
 import { useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 
-// The values below are managed in the settings tab, reading from the store
+/**
+ * React hook accessors for settings stored in the Redux store.
+ *
+ * - Default values are defined in
+ *   model/backend/gitlab/constants.ts
+ *
+ * - Non-hook variants are in
+ *   model/backend/gitlab/digitalTwinConfig/settingsUtility.ts
+ *
+ * - Settings can be overridden by the user in the Settings tab
+ */
 export const useGroupName = (): string => {
-  // Reads GROUP_NAME from the Redux store.
-  const GROUP_NAME = useSelector(
+  const groupName = useSelector(
     (state: RootState) => state.settings.GROUP_NAME,
   );
-  return GROUP_NAME;
+  return groupName;
 };
 
 export const useDTDirectory = (): string => {
-  // Reads DT_DIRECTORY from the Redux store.
-  const DT_DIRECTORY = useSelector(
+  const dtDirectory = useSelector(
     (state: RootState) => state.settings.DT_DIRECTORY,
   );
-  return DT_DIRECTORY;
+  return dtDirectory;
 };
 
 export const useCommonLibraryProjectName = (): string => {
-  // Reads COMMON_LIBRARY_PROJECT_NAME from the Redux store.
-  const COMMON_LIBRARY_PROJECT_NAME = useSelector(
+  const commonLibraryProjectName = useSelector(
     (state: RootState) => state.settings.COMMON_LIBRARY_PROJECT_NAME,
   );
-  return COMMON_LIBRARY_PROJECT_NAME;
+  return commonLibraryProjectName;
 };
 
 export const useRunnerTag = (): string => {
-  // Reads RUNNER_TAG from the Redux store.
-  const RUNNER_TAG = useSelector(
+  const runnerTag = useSelector(
     (state: RootState) => state.settings.RUNNER_TAG,
   );
-  return RUNNER_TAG;
+  return runnerTag;
 };
 
 export const useBranchName = (): string => {
-  // Reads BRANCH_NAME from the Redux store.
-  const BRANCH_NAME = useSelector(
+  const branchName = useSelector(
     (state: RootState) => state.settings.BRANCH_NAME,
   );
-  return BRANCH_NAME;
+  return branchName;
 };

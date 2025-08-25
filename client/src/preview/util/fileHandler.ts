@@ -1,13 +1,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { FileType, FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
-  FileState,
   BackendInterface,
   FileHandlerInterface,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/utilityInterfaces';
 
 export function isValidFileType(
   item: { type: string; name: string; path: string },
@@ -109,8 +109,8 @@ class FileHandler implements FileHandlerInterface {
       );
 
       return response
-        .filter((item) => isValidFileType(item, fileType))
-        .map((file) => file.name);
+        .filter((item: RepositoryTreeItem) => isValidFileType(item, fileType))
+        .map((file: RepositoryTreeItem) => file.name);
     } catch {
       return [];
     }
@@ -172,8 +172,10 @@ class FileHandler implements FileHandlerInterface {
       );
 
       return response
-        .filter((item) => isValidFileType(item, FileType.CONFIGURATION))
-        .map((file) => file.name);
+        .filter((item: RepositoryTreeItem) =>
+          isValidFileType(item, FileType.CONFIGURATION),
+        )
+        .map((file: RepositoryTreeItem) => file.name);
     } catch (_error) {
       return [];
     }

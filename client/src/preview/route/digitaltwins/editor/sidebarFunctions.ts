@@ -1,8 +1,5 @@
 import { addOrUpdateFile } from 'preview/store/file.slice';
-import {
-  FileState,
-  LibraryConfigFile,
-} from 'model/backend/gitlab/UtilityInterfaces';
+import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
@@ -16,6 +13,7 @@ import {
   fetchAndSetFileContent,
   fetchAndSetFileLibraryContent,
 } from './sidebarFetchers';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 export const handleFileClick = (
   fileName: string,

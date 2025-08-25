@@ -179,8 +179,12 @@ to provide the desired backend implementation.
 
 ## Data Flow
 
-The below class diagram shows how a backend (Gitlab) is used.
-![Class diagram over ./Preview/Util](./classDiagramOfPreviewUtil.png)
+The basic data flow consists of a bidirectional relationship between the backend
+and the application such that the files can be created, deleted and triggered
+from the UI changing the state of the storage backend's files and running its pipelines
+on the execution backend, if they are seperated.
+Statuses on pipelines are intermittently retrieved and showcased to the user
+who also has the option to stop execution.
 
 ## Extension Points
 

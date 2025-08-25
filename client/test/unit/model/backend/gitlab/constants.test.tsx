@@ -3,13 +3,15 @@ import {
   getCommonLibraryProjectName,
   getDTDirectory,
   getRunnerTag,
+  getBranchName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
   useGroupName,
   useCommonLibraryProjectName,
   useDTDirectory,
   useRunnerTag,
   useBranchName,
-  getBranchName,
-} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+} from 'util/settingsUseHooks';
 import store from 'store/store';
 import {
   setGroupName,

@@ -8,17 +8,16 @@ import {
   getDTDirectory,
   getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { FileType } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import {
   DigitalTwinInterface,
-  FileState,
-  LibraryConfigFile,
   BackendInterface,
   DTAssetsInterface,
   ProjectId,
   LibraryAssetInterface,
-} from 'model/backend/gitlab/UtilityInterfaces';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+  LibraryConfigFile,
+} from 'model/backend/interfaces/utilityInterfaces';
 import {
   isValidInstance,
   logError,
@@ -80,7 +79,7 @@ class DigitalTwin implements DigitalTwinInterface {
       const fileContent = await this.DTAssets.getFileContent('README.md');
       this.fullDescription = fileContent.replace(
         /(!\[[^\]]*\])\(([^)]+)\)/g,
-        (match, altText, imagePath) => {
+        (match: string, altText: string, imagePath: string) => {
           const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
           return `${altText}(${fullUrl})`;
         },
@@ -245,14 +244,14 @@ class DigitalTwin implements DigitalTwinInterface {
 
   async getAssetFiles(): Promise<{ assetPath: string; fileNames: string[] }[]> {
     const mainFolderPath = `digital_twins/${this.DTName}`;
-    const excludeFolder = 'lifecycle';
+    const excludeFolder = FileType.LIFECYCLE;
     const result: { assetPath: string; fileNames: string[] }[] = [];
 
     try {
       const folders = await this.DTAssets.getFolders(mainFolderPath);
 
       const validFolders = folders.filter(
-        (folder) => !folder.includes(excludeFolder),
+        (folder: string) => !folder.includes(excludeFolder),
       );
 
       for (const folder of validFolders) {

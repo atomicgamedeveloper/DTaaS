@@ -1,6 +1,6 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import GitlabAPI from 'model/backend/gitlab/backend';
-import { JobSummary } from 'model/backend/gitlab/UtilityInterfaces';
+import { JobSummary } from 'model/backend/interfaces/utilityInterfaces';
 import {
   getCommonLibraryProjectName,
   getGroupName,

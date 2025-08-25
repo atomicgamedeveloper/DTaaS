@@ -4,7 +4,8 @@ import {
   BackendAPI,
   LibraryConfigFile,
   ProjectId,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/utilityInterfaces';
 import { Asset } from 'preview/components/asset/Asset';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
@@ -67,8 +68,11 @@ export async function getDTSubfolders(
   const files = await api.listRepositoryFiles(projectId, getDTDirectory());
   const subfolders: Asset[] = await Promise.all(
     files
-      .filter((file) => file.type === 'tree' && file.path !== getDTDirectory())
-      .map(async (file) => ({
+      .filter(
+        (file: RepositoryTreeItem) =>
+          file.type === 'tree' && file.path !== getDTDirectory(),
+      )
+      .map(async (file: RepositoryTreeItem) => ({
         name: file.name,
         path: file.path,
         type: AssetTypes['Digital Twin' as keyof typeof AssetTypes],

@@ -1,17 +1,12 @@
 import store from 'store/store';
 
-// The values below are managed in the settings tab, reading from the store
-
-// Front end hooks
-export {
-  useGroupName,
-  useDTDirectory,
-  useCommonLibraryProjectName,
-  useRunnerTag,
-  useBranchName,
-} from 'util/settingsUseHooks';
-
-// Non-hook version for use in classes and other non-React contexts
+/**
+ * Non-hook getters for settings stored in the Redux store.
+ *
+ * - Default values are defined in ./constants.ts
+ * - Hook variants are in util/settingsUseHooks.ts
+ * - Settings can be overridden by the user in the Settings tab
+ */
 export const getGroupName = (): string => store.getState().settings.GROUP_NAME;
 export const getDTDirectory = (): string =>
   store.getState().settings.DT_DIRECTORY;

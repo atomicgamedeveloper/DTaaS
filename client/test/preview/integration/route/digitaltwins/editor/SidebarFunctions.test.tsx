@@ -6,8 +6,8 @@ import {
   handleCloseFileNameDialog,
   handleFileSubmit,
 } from 'preview/route/digitaltwins/editor/sidebarFunctions';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import { updateFileState } from 'preview/util/fileUtils';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),

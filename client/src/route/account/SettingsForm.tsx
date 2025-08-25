@@ -84,10 +84,7 @@ const SettingsForm: React.FC = () => {
       if (id === 'runnerTag') {
         return { ...prev, runnerTag: value };
       }
-      if (id === 'branchName') {
-        return { ...prev, branchName: value };
-      }
-      return prev;
+      return { ...prev, branchName: value };
     });
   };
 

@@ -7,14 +7,14 @@ import {
   getGroupName,
   getCommonLibraryProjectName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import GitlabAPI from 'model/backend/gitlab/backend';
 import {
   BackendInterface,
   LogEntry,
   ProjectId,
   JobSummary,
   Pipeline,
-} from './UtilityInterfaces';
-import GitlabAPI from './backend';
+} from '../interfaces/utilityInterfaces';
 
 export class GitlabInstance implements BackendInterface {
   public projectName: string;

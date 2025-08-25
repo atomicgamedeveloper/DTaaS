@@ -7,7 +7,7 @@ import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import {
   BackendInterface,
   JobSummary,
-} from 'model/backend/gitlab/UtilityInterfaces';
+} from 'model/backend/interfaces/utilityInterfaces';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 
 describe('PipelineUtils', () => {

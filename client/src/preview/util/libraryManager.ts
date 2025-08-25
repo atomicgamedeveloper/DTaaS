@@ -2,24 +2,20 @@
 /* eslint-disable no-await-in-loop */
 
 import {
-  FileState,
   BackendInterface,
   LibraryManagerInterface,
-} from 'model/backend/gitlab/UtilityInterfaces';
+} from 'model/backend/interfaces/utilityInterfaces';
 import FileHandler from './fileHandler';
-
-export enum FileType {
-  DESCRIPTION = 'description',
-  CONFIGURATION = 'configuration',
-  LIFECYCLE = 'lifecycle',
-}
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 export function getFilePath(
   file: FileState,
   mainFolderPath: string,
   lifecycleFolderPath: string,
 ): string {
-  return file.type === 'lifecycle' ? lifecycleFolderPath : mainFolderPath;
+  return file.type === FileType.LIFECYCLE
+    ? lifecycleFolderPath
+    : mainFolderPath;
 }
 
 class LibraryManager implements LibraryManagerInterface {
