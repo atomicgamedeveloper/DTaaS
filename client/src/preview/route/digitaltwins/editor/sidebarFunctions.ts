@@ -9,11 +9,11 @@ import {
   getFileTypeFromExtension,
   updateFileState,
 } from 'preview/util/fileUtils';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
   fetchAndSetFileContent,
   fetchAndSetFileLibraryContent,
 } from './sidebarFetchers';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 export const handleFileClick = (
   fileName: string,

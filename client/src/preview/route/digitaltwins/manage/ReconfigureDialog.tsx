@@ -17,6 +17,7 @@ import {
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
 import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
   removeAllModifiedFiles,
   selectModifiedFiles,
@@ -28,7 +29,6 @@ import {
 import { showSnackbar } from '../../../store/snackbar.slice';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import Editor from '../editor/Editor';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 interface ReconfigureDialogProps {
   showDialog: boolean;

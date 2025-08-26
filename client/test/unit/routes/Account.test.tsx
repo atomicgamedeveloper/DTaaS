@@ -8,6 +8,7 @@ import {
   testStaticAccountProfile,
 } from 'test/unit/unit.testUtil';
 import * as reactRedux from 'react-redux';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 jest.mock('components/tab/TabComponent', () => ({
   ...jest.requireActual('components/tab/TabComponent'),
@@ -35,7 +36,7 @@ describe('AccountTabs', () => {
       DT_DIRECTORY: 'mock-dir',
       COMMON_LIBRARY_PROJECT_ID: 123,
       RUNNER_TAG: 'linux',
-      BRANCH_NAME: 'master',
+      BRANCH_NAME: getBranchName(),
     });
   });
   afterEach(() => {

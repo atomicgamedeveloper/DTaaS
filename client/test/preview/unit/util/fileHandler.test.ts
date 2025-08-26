@@ -2,6 +2,7 @@ import FileHandler from 'preview/util/fileHandler';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import { FileType } from 'model/backend/interfaces/sharedInterfaces';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 const mockApi = mockBackendAPI;
 
@@ -34,7 +35,7 @@ describe('FileHandler', () => {
     expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
       1,
       'path/file',
-      'master',
+      getBranchName(),
       'content',
       'commit message',
     );
@@ -51,7 +52,7 @@ describe('FileHandler', () => {
     expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
       2,
       'path/file',
-      'master',
+      getBranchName(),
       'content',
       'commit message',
     );
@@ -68,7 +69,7 @@ describe('FileHandler', () => {
     expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
       2,
       'path/file',
-      'master',
+      getBranchName(),
       'content',
       'commit message',
     );
@@ -79,7 +80,7 @@ describe('FileHandler', () => {
     expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'path',
-      'master',
+      getBranchName(),
       'updated content',
       'commit message',
     );
@@ -90,7 +91,7 @@ describe('FileHandler', () => {
     expect(mockApi.removeRepositoryFile).toHaveBeenCalledWith(
       1,
       'path',
-      'master',
+      getBranchName(),
       'Removing DTName digital twin',
     );
   });
@@ -104,7 +105,7 @@ describe('FileHandler', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'path',
-      'master',
+      getBranchName(),
     );
   });
 
@@ -117,7 +118,7 @@ describe('FileHandler', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       2,
       'path',
-      'master',
+      getBranchName(),
     );
   });
 
@@ -130,7 +131,7 @@ describe('FileHandler', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       2,
       'path',
-      'master',
+      getBranchName(),
     );
   });
 

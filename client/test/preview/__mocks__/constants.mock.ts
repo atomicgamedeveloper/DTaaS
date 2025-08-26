@@ -4,12 +4,14 @@
  * so they can be imported consistently across tests
  */
 
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+
 const DEFAULT_MOCK_VALUES = {
   GROUP_NAME: 'DTaaS',
   DT_DIRECTORY: 'digital_twins',
   COMMON_LIBRARY_PROJECT_NAME: 'common',
   RUNNER_TAG: 'linux',
-  BRANCH_NAME: 'master',
+  BRANCH_NAME: getBranchName(),
 };
 
 /**

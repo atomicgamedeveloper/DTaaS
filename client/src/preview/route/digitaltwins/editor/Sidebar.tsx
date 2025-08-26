@@ -6,13 +6,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
 import { getFilteredFileNames } from 'preview/util/fileUtils';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import { selectDigitalTwinByName } from '../../../store/digitalTwin.slice';
 import { fetchData } from './sidebarFetchers';
 import { handleAddFileClick } from './sidebarFunctions';
 import { renderFileTreeItems, renderFileSection } from './sidebarRendering';
 import SidebarDialog from './SidebarDialog';
 import FileActionButtons from '../create/FileActionButtons';
-import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 interface SidebarProps {
   name?: string;

@@ -25,11 +25,11 @@ interface SettingsState {
 }
 
 export const saveSettingsToLocalStorage = (settings: SettingsState) => {
-  localStorage.setItem('dtaas_settings', JSON.stringify(settings));
+  localStorage.setItem('settings', JSON.stringify(settings));
 };
 
 export const loadInitialSettings = (): SettingsState => {
-  const settings = localStorage.getItem('dtaas_settings');
+  const settings = localStorage.getItem('settings');
   if (settings) {
     const parsedSettings = JSON.parse(settings);
     if (parsedSettings && typeof parsedSettings === 'object') {

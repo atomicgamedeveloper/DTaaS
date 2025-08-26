@@ -70,7 +70,7 @@ describe('settingsSlice', () => {
 
     const result = loadInitialSettings();
 
-    expect(getItemSpy).toHaveBeenCalledWith('dtaas_settings');
+    expect(getItemSpy).toHaveBeenCalledWith('settings');
     expect(parseSpy).toHaveBeenCalledWith(savedJson);
     expect(result).toEqual({ ...DEFAULT_SETTINGS, ...parsedSettings });
   });
@@ -82,7 +82,7 @@ describe('settingsSlice', () => {
     saveSettingsToLocalStorage(testSettings);
 
     expect(setItemSpy).toHaveBeenCalledWith(
-      'dtaas_settings',
+      'settings',
       JSON.stringify(testSettings),
     );
   });

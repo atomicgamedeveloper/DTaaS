@@ -1,5 +1,6 @@
 import GitlabAPI from 'model/backend/gitlab/backend';
 import { Gitlab } from '@gitbeaker/rest';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 jest.mock('@gitbeaker/rest', () => ({
   Gitlab: jest.fn().mockImplementation(() => ({})),
@@ -74,14 +75,14 @@ describe('GitlabAPI', () => {
 
       const result = await api.startPipeline(
         1,
-        'master',
+        getBranchName(),
         { FOO: 'bar' },
         'test-token',
       );
 
       expect(mockClient.PipelineTriggerTokens.trigger).toHaveBeenCalledWith(
         1,
-        'master',
+        getBranchName(),
         'test-token',
         { variables: { FOO: 'bar' } },
       );
@@ -140,7 +141,7 @@ describe('GitlabAPI', () => {
       const result = await api.createRepositoryFile(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'file content',
         'Add test file',
       );
@@ -148,7 +149,7 @@ describe('GitlabAPI', () => {
       expect(mockClient.RepositoryFiles.create).toHaveBeenCalledWith(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'file content',
         'Add test file',
       );
@@ -161,7 +162,7 @@ describe('GitlabAPI', () => {
       const result = await api.editRepositoryFile(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'updated content',
         'Update test file',
       );
@@ -169,7 +170,7 @@ describe('GitlabAPI', () => {
       expect(mockClient.RepositoryFiles.edit).toHaveBeenCalledWith(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'updated content',
         'Update test file',
       );
@@ -182,14 +183,14 @@ describe('GitlabAPI', () => {
       const result = await api.removeRepositoryFile(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'Remove test file',
       );
 
       expect(mockClient.RepositoryFiles.remove).toHaveBeenCalledWith(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
         'Remove test file',
       );
       expect(result).toEqual({ content: '' });
@@ -204,13 +205,13 @@ describe('GitlabAPI', () => {
       const result = await api.getRepositoryFileContent(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
       );
 
       expect(mockClient.RepositoryFiles.show).toHaveBeenCalledWith(
         1,
         'test.txt',
-        'master',
+        getBranchName(),
       );
       expect(result.content).toBe('Hello World');
     });
@@ -231,7 +232,7 @@ describe('GitlabAPI', () => {
         {
           path: '',
           recursive: false,
-          ref: 'master',
+          ref: getBranchName(),
         },
       );
       expect(result).toEqual(mockTreeItems);

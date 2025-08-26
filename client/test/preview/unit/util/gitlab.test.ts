@@ -5,6 +5,7 @@ import {
   getCommonLibraryProjectName,
   getGroupName,
   getDTDirectory,
+  getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
@@ -261,7 +262,7 @@ describe('GitlabInstance', () => {
     const subfolders = await mockApi.listRepositoryFiles(
       projectId,
       getDTDirectory(),
-      'master',
+      getBranchName(),
       false,
     );
 
@@ -275,7 +276,7 @@ describe('GitlabInstance', () => {
     expect(mockApi.listRepositoryFiles).toHaveBeenCalledWith(
       projectId,
       getDTDirectory(),
-      'master',
+      getBranchName(),
       false,
     );
   });

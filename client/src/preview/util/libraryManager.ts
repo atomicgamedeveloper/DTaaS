@@ -5,8 +5,8 @@ import {
   BackendInterface,
   LibraryManagerInterface,
 } from 'model/backend/interfaces/utilityInterfaces';
-import FileHandler from './fileHandler';
 import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
+import FileHandler from './fileHandler';
 
 export function getFilePath(
   file: FileState,
