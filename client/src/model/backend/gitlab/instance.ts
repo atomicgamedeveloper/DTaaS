@@ -14,7 +14,7 @@ import {
   ProjectId,
   JobSummary,
   Pipeline,
-} from '../interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/utilityInterfaces';
 
 export class GitlabInstance implements BackendInterface {
   public projectName: string;
