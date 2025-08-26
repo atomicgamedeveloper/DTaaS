@@ -30,5 +30,6 @@
     "^test/(.*)$": "<rootDir>/test/$1",
     "\\.(css|less|scss)$": "<rootDir>/test/__mocks__/styleMock.ts"
   },
-  "maxWorkers": 1
+  "maxWorkers": 1,
+  "cache": false
 }
