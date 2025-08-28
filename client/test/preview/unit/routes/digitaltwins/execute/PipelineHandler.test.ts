@@ -9,9 +9,7 @@ describe('PipelineHandler', () => {
   const setLogButtonDisabled = jest.fn();
   const dispatch = jest.fn();
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('handles button click when button text is Start', async () => {
     const handleStart = jest.spyOn(PipelineHandlers, 'handleStart');

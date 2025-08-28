@@ -11,7 +11,6 @@ describe('GitlabAPI', () => {
   let mockClient: jest.Mocked<InstanceType<typeof Gitlab>>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     mockClient = {
       PipelineTriggerTokens: {
         all: jest.fn(),

@@ -30,9 +30,7 @@ describe('PipelineHandler Integration Tests', () => {
     store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('handles button click when button text is Stop', async () => {
     await PipelineHandlers.handleButtonClick(

@@ -27,9 +27,7 @@ describe('sidebarFunctions integration tests', () => {
   const dispatch = jest.fn();
   (useDispatch as unknown as jest.Mock).mockReturnValue(dispatch);
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  beforeEach(() => {});
 
   test('handleCreateFileClick with DigitalTwin asset', () => {
     const setFileName = jest.fn();

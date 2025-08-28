@@ -42,9 +42,7 @@ describe('ConfirmDeleteDialog', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the ConfirmDeleteDialog', () => {
     expect(

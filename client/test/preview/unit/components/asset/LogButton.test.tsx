@@ -22,9 +22,7 @@ describe('LogButton', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the Log button', () => {
     renderLogButton();

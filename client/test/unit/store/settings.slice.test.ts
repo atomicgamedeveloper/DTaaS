@@ -13,7 +13,6 @@ describe('settingsSlice', () => {
   const initialState = { ...DEFAULT_SETTINGS };
 
   beforeEach(() => {
-    jest.clearAllMocks();
     jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
     jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
   });

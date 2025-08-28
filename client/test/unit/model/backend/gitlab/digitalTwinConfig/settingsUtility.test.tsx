@@ -43,7 +43,6 @@ describe('Constants', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks();
     settings = DEFAULT_SETTINGS;
     mockedUseSelector.mockImplementation(
       (selector) => selector({ settings }), // Mock reads settings by reference, so updates in tests are reflected automatically

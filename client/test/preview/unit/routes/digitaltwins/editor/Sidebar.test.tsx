@@ -59,12 +59,9 @@ describe('Sidebar', () => {
         return mockDigitalTwin;
       },
     );
-    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders Sidebar', async () => {
     await renderSidebar('reconfigure', 'mockedDTName');

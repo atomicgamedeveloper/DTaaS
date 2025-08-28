@@ -28,9 +28,7 @@ describe('CreatePage', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the CreatePage component', () => {
     expect(screen.getByText('Cancel')).toBeInTheDocument();

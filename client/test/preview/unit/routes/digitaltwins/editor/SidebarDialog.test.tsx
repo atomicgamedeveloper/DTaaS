@@ -29,9 +29,7 @@ describe('SidebarDialog', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the SidebarDialog component', () => {
     expect(screen.getByText('Enter the file name')).toBeInTheDocument();

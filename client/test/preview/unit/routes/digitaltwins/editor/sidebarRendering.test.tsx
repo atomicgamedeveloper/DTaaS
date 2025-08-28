@@ -30,7 +30,6 @@ describe('SidebarRendering', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('should render file tree items correctly and handle file click - DigitalTwin', () => {

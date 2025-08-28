@@ -38,7 +38,6 @@ describe('PipelineChecks', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('handles timeout', () => {

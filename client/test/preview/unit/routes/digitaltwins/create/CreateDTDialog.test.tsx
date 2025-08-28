@@ -69,9 +69,7 @@ describe('CreateDTDialog', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the CreateDTDialog with the correct message', () => {
     expect(

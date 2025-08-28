@@ -26,9 +26,7 @@ describe('useCart', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('should return the cart state', () => {
     const { result } = renderHook(() => useCart());

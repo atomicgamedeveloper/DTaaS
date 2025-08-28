@@ -16,9 +16,7 @@ describe('SignIn', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the SignIn button', () => {
     render(

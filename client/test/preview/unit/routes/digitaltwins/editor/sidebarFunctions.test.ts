@@ -23,7 +23,6 @@ describe('SidebarFunctions', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('should handle file click correctly in create tab', () => {

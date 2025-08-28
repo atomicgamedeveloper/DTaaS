@@ -18,7 +18,6 @@ describe('PipelineUtils', () => {
   const pipelineId = 1;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     digitalTwin = {
       ...mockDigitalTwin,
       backend: {
@@ -30,9 +29,7 @@ describe('PipelineUtils', () => {
     } as unknown as typeof mockDigitalTwin;
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('starts pipeline and handles success', async () => {
     digitalTwin.lastExecutionStatus = ExecutionStatus.SUCCESS;

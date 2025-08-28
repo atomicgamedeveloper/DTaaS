@@ -67,7 +67,6 @@ describe('Redux and Authentication integration test', () => {
     };
   };
   beforeEach(() => {
-    jest.clearAllMocks();
     initialState = {
       auth: {
         userName: undefined,

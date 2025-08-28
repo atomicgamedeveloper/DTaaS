@@ -23,7 +23,6 @@ describe('logFetching', () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
     (mockBackendInstance.getProjectId as jest.Mock).mockReturnValue(123);
   });
 

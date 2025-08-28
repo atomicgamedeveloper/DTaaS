@@ -58,9 +58,7 @@ describe('DetailsDialog Integration Tests', () => {
     setupTest();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders DetailsDialog with Digital Twin description', async () => {
     render(

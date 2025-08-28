@@ -26,7 +26,6 @@ describe('GitlabInstance', () => {
   let mockApi: GitlabAPI;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     mockApi = mockBackendAPI;
     gitlab = new GitlabInstance('user1', mockApi);
   });

@@ -36,9 +36,7 @@ describe('StartStopButton', () => {
     renderStartStopButton(assetName, setLogButtonDisabled);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders only the Start button', () => {
     expect(screen.getByRole('button', { name: /Start/i })).toBeInTheDocument();

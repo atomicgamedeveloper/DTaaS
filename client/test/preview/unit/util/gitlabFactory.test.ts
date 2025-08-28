@@ -12,9 +12,7 @@ jest.mock('model/backend/gitlab/gitlabFactory', () => ({
 }));
 
 describe('gitlabFactory', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('should create a GitlabInstance with the correct parameters', () => {
     const gitlabInstance: BackendInterface = createGitlabInstance(

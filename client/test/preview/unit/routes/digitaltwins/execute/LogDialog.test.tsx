@@ -20,9 +20,7 @@ describe('LogDialog', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the LogDialog with logs available', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({

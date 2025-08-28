@@ -16,7 +16,6 @@ describe('sidebarFetchers', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('should fetch and set file content if library is true', async () => {

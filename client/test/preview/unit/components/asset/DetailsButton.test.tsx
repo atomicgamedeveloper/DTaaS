@@ -27,9 +27,7 @@ describe('DetailsButton', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the Details button', () => {
     renderDetailsButton('AssetName', true, jest.fn());

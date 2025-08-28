@@ -314,6 +314,7 @@ export interface DigitalTwinInterface
 }
 
 // libraryConfigFile.slice.ts
+
 export type LibraryConfigFile = {
   assetPath: string;
   fileName: string;
@@ -324,6 +325,7 @@ export type LibraryConfigFile = {
 };
 
 // DTAssets.ts
+
 export interface DTAssetsFileCreator {
   createFiles(
     files:
@@ -403,6 +405,7 @@ export interface DTAssetsInterface
 }
 
 // FileHandlerInterface.ts
+
 export interface FileHandlerLibraryFileProvider {
   getLibraryFileNames(filePath: string, isPrivate: boolean): Promise<string[]>;
   getLibraryConfigFileNames(
@@ -428,7 +431,7 @@ export interface FileHandlerInterface
   name: string;
   backend: BackendInterface;
   /**
-   * Create a file at the given path, committing with the provided message.
+   * Create a file at the given path, committing with the provided message (Overloaded IFile method).
    * @param file - either an existing FileState, or an { name: string, content: string, isNew: boolean } object.
    * @param filePath - repository path (folder and filename) where the file will be created
    * @param commitMessage - the commit message to use when creating the file
@@ -443,7 +446,7 @@ export interface FileHandlerInterface
   ): Promise<void>;
 
   /**
-   * Fetch the full text content of a file from the given path.
+   * Fetch the full text content of a file from the given path (Overloaded IFile method.)
    * @param filePath - the path (folder and filename) of the file to retrieve
    * @param optional flag indicating if the file is private (default is true)
    * @returns a promise resolving to the file’s content as a string
@@ -478,6 +481,7 @@ export interface LibraryAssetInterface
 }
 
 // LibraryManager.ts
+
 export interface LibraryManagerDetails {
   assetName: string;
 }

@@ -126,9 +126,7 @@ describe('Sidebar', () => {
     store.dispatch(setDigitalTwin({ assetName: 'Asset 1', digitalTwin }));
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('calls handleFileClick when a file type is clicked', async () => {
     await act(async () => {

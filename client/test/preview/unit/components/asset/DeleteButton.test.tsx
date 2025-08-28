@@ -16,9 +16,7 @@ describe('DeleteButton', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders the Delete button', () => {
     renderDeleteButton();

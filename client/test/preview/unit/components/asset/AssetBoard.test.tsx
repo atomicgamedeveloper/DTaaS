@@ -56,9 +56,7 @@ describe('AssetBoard', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders AssetBoard with Manage Card', () => {
     renderAssetBoard('Manage');

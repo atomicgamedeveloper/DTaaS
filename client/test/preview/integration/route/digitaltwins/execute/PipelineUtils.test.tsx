@@ -23,7 +23,6 @@ describe('PipelineUtils', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('starts pipeline and handle success', async () => {

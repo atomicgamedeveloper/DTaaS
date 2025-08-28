@@ -10,14 +10,6 @@ import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import * as envUtil from 'util/envUtil';
 
-// Mock the constants module
-jest.mock('model/backend/gitlab/digitalTwinConfig/settingsUtility', () => ({
-  ...jest.requireActual(
-    'model/backend/gitlab/digitalTwinConfig/settingsUtility',
-  ),
-  getGroupName: jest.fn().mockReturnValue('testGroup'),
-}));
-
 // Mock the envUtil module
 jest.mock('util/envUtil', () => ({
   __esModule: true,
@@ -49,7 +41,6 @@ describe('DigitalTwin', () => {
 
   beforeEach(() => {
     // Clear mock calls but preserve mock implementations
-    jest.clearAllMocks();
     mockGitlabInstance.getProjectId = jest.fn().mockReturnValue(1);
     mockGitlabInstance.getCommonProjectId = jest.fn().mockReturnValue(2);
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);

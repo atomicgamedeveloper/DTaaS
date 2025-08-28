@@ -41,9 +41,7 @@ describe('SettingsForm', () => {
     renderWithRouter(<SettingsForm />, { route: '/private' });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders form fields', () => {
     expect(screen.getByLabelText(/group name/i)).toBeInTheDocument();

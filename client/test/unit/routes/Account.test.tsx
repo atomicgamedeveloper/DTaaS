@@ -40,7 +40,6 @@ describe('AccountTabs', () => {
     });
   });
   afterEach(() => {
-    jest.clearAllMocks();
     accountMockUser = mockUser;
   });
 

@@ -20,9 +20,7 @@ describe('EditorTab', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  
 
   it('renders EditorTab', async () => {
     waitFor(async () => {

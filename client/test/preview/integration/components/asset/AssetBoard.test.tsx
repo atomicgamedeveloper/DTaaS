@@ -65,11 +65,7 @@ describe('AssetBoard Integration Tests', () => {
   beforeEach(() => {
     setupTest();
   });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
+  
   it('renders AssetBoard with AssetCardExecute', async () => {
     act(() => {
       render(
