@@ -251,7 +251,7 @@ class DigitalTwin implements DigitalTwinInterface {
       const folders = await this.DTAssets.getFolders(mainFolderPath);
 
       const validFolders = folders.filter(
-        (folder: string) => !folder.includes(excludeFolder),
+        (folder) => !folder.includes(excludeFolder),
       );
 
       for (const folder of validFolders) {
