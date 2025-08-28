@@ -43,7 +43,6 @@ describe('ChangeFileNameDialog', () => {
     });
   });
 
-
   it('handles click on change button', () => {
     const changeButton = screen.getByRole('button', { name: /Change/i });
     act(() => {

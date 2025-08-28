@@ -42,8 +42,6 @@ describe('ConfirmDeleteDialog', () => {
     );
   });
 
-  
-
   it('renders the ConfirmDeleteDialog', () => {
     expect(
       screen.getByText(

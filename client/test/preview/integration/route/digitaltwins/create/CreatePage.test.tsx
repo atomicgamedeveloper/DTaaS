@@ -43,8 +43,6 @@ describe('CreatePage', () => {
     });
   });
 
-  
-
   it('handles cancel when clicking on cancel button and confirm', () => {
     act(() => {
       screen.getByText('Cancel').click();

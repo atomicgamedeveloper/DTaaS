@@ -20,8 +20,6 @@ describe('FileActionButtons', () => {
     });
   });
 
-  
-
   it('handles click on delete button', () => {
     const deleteButton = screen.getByRole('button', { name: /Delete/i });
     act(() => {

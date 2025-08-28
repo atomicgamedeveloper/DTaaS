@@ -29,8 +29,6 @@ describe('SidebarDialog', () => {
     );
   });
 
-  
-
   it('renders the SidebarDialog component', () => {
     expect(screen.getByText('Enter the file name')).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();

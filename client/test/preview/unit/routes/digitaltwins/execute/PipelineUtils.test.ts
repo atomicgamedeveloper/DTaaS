@@ -29,8 +29,6 @@ describe('PipelineUtils', () => {
     } as unknown as typeof mockDigitalTwin;
   });
 
-  
-
   it('starts pipeline and handles success', async () => {
     digitalTwin.lastExecutionStatus = ExecutionStatus.SUCCESS;
 

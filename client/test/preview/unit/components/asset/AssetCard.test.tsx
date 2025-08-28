@@ -81,8 +81,6 @@ const renderComponent = <T extends object>(
 };
 
 describe('AssetCard', () => {
-  
-
   it('renders AssetCardManage with digital twin description', () => {
     setupMockStore('Asset description', 'Digital Twin description');
     renderComponent(AssetCardManage, { asset, onDelete: jest.fn() });

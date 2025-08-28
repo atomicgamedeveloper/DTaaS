@@ -69,8 +69,6 @@ describe('CreateDTDialog', () => {
     );
   });
 
-  
-
   it('renders the CreateDTDialog with the correct message', () => {
     expect(
       screen.getByText(/Are you sure you want to create the/i),

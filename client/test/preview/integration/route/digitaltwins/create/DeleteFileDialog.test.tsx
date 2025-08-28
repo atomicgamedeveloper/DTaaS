@@ -37,8 +37,6 @@ describe('DeleteFileDialog', () => {
     });
   });
 
-  
-
   it('handles click on yes button', () => {
     const yesButton = screen.getByRole('button', { name: /Yes/i });
     act(() => {

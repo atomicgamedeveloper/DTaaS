@@ -16,8 +16,6 @@ describe('DeleteButton', () => {
       </Provider>,
     );
 
-  
-
   it('renders the Delete button', () => {
     renderDeleteButton();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();

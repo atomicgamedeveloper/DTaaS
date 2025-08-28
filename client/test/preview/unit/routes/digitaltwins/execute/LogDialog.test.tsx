@@ -20,8 +20,6 @@ describe('LogDialog', () => {
       </Provider>,
     );
 
-  
-
   it('renders the LogDialog with logs available', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
       jobLogs: [{ jobName: 'job', log: 'testLog' }],

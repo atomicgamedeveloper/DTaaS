@@ -28,8 +28,6 @@ describe('AuthProvider', () => {
     (useOidcConfig as jest.Mock).mockReturnValue(oidcConfig);
   });
 
-  
-
   it('renders a loading message while waiting for OIDC config', () => {
     (useOidcConfig as jest.Mock).mockReturnValue(undefined);
 

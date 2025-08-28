@@ -8,8 +8,6 @@ import { hideSnackbar } from 'preview/store/snackbar.slice';
 jest.useFakeTimers();
 
 describe('CustomSnackbar', () => {
-  
-
   it('renders the Snackbar with the correct message', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
       open: true,

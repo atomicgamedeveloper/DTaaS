@@ -103,8 +103,6 @@ describe('Editor', () => {
     });
   });
 
-  
-
   it('changes active tab', () => {
     const editorTab = screen.getByRole('tab', { name: 'Editor' });
     const previewTab = screen.getByRole('tab', { name: 'Preview' });

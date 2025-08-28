@@ -40,8 +40,6 @@ describe('PreviewTab', () => {
     });
   });
 
-  
-
   it('renders Markdown content using md.render', () => {
     const markdownContent = '# Heading\nSome **bold** text.';
 

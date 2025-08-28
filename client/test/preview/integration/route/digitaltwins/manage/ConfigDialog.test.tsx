@@ -61,8 +61,6 @@ describe('ReconfigureDialog Integration Tests', () => {
     setupTest();
   });
 
-  
-
   it('renders ReconfigureDialog', async () => {
     render(
       <Provider store={store}>

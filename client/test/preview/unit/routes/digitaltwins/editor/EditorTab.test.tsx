@@ -20,8 +20,6 @@ describe('EditorTab', () => {
     );
   });
 
-  
-
   it('renders EditorTab', async () => {
     waitFor(async () => {
       render(

@@ -18,7 +18,6 @@ const store = configureStore({
 });
 
 describe('CustomSnackbar Integration Test', () => {
-
   it('renders the Snackbar with the correct message', async () => {
     store.dispatch(
       showSnackbar({

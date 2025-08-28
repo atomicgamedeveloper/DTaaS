@@ -41,8 +41,6 @@ describe('SettingsForm', () => {
     renderWithRouter(<SettingsForm />, { route: '/private' });
   });
 
-  
-
   it('renders form fields', () => {
     expect(screen.getByLabelText(/group name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/dt directory/i)).toBeInTheDocument();

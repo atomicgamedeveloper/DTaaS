@@ -28,8 +28,6 @@ describe('CreatePage', () => {
     );
   });
 
-  
-
   it('renders the CreatePage component', () => {
     expect(screen.getByText('Cancel')).toBeInTheDocument();
     expect(screen.getByText('Save')).toBeInTheDocument();

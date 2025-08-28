@@ -39,8 +39,6 @@ describe('DeleteDialog Integration Tests', () => {
     setupTest();
   });
 
-  
-
   it('closes DeleteDialog on Cancel button click', async () => {
     const setShowDialog = jest.fn();
 

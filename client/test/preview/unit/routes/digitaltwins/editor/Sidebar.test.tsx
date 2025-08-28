@@ -61,8 +61,6 @@ describe('Sidebar', () => {
     );
   });
 
-  
-
   it('renders Sidebar', async () => {
     await renderSidebar('reconfigure', 'mockedDTName');
 

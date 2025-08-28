@@ -74,8 +74,6 @@ describe('useSignOut', () => {
     });
   });
 
-  
-
   it('expires _xsrf cookie', async () => {
     const auth = useAuth();
     const signOut = useSignOut();

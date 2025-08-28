@@ -42,8 +42,6 @@ describe('LogDialog', () => {
     );
   });
 
-  
-
   it('renders the LogDialog with logs available', () => {
     store.dispatch(
       setJobLogs({

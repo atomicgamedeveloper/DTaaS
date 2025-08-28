@@ -39,8 +39,6 @@ describe('Editor', () => {
     );
   });
 
-  
-
   it('render Editor', () => {
     expect(screen.getByText('EditorTab')).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();

@@ -16,8 +16,6 @@ describe('SignIn', () => {
     });
   });
 
-  
-
   it('renders the SignIn button', () => {
     render(
       <MemoryRouter>

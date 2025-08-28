@@ -65,7 +65,7 @@ describe('AssetBoard Integration Tests', () => {
   beforeEach(() => {
     setupTest();
   });
-  
+
   it('renders AssetBoard with AssetCardExecute', async () => {
     act(() => {
       render(

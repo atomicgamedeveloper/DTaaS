@@ -27,8 +27,6 @@ describe('DetailsButton', () => {
       </Provider>,
     );
 
-  
-
   it('renders the Details button', () => {
     renderDetailsButton('AssetName', true, jest.fn());
     expect(

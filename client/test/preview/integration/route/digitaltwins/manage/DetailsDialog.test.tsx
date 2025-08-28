@@ -58,8 +58,6 @@ describe('DetailsDialog Integration Tests', () => {
     setupTest();
   });
 
-  
-
   it('renders DetailsDialog with Digital Twin description', async () => {
     render(
       <Provider store={store}>

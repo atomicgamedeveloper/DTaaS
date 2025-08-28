@@ -24,8 +24,6 @@ describe('ChangeFileNameDialog', () => {
     );
   });
 
-  
-
   it('renders the ChangeFileNameDialog', () => {
     expect(screen.getByText(/Change the file name/i)).toBeInTheDocument();
   });

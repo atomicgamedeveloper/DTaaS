@@ -16,8 +16,6 @@ describe('ReconfigureButton', () => {
       </Provider>,
     );
 
-  
-
   it('renders the Reconfigure button', () => {
     renderReconfigureButton();
     expect(

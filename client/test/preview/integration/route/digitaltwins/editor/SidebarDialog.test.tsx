@@ -40,8 +40,6 @@ describe('SidebarDialog', () => {
     });
   });
 
-  
-
   it('should handle click on cancel button', () => {
     const cancelButton = screen.getByText('Cancel');
 

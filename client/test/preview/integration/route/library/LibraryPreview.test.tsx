@@ -16,8 +16,6 @@ jest.mock('react-oidc-context', () => ({
 }));
 
 describe('Library Preview', () => {
-  
-
   it('displays content of tabs', async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: {

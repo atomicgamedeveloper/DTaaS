@@ -56,8 +56,6 @@ describe('AssetBoard', () => {
     );
   });
 
-  
-
   it('renders AssetBoard with Manage Card', () => {
     renderAssetBoard('Manage');
 

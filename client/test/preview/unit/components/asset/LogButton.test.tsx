@@ -22,8 +22,6 @@ describe('LogButton', () => {
       </Provider>,
     );
 
-  
-
   it('renders the Log button', () => {
     renderLogButton();
     expect(screen.getByRole('button', { name: /Log/i })).toBeInTheDocument();
