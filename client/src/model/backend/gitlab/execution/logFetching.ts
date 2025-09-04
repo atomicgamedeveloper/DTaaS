@@ -1,9 +1,9 @@
-import { JobLog } from 'model/backend/gitlab/types/executionHistory';
+import { JobLog } from 'model/backend/interfaces/execution';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   BackendInterface,
   JobSummary,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
 
 /**
  * Fetches job logs from the backend for a specific pipeline

@@ -16,8 +16,10 @@ import {
   removeAllModifiedLibraryFiles,
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import {
+  LibraryConfigFile,
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import {
   removeAllModifiedFiles,
   selectModifiedFiles,

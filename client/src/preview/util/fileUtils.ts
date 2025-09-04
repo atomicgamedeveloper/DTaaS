@@ -1,8 +1,11 @@
 import { addOrUpdateFile, renameFile } from 'preview/store/file.slice';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import {
+  LibraryConfigFile,
+  FileState,
+  FileType,
+} from 'model/backend/interfaces/sharedInterfaces';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 export const isFileModifiable = (fileName: string) =>
   !['README.md', 'description.md', '.gitlab-ci.yml'].includes(fileName);

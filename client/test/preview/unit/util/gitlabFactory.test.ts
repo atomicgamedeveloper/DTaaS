@@ -1,5 +1,5 @@
 import GitlabAPI from 'model/backend/gitlab/backend';
-import { BackendInterface } from 'model/backend/interfaces/utilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import createGitlabInstance from 'model/backend/gitlab/gitlabFactory';
 
 jest.mock('model/backend/gitlab/backend', () => ({

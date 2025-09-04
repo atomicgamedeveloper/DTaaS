@@ -3,6 +3,7 @@ import FileHandler from 'preview/util/fileHandler';
 import DTAssets from 'preview/util/DTAssets';
 import LibraryManager from 'preview/util/libraryManager';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import 'test/preview/__mocks__/constants.mock';
 
 export const mockFileHandler: FileHandler = {
   name: 'mockedName',

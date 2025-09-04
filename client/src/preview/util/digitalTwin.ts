@@ -8,16 +8,19 @@ import {
   getDTDirectory,
   getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
-import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import {
+  FileState,
+  FileType,
   DigitalTwinInterface,
-  BackendInterface,
   DTAssetsInterface,
-  ProjectId,
   LibraryAssetInterface,
   LibraryConfigFile,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/sharedInterfaces';
+import {
+  BackendInterface,
+  ProjectId,
+} from 'model/backend/interfaces/backendInterfaces';
 import {
   isValidInstance,
   logError,

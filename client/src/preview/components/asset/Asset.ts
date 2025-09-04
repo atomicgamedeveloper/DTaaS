@@ -1,4 +1,4 @@
-import { BackendInterface } from 'model/backend/interfaces/utilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 
 export interface Asset {
   name: string;

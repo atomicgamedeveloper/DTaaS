@@ -1,5 +1,8 @@
 import { addOrUpdateFile } from 'preview/store/file.slice';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import {
+  LibraryConfigFile,
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
@@ -9,7 +12,6 @@ import {
   getFileTypeFromExtension,
   updateFileState,
 } from 'preview/util/fileUtils';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
   fetchAndSetFileContent,
   fetchAndSetFileLibraryContent,

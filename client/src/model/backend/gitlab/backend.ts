@@ -7,12 +7,12 @@ import { Gitlab } from '@gitbeaker/rest';
 import {
   BackendAPI,
   ProjectId,
-  Pipeline,
   RepositoryFile,
   RepositoryTreeItem,
   ProjectSummary,
   JobSummary,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
+import { Pipeline } from '../interfaces/execution';
 import { getBranchName } from './digitalTwinConfig/settingsUtility';
 
 export class GitlabAPI implements BackendAPI {

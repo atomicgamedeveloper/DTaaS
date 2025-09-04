@@ -1,5 +1,7 @@
-import { FileType } from 'model/backend/interfaces/sharedInterfaces';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import {
+  FileType,
+  LibraryConfigFile,
+} from 'model/backend/interfaces/sharedInterfaces';
 import * as fileUtils from 'preview/util/fileUtils';
 
 describe('FileUtils', () => {

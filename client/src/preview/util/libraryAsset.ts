@@ -4,10 +4,10 @@ import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUti
 import { Asset } from 'preview/components/asset/Asset';
 import {
   BackendInterface,
-  LibraryAssetInterface,
   ProjectId,
   RepositoryTreeItem,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
+import { LibraryAssetInterface } from 'model/backend/interfaces/sharedInterfaces';
 import LibraryManager from './libraryManager';
 
 class LibraryAsset implements LibraryAssetInterface {

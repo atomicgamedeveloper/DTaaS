@@ -10,7 +10,10 @@ import {
   Box,
 } from '@mui/material';
 import { removeAllCreationFiles } from 'preview/store/file.slice';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import {
+  LibraryConfigFile,
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import DigitalTwin from 'preview/util/digitalTwin';
@@ -24,7 +27,6 @@ import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 interface CreateDTDialogProps {
   open: boolean;

@@ -7,7 +7,7 @@ import {
   getRunnerTag,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import * as envUtil from 'util/envUtil';
 
 // Mock the envUtil module
@@ -40,17 +40,15 @@ describe('DigitalTwin', () => {
   let dt: DigitalTwin;
 
   beforeEach(() => {
-    // Clear mock calls but preserve mock implementations
     mockGitlabInstance.getProjectId = jest.fn().mockReturnValue(1);
     mockGitlabInstance.getCommonProjectId = jest.fn().mockReturnValue(2);
+    mockGitlabInstance.startPipeline = jest.fn().mockResolvedValue({ id: 123 });
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
 
-    // Re-apply the mock for getAuthority - without using require()
     (envUtil.getAuthority as jest.Mock).mockReturnValue(
       'https://example.com/AUTHORITY',
     );
 
-    // Mock sessionStorage for tests that need it
     Object.defineProperty(window, 'sessionStorage', {
       value: {
         getItem: jest.fn(() => 'testUser'),
@@ -80,7 +78,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should return empty description if no description file exists', async () => {
-    (mockBackendAPI.listRepositoryFiles as jest.Mock).mockRejectedValue(
+    (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockRejectedValue(
       new Error('File not found'),
     );
 
@@ -97,14 +95,6 @@ describe('DigitalTwin', () => {
       content: mockContent,
     });
 
-    Object.defineProperty(window, 'sessionStorage', {
-      value: {
-        getItem: jest.fn(() => 'testUser'),
-        setItem: jest.fn(),
-      },
-      writable: true,
-    });
-
     await dt.getFullDescription();
 
     expect(dt.fullDescription).toBe(
@@ -119,7 +109,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should return error message if no README.md file exists', async () => {
-    (mockBackendAPI.listRepositoryFiles as jest.Mock).mockRejectedValue(
+    (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockRejectedValue(
       new Error('File not found'),
     );
 
@@ -177,7 +167,9 @@ describe('DigitalTwin', () => {
   it('should log error when triggering pipeline fails', async () => {
     jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(true);
     const errorMessage = 'Trigger failed';
-    (mockBackendAPI.startPipeline as jest.Mock).mockRejectedValue(errorMessage);
+    (mockGitlabInstance.startPipeline as jest.Mock).mockRejectedValue(
+      errorMessage,
+    );
 
     const pipelineId = await dt.execute();
 
@@ -186,7 +178,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should handle non-Error thrown during pipeline execution', async () => {
-    (mockBackendAPI.startPipeline as jest.Mock).mockRejectedValue(
+    (mockGitlabInstance.startPipeline as jest.Mock).mockRejectedValue(
       'String error message',
     );
 
@@ -265,6 +257,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should create digital twin with files', async () => {
+    (mockBackendAPI.createRepositoryFile as jest.Mock).mockResolvedValue({});
     const result = await dt.create(files, [], []);
 
     expect(result).toBe(

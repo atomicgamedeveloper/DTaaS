@@ -23,3 +23,12 @@ export interface DigitalTwinPipelineState {
   pipelineLoading: boolean;
   pipelineCompleted: boolean;
 }
+
+export type Pipeline = {
+  id: number;
+  status: string;
+};
+
+export type TriggerToken = {
+  token: string;
+};

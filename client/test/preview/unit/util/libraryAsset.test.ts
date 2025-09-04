@@ -1,5 +1,5 @@
 import LibraryAsset, { getLibrarySubfolders } from 'preview/util/libraryAsset';
-import { BackendInterface } from 'model/backend/interfaces/utilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import LibraryManager from 'preview/util/libraryManager';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';

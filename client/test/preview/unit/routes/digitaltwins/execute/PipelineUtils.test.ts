@@ -7,8 +7,8 @@ import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import {
   BackendInterface,
   JobSummary,
-} from 'model/backend/interfaces/utilityInterfaces';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+} from 'model/backend/interfaces/backendInterfaces';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 describe('PipelineUtils', () => {
   let digitalTwin: typeof mockDigitalTwin;

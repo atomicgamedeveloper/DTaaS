@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { TreeItem, TreeItemProps } from '@mui/x-tree-view/TreeItem';
-import { LibraryConfigFile } from 'model/backend/interfaces/utilityInterfaces';
+import {
+  LibraryConfigFile,
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import { handleFileClick } from './sidebarFunctions';
 
 export const renderFileTreeItems = (

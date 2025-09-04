@@ -8,7 +8,7 @@ import {
   countSuccessfulJobs,
   countFailedJobs,
 } from 'model/backend/gitlab/execution/logFetching';
-import { JobLog } from 'model/backend/gitlab/types/executionHistory';
+import { JobLog } from 'model/backend/interfaces/execution';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 
 describe('logFetching', () => {

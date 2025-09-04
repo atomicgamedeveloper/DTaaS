@@ -8,7 +8,7 @@ import {
   getStatusDescription,
   getStatusSeverity,
 } from 'model/backend/gitlab/execution/statusChecking';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 describe('statusChecking', () => {
   describe('mapGitlabStatusToExecutionStatus', () => {

@@ -2,12 +2,15 @@
 /* eslint-disable no-await-in-loop */
 
 import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { FileType, FileState } from 'model/backend/interfaces/sharedInterfaces';
+import {
+  FileType,
+  FileState,
+  FileHandlerInterface,
+} from 'model/backend/interfaces/sharedInterfaces';
 import {
   BackendInterface,
-  FileHandlerInterface,
   RepositoryTreeItem,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
 
 export function isValidFileType(
   item: { type: string; name: string; path: string },

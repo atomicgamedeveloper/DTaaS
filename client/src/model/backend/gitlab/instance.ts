@@ -13,8 +13,8 @@ import {
   LogEntry,
   ProjectId,
   JobSummary,
-  Pipeline,
-} from 'model/backend/interfaces/utilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
+import { Pipeline } from '../interfaces/execution';
 
 export class GitlabInstance implements BackendInterface {
   public projectName: string;

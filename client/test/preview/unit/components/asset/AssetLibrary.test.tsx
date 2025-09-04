@@ -27,6 +27,7 @@ jest.mock('preview/components/asset/AssetCard', () => ({
 
 describe('AssetLibrary', () => {
   beforeEach(() => {
+    jest.resetAllMocks();
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector: (state: RootState) => unknown) => {
         if (selector === selectAssetsByTypeAndPrivacy('path', false)) {

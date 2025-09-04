@@ -1,6 +1,6 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import GitlabAPI from 'model/backend/gitlab/backend';
-import { JobSummary } from 'model/backend/interfaces/utilityInterfaces';
+import { JobSummary } from 'model/backend/interfaces/backendInterfaces';
 import {
   getCommonLibraryProjectName,
   getGroupName,
@@ -9,16 +9,6 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
-jest.mock('@gitbeaker/rest');
-
-// Mock the constants modules
-jest.mock('model/backend/gitlab/digitalTwinConfig/settingsUtility', () => ({
-  ...jest.requireActual(
-    'model/backend/gitlab/digitalTwinConfig/settingsUtility',
-  ),
-  getGroupName: jest.fn().mockReturnValue('testGroup'),
-}));
-jest.mock('model/backend/gitlab/digitalTwinConfig/constants');
 jest.mock('@gitbeaker/rest');
 
 describe('GitlabInstance', () => {
