@@ -1,6 +1,3 @@
-export type JobName = string;
-export type LogContent = string;
-
 export enum ExecutionStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
@@ -12,8 +9,8 @@ export enum ExecutionStatus {
 }
 
 export interface JobLog {
-  jobName: JobName;
-  log: LogContent;
+  jobName: string;
+  log: string;
 }
 
 export interface DigitalTwinPipelineState {
