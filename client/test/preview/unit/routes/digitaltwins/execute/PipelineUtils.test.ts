@@ -7,8 +7,8 @@ import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import {
   BackendInterface,
   JobSummary,
-} from 'model/backend/gitlab/UtilityInterfaces';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+} from 'model/backend/interfaces/backendInterfaces';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 describe('PipelineUtils', () => {
   let digitalTwin: typeof mockDigitalTwin;
@@ -18,7 +18,6 @@ describe('PipelineUtils', () => {
   const pipelineId = 1;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     digitalTwin = {
       ...mockDigitalTwin,
       backend: {
@@ -28,10 +27,6 @@ describe('PipelineUtils', () => {
         getJobTrace: jest.fn(),
       },
     } as unknown as typeof mockDigitalTwin;
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('starts pipeline and handles success', async () => {

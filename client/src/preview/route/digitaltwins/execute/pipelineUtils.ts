@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import { fetchJobLogs as fetchJobLogsCore } from 'model/backend/gitlab/execution/logFetching';
-import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import {
   setJobLogs,
   setPipelineCompleted,
@@ -9,7 +9,7 @@ import {
 } from 'preview/store/digitalTwin.slice';
 import { useDispatch } from 'react-redux';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 export const startPipeline = async (
   digitalTwin: DigitalTwin,

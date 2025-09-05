@@ -1,5 +1,5 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import { RootState } from 'store/store';
 
 const initialState: FileState[] = [];
@@ -42,11 +42,11 @@ const filesSlice = createSlice({
 
         const extension = action.payload.newName.split('.').pop();
         if (extension === 'md') {
-          state[index].type = 'description';
+          state[index].type = FileType.DESCRIPTION;
         } else if (['json', 'yaml', 'yml'].includes(extension!)) {
-          state[index].type = 'configuration';
+          state[index].type = FileType.CONFIGURATION;
         } else {
-          state[index].type = 'lifecycle';
+          state[index].type = FileType.LIFECYCLE;
         }
       }
     },

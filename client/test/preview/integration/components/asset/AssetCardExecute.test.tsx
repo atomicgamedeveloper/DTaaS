@@ -72,10 +72,6 @@ describe('AssetCardExecute Integration Test', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should start execution', async () => {
     const startStopButton = screen.getByRole('button', { name: /Start/i });
 

@@ -2,13 +2,15 @@
 
 import {
   BackendAPI,
-  LibraryConfigFile,
   ProjectId,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/backendInterfaces';
+import { LibraryConfigFile } from 'model/backend/interfaces/sharedInterfaces';
 import { Asset } from 'preview/components/asset/Asset';
-import { AssetTypes, DT_DIRECTORY } from 'model/backend/gitlab/constants';
+import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import GitlabInstance from 'model/backend/gitlab/instance';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import DigitalTwin from './digitalTwin';
 
 export function isValidInstance(digitalTwin: DigitalTwin): boolean {
@@ -63,11 +65,14 @@ export async function getDTSubfolders(
   projectId: ProjectId,
   api: BackendAPI,
 ): Promise<Asset[]> {
-  const files = await api.listRepositoryFiles(projectId, DT_DIRECTORY);
+  const files = await api.listRepositoryFiles(projectId, getDTDirectory());
   const subfolders: Asset[] = await Promise.all(
     files
-      .filter((file) => file.type === 'tree' && file.path !== DT_DIRECTORY)
-      .map(async (file) => ({
+      .filter(
+        (file: RepositoryTreeItem) =>
+          file.type === 'tree' && file.path !== getDTDirectory(),
+      )
+      .map(async (file: RepositoryTreeItem) => ({
         name: file.name,
         path: file.path,
         type: AssetTypes['Digital Twin' as keyof typeof AssetTypes],

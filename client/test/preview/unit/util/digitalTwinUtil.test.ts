@@ -1,5 +1,5 @@
 import { getDTSubfolders } from 'preview/util/digitalTwinUtils';
-import { DT_DIRECTORY } from 'model/backend/gitlab/constants';
+import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 const mockApi = {
   init: jest.fn(),
@@ -34,7 +34,7 @@ describe('DigitalTwinUtil', () => {
 
     expect(mockApi.listRepositoryFiles).toHaveBeenCalledWith(
       projectId,
-      DT_DIRECTORY, // recursive is false by default
+      getDTDirectory(), // recursive is false by default
     );
   });
 });

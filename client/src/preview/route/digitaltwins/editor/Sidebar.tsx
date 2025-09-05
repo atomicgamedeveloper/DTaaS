@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
 import { getFilteredFileNames } from 'preview/util/fileUtils';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import { selectDigitalTwinByName } from '../../../store/digitalTwin.slice';
 import { fetchData } from './sidebarFetchers';
 import { handleAddFileClick } from './sidebarFunctions';
@@ -229,8 +229,8 @@ const Sidebar = ({
           <React.Fragment key="create-page">
             {renderFileSection(
               'Description',
-              'description',
-              getFilteredFileNames('description', files),
+              FileType.DESCRIPTION,
+              getFilteredFileNames(FileType.DESCRIPTION, files),
               digitalTwin!,
               setFileName,
               setFileContent,
@@ -244,8 +244,8 @@ const Sidebar = ({
             )}
             {renderFileSection(
               'Configuration',
-              'config',
-              getFilteredFileNames('config', files),
+              FileType.CONFIGURATION,
+              getFilteredFileNames(FileType.CONFIGURATION, files),
               digitalTwin!,
               setFileName,
               setFileContent,
@@ -259,8 +259,8 @@ const Sidebar = ({
             )}
             {renderFileSection(
               'Lifecycle',
-              'lifecycle',
-              getFilteredFileNames('lifecycle', files),
+              FileType.LIFECYCLE,
+              getFilteredFileNames(FileType.LIFECYCLE, files),
               digitalTwin!,
               setFileName,
               setFileContent,
@@ -277,7 +277,7 @@ const Sidebar = ({
                 asset.isPrivate
                   ? `${asset.name} configuration`
                   : `common/${asset.name} configuration`,
-                'config',
+                FileType.CONFIGURATION,
                 asset.configFiles,
                 asset,
                 setFileName,

@@ -16,10 +16,6 @@ describe('ReconfigureButton', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the Reconfigure button', () => {
     renderReconfigureButton();
     expect(

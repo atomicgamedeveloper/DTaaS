@@ -6,8 +6,8 @@ import {
   handleCloseFileNameDialog,
   handleFileSubmit,
 } from 'preview/route/digitaltwins/editor/sidebarFunctions';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import { updateFileState } from 'preview/util/fileUtils';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
@@ -27,9 +27,7 @@ describe('sidebarFunctions integration tests', () => {
   const dispatch = jest.fn();
   (useDispatch as unknown as jest.Mock).mockReturnValue(dispatch);
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  beforeEach(() => {});
 
   test('handleCreateFileClick with DigitalTwin asset', () => {
     const setFileName = jest.fn();

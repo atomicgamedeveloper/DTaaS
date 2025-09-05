@@ -19,7 +19,7 @@ import {
 import {
   LibraryConfigFile,
   FileState,
-} from 'model/backend/gitlab/UtilityInterfaces';
+} from 'model/backend/interfaces/sharedInterfaces';
 import {
   removeAllModifiedFiles,
   selectModifiedFiles,

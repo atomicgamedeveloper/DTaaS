@@ -40,10 +40,6 @@ describe('PreviewTab', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders Markdown content using md.render', () => {
     const markdownContent = '# Heading\nSome **bold** text.';
 

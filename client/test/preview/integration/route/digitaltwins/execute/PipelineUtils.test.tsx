@@ -5,7 +5,7 @@ import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 describe('PipelineUtils', () => {
   let digitalTwin: DigitalTwin;
@@ -23,7 +23,6 @@ describe('PipelineUtils', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('starts pipeline and handle success', async () => {

@@ -24,10 +24,6 @@ describe('ChangeFileNameDialog', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the ChangeFileNameDialog', () => {
     expect(screen.getByText(/Change the file name/i)).toBeInTheDocument();
   });

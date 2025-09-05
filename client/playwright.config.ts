@@ -25,6 +25,7 @@ export default defineConfig({
   retries: process.env.CI ? 0 : 1, // Disable retries on Github actions for now as setup always fails
   timeout: process.env.CI ? 1000 : 60 * 1000,
   globalTimeout: 10 * 60 * 1000,
+  workers: 3,
   testDir: './test/e2e/tests',
   testMatch: /.*\.test\.ts/,
   reporter: [
@@ -51,7 +52,7 @@ export default defineConfig({
   use: {
     baseURL: BASE_URI,
     screenshot: 'only-on-failure',
-    trace: 'on-first-retry', // Wil not record trace on Github actions because of no retries
+    trace: 'on-first-retry', // Will not record trace on Github actions because of no retries
     headless: true,
   },
   projects: [
@@ -81,4 +82,5 @@ export default defineConfig({
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',
   globalTeardown: 'test/e2e/setup/global-teardown.ts',
+  reportSlowTests: null,
 });

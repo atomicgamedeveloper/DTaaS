@@ -7,7 +7,7 @@ import {
 } from 'preview/store/file.slice';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
-import { defaultFiles } from 'model/backend/gitlab/constants';
+import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 interface ConfirmDeleteDialogProps {
   open: boolean;

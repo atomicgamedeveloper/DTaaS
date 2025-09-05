@@ -1,12 +1,16 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import {
+  FileType,
   FileState,
-  BackendInterface,
   FileHandlerInterface,
-} from 'model/backend/gitlab/UtilityInterfaces';
-import { FileType } from 'model/backend/gitlab/constants';
+} from 'model/backend/interfaces/sharedInterfaces';
+import {
+  BackendInterface,
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/backendInterfaces';
 
 export function isValidFileType(
   item: { type: string; name: string; path: string },
@@ -50,7 +54,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.createRepositoryFile(
       projectToUse,
       `${filePath}/${file.name}`,
-      'main',
+      getBranchName(),
       file.content,
       commitMessage,
     );
@@ -64,7 +68,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.editRepositoryFile(
       this.backend.getProjectId(),
       filePath,
-      'main',
+      getBranchName(),
       updatedContent,
       commitMessage,
     );
@@ -74,7 +78,7 @@ class FileHandler implements FileHandlerInterface {
     await this.backend.api.removeRepositoryFile(
       this.backend.getProjectId(),
       digitalTwinPath,
-      'main',
+      getBranchName(),
       `Removing ${this.name} digital twin`,
     );
   }
@@ -84,11 +88,10 @@ class FileHandler implements FileHandlerInterface {
       isPrivate === false
         ? this.backend.getCommonProjectId()
         : this.backend.getProjectId();
-
     const response = await this.backend.api.getRepositoryFileContent(
       projectToUse,
       filePath,
-      'main',
+      getBranchName(),
     );
     return response.content;
   }
@@ -109,8 +112,8 @@ class FileHandler implements FileHandlerInterface {
       );
 
       return response
-        .filter((item) => isValidFileType(item, fileType))
-        .map((file) => file.name);
+        .filter((item: RepositoryTreeItem) => isValidFileType(item, fileType))
+        .map((file: RepositoryTreeItem) => file.name);
     } catch {
       return [];
     }
@@ -172,8 +175,10 @@ class FileHandler implements FileHandlerInterface {
       );
 
       return response
-        .filter((item) => isValidFileType(item, FileType.CONFIGURATION))
-        .map((file) => file.name);
+        .filter((item: RepositoryTreeItem) =>
+          isValidFileType(item, FileType.CONFIGURATION),
+        )
+        .map((file: RepositoryTreeItem) => file.name);
     } catch (_error) {
       return [];
     }

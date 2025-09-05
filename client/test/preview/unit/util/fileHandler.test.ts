@@ -1,7 +1,8 @@
-import { FileType } from 'model/backend/gitlab/constants';
 import FileHandler from 'preview/util/fileHandler';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
+import { FileType } from 'model/backend/interfaces/sharedInterfaces';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 const mockApi = mockBackendAPI;
 
@@ -34,7 +35,7 @@ describe('FileHandler', () => {
     expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
       1,
       'path/file',
-      'main',
+      getBranchName(),
       'content',
       'commit message',
     );
@@ -51,7 +52,24 @@ describe('FileHandler', () => {
     expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
       2,
       'path/file',
-      'main',
+      getBranchName(),
+      'content',
+      'commit message',
+    );
+  });
+
+  it('should create a common project file', async () => {
+    const fileState = {
+      name: 'file',
+      content: 'content',
+      isNew: true,
+      isModified: false,
+    };
+    await fileHandler.createFile(fileState, 'path', 'commit message', true);
+    expect(mockApi.createRepositoryFile).toHaveBeenCalledWith(
+      2,
+      'path/file',
+      getBranchName(),
       'content',
       'commit message',
     );
@@ -62,7 +80,7 @@ describe('FileHandler', () => {
     expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      getBranchName(),
       'updated content',
       'commit message',
     );
@@ -73,7 +91,7 @@ describe('FileHandler', () => {
     expect(mockApi.removeRepositoryFile).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      getBranchName(),
       'Removing DTName digital twin',
     );
   });
@@ -87,7 +105,7 @@ describe('FileHandler', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'path',
-      'main',
+      getBranchName(),
     );
   });
 
@@ -100,7 +118,20 @@ describe('FileHandler', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       2,
       'path',
-      'main',
+      getBranchName(),
+    );
+  });
+
+  it('should get file content from common project', async () => {
+    jest
+      .spyOn(mockApi, 'getRepositoryFileContent')
+      .mockResolvedValue({ content: 'existing content' });
+    const content = await fileHandler.getFileContent('path', false);
+    expect(content).toBe('existing content');
+    expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
+      2,
+      'path',
+      getBranchName(),
     );
   });
 

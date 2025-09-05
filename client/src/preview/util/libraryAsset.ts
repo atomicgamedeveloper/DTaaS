@@ -1,11 +1,13 @@
 import { getAuthority } from 'util/envUtil';
-import { AssetTypes, GROUP_NAME } from 'model/backend/gitlab/constants';
+import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { Asset } from 'preview/components/asset/Asset';
 import {
   BackendInterface,
-  LibraryAssetInterface,
   ProjectId,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  RepositoryTreeItem,
+} from 'model/backend/interfaces/backendInterfaces';
+import { LibraryAssetInterface } from 'model/backend/interfaces/sharedInterfaces';
 import LibraryManager from './libraryManager';
 
 class LibraryAsset implements LibraryAssetInterface {
@@ -68,7 +70,7 @@ class LibraryAsset implements LibraryAssetInterface {
         this.fullDescription = fileContent.replace(
           /(!\[[^\]]*\])\(([^)]+)\)/g,
           (match, altText, imagePath) => {
-            const fullUrl = `${getAuthority()}/${GROUP_NAME}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+            const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
         );
@@ -105,8 +107,11 @@ export async function getLibrarySubfolders(
 
   const subfolders: Asset[] = await Promise.all(
     files
-      .filter((file) => file.type === 'tree' && file.path !== mappedPath)
-      .map(async (file) => ({
+      .filter(
+        (file: RepositoryTreeItem) =>
+          file.type === 'tree' && file.path !== mappedPath,
+      )
+      .map(async (file: RepositoryTreeItem) => ({
         name: file.name,
         path: file.path,
         type,

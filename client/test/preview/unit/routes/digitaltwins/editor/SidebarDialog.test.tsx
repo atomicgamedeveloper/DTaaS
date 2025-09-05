@@ -1,8 +1,8 @@
 import * as React from 'react';
 import SidebarDialog from 'preview/route/digitaltwins/editor/SidebarDialog';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 describe('SidebarDialog', () => {
   const isOpen = true;
@@ -27,10 +27,6 @@ describe('SidebarDialog', () => {
         dispatch={dispatch}
       />,
     );
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('renders the SidebarDialog component', () => {

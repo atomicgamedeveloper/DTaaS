@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import { TabData } from 'components/tab/subcomponents/TabRender';
+import SettingsForm from './SettingsForm';
 
 function ListGroups(groups: string[]): React.ReactNode[] {
   const boldGroups = groups.map((group) =>
@@ -15,7 +16,7 @@ function ListGroups(groups: string[]): React.ReactNode[] {
   const groupListing: React.ReactNode[] = [];
   boldGroups
     .slice(0, -1)
-    .map((groupElement) => groupListing.push(groupElement, ', '));
+    .forEach((groupElement) => groupListing.push(groupElement, ', '));
   groupListing.splice(groupListing.length - 1, 1, [
     ' and ',
     boldGroups.slice(-1),
@@ -59,9 +60,12 @@ function ProfileTab() {
       <h2>Profile</h2>
       <img src={pfp} alt="Avatar" data-testid="profile-picture" />
       <p>
-        The username is <b>{name}</b>. See more details on{' '}
+        The username is <b>{name}</b>. You can edit your profile details and
+        change password on{' '}
         <b>
-          <a href={profileUrl}>SSO OAuth Provider.</a>
+          <a href={profileUrl} target="_blank" rel="noreferrer">
+            SSO OAuth Provider.
+          </a>
         </b>
       </p>
       {groupParagraph}
@@ -80,6 +84,8 @@ function SettingsTab() {
           <a href={profileUrl}>SSO OAuth Provider.</a>
         </b>
       </p>
+
+      <SettingsForm />
     </div>
   );
 }

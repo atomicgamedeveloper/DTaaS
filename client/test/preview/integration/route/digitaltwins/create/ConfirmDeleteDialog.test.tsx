@@ -39,10 +39,6 @@ describe('ConfirmDeleteDialog', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('handles fileExists functionality', () => {
     const file = {
       name: 'description.md',

@@ -7,7 +7,7 @@ import {
   mockDigitalTwin,
   mockLibraryAsset,
 } from 'test/preview/__mocks__/global_mocks';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 describe('SidebarRendering', () => {
   const setFileName = jest.fn();
@@ -22,7 +22,7 @@ describe('SidebarRendering', () => {
     {
       name: 'file',
       content: 'content',
-      type: 'type',
+      type: FileType.DESCRIPTION,
       isModified: false,
       isNew: true,
     },
@@ -30,7 +30,6 @@ describe('SidebarRendering', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('should render file tree items correctly and handle file click - DigitalTwin', () => {

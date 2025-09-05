@@ -103,7 +103,6 @@ describe('ReconfigureDialog', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
     jest.restoreAllMocks();
   });
 

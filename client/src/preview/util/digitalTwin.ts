@@ -3,20 +3,24 @@
 
 import { getAuthority } from 'util/envUtil';
 import {
-  DigitalTwinInterface,
-  FileState,
-  LibraryConfigFile,
-  BackendInterface,
-  DTAssetsInterface,
-  ProjectId,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  getGroupName,
+  getRunnerTag,
+  getDTDirectory,
+  getBranchName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import {
-  RUNNER_TAG,
+  FileState,
   FileType,
-  GROUP_NAME,
-  DT_DIRECTORY,
-} from 'model/backend/gitlab/constants';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+  DigitalTwinInterface,
+  DTAssetsInterface,
+  LibraryAssetInterface,
+  LibraryConfigFile,
+} from 'model/backend/interfaces/sharedInterfaces';
+import {
+  BackendInterface,
+  ProjectId,
+} from 'model/backend/interfaces/backendInterfaces';
 import {
   isValidInstance,
   logError,
@@ -24,7 +28,6 @@ import {
   getUpdatedLibraryFile,
 } from './digitalTwinUtils';
 import DTAssets from './DTAssets';
-import LibraryAsset from './libraryAsset';
 
 export const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
@@ -74,13 +77,13 @@ class DigitalTwin implements DigitalTwinInterface {
   }
 
   async getFullDescription(): Promise<void> {
-    const imagesPath = `${DT_DIRECTORY}/${this.DTName}/`;
+    const imagesPath = `${getDTDirectory()}/${this.DTName}/`;
     try {
       const fileContent = await this.DTAssets.getFileContent('README.md');
       this.fullDescription = fileContent.replace(
         /(!\[[^\]]*\])\(([^)]+)\)/g,
-        (match, altText, imagePath) => {
-          const fullUrl = `${getAuthority()}/${GROUP_NAME}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
+        (match: string, altText: string, imagePath: string) => {
+          const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
           return `${altText}(${fullUrl})`;
         },
       );
@@ -90,32 +93,35 @@ class DigitalTwin implements DigitalTwinInterface {
   }
 
   private async triggerPipeline() {
-    const variables = { DTName: this.DTName, RunnerTag: RUNNER_TAG };
+    const runnerTag = getRunnerTag();
+    const variables = { DTName: this.DTName, RunnerTag: runnerTag };
     return this.backend.startPipeline(
       this.backend.getProjectId(),
-      'main',
+      getBranchName(),
       variables,
     );
   }
 
   async execute(): Promise<number | null> {
+    const runnerTag = getRunnerTag();
     if (!isValidInstance(this)) {
-      logError(this, RUNNER_TAG, 'Missing projectId or triggerToken');
+      logError(this, runnerTag, 'Missing projectId or triggerToken');
       return null;
     }
 
     try {
       const response = await this.triggerPipeline();
-      logSuccess(this, RUNNER_TAG);
+      logSuccess(this, runnerTag);
       this.pipelineId = response.id;
       return this.pipelineId;
     } catch (error) {
-      logError(this, RUNNER_TAG, String(error));
+      logError(this, runnerTag, String(error));
       return null;
     }
   }
 
   async stop(projectId: ProjectId, pipeline: string): Promise<void> {
+    const runnerTag = getRunnerTag();
     const pipelineId =
       pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
     try {
@@ -123,7 +129,7 @@ class DigitalTwin implements DigitalTwinInterface {
       this.backend.logs.push({
         status: 'canceled',
         DTName: this.DTName,
-        runnerTag: RUNNER_TAG,
+        runnerTag,
       });
       this.lastExecutionStatus = ExecutionStatus.CANCELED;
     } catch (error) {
@@ -131,7 +137,7 @@ class DigitalTwin implements DigitalTwinInterface {
         status: 'error',
         error: new Error(String(error)),
         DTName: this.DTName,
-        runnerTag: RUNNER_TAG,
+        runnerTag,
       });
       this.lastExecutionStatus = ExecutionStatus.ERROR;
     }
@@ -139,7 +145,7 @@ class DigitalTwin implements DigitalTwinInterface {
 
   async create(
     files: FileState[],
-    cartAssets: LibraryAsset[],
+    cartAssets: LibraryAssetInterface[],
     libraryFiles: LibraryConfigFile[],
   ): Promise<string> {
     const mainFolderPath = `digital_twins/${this.DTName}`;
@@ -198,7 +204,7 @@ class DigitalTwin implements DigitalTwinInterface {
   }
 
   async prepareAllAssetFiles(
-    cartAssets: LibraryAsset[],
+    cartAssets: LibraryAssetInterface[],
     libraryFiles: LibraryConfigFile[],
   ): Promise<
     Array<{
@@ -241,7 +247,7 @@ class DigitalTwin implements DigitalTwinInterface {
 
   async getAssetFiles(): Promise<{ assetPath: string; fileNames: string[] }[]> {
     const mainFolderPath = `digital_twins/${this.DTName}`;
-    const excludeFolder = 'lifecycle';
+    const excludeFolder = FileType.LIFECYCLE;
     const result: { assetPath: string; fileNames: string[] }[] = [];
 
     try {

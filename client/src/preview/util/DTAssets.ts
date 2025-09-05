@@ -1,13 +1,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-import { FileType } from 'model/backend/gitlab/constants';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import {
-  FileState,
-  BackendInterface,
   DTAssetsInterface,
   FileHandlerInterface,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  FileState,
+  FileType,
+} from 'model/backend/interfaces/sharedInterfaces';
 import FileHandler from './fileHandler';
 
 export function getFilePath(
@@ -15,7 +15,9 @@ export function getFilePath(
   mainFolderPath: string,
   lifecycleFolderPath: string,
 ): string {
-  return file.type === 'lifecycle' ? lifecycleFolderPath : mainFolderPath;
+  return file.type === FileType.LIFECYCLE
+    ? lifecycleFolderPath
+    : mainFolderPath;
 }
 
 class DTAssets implements DTAssetsInterface {
@@ -44,7 +46,7 @@ class DTAssets implements DTAssetsInterface {
     lifecycleFolderPath: string,
   ): Promise<void> {
     for (const file of files) {
-      const fileType = (file as FileState).type || 'asset';
+      const fileType = (file as FileState).type;
 
       if (file.isNew) {
         const mainFolderPathUpdated = file.isFromCommonLibrary
@@ -54,7 +56,7 @@ class DTAssets implements DTAssetsInterface {
           ? `${mainFolderPathUpdated}/lifecycle`
           : lifecycleFolderPath;
         const filePath =
-          fileType === 'lifecycle'
+          fileType === FileType.LIFECYCLE
             ? lifecycleFolderPathUpdated
             : mainFolderPathUpdated;
         const commitMessage = `Add ${file.name} to ${fileType} folder`;

@@ -43,10 +43,6 @@ describe('ChangeFileNameDialog', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('handles click on change button', () => {
     const changeButton = screen.getByRole('button', { name: /Change/i });
     act(() => {

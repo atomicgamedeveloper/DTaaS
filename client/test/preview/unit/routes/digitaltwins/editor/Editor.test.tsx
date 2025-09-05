@@ -39,10 +39,6 @@ describe('Editor', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('render Editor', () => {
     expect(screen.getByText('EditorTab')).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();

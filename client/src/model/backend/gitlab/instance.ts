@@ -4,17 +4,17 @@
  * It provides methods to initialize the instance, retrieve project IDs, and manage execution logs.
  */
 import {
-  GROUP_NAME,
-  COMMON_LIBRARY_PROJECT_NAME,
-} from 'model/backend/gitlab/constants';
+  getGroupName,
+  getCommonLibraryProjectName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import GitlabAPI from 'model/backend/gitlab/backend';
 import {
   BackendInterface,
   LogEntry,
   ProjectId,
   JobSummary,
-  Pipeline,
-} from './UtilityInterfaces';
-import GitlabAPI from './backend';
+} from 'model/backend/interfaces/backendInterfaces';
+import { Pipeline } from '../interfaces/execution';
 
 export class GitlabInstance implements BackendInterface {
   public projectName: string;
@@ -56,12 +56,12 @@ export class GitlabInstance implements BackendInterface {
   }
 
   private async setProjectIds(): Promise<void> {
-    const group = await this.api.getGroupByName(GROUP_NAME);
+    const group = await this.api.getGroupByName(getGroupName());
     const projects = await this.api.listGroupProjects(group.id as string);
     const project =
       projects.find((proj) => proj.name === this.projectName) ?? null;
     const commonProject =
-      projects.find((proj) => proj.name === COMMON_LIBRARY_PROJECT_NAME) ??
+      projects.find((proj) => proj.name === getCommonLibraryProjectName()) ??
       null;
 
     if (!project) {
@@ -70,7 +70,7 @@ export class GitlabInstance implements BackendInterface {
 
     if (!commonProject) {
       throw new Error(
-        `Common project ${COMMON_LIBRARY_PROJECT_NAME} not found`,
+        `Common project ${getCommonLibraryProjectName()} not found`,
       );
     }
 

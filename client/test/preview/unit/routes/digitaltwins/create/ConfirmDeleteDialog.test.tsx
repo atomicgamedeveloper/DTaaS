@@ -6,7 +6,7 @@ import {
   removeAllCreationFiles,
   addOrUpdateFile,
 } from 'preview/store/file.slice';
-import { defaultFiles } from 'model/backend/gitlab/constants';
+import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -40,10 +40,6 @@ describe('ConfirmDeleteDialog', () => {
         setNewDigitalTwinName={setNewDigitalTwinName}
       />,
     );
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('renders the ConfirmDeleteDialog', () => {

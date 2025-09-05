@@ -11,9 +11,9 @@ import {
 } from '@mui/material';
 import { removeAllCreationFiles } from 'preview/store/file.slice';
 import {
-  FileState,
   LibraryConfigFile,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import DigitalTwin from 'preview/util/digitalTwin';
@@ -23,7 +23,7 @@ import {
   setShouldFetchDigitalTwins,
 } from 'preview/store/digitalTwin.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
-import { defaultFiles } from 'model/backend/gitlab/constants';
+import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';

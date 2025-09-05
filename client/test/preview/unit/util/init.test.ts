@@ -66,10 +66,6 @@ describe('fetchAssets', () => {
     }));
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should throw an error if gitlab fails to initialize', async () => {
     const errorMessage = 'Failed to initialize Gitlab';
     (mockBackendInstance.init as jest.Mock).mockRejectedValue(errorMessage);

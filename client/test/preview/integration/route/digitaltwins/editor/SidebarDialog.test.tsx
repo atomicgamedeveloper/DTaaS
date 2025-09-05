@@ -40,10 +40,6 @@ describe('SidebarDialog', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should handle click on cancel button', () => {
     const cancelButton = screen.getByText('Cancel');
 

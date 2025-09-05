@@ -18,10 +18,6 @@ const store = configureStore({
 });
 
 describe('CustomSnackbar Integration Test', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the Snackbar with the correct message', async () => {
     store.dispatch(
       showSnackbar({

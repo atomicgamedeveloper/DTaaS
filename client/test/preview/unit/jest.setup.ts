@@ -6,5 +6,5 @@ import 'test/__mocks__/unit/component_mocks';
 import 'test/__mocks__/unit/module_mocks';
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  jest.clearAllMocks();
 });

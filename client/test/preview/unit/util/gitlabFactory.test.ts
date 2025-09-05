@@ -1,5 +1,5 @@
 import GitlabAPI from 'model/backend/gitlab/backend';
-import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import createGitlabInstance from 'model/backend/gitlab/gitlabFactory';
 
 jest.mock('model/backend/gitlab/backend', () => ({
@@ -12,10 +12,6 @@ jest.mock('model/backend/gitlab/gitlabFactory', () => ({
 }));
 
 describe('gitlabFactory', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should create a GitlabInstance with the correct parameters', () => {
     const gitlabInstance: BackendInterface = createGitlabInstance(
       'username',

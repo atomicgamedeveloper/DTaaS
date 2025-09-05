@@ -24,10 +24,6 @@ describe('LogButton', () => {
       );
     });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the Log button', () => {
     renderLogButton();
     expect(screen.getByRole('button', { name: /Log/i })).toBeInTheDocument();

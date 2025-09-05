@@ -16,10 +16,6 @@ describe('DeleteButton', () => {
       </Provider>,
     );
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the Delete button', () => {
     renderDeleteButton();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();

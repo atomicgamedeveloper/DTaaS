@@ -1,3 +1,4 @@
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
@@ -119,7 +120,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
-      'main',
+      getBranchName(),
     );
   });
 
@@ -135,7 +136,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
-      'main',
+      getBranchName(),
     );
   });
 
@@ -148,7 +149,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/test-file.md',
-      'main',
+      getBranchName(),
       'Test file content',
       'Update test-file.md content',
     );
@@ -166,7 +167,7 @@ describe('DigitalTwin', () => {
     expect(mockApi.editRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/lifecycle/lifecycle-file',
-      'main',
+      getBranchName(),
       'Lifecycle file content',
       'Update lifecycle-file content',
     );

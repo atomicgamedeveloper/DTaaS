@@ -1,5 +1,5 @@
 import { Gitlab } from '@gitbeaker/core';
-import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import GitlabAPI from 'model/backend/gitlab/backend';
 
 export const mockAppURL = 'https://example.com/';

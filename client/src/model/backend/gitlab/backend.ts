@@ -7,12 +7,13 @@ import { Gitlab } from '@gitbeaker/rest';
 import {
   BackendAPI,
   ProjectId,
-  Pipeline,
   RepositoryFile,
   RepositoryTreeItem,
   ProjectSummary,
   JobSummary,
-} from './UtilityInterfaces';
+} from 'model/backend/interfaces/backendInterfaces';
+import { Pipeline } from '../interfaces/execution';
+import { getBranchName } from './digitalTwinConfig/settingsUtility';
 
 export class GitlabAPI implements BackendAPI {
   public client: InstanceType<typeof Gitlab>;
@@ -112,7 +113,7 @@ export class GitlabAPI implements BackendAPI {
   public async listRepositoryFiles(
     projectId: ProjectId,
     path = '',
-    ref = 'main',
+    ref = getBranchName(),
     recursive = false,
   ): Promise<RepositoryTreeItem[]> {
     const items = await this.client.Repositories.allRepositoryTrees(projectId, {

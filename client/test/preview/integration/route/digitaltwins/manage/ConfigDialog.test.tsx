@@ -61,10 +61,6 @@ describe('ReconfigureDialog Integration Tests', () => {
     setupTest();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders ReconfigureDialog', async () => {
     render(
       <Provider store={store}>

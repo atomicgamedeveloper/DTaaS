@@ -81,10 +81,6 @@ const renderComponent = <T extends object>(
 };
 
 describe('AssetCard', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders AssetCardManage with digital twin description', () => {
     setupMockStore('Asset description', 'Digital Twin description');
     renderComponent(AssetCardManage, { asset, onDelete: jest.fn() });

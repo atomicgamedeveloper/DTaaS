@@ -1,6 +1,9 @@
-import { JobLog } from 'model/backend/gitlab/types/executionHistory';
+import { JobLog } from 'model/backend/interfaces/execution';
 import cleanLog from 'model/backend/gitlab/cleanLog';
-import { BackendInterface, JobSummary } from '../UtilityInterfaces';
+import {
+  BackendInterface,
+  JobSummary,
+} from 'model/backend/interfaces/backendInterfaces';
 
 /**
  * Fetches job logs from the backend for a specific pipeline
@@ -20,7 +23,9 @@ export const fetchJobLogs = async (
 
   const jobs = await backend.getPipelineJobs(projectId, pipelineId);
 
-  const logPromises = jobs.map((job) => fetchSingleJobLog(backend, job));
+  const logPromises = jobs.map((job: JobSummary) =>
+    fetchSingleJobLog(backend, job),
+  );
   return (await Promise.all(logPromises)).reverse();
 };
 

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { TreeItem, TreeItemProps } from '@mui/x-tree-view/TreeItem';
 import {
-  FileState,
   LibraryConfigFile,
-} from 'model/backend/gitlab/UtilityInterfaces';
+  FileState,
+} from 'model/backend/interfaces/sharedInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';

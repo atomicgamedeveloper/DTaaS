@@ -20,10 +20,6 @@ describe('FileActionButtons', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('handles click on delete button', () => {
     const deleteButton = screen.getByRole('button', { name: /Delete/i });
     act(() => {

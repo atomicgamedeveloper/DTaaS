@@ -23,10 +23,6 @@ describe('AddToCartButton', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should add asset to cart when not in cart', () => {
     jest.spyOn(cartAccess, 'default').mockReturnValue({
       state: { assets: [] },

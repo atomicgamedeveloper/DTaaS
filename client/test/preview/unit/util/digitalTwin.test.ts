@@ -1,9 +1,21 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
-import { GROUP_NAME, RUNNER_TAG } from 'model/backend/gitlab/constants';
+import {
+  getBranchName,
+  getGroupName,
+  getRunnerTag,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import * as envUtil from 'util/envUtil';
+
+// Mock the envUtil module
+jest.mock('util/envUtil', () => ({
+  __esModule: true,
+  ...jest.requireActual('util/envUtil'),
+  getAuthority: jest.fn().mockReturnValue('https://example.com/AUTHORITY'),
+}));
 
 const mockGitlabInstance = {
   api: mockBackendAPI,
@@ -30,7 +42,24 @@ describe('DigitalTwin', () => {
   beforeEach(() => {
     mockGitlabInstance.getProjectId = jest.fn().mockReturnValue(1);
     mockGitlabInstance.getCommonProjectId = jest.fn().mockReturnValue(2);
+    mockGitlabInstance.startPipeline = jest.fn().mockResolvedValue({ id: 123 });
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
+
+    (envUtil.getAuthority as jest.Mock).mockReturnValue(
+      'https://example.com/AUTHORITY',
+    );
+
+    Object.defineProperty(window, 'sessionStorage', {
+      value: {
+        getItem: jest.fn(() => 'testUser'),
+        setItem: jest.fn(),
+        clear: jest.fn(),
+        removeItem: jest.fn(),
+        length: 0,
+        key: jest.fn(),
+      },
+      writable: true,
+    });
   });
 
   it('should get description', async () => {
@@ -44,12 +73,12 @@ describe('DigitalTwin', () => {
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/description.md',
-      'main',
+      getBranchName(),
     );
   });
 
   it('should return empty description if no description file exists', async () => {
-    (mockBackendAPI.listRepositoryFiles as jest.Mock).mockRejectedValue(
+    (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockRejectedValue(
       new Error('File not found'),
     );
 
@@ -66,29 +95,21 @@ describe('DigitalTwin', () => {
       content: mockContent,
     });
 
-    Object.defineProperty(window, 'sessionStorage', {
-      value: {
-        getItem: jest.fn(() => 'testUser'),
-        setItem: jest.fn(),
-      },
-      writable: true,
-    });
-
     await dt.getFullDescription();
 
     expect(dt.fullDescription).toBe(
-      `Test README content with an image ![alt text](https://example.com/AUTHORITY/${GROUP_NAME}/testUser/-/raw/main/digital_twins/test-DTName/image.png)`,
+      `Test README content with an image ![alt text](https://example.com/AUTHORITY/${getGroupName()}/testUser/-/raw/main/digital_twins/test-DTName/image.png)`,
     );
 
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName/README.md',
-      'main',
+      getBranchName(),
     );
   });
 
   it('should return error message if no README.md file exists', async () => {
-    (mockBackendAPI.listRepositoryFiles as jest.Mock).mockRejectedValue(
+    (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockRejectedValue(
       new Error('File not found'),
     );
 
@@ -110,19 +131,35 @@ describe('DigitalTwin', () => {
 
     expect(pipelineId).toBe(123);
     expect(dt.lastExecutionStatus).toBe(ExecutionStatus.SUCCESS);
-    expect(mockGitlabInstance.startPipeline).toHaveBeenCalledWith(1, 'main', {
-      DTName: 'test-DTName',
-      RunnerTag: RUNNER_TAG,
-    });
+    expect(mockGitlabInstance.startPipeline).toHaveBeenCalledWith(
+      1,
+      getBranchName(),
+      {
+        DTName: 'test-DTName',
+        RunnerTag: getRunnerTag(),
+      },
+    );
+  });
+
+  it('should log error and return null when projectId or triggerToken is missing', async () => {
+    (dt.backend.getProjectId as jest.Mock).mockReturnValue(null);
+    jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(false);
+    (mockBackendAPI.getTriggerToken as jest.Mock).mockResolvedValue(null);
+
+    const pipelineId = await dt.execute();
+
+    expect(pipelineId).toBeNull();
+    expect(dt.lastExecutionStatus).toBe('error');
+    expect(mockBackendAPI.getTriggerToken).not.toHaveBeenCalled();
   });
 
   it('should log success and update status', () => {
-    dtUtils.logSuccess(dt, RUNNER_TAG);
+    dtUtils.logSuccess(dt, getRunnerTag());
 
     expect(dt.backend.logs).toContainEqual({
       status: 'success',
       DTName: 'test-DTName',
-      runnerTag: RUNNER_TAG,
+      runnerTag: getRunnerTag(),
     });
     expect(dt.lastExecutionStatus).toBe(ExecutionStatus.SUCCESS);
   });
@@ -130,7 +167,9 @@ describe('DigitalTwin', () => {
   it('should log error when triggering pipeline fails', async () => {
     jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(true);
     const errorMessage = 'Trigger failed';
-    (mockBackendAPI.startPipeline as jest.Mock).mockRejectedValue(errorMessage);
+    (mockGitlabInstance.startPipeline as jest.Mock).mockRejectedValue(
+      errorMessage,
+    );
 
     const pipelineId = await dt.execute();
 
@@ -139,7 +178,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should handle non-Error thrown during pipeline execution', async () => {
-    (mockBackendAPI.startPipeline as jest.Mock).mockRejectedValue(
+    (mockGitlabInstance.startPipeline as jest.Mock).mockRejectedValue(
       'String error message',
     );
 
@@ -202,7 +241,7 @@ describe('DigitalTwin', () => {
     expect(mockBackendAPI.removeRepositoryFile).toHaveBeenCalledWith(
       1,
       'digital_twins/test-DTName',
-      'main',
+      getBranchName(),
       'Removing test-DTName digital twin',
     );
   });
@@ -218,6 +257,7 @@ describe('DigitalTwin', () => {
   });
 
   it('should create digital twin with files', async () => {
+    (mockBackendAPI.createRepositoryFile as jest.Mock).mockResolvedValue({});
     const result = await dt.create(files, [], []);
 
     expect(result).toBe(

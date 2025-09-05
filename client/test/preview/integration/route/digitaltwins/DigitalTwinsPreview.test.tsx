@@ -15,10 +15,6 @@ jest.mock('react-oidc-context', () => ({
 }));
 
 describe('Digital Twins', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('displays content of tabs', async () => {
     await act(async () => {
       render(

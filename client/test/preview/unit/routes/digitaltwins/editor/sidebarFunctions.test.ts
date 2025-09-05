@@ -1,8 +1,8 @@
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import * as FileUtils from 'preview/util/fileUtils';
 import * as SidebarFetchers from 'preview/route/digitaltwins/editor/sidebarFetchers';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 jest.mock('preview/util/fileUtils');
 jest.mock('preview/route/digitaltwins/editor/sidebarFetchers');
@@ -23,7 +23,6 @@ describe('SidebarFunctions', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('should handle file click correctly in create tab', () => {

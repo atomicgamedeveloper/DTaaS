@@ -1,4 +1,4 @@
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 /**
  * Maps GitLab pipeline status to internal execution status

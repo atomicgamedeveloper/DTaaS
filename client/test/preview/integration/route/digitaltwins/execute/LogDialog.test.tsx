@@ -42,10 +42,6 @@ describe('LogDialog', () => {
     );
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the LogDialog with logs available', () => {
     store.dispatch(
       setJobLogs({

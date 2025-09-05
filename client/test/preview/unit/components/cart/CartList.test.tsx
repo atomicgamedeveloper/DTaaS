@@ -5,10 +5,6 @@ import * as cartAccess from 'preview/store/CartAccess';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 
 describe('CartList', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should render a list of assets', () => {
     jest.spyOn(cartAccess, 'default').mockReturnValue({
       state: { assets: [mockLibraryAsset] },

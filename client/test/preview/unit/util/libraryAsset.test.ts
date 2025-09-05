@@ -1,7 +1,8 @@
 import LibraryAsset, { getLibrarySubfolders } from 'preview/util/libraryAsset';
-import { BackendInterface } from 'model/backend/gitlab/UtilityInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import LibraryManager from 'preview/util/libraryManager';
-import { AssetTypes, GROUP_NAME } from 'model/backend/gitlab/constants';
+import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 jest.mock('preview/util/libraryManager');
 
@@ -69,7 +70,7 @@ describe('LibraryAsset', () => {
     sessionStorage.setItem('username', 'user');
     await libraryAsset.getFullDescription();
     expect(libraryAsset.fullDescription).toBe(
-      `![alt text](https://example.com/AUTHORITY/${GROUP_NAME}/user/-/raw/main/path/to/library/image.png)`,
+      `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/main/path/to/library/image.png)`,
     );
   });
 

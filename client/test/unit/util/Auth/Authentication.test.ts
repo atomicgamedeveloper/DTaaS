@@ -74,10 +74,6 @@ describe('useSignOut', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('expires _xsrf cookie', async () => {
     const auth = useAuth();
     const signOut = useSignOut();

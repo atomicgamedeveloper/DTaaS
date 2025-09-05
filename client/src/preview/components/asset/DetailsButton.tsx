@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { Button } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import { DescriptionProvider } from 'model/backend/gitlab/UtilityInterfaces';
+import { DescriptionProvider } from 'model/backend/interfaces/sharedInterfaces';
 import { selectDigitalTwinByName } from '../../store/digitalTwin.slice';
 
 interface DialogButtonProps {

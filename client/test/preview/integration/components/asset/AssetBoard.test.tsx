@@ -12,10 +12,10 @@ import snackbarSlice from 'preview/store/snackbar.slice';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
-import { FileState } from 'model/backend/gitlab/UtilityInterfaces';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -64,10 +64,6 @@ describe('AssetBoard Integration Tests', () => {
 
   beforeEach(() => {
     setupTest();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('renders AssetBoard with AssetCardExecute', async () => {

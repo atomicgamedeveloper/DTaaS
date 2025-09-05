@@ -1,5 +1,5 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LibraryConfigFile } from 'model/backend/gitlab/UtilityInterfaces';
+import { LibraryConfigFile } from 'model/backend/interfaces/sharedInterfaces';
 import { RootState } from 'store/store';
 
 const initialState: LibraryConfigFile[] = [];

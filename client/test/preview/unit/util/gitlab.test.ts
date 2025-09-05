@@ -1,20 +1,22 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import GitlabAPI from 'model/backend/gitlab/backend';
-import { JobSummary } from 'model/backend/gitlab/UtilityInterfaces';
+import { JobSummary } from 'model/backend/interfaces/backendInterfaces';
 import {
-  COMMON_LIBRARY_PROJECT_NAME,
-  GROUP_NAME,
-} from 'model/backend/gitlab/constants';
+  getCommonLibraryProjectName,
+  getGroupName,
+  getDTDirectory,
+  getBranchName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
 jest.mock('@gitbeaker/rest');
 
 describe('GitlabInstance', () => {
   let gitlab: GitlabInstance;
-  const mockApi: GitlabAPI = mockBackendAPI;
+  let mockApi: GitlabAPI;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockApi = mockBackendAPI;
     gitlab = new GitlabInstance('user1', mockApi);
   });
 
@@ -25,7 +27,7 @@ describe('GitlabInstance', () => {
     });
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 5, name: GROUP_NAME });
+      .mockResolvedValue({ id: 5, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([
       { id: 2, name: 'user1' },
       { id: 5, name: 'common' },
@@ -51,7 +53,7 @@ describe('GitlabInstance', () => {
     });
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 5, name: GROUP_NAME });
+      .mockResolvedValue({ id: 5, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([
       { id: 2, name: 'user1' },
       { id: 5, name: 'common' },
@@ -81,7 +83,7 @@ describe('GitlabInstance', () => {
   it('should initialize with a project ID and trigger token', async () => {
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 1, name: GROUP_NAME });
+      .mockResolvedValue({ id: 1, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([
       { id: 1, name: 'user1' },
       { id: 2, name: 'common' },
@@ -92,7 +94,7 @@ describe('GitlabInstance', () => {
 
     expect(gitlab.getProjectId()).toBe(1);
     expect(gitlab.getCommonProjectId()).toBe(2);
-    expect(mockApi.getGroupByName).toHaveBeenCalledWith(GROUP_NAME);
+    expect(mockApi.getGroupByName).toHaveBeenCalledWith(getGroupName());
     expect(mockApi.listGroupProjects).toHaveBeenCalledWith(1);
     expect(mockApi.getTriggerToken).toHaveBeenCalledWith(1);
   });
@@ -100,14 +102,14 @@ describe('GitlabInstance', () => {
   it('should throw error if project is not found', async () => {
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 1, name: GROUP_NAME });
+      .mockResolvedValue({ id: 1, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([]);
 
     await expect(gitlab.init()).rejects.toThrow(
       `Project ${gitlab.projectName} not found`,
     );
 
-    expect(mockApi.getGroupByName).toHaveBeenCalledWith(GROUP_NAME);
+    expect(mockApi.getGroupByName).toHaveBeenCalledWith(getGroupName());
     expect(mockApi.listGroupProjects).toHaveBeenCalledWith(1);
     expect(mockApi.getTriggerToken).not.toHaveBeenCalled();
   });
@@ -115,16 +117,16 @@ describe('GitlabInstance', () => {
   it('should throw error if commonProject is not found', async () => {
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 1, name: GROUP_NAME });
+      .mockResolvedValue({ id: 1, name: getGroupName() });
     jest
       .spyOn(mockApi, 'listGroupProjects')
       .mockResolvedValue([{ id: 1, name: 'user1' }]);
 
     await expect(gitlab.init()).rejects.toThrow(
-      `Common project ${COMMON_LIBRARY_PROJECT_NAME} not found`,
+      `Common project ${getCommonLibraryProjectName()} not found`,
     );
 
-    expect(mockApi.getGroupByName).toHaveBeenCalledWith(GROUP_NAME);
+    expect(mockApi.getGroupByName).toHaveBeenCalledWith(getGroupName());
     expect(mockApi.listGroupProjects).toHaveBeenCalledWith(1);
     expect(mockApi.getTriggerToken).not.toHaveBeenCalled();
   });
@@ -132,7 +134,7 @@ describe('GitlabInstance', () => {
   it('should handle no trigger token found', async () => {
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 1, name: GROUP_NAME });
+      .mockResolvedValue({ id: 1, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([
       { id: 1, name: 'user1' },
       { id: 3, name: 'common' },
@@ -145,7 +147,7 @@ describe('GitlabInstance', () => {
     expect(gitlab.getCommonProjectId()).toBe(3);
     const token = await mockApi.getTriggerToken(1);
     expect(token).toBe(null);
-    expect(mockApi.getGroupByName).toHaveBeenCalledWith(GROUP_NAME);
+    expect(mockApi.getGroupByName).toHaveBeenCalledWith(getGroupName());
     expect(mockApi.listGroupProjects).toHaveBeenCalledWith(1);
     expect(mockApi.getTriggerToken).toHaveBeenCalledWith(1);
   });
@@ -223,7 +225,7 @@ describe('GitlabInstance', () => {
     });
     jest
       .spyOn(mockApi, 'getGroupByName')
-      .mockResolvedValue({ id: 5, name: GROUP_NAME });
+      .mockResolvedValue({ id: 5, name: getGroupName() });
     jest.spyOn(mockApi, 'listGroupProjects').mockResolvedValue([
       { id: 2, name: 'user1' },
       { id: 5, name: 'common' },
@@ -234,5 +236,37 @@ describe('GitlabInstance', () => {
     const result = gitlab.getTriggerToken();
 
     expect(result).toEqual('test-token');
+  });
+
+  it('should fetch DT subfolders successfully', async () => {
+    const projectId = gitlab.getCommonProjectId();
+    const files = [
+      { name: 'subfolder1', path: 'digital_twins/subfolder1', type: 'tree' },
+      { name: 'subfolder2', path: 'digital_twins/subfolder2', type: 'tree' },
+      { name: 'file1', path: 'digital_twins/file1', type: 'blob' },
+    ];
+
+    (mockApi.listRepositoryFiles as jest.Mock).mockResolvedValue(files);
+
+    const subfolders = await mockApi.listRepositoryFiles(
+      projectId,
+      getDTDirectory(),
+      getBranchName(),
+      false,
+    );
+
+    expect(subfolders).toHaveLength(3);
+    expect(subfolders).toEqual([
+      { name: 'subfolder1', path: 'digital_twins/subfolder1', type: 'tree' },
+      { name: 'subfolder2', path: 'digital_twins/subfolder2', type: 'tree' },
+      { name: 'file1', path: 'digital_twins/file1', type: 'blob' },
+    ]);
+
+    expect(mockApi.listRepositoryFiles).toHaveBeenCalledWith(
+      projectId,
+      getDTDirectory(),
+      getBranchName(),
+      false,
+    );
   });
 });

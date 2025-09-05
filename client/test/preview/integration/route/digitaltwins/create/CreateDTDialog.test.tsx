@@ -57,10 +57,6 @@ describe('CreateDTDialog - handleConfirm function', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('does not proceed if file validation fails', async () => {
     (validateFiles as jest.Mock).mockReturnValue(true);
 

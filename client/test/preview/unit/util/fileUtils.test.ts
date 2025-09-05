@@ -1,4 +1,7 @@
-import { LibraryConfigFile } from 'model/backend/gitlab/UtilityInterfaces';
+import {
+  FileType,
+  LibraryConfigFile,
+} from 'model/backend/interfaces/sharedInterfaces';
 import * as fileUtils from 'preview/util/fileUtils';
 
 describe('FileUtils', () => {
@@ -44,8 +47,8 @@ describe('FileUtils', () => {
 
   it('should add default files', () => {
     const defaultFilesNames = [
-      { name: 'file1', type: 'lifecycle' },
-      { name: 'file2', type: 'lifecycle' },
+      { name: 'file1', type: FileType.LIFECYCLE },
+      { name: 'file2', type: FileType.LIFECYCLE },
     ];
 
     const files = [

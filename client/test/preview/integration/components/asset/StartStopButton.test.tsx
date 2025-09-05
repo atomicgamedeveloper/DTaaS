@@ -56,10 +56,6 @@ describe('StartStopButton Integration Test', () => {
     });
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders only the Start button', () => {
     expect(screen.getByRole('button', { name: /Start/i })).toBeInTheDocument();
     expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
