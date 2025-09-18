@@ -6,7 +6,7 @@ import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'preview/store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
@@ -14,10 +14,23 @@ import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import LibraryManager from 'preview/util/libraryManager';
+import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
+
+import {
+  ADAPTER_MOCKS,
+  INIT_MOCKS,
+  GITLAB_MOCKS,
+} from 'test/preview/__mocks__/adapterMocks';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
+jest.mock(
+  'route/digitaltwins/execution/digitalTwinAdapter',
+  () => ADAPTER_MOCKS,
+);
+jest.mock('preview/util/init', () => INIT_MOCKS);
+jest.mock('preview/util/gitlab', () => GITLAB_MOCKS);
 
 const mockDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
 mockDigitalTwin.fullDescription = 'Digital Twin Description';
@@ -48,14 +61,25 @@ const store = configureStore({
 
 describe('DetailsDialog Integration Tests', () => {
   const setupTest = () => {
+    jest.clearAllMocks();
+
+    store.dispatch({ type: 'RESET_ALL' });
+
     store.dispatch(setAssets([mockLibraryAsset]));
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
     store.dispatch(
-      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: mockDigitalTwin }),
+      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
     );
   };
 
   beforeEach(() => {
     setupTest();
+  });
+
+  afterEach(() => {
+    store.dispatch({ type: 'RESET_ALL' });
+
+    jest.clearAllTimers();
   });
 
   it('renders DetailsDialog with Digital Twin description', async () => {
@@ -72,7 +96,9 @@ describe('DetailsDialog Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Digital Twin Description')).toBeInTheDocument();
+      expect(
+        screen.getByText('Test Digital Twin Description'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -91,7 +117,10 @@ describe('DetailsDialog Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Library Asset Description')).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Close/i }),
+      ).toBeInTheDocument();
     });
   });
 

@@ -18,15 +18,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import {
-  setDigitalTwin,
-  setShouldFetchDigitalTwins,
-} from 'preview/store/digitalTwin.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import {
+  setDigitalTwin,
+  setShouldFetchDigitalTwins,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 
 interface CreateDTDialogProps {
   open: boolean;
@@ -59,7 +60,13 @@ const handleSuccess = (
       severity: 'success',
     }),
   );
-  dispatch(setDigitalTwin({ assetName: newDigitalTwinName, digitalTwin }));
+  const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+  dispatch(
+    setDigitalTwin({
+      assetName: newDigitalTwinName,
+      digitalTwin: digitalTwinData,
+    }),
+  );
   dispatch(setShouldFetchDigitalTwins(true));
   dispatch(removeAllCreationFiles());
 

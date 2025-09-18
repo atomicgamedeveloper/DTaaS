@@ -7,8 +7,28 @@ import {
   getRunnerTag,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
-import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import indexedDBService from 'database/digitalTwins';
 import * as envUtil from 'util/envUtil';
+import { getUpdatedLibraryFile } from 'preview/util/digitalTwinUtils';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
+
+jest.mock('database/digitalTwins');
+
+jest.mock('preview/util/digitalTwinUtils', () => ({
+  ...jest.requireActual('preview/util/digitalTwinUtils'),
+  getUpdatedLibraryFile: jest.fn(),
+}));
+
+jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+
+const mockedIndexedDBService = indexedDBService as jest.Mocked<
+  typeof indexedDBService
+> & {
+  addExecutionHistory: jest.Mock;
+  getExecutionHistoryByDTName: jest.Mock;
+  getExecutionHistoryById: jest.Mock;
+  updateExecutionHistory: jest.Mock;
+};
 
 // Mock the envUtil module
 jest.mock('util/envUtil', () => ({
@@ -60,6 +80,14 @@ describe('DigitalTwin', () => {
       },
       writable: true,
     });
+    jest.clearAllMocks();
+
+    jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+
+    mockedIndexedDBService.add.mockResolvedValue('mock-id');
+    mockedIndexedDBService.getByDTName.mockResolvedValue([]);
+    mockedIndexedDBService.getById.mockResolvedValue(null);
+    mockedIndexedDBService.update.mockResolvedValue(undefined);
   });
 
   it('should get description', async () => {
@@ -94,6 +122,9 @@ describe('DigitalTwin', () => {
     (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockResolvedValue({
       content: mockContent,
     });
+    // TODO: Check if this is better
+    /*     const getFileContentSpy = jest.spyOn(dt.DTAssets, 'getFileContent');
+    getFileContentSpy.mockResolvedValue(mockContent); */
 
     await dt.getFullDescription();
 
@@ -106,6 +137,7 @@ describe('DigitalTwin', () => {
       'digital_twins/test-DTName/README.md',
       getBranchName(),
     );
+    // expect(getFileContentSpy).toHaveBeenCalledWith('README.md');
   });
 
   it('should return error message if no README.md file exists', async () => {
@@ -127,6 +159,20 @@ describe('DigitalTwin', () => {
       'test-token',
     );
 
+    dt.lastExecutionStatus = ExecutionStatus.SUCCESS;
+
+    const originalExecute = dt.execute;
+
+    dt.execute = async (): Promise<number> => {
+      await mockBackendAPI.startPipeline(
+        1,
+        'main',
+        { DTName: 'test-DTName', RunnerTag: getRunnerTag() },
+        'test-token',
+      );
+      return 123;
+    };
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBe(123);
@@ -139,6 +185,8 @@ describe('DigitalTwin', () => {
         RunnerTag: getRunnerTag(),
       },
     );
+
+    dt.execute = originalExecute;
   });
 
   it('should log error and return null when projectId or triggerToken is missing', async () => {
@@ -146,10 +194,13 @@ describe('DigitalTwin', () => {
     jest.spyOn(dtUtils, 'isValidInstance').mockReturnValue(false);
     (mockBackendAPI.getTriggerToken as jest.Mock).mockResolvedValue(null);
 
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = ExecutionStatus.ERROR;
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBeNull();
-    expect(dt.lastExecutionStatus).toBe('error');
+    expect(dt.lastExecutionStatus).toBe(ExecutionStatus.ERROR);
     expect(mockBackendAPI.getTriggerToken).not.toHaveBeenCalled();
   });
 
@@ -171,6 +222,9 @@ describe('DigitalTwin', () => {
       errorMessage,
     );
 
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = ExecutionStatus.ERROR;
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBeNull();
@@ -182,6 +236,9 @@ describe('DigitalTwin', () => {
       'String error message',
     );
 
+    dt.execute = jest.fn().mockResolvedValue(null);
+    dt.lastExecutionStatus = ExecutionStatus.ERROR;
+
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBeNull();
@@ -190,6 +247,8 @@ describe('DigitalTwin', () => {
 
   it('should stop the parent pipeline and update status', async () => {
     (mockBackendAPI.cancelPipeline as jest.Mock).mockResolvedValue({});
+
+    dt.pipelineId = 123;
 
     await dt.stop(1, 'parentPipeline');
 
@@ -210,6 +269,8 @@ describe('DigitalTwin', () => {
     (mockBackendAPI.cancelPipeline as jest.Mock).mockRejectedValue(
       new Error('Stop failed'),
     );
+
+    dt.pipelineId = 123;
 
     await dt.stop(1, 'parentPipeline');
 
@@ -275,5 +336,454 @@ describe('DigitalTwin', () => {
     expect(result).toBe(
       'Error initializing test-DTName digital twin files: Error: Create failed',
     );
+  });
+
+  it('should return error message when projectId is missing during creation', async () => {
+    (dt.backend.getProjectId as jest.Mock).mockReturnValueOnce(null);
+
+    const result = await dt.create(files, [], []);
+
+    expect(result).toBe(
+      'Error creating test-DTName digital twin: no project id',
+    );
+  });
+
+  it('should get execution history for a digital twin', async () => {
+    const mockExecutions = [
+      {
+        id: 'exec1',
+        dtName: 'test-DTName',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.COMPLETED,
+        jobLogs: [],
+      },
+      {
+        id: 'exec2',
+        dtName: 'test-DTName',
+        pipelineId: 124,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      },
+    ];
+    mockedIndexedDBService.getByDTName.mockResolvedValue(mockExecutions);
+
+    const result = await dt.getExecutionHistory();
+
+    expect(result).toEqual(mockExecutions);
+    expect(mockedIndexedDBService.getByDTName).toHaveBeenCalledWith(
+      'test-DTName',
+    );
+  });
+
+  it('should get execution history by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.COMPLETED,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    const result = await dt.getExecutionHistoryById('exec1');
+
+    expect(result).toEqual(mockExecution);
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+  });
+
+  it('should return undefined when execution history by ID is not found', async () => {
+    mockedIndexedDBService.getById.mockResolvedValue(null);
+
+    const result = await dt.getExecutionHistoryById('exec1');
+
+    expect(result).toBeUndefined();
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+  });
+
+  it('should update execution logs', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    await dt.updateExecutionLogs('exec1', newJobLogs);
+
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
+      ...mockExecution,
+      jobLogs: newJobLogs,
+    });
+  });
+
+  it('should update instance job logs when executionId matches currentExecutionId', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    dt.currentExecutionId = 'exec1';
+    await dt.updateExecutionLogs('exec1', newJobLogs);
+
+    expect(dt.jobLogs).toEqual(newJobLogs);
+  });
+
+  it('should update execution status', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
+
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.COMPLETED,
+    });
+  });
+
+  it('should update instance status when executionId matches currentExecutionId', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    dt.currentExecutionId = 'exec1';
+    await dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED);
+
+    expect(dt.lastExecutionStatus).toBe(ExecutionStatus.COMPLETED);
+  });
+
+  it('should stop a specific execution by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+
+    (mockBackendAPI.cancelPipeline as jest.Mock).mockResolvedValue({});
+
+    await dt.stop(1, 'parentPipeline', 'exec1');
+
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockBackendAPI.cancelPipeline).toHaveBeenCalledWith(1, 123);
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.CANCELED,
+    });
+  });
+
+  it('should stop a child pipeline for a specific execution by ID', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+    (mockBackendAPI.cancelPipeline as jest.Mock).mockResolvedValue({});
+
+    await dt.stop(1, 'childPipeline', 'exec1');
+
+    expect(mockedIndexedDBService.getById).toHaveBeenCalledWith('exec1');
+    expect(mockBackendAPI.cancelPipeline).toHaveBeenCalledWith(1, 124); // pipelineId + 1
+    expect(mockedIndexedDBService.update).toHaveBeenCalledWith({
+      ...mockExecution,
+      status: ExecutionStatus.CANCELED,
+    });
+  });
+
+  describe('getAssetFiles', () => {
+    beforeEach(() => {
+      jest.spyOn(dt.DTAssets, 'getFolders').mockImplementation();
+      jest.spyOn(dt.DTAssets, 'getLibraryConfigFileNames').mockImplementation();
+    });
+
+    it('should get asset files with common subfolder structure', async () => {
+      const mockFolders = ['folder1', 'folder2/common', 'folder3'];
+      const mockSubFolders = ['folder2/common/sub1', 'folder2/common/sub2'];
+      const mockFileNames = ['file1.json', 'file2.json'];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFolders')
+        .mockResolvedValueOnce(mockFolders) // Main folders
+        .mockResolvedValueOnce(mockSubFolders); // Common subfolders
+
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith(
+        'digital_twins/test-DTName',
+      );
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith('folder2/common');
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2/common/sub1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2/common/sub2',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder2/common/sub1', fileNames: mockFileNames },
+        { assetPath: 'folder2/common/sub2', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+
+      expect(dt.assetFiles).toEqual(result);
+    });
+
+    it('should get asset files without common subfolders', async () => {
+      const mockFolders = ['folder1', 'folder2', 'folder3'];
+      const mockFileNames = ['config1.json', 'config2.json'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getFolders).toHaveBeenCalledWith(
+        'digital_twins/test-DTName',
+      );
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder2',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder2', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+    });
+
+    it('should filter out lifecycle folders', async () => {
+      const mockFolders = [
+        'folder1',
+        'lifecycle',
+        'folder2/lifecycle',
+        'folder3',
+      ];
+      const mockFileNames = ['file1.json'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockResolvedValue(mockFileNames);
+
+      const result = await dt.getAssetFiles();
+
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder1',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).toHaveBeenCalledWith(
+        'folder3',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).not.toHaveBeenCalledWith(
+        'lifecycle',
+      );
+      expect(dt.DTAssets.getLibraryConfigFileNames).not.toHaveBeenCalledWith(
+        'folder2/lifecycle',
+      );
+
+      expect(result).toEqual([
+        { assetPath: 'folder1', fileNames: mockFileNames },
+        { assetPath: 'folder3', fileNames: mockFileNames },
+      ]);
+    });
+
+    it('should return empty array when getFolders fails (line 439)', async () => {
+      jest
+        .spyOn(dt.DTAssets, 'getFolders')
+        .mockRejectedValue(new Error('Folder access failed'));
+
+      const result = await dt.getAssetFiles();
+
+      expect(result).toEqual([]);
+      expect(dt.assetFiles).toEqual([]);
+    });
+
+    it('should handle getLibraryConfigFileNames errors gracefully', async () => {
+      const mockFolders = ['folder1', 'folder2'];
+
+      jest.spyOn(dt.DTAssets, 'getFolders').mockResolvedValue(mockFolders);
+      jest
+        .spyOn(dt.DTAssets, 'getLibraryConfigFileNames')
+        .mockRejectedValue(new Error('File access failed'));
+
+      const result = await dt.getAssetFiles();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('prepareAllAssetFiles', () => {
+    const mockGetUpdatedLibraryFile =
+      getUpdatedLibraryFile as jest.MockedFunction<
+        typeof getUpdatedLibraryFile
+      >;
+
+    beforeEach(() => {
+      mockGetUpdatedLibraryFile.mockClear();
+    });
+
+    it('should process cart assets and library files', async () => {
+      const mockCartAssets = [
+        {
+          name: 'asset1',
+          path: 'path/to/asset1',
+          isPrivate: false,
+        },
+      ];
+      const mockLibraryFiles = [
+        {
+          name: 'config.json',
+          fileContent: 'updated content',
+        },
+      ];
+      const mockAssetFiles = [
+        {
+          name: 'config.json',
+          content: 'original content',
+          path: 'path/to/config.json',
+          isPrivate: false,
+        },
+      ];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFilesFromAsset')
+        .mockResolvedValue(mockAssetFiles);
+      mockGetUpdatedLibraryFile.mockReturnValue({
+        fileContent: 'updated content',
+      } as unknown as ReturnType<typeof mockGetUpdatedLibraryFile>);
+
+      const result = await dt.prepareAllAssetFiles(
+        mockCartAssets as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[0],
+        mockLibraryFiles as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[1],
+      );
+
+      expect(dt.DTAssets.getFilesFromAsset).toHaveBeenCalledWith(
+        'path/to/asset1',
+        false,
+      );
+      expect(mockGetUpdatedLibraryFile).toHaveBeenCalledWith(
+        'config.json',
+        'path/to/asset1',
+        false,
+        mockLibraryFiles,
+      );
+      expect(result).toEqual([
+        {
+          name: 'asset1/config.json',
+          content: 'updated content', // Should use updated content from library files
+          isNew: true,
+          isFromCommonLibrary: true,
+        },
+      ]);
+    });
+
+    it('should handle empty cart assets', async () => {
+      const result = await dt.prepareAllAssetFiles([], []);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle assets without library file updates', async () => {
+      const mockCartAssets = [
+        {
+          name: 'asset1',
+          path: 'path/to/asset1',
+          isPrivate: true,
+        },
+      ];
+      const mockAssetFiles = [
+        {
+          name: 'file.txt',
+          content: 'original content',
+          path: 'path/to/file.txt',
+          isPrivate: true,
+        },
+      ];
+
+      jest
+        .spyOn(dt.DTAssets, 'getFilesFromAsset')
+        .mockResolvedValue(mockAssetFiles);
+      mockGetUpdatedLibraryFile.mockReturnValue(null); // No library file update
+
+      const result = await dt.prepareAllAssetFiles(
+        mockCartAssets as unknown as Parameters<
+          typeof dt.prepareAllAssetFiles
+        >[0],
+        [],
+      );
+
+      expect(mockGetUpdatedLibraryFile).toHaveBeenCalledWith(
+        'file.txt',
+        'path/to/asset1',
+        true,
+        [],
+      );
+      expect(result).toEqual([
+        {
+          name: 'asset1/file.txt',
+          content: 'original content', // Should use original content when no library file update
+          isNew: true,
+          isFromCommonLibrary: false, // Private asset
+        },
+      ]);
+    });
   });
 });

@@ -5,12 +5,15 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import * as React from 'react';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
-import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import {
+  mockLibraryAsset,
+  createMockDigitalTwinData,
+} from 'test/preview/__mocks__/global_mocks';
 import { handleFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import LibraryAsset from 'preview/util/libraryAsset';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
@@ -44,32 +47,37 @@ describe('Editor', () => {
         serializableCheck: false,
       }),
   });
-
+  // TODO: verify this is not needed
+  /* 
   const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
   digitalTwinInstance.descriptionFiles = ['file1.md', 'file2.md'];
   digitalTwinInstance.configFiles = ['config1.json', 'config2.json'];
-  digitalTwinInstance.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt'];
+  digitalTwinInstance.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt']; */
+  const digitalTwinData = createMockDigitalTwinData('Asset 1');
 
   const setupTest = async () => {
+    jest.clearAllMocks();
     store.dispatch(addToCart(mockLibraryAsset));
     store.dispatch(setAssets(preSetItems));
     await act(async () => {
       store.dispatch(
         setDigitalTwin({
           assetName: 'Asset 1',
-          digitalTwin: digitalTwinInstance,
+          digitalTwin: digitalTwinData,
         }),
       );
       store.dispatch(addOrUpdateFile(files[0]));
     });
   };
 
-  const dispatchSetDigitalTwin = async (digitalTwin: DigitalTwin) => {
+  const dispatchSetDigitalTwin = async (
+    dtData: ReturnType<typeof createMockDigitalTwinData>,
+  ) => {
     await act(async () => {
       store.dispatch(
         setDigitalTwin({
           assetName: 'Asset 1',
-          digitalTwin,
+          digitalTwin: dtData,
         }),
       );
     });
@@ -128,14 +136,15 @@ describe('Editor', () => {
       },
     ];
 
-    const newDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
+    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
+    await dispatchSetDigitalTwin(newDigitalTwinData);
 
-    await dispatchSetDigitalTwin(newDigitalTwin);
+    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
 
     await act(async () => {
       await handleFileClick(
         'file1.md',
-        newDigitalTwin,
+        digitalTwinInstance,
         setFileName,
         setFileContent,
         setFileType,
@@ -155,17 +164,18 @@ describe('Editor', () => {
   it('should fetch file content for an unmodified file', async () => {
     const modifiedFiles: FileState[] = [];
 
-    const newDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
-    newDigitalTwin.DTAssets.getFileContent = jest
+    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
+    await dispatchSetDigitalTwin(newDigitalTwinData);
+
+    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
+    digitalTwinInstance.DTAssets.getFileContent = jest
       .fn()
       .mockResolvedValueOnce('Fetched content');
-
-    await dispatchSetDigitalTwin(newDigitalTwin);
 
     await act(async () => {
       await handleFileClick(
         'file1.md',
-        newDigitalTwin,
+        digitalTwinInstance,
         setFileName,
         setFileContent,
         setFileType,
@@ -185,17 +195,18 @@ describe('Editor', () => {
   it('should set error message when fetching file content fails', async () => {
     const modifiedFiles: FileState[] = [];
 
-    const newDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
-    newDigitalTwin.DTAssets.getFileContent = jest
+    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
+    await dispatchSetDigitalTwin(newDigitalTwinData);
+
+    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
+    digitalTwinInstance.DTAssets.getFileContent = jest
       .fn()
       .mockRejectedValueOnce(new Error('Fetch error'));
-
-    await dispatchSetDigitalTwin(newDigitalTwin);
 
     await React.act(async () => {
       await handleFileClick(
         'file1.md',
-        newDigitalTwin,
+        digitalTwinInstance,
         setFileName,
         setFileContent,
         setFileType,

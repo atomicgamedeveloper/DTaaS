@@ -11,6 +11,9 @@ export const BRANCH_NAME = 'master';
 export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
 export const PIPELINE_POLL_INTERVAL = 5 * 1000;
 
+// ExecutionHistoryLoader
+export const EXECUTION_CHECK_INTERVAL = 10000;
+
 // Maps tabs to project folders (based on asset types)
 export enum AssetTypes {
   'Functions' = 'functions',

@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  Typography,
 } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
+import { useDispatch } from 'react-redux';
 import { formatName } from 'preview/util/digitalTwin';
+import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
+import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
+import { ThunkDispatch, Action } from '@reduxjs/toolkit';
+import { RootState } from 'store/store';
 
 interface LogDialogProps {
   showLog: boolean;
@@ -23,26 +25,25 @@ const handleCloseLog = (setShowLog: Dispatch<SetStateAction<boolean>>) => {
 };
 
 function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
-  const digitalTwin = useSelector(selectDigitalTwinByName(name));
+  const dispatch =
+    useDispatch<ThunkDispatch<RootState, unknown, Action<string>>>();
+
+  useEffect(() => {
+    if (showLog) {
+      // Use the thunk action creator directly
+      dispatch(fetchExecutionHistory(name));
+    }
+  }, [dispatch, name, showLog]);
+
+  const handleViewLogs = () => {};
+
+  const title = `${formatName(name)} Execution History`;
 
   return (
-    <Dialog open={showLog} maxWidth="md">
-      <DialogTitle>{`${formatName(name)} log`}</DialogTitle>
+    <Dialog open={showLog} maxWidth="md" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>
-        {digitalTwin.jobLogs.length > 0 ? (
-          digitalTwin.jobLogs.map(
-            (jobLog: { jobName: string; log: string }, index: number) => (
-              <div key={index} style={{ marginBottom: '16px' }}>
-                <Typography variant="h6">{jobLog.jobName}</Typography>
-                <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-                  {jobLog.log}
-                </Typography>
-              </div>
-            ),
-          )
-        ) : (
-          <Typography variant="body2">No logs available</Typography>
-        )}
+        <ExecutionHistoryList dtName={name} onViewLogs={handleViewLogs} />
       </DialogContent>
       <DialogActions>
         <Button onClick={() => handleCloseLog(setShowLog)} color="primary">

@@ -1,10 +1,20 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import DigitalTwin from 'preview/util/digitalTwin';
-import { JobLog } from 'preview/components/asset/StartStopButton';
-import { RootState } from 'store/store';
+import { JobLog } from 'model/backend/gitlab/types/executionHistory';
+
+export interface DigitalTwinData {
+  DTName: string;
+  description: string;
+  jobLogs: JobLog[];
+  pipelineCompleted: boolean;
+  pipelineLoading: boolean;
+  pipelineId?: number;
+  currentExecutionId?: string;
+  lastExecutionStatus?: string;
+  gitlabProjectId?: number | null;
+}
 
 interface DigitalTwinState {
-  [key: string]: DigitalTwin;
+  [key: string]: DigitalTwinData;
 }
 
 interface DigitalTwinSliceState {
@@ -23,7 +33,10 @@ const digitalTwinSlice = createSlice({
   reducers: {
     setDigitalTwin: (
       state,
-      action: PayloadAction<{ assetName: string; digitalTwin: DigitalTwin }>,
+      action: PayloadAction<{
+        assetName: string;
+        digitalTwin: DigitalTwinData;
+      }>,
     ) => {
       state.digitalTwin[action.payload.assetName] = action.payload.digitalTwin;
     },
@@ -68,12 +81,6 @@ const digitalTwinSlice = createSlice({
     },
   },
 });
-
-export const selectDigitalTwinByName = (name: string) => (state: RootState) =>
-  state.digitalTwin.digitalTwin[name];
-
-export const selectShouldFetchDigitalTwins = (state: RootState) =>
-  state.digitalTwin.shouldFetchDigitalTwins;
 
 export const {
   setDigitalTwin,

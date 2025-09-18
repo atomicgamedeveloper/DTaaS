@@ -1,30 +1,62 @@
 import * as React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import '@testing-library/jest-dom';
 import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
 import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-  setJobLogs,
-} from 'preview/store/digitalTwin.slice';
+  DigitalTwinData,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
+import executionHistoryReducer, {
+  setExecutionHistoryEntries,
+} from 'model/backend/gitlab/state/executionHistory.slice';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
+
+jest.mock('database/digitalTwins', () => ({
+  __esModule: true,
+  default: {
+    getByDTName: jest.fn().mockResolvedValue([]),
+    getAll: jest.fn().mockResolvedValue([]),
+    add: jest.fn().mockResolvedValue(undefined),
+    update: jest.fn().mockResolvedValue(undefined),
+    delete: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 
 const store = configureStore({
   reducer: combineReducers({
     digitalTwin: digitalTwinReducer,
+    executionHistory: executionHistoryReducer,
   }),
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  preloadedState: {
+    executionHistory: {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
+  },
 });
 
 describe('LogDialog', () => {
   const assetName = 'mockedDTName';
   const setShowLog = jest.fn();
 
-  const renderLogDialog = () => {
-    act(() => {
+  const renderLogDialog = async () => {
+    await act(async () => {
       render(
         <Provider store={store}>
           <LogDialog name={assetName} showLog={true} setShowLog={setShowLog} />
@@ -34,54 +66,74 @@ describe('LogDialog', () => {
   };
 
   beforeEach(() => {
+    const digitalTwinData: DigitalTwinData =
+      extractDataFromDigitalTwin(mockDigitalTwin);
+
     store.dispatch(
       setDigitalTwin({
         assetName: 'mockedDTName',
-        digitalTwin: mockDigitalTwin,
+        digitalTwin: digitalTwinData,
       }),
     );
   });
 
-  it('renders the LogDialog with logs available', () => {
+  it('renders the LogDialog with execution history', async () => {
     store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [{ jobName: 'job', log: 'testLog' }],
-      }),
+      setExecutionHistoryEntries([
+        {
+          id: 'test-execution-1',
+          dtName: assetName,
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [{ jobName: 'job', log: 'testLog' }],
+        },
+      ]),
     );
 
-    renderLogDialog();
+    await renderLogDialog();
 
-    expect(screen.getByText(/mockedDTName log/i)).toBeInTheDocument();
-    expect(screen.getByText(/job/i)).toBeInTheDocument();
-    expect(screen.getByText(/testLog/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(/MockedDTName Execution History/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+    });
   });
 
-  it('renders the LogDialog with no logs available', () => {
-    store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [],
-      }),
-    );
+  it('renders the LogDialog with empty execution history', async () => {
+    store.dispatch(setExecutionHistoryEntries([]));
 
-    renderLogDialog();
+    await renderLogDialog();
 
-    expect(screen.getByText(/No logs available/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(/MockedDTName Execution History/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/No execution history found/i),
+      ).toBeInTheDocument();
+    });
   });
 
   it('handles button click', async () => {
     store.dispatch(
-      setJobLogs({
-        assetName,
-        jobLogs: [{ jobName: 'create', log: 'create log' }],
-      }),
+      setExecutionHistoryEntries([
+        {
+          id: 'test-execution-2',
+          dtName: assetName,
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [{ jobName: 'create', log: 'create log' }],
+        },
+      ]),
     );
 
-    renderLogDialog();
+    await renderLogDialog();
 
     const closeButton = screen.getByRole('button', { name: /Close/i });
-    act(() => {
+    await act(async () => {
       fireEvent.click(closeButton);
     });
 

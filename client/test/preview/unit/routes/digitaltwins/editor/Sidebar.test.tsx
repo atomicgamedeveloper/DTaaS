@@ -94,7 +94,7 @@ describe('Sidebar', () => {
       expect(screen.getByText('Description')).toBeInTheDocument();
       expect(screen.getByText('Lifecycle')).toBeInTheDocument();
       expect(screen.getByText('Configuration')).toBeInTheDocument();
-      expect(screen.getByText('assetPath configuration')).toBeInTheDocument();
+      expect(screen.getByText('Asset 1 configuration')).toBeInTheDocument();
     });
   });
 

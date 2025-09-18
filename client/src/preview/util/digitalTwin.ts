@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-
 import { getAuthority } from 'util/envUtil';
 import {
   getGroupName,
@@ -8,7 +7,7 @@ import {
   getDTDirectory,
   getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { ExecutionStatus, JobLog } from 'model/backend/interfaces/execution';
 import {
   FileState,
   FileType,
@@ -21,13 +20,16 @@ import {
   BackendInterface,
   ProjectId,
 } from 'model/backend/interfaces/backendInterfaces';
+import { v4 as uuidv4 } from 'uuid';
+import indexedDBService from 'database/digitalTwins';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
+import DTAssets from './DTAssets';
 import {
   isValidInstance,
   logError,
   logSuccess,
   getUpdatedLibraryFile,
 } from './digitalTwinUtils';
-import DTAssets from './DTAssets';
 
 export const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
@@ -43,14 +45,24 @@ class DigitalTwin implements DigitalTwinInterface {
 
   public DTAssets: DTAssetsInterface;
 
+  // Current active pipeline ID (for backward compatibility)
   public pipelineId: number | null = null;
 
+  public activePipelineIds: number[] = [];
+
+  // Current execution ID (for backward compatibility)
+  public currentExecutionId: string | null = null;
+
+  // Last execution status (for backward compatibility)
   public lastExecutionStatus!: ExecutionStatus | null;
 
-  public jobLogs: { jobName: string; log: string }[] = [];
+  // Job logs for the current execution (for backward compatibility)
+  public jobLogs: JobLog[] = [];
 
+  // Loading state for the current pipeline (for backward compatibility)
   public pipelineLoading: boolean = false;
 
+  // Completion state for the current pipeline (for backward compatibility)
   public pipelineCompleted: boolean = false;
 
   public descriptionFiles: string[] = [];
@@ -102,6 +114,10 @@ class DigitalTwin implements DigitalTwinInterface {
     );
   }
 
+  /**
+   * Execute a Digital Twin and create an execution history entry
+   * @returns Promise that resolves with the pipeline ID or null if execution failed
+   */
   async execute(): Promise<number | null> {
     const runnerTag = getRunnerTag();
     if (!isValidInstance(this)) {
@@ -113,17 +129,62 @@ class DigitalTwin implements DigitalTwinInterface {
       const response = await this.triggerPipeline();
       logSuccess(this, runnerTag);
       this.pipelineId = response.id;
-      return this.pipelineId;
+
+      this.activePipelineIds.push(response.id);
+
+      const executionId = uuidv4();
+      this.currentExecutionId = executionId;
+
+      const executionEntry: DTExecutionResult = {
+        id: executionId,
+        dtName: this.DTName,
+        pipelineId: response.id,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      await indexedDBService.add(executionEntry);
+
+      return response.id;
     } catch (error) {
       logError(this, runnerTag, String(error));
       return null;
     }
   }
 
-  async stop(projectId: ProjectId, pipeline: string): Promise<void> {
+  /**
+   * Stop a specific pipeline execution
+   * @param projectId The GitLab project ID
+   * @param pipeline The pipeline to stop ('parentPipeline' or 'childPipeline')
+   * @param executionId Optional execution ID to stop a specific execution
+   * @returns Promise that resolves when the pipeline is stopped
+   */
+  async stop(
+    projectId: ProjectId,
+    pipeline: string,
+    executionId?: string,
+  ): Promise<void> {
     const runnerTag = getRunnerTag();
-    const pipelineId =
-      pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
+    let pipelineId: number | null = null;
+
+    if (executionId) {
+      const execution = await indexedDBService.getById(executionId);
+      if (execution) {
+        pipelineId = execution.pipelineId;
+        if (pipeline !== 'parentPipeline') {
+          pipelineId += 1;
+        }
+      }
+    } else {
+      pipelineId =
+        pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
+    }
+
+    if (!pipelineId) {
+      return;
+    }
+
     try {
       await this.backend.api.cancelPipeline(projectId, pipelineId!);
       this.backend.logs.push({
@@ -132,6 +193,26 @@ class DigitalTwin implements DigitalTwinInterface {
         runnerTag,
       });
       this.lastExecutionStatus = ExecutionStatus.CANCELED;
+
+      if (executionId) {
+        const execution = await indexedDBService.getById(executionId);
+        if (execution) {
+          execution.status = ExecutionStatus.CANCELED;
+          await indexedDBService.update(execution);
+        }
+      } else if (this.currentExecutionId) {
+        const execution = await indexedDBService.getById(
+          this.currentExecutionId,
+        );
+        if (execution) {
+          execution.status = ExecutionStatus.CANCELED;
+          await indexedDBService.update(execution);
+        }
+      }
+
+      this.activePipelineIds = this.activePipelineIds.filter(
+        (id) => id !== pipelineId,
+      );
     } catch (error) {
       this.backend.logs.push({
         status: 'error',
@@ -140,6 +221,70 @@ class DigitalTwin implements DigitalTwinInterface {
         runnerTag,
       });
       this.lastExecutionStatus = ExecutionStatus.ERROR;
+    }
+  }
+
+  /**
+   * Get all execution history entries for this Digital Twin
+   * @returns Promise that resolves with an array of execution history entries
+   */
+  async getExecutionHistory(): Promise<DTExecutionResult[]> {
+    return indexedDBService.getByDTName(this.DTName);
+  }
+
+  /**
+   * Get a specific execution history entry by ID
+   * @param executionId The execution ID
+   * @returns Promise that resolves with the execution history entry or undefined if not found
+   */
+  // eslint-disable-next-line class-methods-use-this
+  async getExecutionHistoryById(
+    executionId: string,
+  ): Promise<DTExecutionResult | undefined> {
+    const result = await indexedDBService.getById(executionId);
+    return result || undefined;
+  }
+
+  /**
+   * Update job logs for a specific execution
+   * @param executionId The execution ID
+   * @param jobLogs The job logs to update
+   * @returns Promise that resolves when the logs are updated
+   */
+  async updateExecutionLogs(
+    executionId: string,
+    jobLogs: JobLog[],
+  ): Promise<void> {
+    const execution = await indexedDBService.getById(executionId);
+    if (execution) {
+      execution.jobLogs = jobLogs;
+      await indexedDBService.update(execution);
+
+      // Update current job logs for backward compatibility
+      if (executionId === this.currentExecutionId) {
+        this.jobLogs = jobLogs;
+      }
+    }
+  }
+
+  /**
+   * Update the status of a specific execution
+   * @param executionId The execution ID
+   * @param status The new status
+   * @returns Promise that resolves when the status is updated
+   */
+  async updateExecutionStatus(
+    executionId: string,
+    status: ExecutionStatus,
+  ): Promise<void> {
+    const execution = await indexedDBService.getById(executionId);
+    if (execution) {
+      execution.status = status;
+      await indexedDBService.update(execution);
+
+      if (executionId === this.currentExecutionId) {
+        this.lastExecutionStatus = status;
+      }
     }
   }
 

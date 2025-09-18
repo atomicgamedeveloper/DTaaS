@@ -3,13 +3,14 @@ import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarReducer from 'preview/store/snackbar.slice';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import LibraryAsset from 'preview/util/libraryAsset';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
 
 const setupStore = () => {
   const preSetItems: LibraryAsset[] = [mockLibraryAsset];
@@ -33,8 +34,12 @@ const setupStore = () => {
   const digitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
   digitalTwin.descriptionFiles = ['description.md'];
 
+  const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+
   store.dispatch(setAssets(preSetItems));
-  store.dispatch(setDigitalTwin({ assetName: 'Asset 1', digitalTwin }));
+  store.dispatch(
+    setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
+  );
   store.dispatch(addOrUpdateFile(files[0]));
 
   return store;

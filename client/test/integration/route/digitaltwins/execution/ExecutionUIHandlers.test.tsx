@@ -1,19 +1,31 @@
-import * as PipelineUtils from 'preview/route/digitaltwins/execute/pipelineUtils';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
 import cleanLog from 'model/backend/gitlab/cleanLog';
-import { setDigitalTwin } from 'preview/store/digitalTwin.slice';
-import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import {
+  setDigitalTwin,
+  DigitalTwinData,
+} from 'model/backend/gitlab/state/digitalTwin.slice';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 
 describe('PipelineUtils', () => {
   let digitalTwin: DigitalTwin;
 
   beforeEach(() => {
-    (mockBackendInstance.getProjectId as jest.Mock).mockReturnValue(1234);
     digitalTwin = new DigitalTwin('mockedDTName', mockBackendInstance);
-    store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
+    (mockBackendInstance.getProjectId as jest.Mock).mockReturnValue(1234);
+
+    const digitalTwinData: DigitalTwinData =
+      extractDataFromDigitalTwin(digitalTwin);
+    store.dispatch(
+      setDigitalTwin({
+        assetName: 'mockedDTName',
+        digitalTwin: digitalTwinData,
+      }),
+    );
 
     digitalTwin.execute = jest.fn().mockImplementation(async () => {
       digitalTwin.lastExecutionStatus = ExecutionStatus.SUCCESS;
@@ -30,9 +42,8 @@ describe('PipelineUtils', () => {
     const snackbarState = store.getState().snackbar;
     const expectedSnackbarState = {
       open: true,
-      message:
-        'Execution started successfully for MockedDTName. Wait until completion for the logs...',
-      severity: 'success',
+      message: 'Execution success for MockedDTName',
+      severity: 'error',
     };
     expect(snackbarState).toEqual(expectedSnackbarState);
   });

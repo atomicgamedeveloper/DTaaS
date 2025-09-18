@@ -2,7 +2,7 @@
  * Interfaces, types, enums that are backend agnostic and work on Digital Twin concepts.
  */
 
-import { DigitalTwinPipelineState } from './execution';
+import { DigitalTwinPipelineState, ExecutionStatus } from './execution';
 import { ProjectId, BackendInterface } from './backendInterfaces';
 
 /**
@@ -175,6 +175,7 @@ export interface DigitalTwinInterface
     DigitalTwinFileProvider {
   backend: BackendInterface;
   DTAssets: DTAssetsInterface;
+  lastExecutionStatus: ExecutionStatus | null;
 }
 // libraryConfigFile.slice.ts
 

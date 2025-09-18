@@ -2,9 +2,10 @@ import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
+import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
 import DigitalTwin from './digitalTwin';
 import { setAsset } from '../store/assets.slice';
-import { setDigitalTwin } from '../store/digitalTwin.slice';
 import LibraryAsset, { getLibrarySubfolders } from './libraryAsset';
 import { getDTSubfolders } from './digitalTwinUtils';
 import { createGitlabInstance } from '../../model/backend/gitlab/gitlabFactory';
@@ -84,9 +85,10 @@ export const fetchDigitalTwins = async (
         return { assetName: asset.name, digitalTwin };
       }),
     );
-    digitalTwins.forEach(({ assetName, digitalTwin }) =>
-      dispatch(setDigitalTwin({ assetName, digitalTwin })),
-    );
+    digitalTwins.forEach(({ assetName, digitalTwin }) => {
+      const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
+      dispatch(setDigitalTwin({ assetName, digitalTwin: digitalTwinData }));
+    });
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }
@@ -95,11 +97,17 @@ export const fetchDigitalTwins = async (
 export async function initDigitalTwin(
   newDigitalTwinName: string,
 ): Promise<DigitalTwin> {
-  const digitalTwinGitlabInstance = createGitlabInstance(
-    sessionStorage.getItem('username') || '',
-    sessionStorage.getItem('access_token') || '',
-    getAuthority(),
-  );
-  await digitalTwinGitlabInstance.init();
-  return new DigitalTwin(newDigitalTwinName, digitalTwinGitlabInstance);
+  try {
+    const digitalTwinGitlabInstance = createGitlabInstance(
+      sessionStorage.getItem('username') || '',
+      sessionStorage.getItem('access_token') || '',
+      getAuthority(),
+    );
+    await digitalTwinGitlabInstance.init();
+    return new DigitalTwin(newDigitalTwinName, digitalTwinGitlabInstance);
+  } catch (error) {
+    throw new Error(
+      `Failed to initialize DigitalTwin for ${newDigitalTwinName}: ${error}`,
+    );
+  }
 }

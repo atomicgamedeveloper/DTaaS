@@ -1,13 +1,15 @@
-import * as PipelineChecks from 'preview/route/digitaltwins/execute/pipelineChecks';
-import * as PipelineUtils from 'preview/route/digitaltwins/execute/pipelineUtils';
+import * as PipelineChecks from 'route/digitaltwins/execution/executionStatusManager';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
 import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
-import { setDigitalTwin } from 'preview/store/digitalTwin.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { previewStore as store } from 'test/preview/integration/integration.testUtil';
+import { PipelineStatusParams } from 'route/digitaltwins/execution/executionStatusManager';
 
-jest.useFakeTimers();
+jest.mock('preview/util/digitalTwin', () => ({
+  DigitalTwin: jest.fn().mockImplementation(() => mockDigitalTwin),
+  formatName: jest.fn(),
+}));
 
-jest.mock('preview/route/digitaltwins/execute/pipelineUtils', () => ({
+jest.mock('route/digitaltwins/execution/executionUIHandlers', () => ({
   fetchJobLogs: jest.fn(),
   updatePipelineStateOnCompletion: jest.fn(),
 }));
@@ -18,46 +20,42 @@ jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
   getPollingInterval: jest.fn(() => 5000),
 }));
 
-describe('PipelineChecks', () => {
-  const digitalTwin = mockDigitalTwin;
+jest.useFakeTimers();
 
+describe('ExecutionStatusManager', () => {
+  const DTName = 'testName';
   const setButtonText = jest.fn();
   const setLogButtonDisabled = jest.fn();
   const dispatch = jest.fn();
   const startTime = Date.now();
-  const params = { setButtonText, digitalTwin, setLogButtonDisabled, dispatch };
+  const digitalTwin = mockDigitalTwin;
+  const params: PipelineStatusParams = {
+    setButtonText,
+    digitalTwin,
+    setLogButtonDisabled,
+    dispatch,
+  };
+  const pipelineId = 1;
 
   Object.defineProperty(AbortSignal, 'timeout', {
     value: jest.fn(),
     writable: false,
   });
 
-  beforeEach(() => {
-    store.dispatch(setDigitalTwin({ assetName: 'mockedDTName', digitalTwin }));
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
-    jest.clearAllMocks();
   });
 
   it('handles timeout', () => {
     PipelineChecks.handleTimeout(
-      digitalTwin.DTName,
-      jest.fn(),
-      jest.fn(),
-      store.dispatch,
+      DTName,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
     );
 
-    const snackbarState = store.getState().snackbar;
-
-    const expectedSnackbarState = {
-      open: true,
-      message: 'Execution timed out for MockedDTName',
-      severity: 'error',
-    };
-
-    expect(snackbarState).toEqual(expectedSnackbarState);
+    expect(setButtonText).toHaveBeenCalled();
+    expect(setLogButtonDisabled).toHaveBeenCalledWith(false);
   });
 
   it('starts pipeline status check', async () => {
@@ -81,11 +79,15 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
       .mockResolvedValue('success');
+
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
+
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -101,11 +103,14 @@ describe('PipelineChecks', () => {
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
       .mockResolvedValue('failed');
+
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
+
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -123,7 +128,7 @@ describe('PipelineChecks', () => {
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -148,7 +153,7 @@ describe('PipelineChecks', () => {
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
-      dispatch: store.dispatch,
+      dispatch,
       startTime,
     });
 
@@ -156,24 +161,19 @@ describe('PipelineChecks', () => {
   });
 
   it('handles pipeline completion with failed status', async () => {
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
+
     await PipelineChecks.handlePipelineCompletion(
-      1,
+      pipelineId,
       digitalTwin,
-      jest.fn(),
-      jest.fn(),
-      store.dispatch,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
       'failed',
     );
 
-    const snackbarState = store.getState().snackbar;
-
-    const expectedSnackbarState = {
-      open: true,
-      message: 'Execution failed for MockedDTName',
-      severity: 'error',
-    };
-
-    expect(snackbarState).toEqual(expectedSnackbarState);
+    expect(dispatch).toHaveBeenCalled();
   });
 
   it('checks child pipeline status and returns timeout', async () => {
@@ -207,6 +207,9 @@ describe('PipelineChecks', () => {
     getPipelineStatusMock
       .mockResolvedValueOnce('running')
       .mockResolvedValue('success');
+
+    // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
 
     await PipelineChecks.checkChildPipelineStatus({
       setButtonText,

@@ -6,6 +6,18 @@ import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUti
 
 jest.mock('preview/util/libraryManager');
 
+const mockSessionStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: mockSessionStorage,
+  writable: true,
+});
+
 describe('LibraryAsset', () => {
   let backend: BackendInterface;
   let libraryManager: LibraryManager;
@@ -33,6 +45,8 @@ describe('LibraryAsset', () => {
     libraryManager = new LibraryManager('test', backend);
     libraryManager.assetName = 'test';
     libraryManager.backend = backend;
+
+    libraryManager = new LibraryManager('test', backend);
     libraryAsset = new LibraryAsset(
       libraryManager,
       'path/to/library',
@@ -67,7 +81,12 @@ describe('LibraryAsset', () => {
   it('should get full description with image URLs replaced', async () => {
     const fileContent = '![alt text](image.png)';
     libraryManager.getFileContent = jest.fn().mockResolvedValue(fileContent);
-    sessionStorage.setItem('username', 'user');
+
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'username') return 'user';
+      return null;
+    });
+
     await libraryAsset.getFullDescription();
     expect(libraryAsset.fullDescription).toBe(
       `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/main/path/to/library/image.png)`,
