@@ -8,7 +8,6 @@ import {
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { showSnackbar } from 'preview/store/snackbar.slice';
 import {
-  ExecutionStatus,
   JobLog,
 } from 'model/backend/gitlab/types/executionHistory';
 import {
@@ -17,6 +16,7 @@ import {
   setSelectedExecutionId,
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 // Re-export for test compatibility
 export { fetchJobLogs };
@@ -207,7 +207,7 @@ export const fetchLogsAndUpdateExecution = async (
   dispatch: ReturnType<typeof useDispatch>,
 ): Promise<boolean> => {
   try {
-    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
+    const jobLogs = await fetchJobLogs(digitalTwin.backend, pipelineId);
 
     if (
       jobLogs.length === 0 ||

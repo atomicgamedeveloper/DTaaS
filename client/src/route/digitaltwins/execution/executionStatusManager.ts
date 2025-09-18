@@ -3,8 +3,6 @@ import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import indexedDBService from 'database/digitalTwins';
 import { showSnackbar } from 'preview/store/snackbar.slice';
-import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/constants';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
 import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   setPipelineCompleted,
@@ -16,6 +14,8 @@ import {
 } from 'model/backend/gitlab/execution/pipelineCore';
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import { updatePipelineStateOnCompletion } from './executionUIHandlers';
+import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 export interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;
@@ -94,8 +94,8 @@ export const checkParentPipelineStatus = async ({
       digitalTwin.pipelineId!
     : digitalTwin.pipelineId!;
 
-  const pipelineStatus = await digitalTwin.gitlabInstance.getPipelineStatus(
-    digitalTwin.gitlabInstance.projectId!,
+  const pipelineStatus = await digitalTwin.backend.getPipelineStatus(
+    digitalTwin.backend.getProjectId(),
     pipelineId,
   );
 
@@ -163,7 +163,7 @@ export const handlePipelineCompletion = async (
       : ExecutionStatus.FAILED;
 
   if (!executionId) {
-    const jobLogs = await fetchJobLogs(digitalTwin.gitlabInstance, pipelineId);
+    const jobLogs = await fetchJobLogs(digitalTwin.backend, pipelineId);
     await updatePipelineStateOnCompletion(
       digitalTwin,
       jobLogs,
@@ -255,8 +255,8 @@ export const checkChildPipelineStatus = async ({
     pipelineId = digitalTwin.pipelineId! + 1;
   }
 
-  const pipelineStatus = await digitalTwin.gitlabInstance.getPipelineStatus(
-    digitalTwin.gitlabInstance.projectId!,
+  const pipelineStatus = await digitalTwin.backend.getPipelineStatus(
+    digitalTwin.backend.getProjectId(),
     pipelineId,
   );
 

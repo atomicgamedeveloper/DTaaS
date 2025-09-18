@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import * as React from 'react';
 import { handleStart } from 'route/digitaltwins/execution/executionButtonHandlers';
 import StartButton from 'preview/components/asset/StartButton';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import * as redux from 'react-redux';
 
 // Mock dependencies

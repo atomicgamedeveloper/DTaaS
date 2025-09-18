@@ -12,7 +12,6 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import {
   DTExecutionResult,
-  ExecutionStatus,
 } from 'model/backend/gitlab/types/executionHistory';
 import digitalTwinReducer, {
   DigitalTwinData,
@@ -38,6 +37,7 @@ import {
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
 } from 'store/selectors/executionHistory.selectors';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 // Mock the pipelineHandler module
 jest.mock('route/digitaltwins/execution/executionButtonHandlers');

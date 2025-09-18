@@ -13,7 +13,10 @@ import {
 } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import * as React from 'react';
-import { mockLibraryAsset , createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
+import {
+  mockLibraryAsset,
+  createMockDigitalTwinData,
+} from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'preview/util/digitalTwin';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
@@ -70,7 +73,7 @@ jest.mock('preview/util/init', () => ({
   }),
 }));
 
-jest.mock('preview/util/gitlab', () => ({
+jest.mock('model/backend/gitlab/instance', () => ({
   GitlabInstance: jest.fn().mockImplementation(() => ({
     init: jest.fn().mockResolvedValue(undefined),
     getProjectId: jest.fn().mockResolvedValue(123),

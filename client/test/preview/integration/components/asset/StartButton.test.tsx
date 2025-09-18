@@ -18,7 +18,7 @@ import executionHistoryReducer, {
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import '@testing-library/jest-dom';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
@@ -47,7 +47,7 @@ jest.mock('preview/util/init', () => ({
   }),
 }));
 
-jest.mock('preview/util/gitlab', () => ({
+jest.mock('model/backend/gitlab/instance', () => ({
   GitlabInstance: jest.fn().mockImplementation(() => ({
     init: jest.fn().mockResolvedValue(undefined),
     getProjectId: jest.fn().mockResolvedValue(123),

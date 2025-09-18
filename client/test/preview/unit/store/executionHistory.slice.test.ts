@@ -24,10 +24,10 @@ import {
 } from 'store/selectors/executionHistory.selectors';
 import {
   DTExecutionResult,
-  ExecutionStatus,
 } from 'model/backend/gitlab/types/executionHistory';
 import { configureStore } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 // Mock the IndexedDB service
 jest.mock('database/digitalTwins', () => ({

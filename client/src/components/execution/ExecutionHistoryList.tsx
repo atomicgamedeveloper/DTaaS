@@ -27,9 +27,7 @@ import {
   Stop as StopIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import {
-  JobLog,
-} from 'model/backend/gitlab/types/executionHistory';
+import { JobLog } from 'model/backend/gitlab/types/executionHistory';
 import {
   fetchExecutionHistory,
   removeExecution,

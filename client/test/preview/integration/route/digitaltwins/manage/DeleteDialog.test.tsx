@@ -26,7 +26,7 @@ jest.mock('preview/util/init', () => {
   );
   return adapterMocks.INIT_MOCKS;
 });
-jest.mock('preview/util/gitlab', () => {
+jest.mock('model/backend/gitlab/instance', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

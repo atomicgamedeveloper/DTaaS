@@ -1,3 +1,18 @@
+/* eslint-disable import/first */
+jest.mock(
+  'route/digitaltwins/execution/digitalTwinAdapter',
+  () => ADAPTER_MOCKS,
+);
+jest.mock('preview/util/init', () => INIT_MOCKS);
+jest.mock('model/backend/gitlab/instance', () => GITLAB_MOCKS);
+
+import {
+  ADAPTER_MOCKS,
+  INIT_MOCKS,
+  GITLAB_MOCKS,
+} from 'test/preview/__mocks__/adapterMocks';
+
+
 import * as React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -16,21 +31,9 @@ import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import LibraryManager from 'preview/util/libraryManager';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 
-import {
-  ADAPTER_MOCKS,
-  INIT_MOCKS,
-  GITLAB_MOCKS,
-} from 'test/preview/__mocks__/adapterMocks';
-
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
-jest.mock(
-  'route/digitaltwins/execution/digitalTwinAdapter',
-  () => ADAPTER_MOCKS,
-);
-jest.mock('preview/util/init', () => INIT_MOCKS);
-jest.mock('preview/util/gitlab', () => GITLAB_MOCKS);
 
 const mockDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
 mockDigitalTwin.fullDescription = 'Digital Twin Description';

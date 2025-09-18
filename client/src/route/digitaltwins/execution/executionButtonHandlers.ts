@@ -148,25 +148,11 @@ export const stopPipelines = async (
   const projectId = digitalTwin.backend.getProjectId();
   if (projectId) {
     if (executionId) {
-      await digitalTwin.stop(
-        projectId,
-        'parentPipeline',
-        executionId,
-      );
-      await digitalTwin.stop(
-        projectId,
-        'childPipeline',
-        executionId,
-      );
+      await digitalTwin.stop(projectId, 'parentPipeline', executionId);
+      await digitalTwin.stop(projectId, 'childPipeline', executionId);
     } else if (digitalTwin.pipelineId) {
-      await digitalTwin.stop(
-        projectId,
-        'parentPipeline',
-      );
-      await digitalTwin.stop(
-        projectId,
-        'childPipeline',
-      );
+      await digitalTwin.stop(projectId, 'parentPipeline');
+      await digitalTwin.stop(projectId, 'childPipeline');
     }
   }
 };

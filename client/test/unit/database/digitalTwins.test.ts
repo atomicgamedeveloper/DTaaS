@@ -1,8 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import 'fake-indexeddb/auto';
-import {
-  ExecutionHistoryEntry,
-} from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionHistoryEntry } from 'model/backend/gitlab/types/executionHistory';
 import indexedDBService from 'database/digitalTwins';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 

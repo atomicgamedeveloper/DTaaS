@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { JobLog } from 'model/backend/gitlab/types/executionHistory';
+import { ProjectId } from 'model/backend/interfaces/backendInterfaces';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 export interface DigitalTwinData {
   DTName: string;
@@ -9,8 +11,8 @@ export interface DigitalTwinData {
   pipelineLoading: boolean;
   pipelineId?: number;
   currentExecutionId?: string;
-  lastExecutionStatus?: string;
-  gitlabProjectId?: number | null;
+  lastExecutionStatus?: ExecutionStatus;
+  gitlabProjectId?: ProjectId | null;
 }
 
 interface DigitalTwinState {

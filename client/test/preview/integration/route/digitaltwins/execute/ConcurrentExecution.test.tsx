@@ -13,7 +13,7 @@ import executionHistoryReducer, {
   clearEntries,
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import { v4 as uuidv4 } from 'uuid';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import '@testing-library/jest-dom';
 

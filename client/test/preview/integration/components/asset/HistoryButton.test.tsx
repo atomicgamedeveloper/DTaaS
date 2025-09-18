@@ -7,7 +7,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
 } from 'model/backend/gitlab/state/executionHistory.slice';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 const createTestStore = () =>
   configureStore({

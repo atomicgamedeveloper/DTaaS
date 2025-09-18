@@ -55,5 +55,5 @@ export const extractDataFromDigitalTwin = (
   pipelineId: digitalTwin.pipelineId || undefined,
   currentExecutionId: digitalTwin.currentExecutionId || undefined,
   lastExecutionStatus: digitalTwin.lastExecutionStatus || undefined,
-  gitlabProjectId: digitalTwin.gitlabInstance?.projectId || null,
+  gitlabProjectId: digitalTwin.backend?.getProjectId() || null,
 });

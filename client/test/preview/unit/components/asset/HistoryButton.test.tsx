@@ -4,7 +4,7 @@ import HistoryButton, {
   handleToggleHistory,
 } from 'components/asset/HistoryButton';
 import * as React from 'react';
-import { ExecutionStatus } from 'model/backend/gitlab/types/executionHistory';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import * as redux from 'react-redux';
 
 jest.mock('react-redux', () => ({
