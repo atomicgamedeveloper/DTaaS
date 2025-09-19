@@ -15,6 +15,14 @@ jest.mock('react-oidc-context', () => ({
 }));
 
 describe('Digital Twins', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('displays content of tabs', async () => {
     await act(async () => {
       render(
@@ -24,6 +32,11 @@ describe('Digital Twins', () => {
           </MemoryRouter>
         </Provider>,
       );
+    });
+
+    // Fast-forward timers and wait for state updates
+    await act(async () => {
+      jest.runAllTimers();
     });
 
     const tabComponent = screen.getByTestId('tab-component');

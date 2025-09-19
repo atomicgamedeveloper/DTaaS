@@ -52,115 +52,95 @@ describe('LogDialog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFetchExecutionHistory.mockClear();
-
-    const executionHistorySlice = jest.requireMock(
-      'model/backend/gitlab/state/executionHistory.slice',
+  });
+  const executionHistorySlice = jest.requireMock(
+    'model/backend/gitlab/state/executionHistory.slice',
+  );
+  it('renders the LogDialog with logs available', () => {
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
+      jobLogs: [{ jobName: 'job', log: 'testLog' }],
+    });
+    executionHistorySlice.fetchExecutionHistory.mockImplementation(
+      (name: string) => mockFetchExecutionHistory(name),
     );
 
-    it('renders the LogDialog with logs available', () => {
-      (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
-        jobLogs: [{ jobName: 'job', log: 'testLog' }],
-      });
-      executionHistorySlice.fetchExecutionHistory.mockImplementation(
-        (name: string) => mockFetchExecutionHistory(name),
-      );
-
-      mockDispatch.mockImplementation((action) => {
-        if (typeof action === 'function') {
-          return action(mockDispatch, () => ({}), undefined);
-        }
-        return action;
-      });
-
-      (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+    mockDispatch.mockImplementation((action) => {
+      if (typeof action === 'function') {
+        return action(mockDispatch, () => ({}), undefined);
+      }
+      return action;
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+  });
 
-    it('renders the LogDialog with execution history', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-      expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
-      expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
-    });
+  it('renders the LogDialog with execution history', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-    it('renders the execution history list by default', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+    expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
+    expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
+  });
 
-      expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
-    });
+  it('renders the execution history list by default', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-    it('handles close button click', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+    expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
+  });
 
-      fireEvent.click(screen.getByRole('button', { name: /Close/i }));
+  it('handles close button click', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-      expect(setShowLog).toHaveBeenCalledWith(false);
-    });
+    fireEvent.click(screen.getByRole('button', { name: /Close/i }));
 
-    it('fetches execution history when dialog is shown', () => {
-      const mockAction = { type: 'fetchExecutionHistory', payload: 'testDT' };
-      mockFetchExecutionHistory.mockReturnValue(mockAction);
+    expect(setShowLog).toHaveBeenCalledWith(false);
+  });
 
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+  it('fetches execution history when dialog is shown', () => {
+    const mockAction = { type: 'fetchExecutionHistory', payload: 'testDT' };
+    mockFetchExecutionHistory.mockReturnValue(mockAction);
 
-      expect(mockDispatch).toHaveBeenCalledWith(mockAction);
-    });
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-    it('handles view logs functionality correctly', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+    expect(mockDispatch).toHaveBeenCalledWith(mockAction);
+  });
 
-      fireEvent.click(screen.getByText('View Logs'));
+  it('handles view logs functionality correctly', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-      expect(screen.getByText('View Logs')).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByText('View Logs'));
 
-    it('displays the correct title', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+    expect(screen.getByText('View Logs')).toBeInTheDocument();
+  });
 
-      expect(screen.getByText('TestDT Execution History')).toBeInTheDocument();
-    });
+  it('displays the correct title', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-    it('does not render the dialog when showLog is false', () => {
-      render(
-        <LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />,
-      );
+    expect(screen.getByText('TestDT Execution History')).toBeInTheDocument();
+  });
 
-      expect(
-        screen.queryByTestId('execution-history-list'),
-      ).not.toBeInTheDocument();
-    });
+  it('does not render the dialog when showLog is false', () => {
+    render(<LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />);
 
-    it('passes the correct dtName to ExecutionHistoryList', () => {
-      render(
-        <LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />,
-      );
+    expect(
+      screen.queryByTestId('execution-history-list'),
+    ).not.toBeInTheDocument();
+  });
 
-      expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
-    });
+  it('passes the correct dtName to ExecutionHistoryList', () => {
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
 
-    it('does not fetch execution history when dialog is not shown', () => {
-      mockDispatch.mockClear();
+    expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
+  });
 
-      render(
-        <LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />,
-      );
+  it('does not fetch execution history when dialog is not shown', () => {
+    mockDispatch.mockClear();
 
-      expect(mockDispatch).not.toHaveBeenCalled();
-    });
+    render(<LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />);
+
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 });

@@ -56,27 +56,6 @@ export type mockGitlabInstanceType = {
   getPipelineStatus: jest.Mock;
 };
 
-/* export const mockGitlabInstance: GitlabInstance = {
-  username: 'mockedUsername',
-  api: new Gitlab({
-    host: 'mockedHost',
-    token: 'mockedToken',
-    requesterFn: jest.fn(),
-  }),
-  logs: [],
-  projectId: 1,
-  triggerToken: 'mock trigger token',
-  init: jest.fn(),
-  getProjectId: jest.fn(),
-  getTriggerToken: jest.fn(),
-  getDTSubfolders: jest.fn(),
-  getLibrarySubfolders: jest.fn(),
-  executionLogs: jest.fn(),
-  getPipelineJobs: jest.fn(),
-  getJobTrace: jest.fn(),
-  getPipelineStatus: jest.fn(),
-}; */
-
 export const mockFileHandler: FileHandler = {
   name: 'mockedName',
   backend: mockBackendInstance,

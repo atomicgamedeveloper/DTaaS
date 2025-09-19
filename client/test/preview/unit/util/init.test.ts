@@ -22,9 +22,11 @@ jest.mock('preview/store/assets.slice', () => ({
 }));
 
 const setDigitalTwin = jest.fn();
-jest.mock('preview/store/digitalTwin.slice', () => ({
+jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => ({
   setDigitalTwin,
 }));
+
+jest.deepUnmock('preview/util/init');
 
 import {
   fetchDigitalTwins,
@@ -123,6 +125,11 @@ describe('fetchAssets', () => {
   });
 
   it('initializes a DigitalTwin with initDigitalTwin', async () => {
+    Object.defineProperty(window, 'sessionStorage', {
+      value: {
+        getItem: jest.fn(() => null),
+      },
+    });
     const DT = await initDigitalTwin('my digital twin');
     expect(createGitlabInstance).toHaveBeenCalledWith('', '', mockAuthority);
     expect(mockBackendInstance.init).toHaveBeenCalled();

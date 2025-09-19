@@ -19,19 +19,11 @@ describe('ExecutionsUIHandlers', () => {
   const setButtonText = jest.fn();
   const pipelineId = 1;
 
-  // TODO: Inspect this beforeEach
-  /* 
   beforeEach(() => {
-    digitalTwin = {
-      ...mockDigitalTwin,
-      backend: {
-        ...mockDigitalTwin.backend,
-        getProjectId: jest.fn().mockReturnValue(1),
-        getPipelineJobs: jest.fn(),
-        getJobTrace: jest.fn(),
-      },
-    } as unknown as typeof mockDigitalTwin;
-  }); */
+    digitalTwin.backend.getProjectId = jest.fn().mockReturnValue(1);
+    digitalTwin.backend.getPipelineJobs = jest.fn();
+    digitalTwin.backend.getJobTrace = jest.fn();
+  });
 
   it('starts pipeline and handles success', async () => {
     const mockExecute = jest.spyOn(digitalTwin, 'execute');

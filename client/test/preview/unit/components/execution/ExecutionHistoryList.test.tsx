@@ -10,9 +10,7 @@ import '@testing-library/jest-dom';
 import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import {
-  DTExecutionResult,
-} from 'model/backend/gitlab/types/executionHistory';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import digitalTwinReducer, {
   DigitalTwinData,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
@@ -171,6 +169,14 @@ const createTestStore = (
       },
     },
   }) as TestStore;
+};
+
+const waitForAccordionTransitions = async () => {
+  await act(async () => {
+    await new Promise<void>((resolve) => {
+      setTimeout(() => resolve(), 300);
+    });
+  });
 };
 
 describe('ExecutionHistoryList', () => {
@@ -343,6 +349,7 @@ describe('ExecutionHistoryList', () => {
     expect(timedOutAccordion).toBeInTheDocument();
 
     fireEvent.click(timedOutAccordion);
+    await waitForAccordionTransitions();
 
     await new Promise<void>((resolve) => {
       setTimeout(() => resolve(), 0);
@@ -616,6 +623,7 @@ describe('ExecutionHistoryList', () => {
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
     fireEvent.click(accordions[0]);
+    await waitForAccordionTransitions();
 
     await new Promise<void>((resolve) => {
       setTimeout(() => resolve(), 200);
@@ -666,6 +674,7 @@ describe('ExecutionHistoryList', () => {
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
     fireEvent.click(accordions[0]);
+    await waitForAccordionTransitions();
 
     await new Promise<void>((resolve) => {
       setTimeout(() => resolve(), 100);

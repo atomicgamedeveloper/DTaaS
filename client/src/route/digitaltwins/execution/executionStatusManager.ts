@@ -13,9 +13,9 @@ import {
   hasTimedOut,
 } from 'model/backend/gitlab/execution/pipelineCore';
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
-import { updatePipelineStateOnCompletion } from './executionUIHandlers';
 import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { updatePipelineStateOnCompletion } from './executionUIHandlers';
 
 export interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;

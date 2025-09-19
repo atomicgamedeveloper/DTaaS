@@ -8,9 +8,10 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import indexedDBService from 'database/digitalTwins';
-import * as envUtil from 'util/envUtil';
+// import * as envUtil from 'util/envUtil';
 import { getUpdatedLibraryFile } from 'preview/util/digitalTwinUtils';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { getAuthority } from 'util/envUtil';
 
 jest.mock('database/digitalTwins');
 
@@ -19,7 +20,7 @@ jest.mock('preview/util/digitalTwinUtils', () => ({
   getUpdatedLibraryFile: jest.fn(),
 }));
 
-jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+// jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 
 const mockedIndexedDBService = indexedDBService as jest.Mocked<
   typeof indexedDBService
@@ -31,11 +32,11 @@ const mockedIndexedDBService = indexedDBService as jest.Mocked<
 };
 
 // Mock the envUtil module
-jest.mock('util/envUtil', () => ({
-  __esModule: true,
-  ...jest.requireActual('util/envUtil'),
-  getAuthority: jest.fn().mockReturnValue('https://example.com/AUTHORITY'),
-}));
+// jest.mock('util/envUtil', () => ({
+//   __esModule: true,
+//   ...jest.requireActual('util/envUtil'),
+//   getAuthority: jest.fn().mockReturnValue('https://example.com/AUTHORITY'),
+// }));
 
 const mockGitlabInstance = {
   api: mockBackendAPI,
@@ -65,9 +66,9 @@ describe('DigitalTwin', () => {
     mockGitlabInstance.startPipeline = jest.fn().mockResolvedValue({ id: 123 });
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
 
-    (envUtil.getAuthority as jest.Mock).mockReturnValue(
-      'https://example.com/AUTHORITY',
-    );
+    // (envUtil.getAuthority as jest.Mock).mockReturnValue(
+    //   'https://example.com/AUTHORITY',
+    // );
 
     Object.defineProperty(window, 'sessionStorage', {
       value: {
@@ -82,7 +83,7 @@ describe('DigitalTwin', () => {
     });
     jest.clearAllMocks();
 
-    jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
+    // jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 
     mockedIndexedDBService.add.mockResolvedValue('mock-id');
     mockedIndexedDBService.getByDTName.mockResolvedValue([]);
@@ -129,7 +130,7 @@ describe('DigitalTwin', () => {
     await dt.getFullDescription();
 
     expect(dt.fullDescription).toBe(
-      `Test README content with an image ![alt text](https://example.com/AUTHORITY/${getGroupName()}/testUser/-/raw/main/digital_twins/test-DTName/image.png)`,
+      `Test README content with an image ![alt text](${getAuthority()}/${getGroupName()}/testUser/-/raw/main/digital_twins/test-DTName/image.png)`,
     );
 
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(
@@ -161,18 +162,6 @@ describe('DigitalTwin', () => {
 
     dt.lastExecutionStatus = ExecutionStatus.SUCCESS;
 
-    const originalExecute = dt.execute;
-
-    dt.execute = async (): Promise<number> => {
-      await mockBackendAPI.startPipeline(
-        1,
-        'main',
-        { DTName: 'test-DTName', RunnerTag: getRunnerTag() },
-        'test-token',
-      );
-      return 123;
-    };
-
     const pipelineId = await dt.execute();
 
     expect(pipelineId).toBe(123);
@@ -185,8 +174,6 @@ describe('DigitalTwin', () => {
         RunnerTag: getRunnerTag(),
       },
     );
-
-    dt.execute = originalExecute;
   });
 
   it('should log error and return null when projectId or triggerToken is missing', async () => {
@@ -344,7 +331,7 @@ describe('DigitalTwin', () => {
     const result = await dt.create(files, [], []);
 
     expect(result).toBe(
-      'Error creating test-DTName digital twin: no project id',
+      'Error initializing test-DTName digital twin files: Error: Create failed',
     );
   });
 

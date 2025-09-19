@@ -3,6 +3,7 @@ import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import LibraryManager from 'preview/util/libraryManager';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { mockLibraryManager } from 'test/preview/__mocks__/global_mocks';
 
 jest.mock('preview/util/libraryManager');
 
@@ -42,11 +43,11 @@ describe('LibraryAsset', () => {
       getPipelineStatus: jest.fn(),
     } as unknown as BackendInterface;
 
-    libraryManager = new LibraryManager('test', backend);
-    libraryManager.assetName = 'test';
-    libraryManager.backend = backend;
-
-    libraryManager = new LibraryManager('test', backend);
+    libraryManager = {
+      ...mockLibraryManager,
+      backend,
+      assetName: 'test',
+    } as unknown as LibraryManager;
     libraryAsset = new LibraryAsset(
       libraryManager,
       'path/to/library',

@@ -22,9 +22,7 @@ import {
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
 } from 'store/selectors/executionHistory.selectors';
-import {
-  DTExecutionResult,
-} from 'model/backend/gitlab/types/executionHistory';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { configureStore } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
