@@ -40,7 +40,7 @@ import {
 } from 'store/selectors/executionHistory.selectors';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { handleStop } from 'route/digitaltwins/execution/executionButtonHandlers';
-import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
@@ -50,7 +50,7 @@ interface ExecutionHistoryListProps {
   onViewLogs: (executionId: string) => void;
 }
 
-const formatTimestamp = (timestamp: number): string => {
+export const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleString();
 };
@@ -240,7 +240,6 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
       />
-
       <Paper elevation={2} sx={{ mt: 2 }}>
         <Box p={2}>
           <Typography variant="h6" gutterBottom>
@@ -324,7 +323,10 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
 
                   return selectedExecution.jobLogs.map(
                     (jobLog: JobLog, index: number) => (
-                      <div key={index} style={{ marginBottom: '16px' }}>
+                      <div
+                        key={`${jobLog.jobName}-${index}`}
+                        style={{ marginBottom: '16px' }}
+                      >
                         <Typography variant="h6">{jobLog.jobName}</Typography>
                         <Typography
                           variant="body2"

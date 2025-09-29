@@ -20,7 +20,7 @@ import '@testing-library/jest-dom';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'Asset 1',
     execute: jest.fn().mockResolvedValue(123),

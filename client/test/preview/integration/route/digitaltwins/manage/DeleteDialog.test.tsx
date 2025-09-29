@@ -6,7 +6,7 @@ import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
@@ -14,7 +14,7 @@ import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+jest.mock('util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

@@ -39,13 +39,11 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 // Mock the pipelineHandler module
 jest.mock('route/digitaltwins/execution/executionButtonHandlers');
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+jest.mock('util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );
-  const actual = jest.requireActual(
-    'route/digitaltwins/execution/digitalTwinAdapter',
-  );
+  const actual = jest.requireActual('util/digitalTwinAdapter');
   return {
     ...adapterMocks.ADAPTER_MOCKS,
     extractDataFromDigitalTwin: actual.extractDataFromDigitalTwin,
@@ -364,7 +362,7 @@ describe('ExecutionHistoryList', () => {
 
     // Ensure the adapter mock has the correct implementation
     // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
-    const adapter = require('route/digitaltwins/execution/digitalTwinAdapter');
+    const adapter = require('util/digitalTwinAdapter');
 
     adapter.createDigitalTwinFromData.mockImplementation(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

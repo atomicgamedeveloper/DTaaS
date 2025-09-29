@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
 import indexedDBService from 'database/digitalTwins';
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   setPipelineCompleted,
@@ -15,7 +15,7 @@ import {
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { updatePipelineStateOnCompletion } from './executionUIHandlers';
+import { updatePipelineStateOnCompletion } from './executionStatusHandlers';
 
 export interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;
@@ -175,7 +175,7 @@ export const handlePipelineCompletion = async (
     );
   } else {
     const { fetchLogsAndUpdateExecution } = await import(
-      './executionUIHandlers'
+      './executionStatusHandlers'
     );
 
     const logsUpdated = await fetchLogsAndUpdateExecution(

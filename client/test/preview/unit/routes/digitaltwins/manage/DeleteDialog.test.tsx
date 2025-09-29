@@ -10,7 +10,7 @@ import {
 import { Provider, useSelector } from 'react-redux';
 import store from 'store/store';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -22,7 +22,7 @@ jest.mock('preview/util/digitalTwin', () => ({
   formatName: jest.fn(),
 }));
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'TestDigitalTwin',
     delete: jest.fn().mockResolvedValue('Digital twin deleted successfully'),

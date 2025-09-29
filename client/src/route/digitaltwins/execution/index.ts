@@ -13,7 +13,7 @@ export {
   updatePipelineStateOnCompletion,
   updatePipelineStateOnStop,
   fetchLogsAndUpdateExecution,
-} from './executionUIHandlers';
+} from './executionStatusHandlers';
 
 // Status management and checking
 export {

@@ -17,13 +17,13 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
 import LibraryAsset from 'preview/util/libraryAsset';
 import useCart from 'preview/store/CartAccess';
-import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import {
   setDigitalTwin,
   setShouldFetchDigitalTwins,

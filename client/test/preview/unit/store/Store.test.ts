@@ -10,13 +10,13 @@ import digitalTwinReducer, {
   setPipelineLoading,
   updateDescription,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
 import snackbarSlice, {
   hideSnackbar,
   showSnackbar,
-} from 'preview/store/snackbar.slice';
+} from 'store/snackbar.slice';
 import { AlertColor } from '@mui/material';
 import fileSlice, {
   addOrUpdateFile,

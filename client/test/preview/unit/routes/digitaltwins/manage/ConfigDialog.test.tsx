@@ -1,4 +1,4 @@
-import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 import {
   act,
   fireEvent,
@@ -11,14 +11,14 @@ import * as React from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store, { RootState } from 'store/store';
 
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { selectModifiedFiles } from 'preview/store/file.slice';
 import { selectModifiedLibraryFiles } from 'preview/store/libraryConfigFiles.slice';
 
 import * as digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
-import * as snackbarSlice from 'preview/store/snackbar.slice';
+import * as snackbarSlice from 'store/snackbar.slice';
 
 jest.mock('preview/store/file.slice', () => {
   const actual = jest.requireActual('preview/store/file.slice');
@@ -39,8 +39,8 @@ jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => {
     default: actual.default, // ensure the reducer is not mocked
   };
 });
-jest.mock('preview/store/snackbar.slice', () => {
-  const actual = jest.requireActual('preview/store/snackbar.slice');
+jest.mock('store/snackbar.slice', () => {
+  const actual = jest.requireActual('store/snackbar.slice');
   return {
     ...actual,
     showSnackbar: jest.fn(),
@@ -61,7 +61,7 @@ jest.mock('preview/util/digitalTwin', () => ({
   formatName: jest.fn().mockReturnValue('TestDigitalTwin'),
 }));
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'TestDigitalTwin',
     DTAssets: {

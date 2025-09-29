@@ -16,7 +16,7 @@ import {
   removeAllModifiedLibraryFiles,
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
-import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import {
   LibraryConfigFile,
@@ -27,7 +27,7 @@ import {
   selectModifiedFiles,
 } from '../../../store/file.slice';
 import { updateDescription } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
-import { showSnackbar } from '../../../store/snackbar.slice';
+import { showSnackbar } from '../../../../store/snackbar.slice';
 import DigitalTwin, { formatName } from '../../../util/digitalTwin';
 import Editor from '../editor/Editor';
 

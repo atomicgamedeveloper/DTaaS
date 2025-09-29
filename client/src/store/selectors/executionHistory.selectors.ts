@@ -21,6 +21,7 @@ export const selectExecutionHistoryById = (id: string) =>
     (entries) => entries.find((entry) => entry.id === id),
   );
 
+// Gets selected execution ID
 export const selectSelectedExecutionId = (state: RootState) =>
   state.executionHistory.selectedExecutionId;
 

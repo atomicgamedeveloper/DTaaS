@@ -23,7 +23,7 @@ import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunc
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
 import '@testing-library/jest-dom';
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'Asset 1',
     descriptionFiles: ['file1.md', 'file2.md'],

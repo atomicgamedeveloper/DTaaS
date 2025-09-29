@@ -1,4 +1,4 @@
-import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionStatusHandlers';
 import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setDigitalTwin,
@@ -8,7 +8,7 @@ import { previewStore as store } from 'test/preview/integration/integration.test
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'preview/util/digitalTwin';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { extractDataFromDigitalTwin } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 
 describe('PipelineUtils', () => {

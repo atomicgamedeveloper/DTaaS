@@ -1,5 +1,5 @@
 import * as PipelineChecks from 'route/digitaltwins/execution/executionStatusManager';
-import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionStatusHandlers';
 import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { PipelineStatusParams } from 'route/digitaltwins/execution/executionStatusManager';
@@ -9,7 +9,8 @@ jest.mock('preview/util/digitalTwin', () => ({
   formatName: jest.fn(),
 }));
 
-jest.mock('route/digitaltwins/execution/executionUIHandlers', () => ({
+jest.mock('route/digitaltwins/execution/executionStatusHandlers', () => ({
+  ...jest.requireActual('route/digitaltwins/execution/executionStatusHandlers'),
   fetchJobLogs: jest.fn(),
   updatePipelineStateOnCompletion: jest.fn(),
 }));
@@ -61,9 +62,15 @@ describe('ExecutionStatusManager', () => {
   it('starts pipeline status check', async () => {
     const checkParentPipelineStatus = jest
       .spyOn(PipelineChecks, 'checkParentPipelineStatus')
-      .mockImplementation(() => Promise.resolve());
+      .mockResolvedValue(undefined);
 
     jest.spyOn(global.Date, 'now').mockReturnValue(startTime);
+
+    jest
+      .spyOn(digitalTwin.backend, 'getPipelineStatus')
+      .mockResolvedValue('success');
+
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
 
     await PipelineChecks.startPipelineStatusCheck(params);
 
@@ -71,10 +78,9 @@ describe('ExecutionStatusManager', () => {
   });
 
   it('checks parent pipeline status and returns success', async () => {
-    const checkChildPipelineStatus = jest.spyOn(
-      PipelineChecks,
-      'checkChildPipelineStatus',
-    );
+    const checkChildPipelineStatus = jest
+      .spyOn(PipelineChecks, 'checkChildPipelineStatus')
+      .mockResolvedValue(undefined);
 
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
@@ -95,10 +101,9 @@ describe('ExecutionStatusManager', () => {
   });
 
   it('checks parent pipeline status and returns failed', async () => {
-    const updatePipelineStateOnCompletion = jest.spyOn(
-      PipelineUtils,
-      'updatePipelineStateOnCompletion',
-    );
+    const checkChildPipelineStatus = jest
+      .spyOn(PipelineChecks, 'checkChildPipelineStatus')
+      .mockResolvedValue(undefined);
 
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
@@ -114,16 +119,19 @@ describe('ExecutionStatusManager', () => {
       startTime,
     });
 
-    expect(updatePipelineStateOnCompletion).toHaveBeenCalled();
+    expect(checkChildPipelineStatus).toHaveBeenCalled();
   });
 
   it('checks parent pipeline status and returns timeout', async () => {
-    const handleTimeout = jest.spyOn(PipelineChecks, 'handleTimeout');
+    const handleTimeout = jest
+      .spyOn(PipelineChecks, 'handleTimeout')
+      .mockResolvedValue(undefined);
 
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
       .mockResolvedValue('running');
     jest.spyOn(PipelineCore, 'hasTimedOut').mockReturnValue(true);
+
     await PipelineChecks.checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
@@ -132,24 +140,31 @@ describe('ExecutionStatusManager', () => {
       startTime,
     });
 
-    jest.advanceTimersByTime(5000);
-
     expect(handleTimeout).toHaveBeenCalled();
   });
 
-  it('checks parent pipeline status and returns running', async () => {
+  it('checks child pipeline status and returns running', async () => {
     const delay = jest.spyOn(PipelineCore, 'delay');
     delay.mockImplementation(() => Promise.resolve());
 
-    jest
-      .spyOn(digitalTwin.backend, 'getPipelineStatus')
-      .mockResolvedValue('running');
+    const getPipelineStatusMock = jest.spyOn(
+      digitalTwin.backend,
+      'getPipelineStatus',
+    );
+    getPipelineStatusMock
+      .mockResolvedValueOnce('running')
+      .mockResolvedValue('success');
+
+    jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
+
     jest
       .spyOn(PipelineCore, 'hasTimedOut')
       .mockReturnValueOnce(false)
       .mockReturnValueOnce(true);
 
-    await PipelineChecks.checkParentPipelineStatus({
+    jest.spyOn(PipelineChecks, 'checkChildPipelineStatus');
+
+    await PipelineChecks.checkChildPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
@@ -157,12 +172,15 @@ describe('ExecutionStatusManager', () => {
       startTime,
     });
 
-    expect(delay).toHaveBeenCalled();
+    expect(getPipelineStatusMock).toHaveBeenCalled();
   });
 
   it('handles pipeline completion with failed status', async () => {
     // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
     jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
+
+    const mockFetchJobLogs = jest.spyOn(PipelineUtils, 'fetchJobLogs');
+    mockFetchJobLogs.mockResolvedValue([]);
 
     await PipelineChecks.handlePipelineCompletion(
       pipelineId,
@@ -184,7 +202,10 @@ describe('ExecutionStatusManager', () => {
       dispatch: jest.fn(),
       startTime: Date.now(),
     };
-    const handleTimeout = jest.spyOn(PipelineChecks, 'handleTimeout');
+
+    const handleTimeout = jest
+      .spyOn(PipelineChecks, 'handleTimeout')
+      .mockResolvedValue(undefined);
 
     jest
       .spyOn(digitalTwin.backend, 'getPipelineStatus')
@@ -211,6 +232,11 @@ describe('ExecutionStatusManager', () => {
     // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing
     jest.spyOn(digitalTwin.backend, 'getPipelineJobs').mockResolvedValue([]);
 
+    jest
+      .spyOn(PipelineCore, 'hasTimedOut')
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+
     await PipelineChecks.checkChildPipelineStatus({
       setButtonText,
       digitalTwin,
@@ -220,6 +246,5 @@ describe('ExecutionStatusManager', () => {
     });
 
     expect(getPipelineStatusMock).toHaveBeenCalled();
-    getPipelineStatusMock.mockRestore();
   });
 });

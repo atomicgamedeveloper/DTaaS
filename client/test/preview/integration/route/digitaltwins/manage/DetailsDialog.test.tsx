@@ -1,8 +1,5 @@
 /* eslint-disable import/first */
-jest.mock(
-  'route/digitaltwins/execution/digitalTwinAdapter',
-  () => ADAPTER_MOCKS,
-);
+jest.mock('util/digitalTwinAdapter', () => ADAPTER_MOCKS);
 jest.mock('preview/util/init', () => INIT_MOCKS);
 jest.mock('model/backend/gitlab/instance', () => GITLAB_MOCKS);
 
@@ -21,7 +18,7 @@ import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import DigitalTwin from 'preview/util/digitalTwin';

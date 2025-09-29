@@ -8,7 +8,7 @@ import {
   startPipeline,
   updatePipelineStateOnCompletion,
   updatePipelineStateOnStop,
-} from 'route/digitaltwins/execution/executionUIHandlers';
+} from 'route/digitaltwins/execution/executionStatusHandlers';
 import { stopPipelines } from 'route/digitaltwins/execution/executionButtonHandlers';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 

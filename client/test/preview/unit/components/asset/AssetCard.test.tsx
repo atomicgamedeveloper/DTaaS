@@ -13,11 +13,6 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('preview/route/digitaltwins/Snackbar', () => ({
-  __esModule: true,
-  default: () => <div data-testid="custom-snackbar" />,
-}));
-
 jest.mock('preview/route/digitaltwins/execute/LogDialog', () => ({
   __esModule: true,
   default: () => <div data-testid="log-dialog" />,
@@ -93,7 +88,6 @@ describe('AssetCard', () => {
 
     expect(screen.getByText(formatName(asset.name))).toBeInTheDocument();
     expect(screen.getByText('Asset description')).toBeInTheDocument();
-    expect(screen.getByTestId('custom-snackbar')).toBeInTheDocument();
     expect(screen.getByTestId('details-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('reconfigure-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('delete-dialog')).toBeInTheDocument();
@@ -105,7 +99,6 @@ describe('AssetCard', () => {
 
     expect(screen.getByText(formatName(asset.name))).toBeInTheDocument();
     expect(screen.getByText('Asset description')).toBeInTheDocument();
-    expect(screen.getByTestId('custom-snackbar')).toBeInTheDocument();
     expect(screen.getByTestId('log-dialog')).toBeInTheDocument();
   });
 });

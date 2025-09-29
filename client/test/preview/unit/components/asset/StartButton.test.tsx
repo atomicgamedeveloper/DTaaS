@@ -12,7 +12,7 @@ jest.mock('route/digitaltwins/execution/executionButtonHandlers', () => ({
 }));
 
 // Mock the digitalTwin adapter to avoid real initialization
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'testAssetName',
     execute: jest.fn().mockResolvedValue(123),

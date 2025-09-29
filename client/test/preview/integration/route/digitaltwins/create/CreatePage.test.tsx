@@ -10,7 +10,7 @@ import {
 import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';
 

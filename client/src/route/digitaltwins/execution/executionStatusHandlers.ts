@@ -6,7 +6,7 @@ import {
   setPipelineCompleted,
   setPipelineLoading,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { JobLog } from 'model/backend/gitlab/types/executionHistory';
 import {
   updateExecutionLogs,

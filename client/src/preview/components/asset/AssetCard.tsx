@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography';
 import { AlertColor, CardActions, Grid } from '@mui/material';
 import styled from '@emotion/styled';
 import { formatName } from 'preview/util/digitalTwin';
-import CustomSnackbar from 'preview/route/digitaltwins/Snackbar';
 import { useSelector } from 'react-redux';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { RootState } from 'store/store';
@@ -203,7 +202,6 @@ function AssetCardManage({ asset, onDelete }: AssetCardManageProps) {
             />
           }
         />
-        <CustomSnackbar />
         <DetailsDialog
           showDialog={showDetailsLog}
           setShowDialog={setShowDetailsLog}
@@ -243,7 +241,6 @@ function AssetCardExecute({ asset }: AssetCardProps) {
             />
           }
         />
-        <CustomSnackbar />
         <LogDialog
           showLog={showLog}
           setShowLog={setShowLog}

@@ -1,14 +1,14 @@
 import { Dispatch, SetStateAction } from 'react';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
 import { RootState } from 'store/store';
 import {
   startPipeline,
   updatePipelineState,
   updatePipelineStateOnStop,
-} from './executionUIHandlers';
+} from './executionStatusHandlers';
 import { startPipelineStatusCheck } from './executionStatusManager';
 
 export type PipelineHandlerDispatch = ThunkDispatch<

@@ -194,10 +194,7 @@ test.describe('Concurrent Execution', () => {
     await startButton.click();
 
     // Wait for debounce period plus a bit for execution to start
-    await page.waitForTimeout(500);
-
-    // Wait a bit more to ensure execution is properly started before reload
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
 
     // Reload the page after execution has started
     await page.reload();

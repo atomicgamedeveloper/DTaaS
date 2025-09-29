@@ -22,7 +22,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(),
 }));
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => ({
+jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'test-dt',
     execute: jest.fn().mockResolvedValue(123),

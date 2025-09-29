@@ -7,7 +7,7 @@ import assetsReducer from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import snackbarSlice, { showSnackbar } from 'preview/store/snackbar.slice';
+import snackbarSlice, { showSnackbar } from 'store/snackbar.slice';
 import fileSlice, { removeAllModifiedFiles } from 'preview/store/file.slice';
 import libraryConfigFilesSlice, {
   removeAllModifiedLibraryFiles,
@@ -20,7 +20,7 @@ jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+jest.mock('util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

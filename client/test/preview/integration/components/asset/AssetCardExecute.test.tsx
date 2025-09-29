@@ -12,7 +12,7 @@ import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import {
   mockLibraryAsset,
   createMockDigitalTwinData,
@@ -22,7 +22,7 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 jest.mock('database/digitalTwins');
 
-jest.mock('route/digitaltwins/execution/digitalTwinAdapter', () => {
+jest.mock('util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

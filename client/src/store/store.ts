@@ -3,7 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import executionHistorySlice from 'model/backend/gitlab/state/executionHistory.slice';
 import digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import assetsSlice from 'preview/store/assets.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';

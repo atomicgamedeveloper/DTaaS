@@ -1,5 +1,5 @@
 import * as PipelineHandlers from 'route/digitaltwins/execution/executionButtonHandlers';
-import * as PipelineUtils from 'route/digitaltwins/execution/executionUIHandlers';
+import * as PipelineUtils from 'route/digitaltwins/execution/executionStatusHandlers';
 import * as PipelineChecks from 'route/digitaltwins/execution/executionStatusManager';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { PipelineHandlerDispatch } from 'route/digitaltwins/execution/executionButtonHandlers';

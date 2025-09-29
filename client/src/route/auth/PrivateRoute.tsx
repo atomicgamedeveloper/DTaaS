@@ -2,6 +2,8 @@ import * as React from 'react';
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
+import CustomSnackbar from 'route/digitaltwins/Snackbar';
+import ExecutionHistoryLoader from 'components/execution/ExecutionHistoryLoader';
 import WaitNavigateAndReload from './WaitAndNavigate';
 
 interface PrivateRouteProps {
@@ -36,7 +38,14 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   } else if (!auth.isAuthenticated) {
     returnJSX = <Navigate to="/" replace />;
   } else if (auth.isAuthenticated) {
-    returnJSX = <>{children}</>;
+    // Lets all authenticated routes inform about DT status
+    returnJSX = (
+      <>
+        {children}
+        <ExecutionHistoryLoader />
+        <CustomSnackbar />
+      </>
+    );
   } else {
     returnJSX = <Navigate to="/" replace />;
   }

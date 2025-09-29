@@ -9,7 +9,7 @@ import { getFilteredFileNames } from 'preview/util/fileUtils';
 import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import { selectDigitalTwinByName } from 'route/digitaltwins/execution';
 import DigitalTwin from 'preview/util/digitalTwin';
-import { createDigitalTwinFromData } from 'route/digitaltwins/execution/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 import { fetchData } from './sidebarFetchers';
 import { handleAddFileClick } from './sidebarFunctions';
 import { renderFileTreeItems, renderFileSection } from './sidebarRendering';

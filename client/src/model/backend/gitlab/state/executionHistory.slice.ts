@@ -11,6 +11,14 @@ import {
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
 import indexedDBService from 'database/digitalTwins';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { showSnackbar } from 'store/snackbar.slice';
+
+const formatTimestamp = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+};
+const formatName = (name: string) =>
+  name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
 
 type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
@@ -108,6 +116,10 @@ const executionHistorySlice = createSlice({
         (entry) => entry.id !== action.payload,
       );
     },
+    removeEntriesForDT: (state, action: PayloadAction<string>) => {
+      const dtName = action.payload;
+      state.entries = state.entries.filter((entry) => entry.dtName !== dtName);
+    },
     setSelectedExecutionId: (state, action: PayloadAction<string | null>) => {
       state.selectedExecutionId = action.payload;
     },
@@ -200,11 +212,36 @@ export const removeExecution =
     try {
       await indexedDBService.delete(id);
       dispatch(setError(null));
+      dispatch(
+        showSnackbar({
+          message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
+          severity: 'success',
+        }),
+      );
     } catch (error) {
       if (execution) {
         dispatch(addExecutionHistoryEntry(execution));
       }
       dispatch(setError(`Failed to remove execution: ${error}`));
+    }
+  };
+
+export const clearExecutionHistoryForDT =
+  (dtName: string): AppThunk =>
+  async (dispatch) => {
+    try {
+      await indexedDBService.deleteByDTName(dtName);
+
+      dispatch(removeEntriesForDT(dtName));
+      dispatch(setError(null));
+      dispatch(
+        showSnackbar({
+          message: `Deleted all entries from ${formatName(dtName)} execution history`,
+          severity: 'success',
+        }),
+      );
+    } catch (error) {
+      dispatch(setError(`Failed to clear execution history: ${error}`));
     }
   };
 
@@ -220,9 +257,7 @@ export const checkRunningExecutions =
     }
 
     try {
-      const module = await import(
-        'model/backend/gitlab/services/ExecutionStatusService'
-      );
+      const module = await import('services/ExecutionStatusService');
       const updatedExecutions = await module.default.checkRunningExecutions(
         runningExecutions,
         state.digitalTwin.digitalTwin,
@@ -246,6 +281,7 @@ export const {
   updateExecutionStatus,
   updateExecutionLogs,
   removeExecutionHistoryEntry,
+  removeEntriesForDT,
   setSelectedExecutionId,
   clearEntries,
 } = executionHistorySlice.actions;
