@@ -50,7 +50,6 @@ describe('LogDialog', () => {
   const setShowLog = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
     mockFetchExecutionHistory.mockClear();
   });
   const executionHistorySlice = jest.requireMock(
@@ -72,10 +71,6 @@ describe('LogDialog', () => {
     });
 
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('renders the LogDialog with execution history', () => {

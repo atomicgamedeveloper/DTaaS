@@ -45,10 +45,6 @@ describe('LogButton Integration Test', () => {
       );
     });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the History button', () => {
     renderLogButton();
     expect(

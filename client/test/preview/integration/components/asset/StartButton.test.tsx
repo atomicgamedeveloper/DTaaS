@@ -82,16 +82,12 @@ describe('StartButton Integration Test', () => {
   const setHistoryButtonDisabled = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     store = createStore();
 
     store.dispatch({ type: 'RESET_ALL' });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-
     jest.clearAllTimers();
   });
 

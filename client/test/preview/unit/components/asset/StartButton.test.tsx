@@ -62,7 +62,6 @@ describe('StartButton', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
     mockDispatch.mockClear();
 
     (

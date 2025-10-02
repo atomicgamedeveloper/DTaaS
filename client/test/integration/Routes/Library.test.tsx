@@ -20,8 +20,6 @@ describe('Library', () => {
     cleanup();
 
     jest.clearAllTimers();
-
-    jest.clearAllMocks();
   });
 
   it('renders the Library and Layout correctly', async () => {

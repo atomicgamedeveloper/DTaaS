@@ -93,8 +93,6 @@ describe('Concurrent Execution Integration', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     // Clear any existing entries
     store.dispatch(clearEntries());
 

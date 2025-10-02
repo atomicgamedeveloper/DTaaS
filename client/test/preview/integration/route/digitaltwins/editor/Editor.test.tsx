@@ -47,16 +47,10 @@ describe('Editor', () => {
         serializableCheck: false,
       }),
   });
-  // TODO: verify this is not needed
-  /* 
-  const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
-  digitalTwinInstance.descriptionFiles = ['file1.md', 'file2.md'];
-  digitalTwinInstance.configFiles = ['config1.json', 'config2.json'];
-  digitalTwinInstance.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt']; */
+
   const digitalTwinData = createMockDigitalTwinData('Asset 1');
 
   const setupTest = async () => {
-    jest.clearAllMocks();
     store.dispatch(addToCart(mockLibraryAsset));
     store.dispatch(setAssets(preSetItems));
     await act(async () => {

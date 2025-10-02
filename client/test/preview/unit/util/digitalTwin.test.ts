@@ -81,10 +81,6 @@ describe('DigitalTwin', () => {
       },
       writable: true,
     });
-    jest.clearAllMocks();
-
-    // jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
-
     mockedIndexedDBService.add.mockResolvedValue('mock-id');
     mockedIndexedDBService.getByDTName.mockResolvedValue([]);
     mockedIndexedDBService.getById.mockResolvedValue(null);

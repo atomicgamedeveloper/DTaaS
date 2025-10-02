@@ -44,8 +44,6 @@ describe('PipelineChecks', () => {
         digitalTwin: digitalTwinData,
       }),
     );
-
-    jest.clearAllMocks();
   });
 
   afterEach(() => {

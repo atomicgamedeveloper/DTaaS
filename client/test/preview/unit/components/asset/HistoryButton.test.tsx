@@ -17,7 +17,6 @@ describe('HistoryButton', () => {
   const useSelector = redux.useSelector as unknown as jest.Mock;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     useSelector.mockReturnValue([]);
   });
 

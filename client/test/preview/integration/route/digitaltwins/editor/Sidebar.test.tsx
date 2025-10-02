@@ -109,8 +109,6 @@ describe('Sidebar', () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-
     store = configureStore({
       reducer: combineReducers({
         cart: cartSlice,

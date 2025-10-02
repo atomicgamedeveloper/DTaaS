@@ -17,9 +17,6 @@ export const fetchJobLogs = async (
   pipelineId: number,
 ): Promise<JobLog[]> => {
   const projectId = backend.getProjectId();
-  if (!projectId) {
-    return [];
-  }
 
   const rawJobs = await backend.getPipelineJobs(projectId, pipelineId);
   const jobs: JobSummary[] = rawJobs.map((job) => job as JobSummary);
@@ -60,22 +57,11 @@ export const fetchJobLogs = async (
  * @returns Promise resolving to array of job logs
  */
 export const fetchPipelineJobLogs = async (
-  backend: {
-    projectId?: number;
-    getPipelineJobs: (
-      projectId: number,
-      pipelineId: number,
-    ) => Promise<unknown[]>;
-    getJobTrace: (projectId: number, jobId: number) => Promise<string>;
-  },
+  backend: BackendInterface,
   pipelineId: number,
   cleanLogFn: (log: string) => string,
 ): Promise<JobLog[]> => {
-  const { projectId } = backend;
-  if (!projectId) {
-    return [];
-  }
-
+  const projectId = backend.getProjectId();
   const rawJobs = await backend.getPipelineJobs(projectId, pipelineId);
   // Convert unknown jobs to GitLabJob format
   const jobs: JobSummary[] = rawJobs.map((job) => job as JobSummary);

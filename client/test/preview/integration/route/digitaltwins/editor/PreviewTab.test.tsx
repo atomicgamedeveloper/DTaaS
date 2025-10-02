@@ -25,11 +25,6 @@ describe('PreviewTab', () => {
           }),
       });
 
-      // TODO: verify this is not needed
-      /*       const digitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
-      digitalTwin.descriptionFiles = ['file1.md', 'file2.md'];
-      digitalTwin.configFiles = ['config1.json', 'config2.json'];
-      digitalTwin.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt']; */
       const digitalTwinData = createMockDigitalTwinData('Asset 1');
 
       store.dispatch(

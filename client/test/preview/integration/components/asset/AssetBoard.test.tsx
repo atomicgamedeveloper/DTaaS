@@ -83,8 +83,6 @@ describe('AssetBoard Integration Tests', () => {
   jest.setTimeout(30000);
 
   const setupTest = () => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
 
     store.dispatch(setAssets(preSetItems));
@@ -104,10 +102,7 @@ describe('AssetBoard Integration Tests', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
-
     jest.clearAllTimers();
   });
 

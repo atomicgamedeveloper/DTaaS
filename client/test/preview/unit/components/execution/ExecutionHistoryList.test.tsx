@@ -209,13 +209,10 @@ describe('ExecutionHistoryList', () => {
 
     testStore = createTestStore();
 
-    jest.clearAllMocks();
-
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReset();
   });
 
   afterEach(async () => {
-    jest.clearAllMocks();
     mockOnViewLogs.mockClear();
     testStore = createTestStore([]);
 

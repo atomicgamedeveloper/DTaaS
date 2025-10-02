@@ -71,12 +71,7 @@ export const mockBackendAPI = {
   listPipelineJobs: jest.fn(),
   getJobLog: jest.fn(),
   getPipelineStatus: jest.fn(),
-  getTriggerToken: jest.fn().mockImplementation((projectId) => {
-    if (projectId === 15) {
-      return null;
-    }
-    return 'some-token';
-  }),
+  getTriggerToken: jest.fn(),
 } as unknown as GitlabAPI;
 
 export const mockBackendInstance: BackendInterface = {

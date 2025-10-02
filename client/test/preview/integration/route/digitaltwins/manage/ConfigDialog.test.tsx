@@ -72,8 +72,6 @@ const store = configureStore({
 
 describe('ReconfigureDialog Integration Tests', () => {
   const setupTest = () => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
 
     const digitalTwinData = createMockDigitalTwinData('Asset 1');
@@ -88,7 +86,6 @@ describe('ReconfigureDialog Integration Tests', () => {
 
   afterEach(() => {
     store.dispatch({ type: 'RESET_ALL' });
-
     jest.clearAllTimers();
   });
 

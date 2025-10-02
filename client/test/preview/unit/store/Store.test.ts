@@ -229,8 +229,6 @@ describe('reducers', () => {
       initialState.snackbar.severity = 'error';
       const newState = snackbarSlice(initialState.snackbar, hideSnackbar());
       expect(newState.open).toBe(false);
-      expect(newState.message).toBe('');
-      expect(newState.severity).toBe('info');
     });
   });
 

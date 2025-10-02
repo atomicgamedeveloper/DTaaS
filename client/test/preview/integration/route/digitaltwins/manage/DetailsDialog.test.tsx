@@ -60,8 +60,6 @@ const store = configureStore({
 
 describe('DetailsDialog Integration Tests', () => {
   const setupTest = () => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
 
     store.dispatch(setAssets([mockLibraryAsset]));
@@ -77,7 +75,6 @@ describe('DetailsDialog Integration Tests', () => {
 
   afterEach(() => {
     store.dispatch({ type: 'RESET_ALL' });
-
     jest.clearAllTimers();
   });
 

@@ -1,8 +1,5 @@
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
-import {
-  BackendInterface,
-  JobSummary,
-} from 'model/backend/interfaces/backendInterfaces';
+import { JobSummary } from 'model/backend/interfaces/backendInterfaces';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import {
   startPipeline,
@@ -184,18 +181,6 @@ describe('ExecutionsUIHandlers', () => {
         1,
       );
       expect(result).toEqual([{ jobName: 'job1', log: 'log1' }]);
-    });
-
-    it('returns empty array if projectId is falsy', async () => {
-      const mockBackendInstance = {
-        ...digitalTwin.backend,
-        getProjectId: jest.fn().mockReturnValue(undefined),
-        getPipelineJobs: jest.fn(),
-        getJobTrace: jest.fn(),
-      } as unknown as BackendInterface;
-
-      const result = await fetchJobLogs(mockBackendInstance, pipelineId);
-      expect(result).toEqual([]);
     });
 
     it('handles error when fetching job trace', async () => {

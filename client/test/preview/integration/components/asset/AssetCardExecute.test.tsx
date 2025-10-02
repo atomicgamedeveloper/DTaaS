@@ -81,8 +81,6 @@ describe('AssetCardExecute Integration Test', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
 
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
@@ -131,10 +129,7 @@ describe('AssetCardExecute Integration Test', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-
     store.dispatch({ type: 'RESET_ALL' });
-
     jest.clearAllTimers();
   });
 

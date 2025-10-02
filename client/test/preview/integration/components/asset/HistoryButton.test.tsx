@@ -45,10 +45,6 @@ describe('HistoryButton Integration Test', () => {
       );
     });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders the History button', () => {
     renderHistoryButton();
     expect(

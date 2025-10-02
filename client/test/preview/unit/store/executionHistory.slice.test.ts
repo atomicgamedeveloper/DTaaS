@@ -433,7 +433,6 @@ describe('executionHistory slice', () => {
     >;
 
     beforeEach(() => {
-      jest.clearAllMocks();
       mockIndexedDBService = jest.requireMock('database/digitalTwins').default;
     });
 
