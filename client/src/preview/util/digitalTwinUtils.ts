@@ -5,15 +5,17 @@ import {
   ProjectId,
   RepositoryTreeItem,
 } from 'model/backend/interfaces/backendInterfaces';
-import { LibraryConfigFile } from 'model/backend/interfaces/sharedInterfaces';
-import { Asset } from 'preview/components/asset/Asset';
+import {
+  DigitalTwinInterface,
+  LibraryConfigFile,
+} from 'model/backend/interfaces/sharedInterfaces';
+import { Asset } from 'model/backend/Asset';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import DigitalTwin from './digitalTwin';
 
-export function isValidInstance(digitalTwin: DigitalTwin): boolean {
+export function isValidInstance(digitalTwin: DigitalTwinInterface): boolean {
   const { backend } = digitalTwin;
   const requiresTriggerToken = backend instanceof GitlabInstance;
   const hasTriggerToken =
@@ -21,7 +23,10 @@ export function isValidInstance(digitalTwin: DigitalTwin): boolean {
   return !requiresTriggerToken || hasTriggerToken;
 }
 
-export function logSuccess(digitalTwin: DigitalTwin, RUNNER_TAG: string): void {
+export function logSuccess(
+  digitalTwin: DigitalTwinInterface,
+  RUNNER_TAG: string,
+): void {
   digitalTwin.backend.logs.push({
     status: 'success',
     DTName: digitalTwin.DTName,
@@ -31,7 +36,7 @@ export function logSuccess(digitalTwin: DigitalTwin, RUNNER_TAG: string): void {
 }
 
 export function logError(
-  digitalTwin: DigitalTwin,
+  digitalTwin: DigitalTwinInterface,
   RUNNER_TAG: string,
   error: string,
 ): void {

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
-import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
+import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import { showSnackbar } from 'store/snackbar.slice';
 import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
 import { RootState } from 'store/store';

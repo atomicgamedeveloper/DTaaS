@@ -1,7 +1,6 @@
-import { getAuthority } from 'util/envUtil';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { Asset } from 'preview/components/asset/Asset';
+import { Asset } from 'model/backend/Asset';
 import {
   BackendInterface,
   ProjectId,
@@ -58,7 +57,7 @@ class LibraryAsset implements LibraryAssetInterface {
     }
   }
 
-  async getFullDescription(): Promise<void> {
+  async getFullDescription(authority: string): Promise<void> {
     if (this.backend?.getProjectId()) {
       const imagesPath = this.path;
       try {
@@ -70,7 +69,7 @@ class LibraryAsset implements LibraryAssetInterface {
         this.fullDescription = fileContent.replace(
           /(!\[[^\]]*\])\(([^)]+)\)/g,
           (match, altText, imagePath) => {
-            const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+            const fullUrl = `${authority}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
         );

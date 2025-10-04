@@ -6,7 +6,7 @@ import {
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';

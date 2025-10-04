@@ -1,5 +1,5 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
-import DigitalTwin, { formatName } from 'preview/util/digitalTwin';
+import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import * as dtUtils from 'preview/util/digitalTwinUtils';
 import {
   getBranchName,

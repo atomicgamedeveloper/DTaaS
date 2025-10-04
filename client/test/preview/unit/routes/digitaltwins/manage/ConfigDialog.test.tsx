@@ -57,7 +57,7 @@ jest.mock('preview/route/digitaltwins/editor/Sidebar', () => ({
   default: () => <div>Sidebar</div>,
 }));
 
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   formatName: jest.fn().mockReturnValue('TestDigitalTwin'),
 }));
 

@@ -28,7 +28,7 @@ import {
 } from '../../../store/file.slice';
 import { updateDescription } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
 import { showSnackbar } from '../../../../store/snackbar.slice';
-import DigitalTwin, { formatName } from '../../../util/digitalTwin';
+import DigitalTwin, { formatName } from '../../../../model/backend/digitalTwin';
 import Editor from '../editor/Editor';
 
 interface ReconfigureDialogProps {

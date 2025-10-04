@@ -4,12 +4,14 @@ import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
 import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
-import DigitalTwin from './digitalTwin';
+import DigitalTwin from '../../model/backend/digitalTwin';
 import { setAsset } from '../store/assets.slice';
-import LibraryAsset, { getLibrarySubfolders } from './libraryAsset';
+import LibraryAsset, {
+  getLibrarySubfolders,
+} from '../../model/backend/libraryAsset';
 import { getDTSubfolders } from './digitalTwinUtils';
 import { createGitlabInstance } from '../../model/backend/gitlab/gitlabFactory';
-import LibraryManager from './libraryManager';
+import LibraryManager from '../../model/backend/libraryManager';
 
 const initialGitlabInstance = createGitlabInstance(
   sessionStorage.getItem('username') || '',

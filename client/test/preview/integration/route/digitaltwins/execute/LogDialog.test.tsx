@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
+import LogDialog from 'model/backend/LogDialog';
 import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {

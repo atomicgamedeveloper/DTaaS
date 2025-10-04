@@ -21,10 +21,10 @@ import digitalTwinReducer, {
 import snackbarSlice from 'store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
-import LibraryAsset from 'preview/util/libraryAsset';
+import DigitalTwin from 'model/backend/digitalTwin';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
-import LibraryManager from 'preview/util/libraryManager';
+import LibraryManager from 'model/backend/libraryManager';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 
 jest.mock('react-redux', () => ({

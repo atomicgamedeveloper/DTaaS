@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import StartButton from 'preview/components/asset/StartButton';
 import HistoryButton from 'components/asset/HistoryButton';
-import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
+import LogDialog from 'model/backend/LogDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';

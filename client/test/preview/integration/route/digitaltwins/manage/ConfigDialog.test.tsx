@@ -12,7 +12,7 @@ import fileSlice, { removeAllModifiedFiles } from 'preview/store/file.slice';
 import libraryConfigFilesSlice, {
   removeAllModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 

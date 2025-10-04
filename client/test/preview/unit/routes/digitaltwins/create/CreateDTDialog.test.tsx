@@ -20,7 +20,7 @@ jest.mock('preview/util/fileUtils', () => ({
   addDefaultFiles: jest.fn(),
 }));
 
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   DigitalTwin: jest.fn().mockImplementation(() => mockDigitalTwin),
 }));
 

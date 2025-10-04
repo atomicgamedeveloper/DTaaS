@@ -1,11 +1,12 @@
-import LibraryAsset, { getLibrarySubfolders } from 'preview/util/libraryAsset';
+import LibraryAsset, { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
-import LibraryManager from 'preview/util/libraryManager';
+import LibraryManager from 'model/backend/libraryManager';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockLibraryManager } from 'test/preview/__mocks__/global_mocks';
+import { getAuthority } from 'util/envUtil';
 
-jest.mock('preview/util/libraryManager');
+jest.mock('model/backend/libraryManager');
 
 const mockSessionStorage = {
   getItem: jest.fn(),
@@ -88,7 +89,7 @@ describe('LibraryAsset', () => {
       return null;
     });
 
-    await libraryAsset.getFullDescription();
+    await libraryAsset.getFullDescription(getAuthority());
     expect(libraryAsset.fullDescription).toBe(
       `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/main/path/to/library/image.png)`,
     );
@@ -98,7 +99,7 @@ describe('LibraryAsset', () => {
     libraryManager.getFileContent = jest
       .fn()
       .mockRejectedValue(new Error('Error'));
-    await libraryAsset.getFullDescription();
+    await libraryAsset.getFullDescription(getAuthority());
     expect(libraryAsset.fullDescription).toBe('There is no README.md file');
   });
 

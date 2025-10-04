@@ -18,7 +18,7 @@ import {
   createMockDigitalTwinData,
 } from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
 import '@testing-library/jest-dom';

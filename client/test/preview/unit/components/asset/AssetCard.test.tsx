@@ -6,14 +6,14 @@ import {
 import * as React from 'react';
 import { Provider, useSelector } from 'react-redux';
 import store from 'store/store';
-import { formatName } from 'preview/util/digitalTwin';
+import { formatName } from 'model/backend/digitalTwin';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
 }));
 
-jest.mock('preview/route/digitaltwins/execute/LogDialog', () => ({
+jest.mock('model/backend/LogDialog', () => ({
   __esModule: true,
   default: () => <div data-testid="log-dialog" />,
 }));

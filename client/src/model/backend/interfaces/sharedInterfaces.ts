@@ -143,7 +143,7 @@ export interface DescriptionProvider {
    * Fetches the README.md content for the digital twin.
    * @returns A promise that resolves when the full description is fetched.
    */
-  getFullDescription(): Promise<void>;
+  getFullDescription(authority?: string): Promise<void>;
 }
 
 export interface DigitalTwinFileProvider {

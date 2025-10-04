@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 
 export interface CartState {
   assets: LibraryAsset[];

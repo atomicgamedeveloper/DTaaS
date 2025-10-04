@@ -1,4 +1,4 @@
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { initDigitalTwin } from 'preview/util/init';
 

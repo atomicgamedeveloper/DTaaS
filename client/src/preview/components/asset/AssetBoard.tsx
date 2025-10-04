@@ -9,7 +9,7 @@ import { fetchDigitalTwins } from 'preview/util/init';
 import { setShouldFetchDigitalTwins } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import Filter from './Filter';
-import { Asset } from './Asset';
+import { Asset } from '../../../model/backend/Asset';
 import { AssetCardExecute, AssetCardManage } from './AssetCard';
 
 const outerGridContainerProps = {

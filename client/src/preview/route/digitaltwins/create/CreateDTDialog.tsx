@@ -16,12 +16,12 @@ import {
 } from 'model/backend/interfaces/sharedInterfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { showSnackbar } from 'store/snackbar.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { initDigitalTwin } from 'preview/util/init';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import useCart from 'preview/store/CartAccess';
 import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
 import {

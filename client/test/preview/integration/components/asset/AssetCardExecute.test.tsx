@@ -46,8 +46,7 @@ jest.mock('route/digitaltwins/execution/executionButtonHandlers', () => ({
     .mockImplementation(() => Promise.resolve('test-execution-id')),
   handleStop: jest.fn().mockResolvedValue(undefined),
 }));
-
-jest.mock('preview/route/digitaltwins/execute/LogDialog', () => ({
+jest.mock('model/backend/LogDialog', () => ({
   __esModule: true,
   default: ({ showLog, name }: { showLog: boolean; name: string }) =>
     showLog ? <div data-testid="log-dialog">Log Dialog for {name}</div> : null,

@@ -4,7 +4,7 @@ import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { PipelineStatusParams } from 'route/digitaltwins/execution/executionStatusManager';
 
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   DigitalTwin: jest.fn().mockImplementation(() => mockDigitalTwin),
   formatName: jest.fn(),
 }));

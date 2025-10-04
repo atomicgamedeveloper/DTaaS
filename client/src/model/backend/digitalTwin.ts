@@ -29,7 +29,7 @@ import {
   logError,
   logSuccess,
   getUpdatedLibraryFile,
-} from './digitalTwinUtils';
+} from '../../preview/util/digitalTwinUtils';
 
 export const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());

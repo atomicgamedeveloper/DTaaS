@@ -10,7 +10,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
-import DigitalTwin, { formatName } from '../../../util/digitalTwin';
+import DigitalTwin, { formatName } from '../../../../model/backend/digitalTwin';
 import { showSnackbar } from '../../../../store/snackbar.slice';
 
 interface DeleteDialogProps {

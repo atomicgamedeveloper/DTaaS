@@ -15,7 +15,7 @@ import {
   mockLibraryAsset,
 } from 'test/preview/__mocks__/global_mocks';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 

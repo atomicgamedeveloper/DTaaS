@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
+import LogDialog from 'model/backend/LogDialog';
 
 // Mock Redux hooks
 jest.mock('react-redux', () => ({

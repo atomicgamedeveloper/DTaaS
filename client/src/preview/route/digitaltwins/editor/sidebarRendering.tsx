@@ -4,8 +4,8 @@ import {
   LibraryConfigFile,
   FileState,
 } from 'model/backend/interfaces/sharedInterfaces';
-import DigitalTwin from 'preview/util/digitalTwin';
-import LibraryAsset from 'preview/util/libraryAsset';
+import DigitalTwin from 'model/backend/digitalTwin';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import { handleFileClick } from './sidebarFunctions';

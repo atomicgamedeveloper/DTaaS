@@ -7,7 +7,7 @@ import digitalTwinReducer, {
   setDigitalTwin,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 

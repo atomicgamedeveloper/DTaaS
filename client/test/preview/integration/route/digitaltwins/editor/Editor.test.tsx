@@ -9,13 +9,13 @@ import digitalTwinReducer, {
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import * as React from 'react';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import {
   mockLibraryAsset,
   createMockDigitalTwinData,
 } from 'test/preview/__mocks__/global_mocks';
 import { handleFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 

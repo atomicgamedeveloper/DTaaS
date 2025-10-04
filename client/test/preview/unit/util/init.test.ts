@@ -5,13 +5,13 @@ jest.mock('preview/util/digitalTwinUtils', () => ({
 }));
 
 const DigitalTwin = jest.fn();
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   default: DigitalTwin,
 }));
 
 const mockGetLibrarySubfolders = jest.fn();
 const mockLibraryAsset = jest.fn();
-jest.mock('preview/util/libraryAsset', () => ({
+jest.mock('model/backend/libraryAsset', () => ({
   getLibrarySubfolders: mockGetLibrarySubfolders,
   default: mockLibraryAsset,
 }));
@@ -33,7 +33,7 @@ import {
   fetchLibraryAssets,
   initDigitalTwin,
 } from 'preview/util/init';
-import { getLibrarySubfolders } from 'preview/util/libraryAsset';
+import { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import {
   mockAuthority,
   mockBackendAPI,

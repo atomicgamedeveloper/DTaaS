@@ -11,7 +11,7 @@ import digitalTwinReducer, {
   updateDescription,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
 import snackbarSlice, {
   hideSnackbar,
@@ -26,7 +26,7 @@ import fileSlice, {
   removeAllModifiedFiles,
   renameFile,
 } from 'preview/store/file.slice';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import cartSlice, {
   addToCart,

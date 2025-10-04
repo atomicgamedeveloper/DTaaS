@@ -1,7 +1,7 @@
-import DigitalTwin from 'preview/util/digitalTwin';
-import FileHandler from 'preview/util/fileHandler';
-import DTAssets from 'preview/util/DTAssets';
-import LibraryManager from 'preview/util/libraryManager';
+import DigitalTwin from 'model/backend/digitalTwin';
+import FileHandler from 'model/backend/fileHandler';
+import DTAssets from 'model/backend/DTAssets';
+import LibraryManager from 'model/backend/libraryManager';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import 'test/preview/__mocks__/constants.mock';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
