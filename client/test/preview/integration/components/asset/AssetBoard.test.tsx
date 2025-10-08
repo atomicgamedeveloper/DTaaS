@@ -18,6 +18,7 @@ import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import LibraryAsset from 'model/backend/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import { storeResetAll } from '../../integration.testUtil';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -83,7 +84,7 @@ describe('AssetBoard Integration Tests', () => {
   jest.setTimeout(30000);
 
   const setupTest = () => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
 
     store.dispatch(setAssets(preSetItems));
     const digitalTwinData = createMockDigitalTwinData('Asset 1');
@@ -102,7 +103,7 @@ describe('AssetBoard Integration Tests', () => {
   });
 
   afterEach(() => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
     jest.clearAllTimers();
   });
 

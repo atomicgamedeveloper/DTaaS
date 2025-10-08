@@ -161,12 +161,6 @@ describe('statusChecking', () => {
       expect(getStatusDescription('skipped')).toBe('Pipeline was skipped');
       expect(getStatusDescription('unknown')).toBe('Pipeline status: unknown');
     });
-
-    // TODO: Check if these tests are valuable
-    /*     it('should handle null/undefined status', () => {
-      expect(getStatusDescription(null)).toBe('Pipeline status: unknown');
-      expect(getStatusDescription(undefined)).toBe('Pipeline status: unknown');
-    }); */
   });
 
   describe('getStatusSeverity', () => {

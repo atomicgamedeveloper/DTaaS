@@ -10,6 +10,8 @@ import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import { mockAuthState, mockAuthStateType } from 'test/__mocks__/global_mocks';
 
+export const storeResetAll = () => store.dispatch({ type: 'RESET_ALL' });
+
 export const previewStore = configureStore({
   reducer: {
     digitalTwin: digitalTwinReducer,

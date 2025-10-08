@@ -119,9 +119,6 @@ describe('DigitalTwin', () => {
     (mockBackendAPI.getRepositoryFileContent as jest.Mock).mockResolvedValue({
       content: mockContent,
     });
-    // TODO: Check if this is better
-    /*     const getFileContentSpy = jest.spyOn(dt.DTAssets, 'getFileContent');
-    getFileContentSpy.mockResolvedValue(mockContent); */
 
     await dt.getFullDescription();
 
@@ -134,7 +131,6 @@ describe('DigitalTwin', () => {
       'digital_twins/test-DTName/README.md',
       getBranchName(),
     );
-    // expect(getFileContentSpy).toHaveBeenCalledWith('README.md');
   });
 
   it('should return error message if no README.md file exists', async () => {

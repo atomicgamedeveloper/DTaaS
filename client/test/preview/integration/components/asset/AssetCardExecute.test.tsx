@@ -19,6 +19,7 @@ import {
 } from 'test/preview/__mocks__/global_mocks';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { storeResetAll } from '../../integration.testUtil';
 
 jest.mock('database/digitalTwins');
 
@@ -80,7 +81,7 @@ describe('AssetCardExecute Integration Test', () => {
   };
 
   beforeEach(() => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
 
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector: (state: RootState) => unknown) => {
@@ -128,7 +129,7 @@ describe('AssetCardExecute Integration Test', () => {
   });
 
   afterEach(() => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
     jest.clearAllTimers();
   });
 

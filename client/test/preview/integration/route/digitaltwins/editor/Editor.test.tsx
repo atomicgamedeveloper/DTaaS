@@ -50,6 +50,40 @@ describe('Editor', () => {
 
   const digitalTwinData = createMockDigitalTwinData('Asset 1');
 
+  async function clickMockFiles(
+    modifiedFiles: FileState[],
+    newDigitalTwinData: DigitalTwin,
+  ): Promise<void> {
+    await act(async () => {
+      await handleFileClick(
+        'file1.md',
+        newDigitalTwinData,
+        setFileName,
+        setFileContent,
+        setFileType,
+        setFilePrivacy,
+        modifiedFiles,
+        'reconfigure',
+        setIsLibraryFile,
+        setLibraryAssetPath,
+      );
+    });
+  }
+
+  async function makeMockDTInstance(overrides?: {
+    DTAssets?: Partial<DigitalTwin['DTAssets']>;
+  }) {
+    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
+    await dispatchSetDigitalTwin(newDigitalTwinData);
+    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
+
+    if (overrides?.DTAssets) {
+      Object.assign(digitalTwinInstance.DTAssets, overrides.DTAssets);
+    }
+
+    return digitalTwinInstance;
+  }
+
   const setupTest = async () => {
     store.dispatch(addToCart(mockLibraryAsset));
     store.dispatch(setAssets(preSetItems));
@@ -130,25 +164,8 @@ describe('Editor', () => {
       },
     ];
 
-    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
-    await dispatchSetDigitalTwin(newDigitalTwinData);
-
-    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
-
-    await act(async () => {
-      await handleFileClick(
-        'file1.md',
-        digitalTwinInstance,
-        setFileName,
-        setFileContent,
-        setFileType,
-        setFilePrivacy,
-        modifiedFiles,
-        'reconfigure',
-        setIsLibraryFile,
-        setLibraryAssetPath,
-      );
-    });
+    const digitalTwinInstance = await makeMockDTInstance();
+    await clickMockFiles(modifiedFiles, digitalTwinInstance);
 
     expect(setFileName).toHaveBeenCalledWith('file1.md');
     expect(setFileContent).toHaveBeenCalledWith('modified content');
@@ -157,29 +174,13 @@ describe('Editor', () => {
 
   it('should fetch file content for an unmodified file', async () => {
     const modifiedFiles: FileState[] = [];
-
-    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
-    await dispatchSetDigitalTwin(newDigitalTwinData);
-
-    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
-    digitalTwinInstance.DTAssets.getFileContent = jest
-      .fn()
-      .mockResolvedValueOnce('Fetched content');
-
-    await act(async () => {
-      await handleFileClick(
-        'file1.md',
-        digitalTwinInstance,
-        setFileName,
-        setFileContent,
-        setFileType,
-        setFilePrivacy,
-        modifiedFiles,
-        'reconfigure',
-        setIsLibraryFile,
-        setLibraryAssetPath,
-      );
+    const digitalTwinInstance = await makeMockDTInstance({
+      DTAssets: {
+        getFileContent: jest.fn().mockResolvedValueOnce('Fetched content'),
+      },
     });
+
+    await clickMockFiles(modifiedFiles, digitalTwinInstance);
 
     expect(setFileName).toHaveBeenCalledWith('file1.md');
     expect(setFileContent).toHaveBeenCalledWith('Fetched content');
@@ -189,28 +190,14 @@ describe('Editor', () => {
   it('should set error message when fetching file content fails', async () => {
     const modifiedFiles: FileState[] = [];
 
-    const newDigitalTwinData = createMockDigitalTwinData('Asset 1');
-    await dispatchSetDigitalTwin(newDigitalTwinData);
-
-    const digitalTwinInstance = new DigitalTwin('Asset 1', mockBackendInstance);
-    digitalTwinInstance.DTAssets.getFileContent = jest
-      .fn()
-      .mockRejectedValueOnce(new Error('Fetch error'));
-
-    await React.act(async () => {
-      await handleFileClick(
-        'file1.md',
-        digitalTwinInstance,
-        setFileName,
-        setFileContent,
-        setFileType,
-        setFilePrivacy,
-        modifiedFiles,
-        'reconfigure',
-        setIsLibraryFile,
-        setLibraryAssetPath,
-      );
+    const digitalTwinInstance = await makeMockDTInstance({
+      DTAssets: {
+        getFileContent: jest
+          .fn()
+          .mockRejectedValueOnce(new Error('Fetch error')),
+      },
     });
+    await clickMockFiles(modifiedFiles, digitalTwinInstance);
 
     expect(setFileContent).toHaveBeenCalledWith(
       'Error fetching file1.md content',

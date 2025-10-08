@@ -35,7 +35,19 @@ describe('DeleteDialog', () => {
   const setShowDialog = jest.fn();
   const onDelete = jest.fn();
 
-  it('renders the DeleteDialog', () => {
+  const setupDeleteTest = (deleteResult: string) => {
+    (createDigitalTwinFromData as jest.Mock).mockResolvedValueOnce({
+      DTName: name,
+      delete: jest.fn().mockResolvedValue(deleteResult),
+    });
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
+      DTName: name,
+      description: 'Test description',
+    });
+  };
+
+  const renderDeleteDialog = () =>
     render(
       <Provider store={store}>
         <DeleteDialog
@@ -46,92 +58,41 @@ describe('DeleteDialog', () => {
         />
       </Provider>,
     );
+
+  const clickDeleteAndVerify = async () => {
+    const deleteButton = screen.getByRole('button', { name: /Yes/i });
+
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
+
+    await waitFor(() => {
+      expect(onDelete).toHaveBeenCalled();
+      expect(setShowDialog).toHaveBeenCalledWith(false);
+    });
+  };
+
+  it('renders the DeleteDialog', () => {
+    renderDeleteDialog();
     expect(screen.getByText(/This step is irreversible/i)).toBeInTheDocument();
   });
 
-  it('handles close dialog', async () => {
-    render(
-      <Provider store={store}>
-        <DeleteDialog
-          showDialog={showDialog}
-          setShowDialog={setShowDialog}
-          name={name}
-          onDelete={onDelete}
-        />
-      </Provider>,
-    );
+  it('handles close dialog', () => {
+    renderDeleteDialog();
     const closeButton = screen.getByRole('button', { name: /Cancel/i });
     closeButton.click();
     expect(setShowDialog).toHaveBeenCalled();
   });
 
   it('handles delete button click', async () => {
-    // Mock createDigitalTwinFromData for this test
-    (createDigitalTwinFromData as jest.Mock).mockResolvedValueOnce({
-      DTName: 'testName',
-      delete: jest.fn().mockResolvedValue('Deleted successfully'),
-    });
-
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
-      DTName: 'testName',
-      description: 'Test description',
-    });
-
-    render(
-      <Provider store={store}>
-        <DeleteDialog
-          showDialog={showDialog}
-          setShowDialog={setShowDialog}
-          name={name}
-          onDelete={onDelete}
-        />
-      </Provider>,
-    );
-
-    const deleteButton = screen.getByRole('button', { name: /Yes/i });
-
-    await act(async () => {
-      fireEvent.click(deleteButton);
-    });
-
-    await waitFor(() => {
-      expect(onDelete).toHaveBeenCalled();
-      expect(setShowDialog).toHaveBeenCalledWith(false);
-    });
+    setupDeleteTest('Deleted successfully');
+    renderDeleteDialog();
+    await clickDeleteAndVerify();
   });
 
   it('handles delete button click and shows error message', async () => {
-    // Mock createDigitalTwinFromData for this test
-    (createDigitalTwinFromData as jest.Mock).mockResolvedValueOnce({
-      DTName: 'testName',
-      delete: jest.fn().mockResolvedValue('Error: deletion failed'),
-    });
-
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
-      DTName: 'testName',
-      description: 'Test description',
-    });
-
-    render(
-      <Provider store={store}>
-        <DeleteDialog
-          showDialog={showDialog}
-          setShowDialog={setShowDialog}
-          name={name}
-          onDelete={onDelete}
-        />
-      </Provider>,
-    );
-
-    const deleteButton = screen.getByRole('button', { name: /Yes/i });
-
-    await act(async () => {
-      fireEvent.click(deleteButton);
-    });
-
-    await waitFor(() => {
-      expect(onDelete).toHaveBeenCalled();
-      expect(setShowDialog).toHaveBeenCalledWith(false);
-    });
+    setupDeleteTest('Error: deletion failed');
+    renderDeleteDialog();
+    await clickDeleteAndVerify();
   });
 });

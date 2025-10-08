@@ -19,6 +19,7 @@ import executionHistoryReducer, {
 import '@testing-library/jest-dom';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { storeResetAll } from '../../integration.testUtil';
 
 jest.mock('util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
@@ -84,7 +85,7 @@ describe('StartButton Integration Test', () => {
   beforeEach(() => {
     store = createStore();
 
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
   });
 
   afterEach(() => {

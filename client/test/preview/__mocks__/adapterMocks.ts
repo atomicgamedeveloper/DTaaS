@@ -77,3 +77,7 @@ export const GITLAB_MOCKS = {
     getJobTrace: jest.fn().mockResolvedValue('mock job trace'),
   })),
 };
+
+jest.mock('util/digitalTwinAdapter', () => ADAPTER_MOCKS);
+jest.mock('preview/util/init', () => INIT_MOCKS);
+jest.mock('model/backend/gitlab/instance', () => GITLAB_MOCKS);

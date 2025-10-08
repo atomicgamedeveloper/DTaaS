@@ -26,6 +26,7 @@ import LibraryAsset from 'model/backend/libraryAsset';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import LibraryManager from 'model/backend/libraryManager';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
+import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -60,7 +61,7 @@ const store = configureStore({
 
 describe('DetailsDialog Integration Tests', () => {
   const setupTest = () => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
 
     store.dispatch(setAssets([mockLibraryAsset]));
     const digitalTwinData = createMockDigitalTwinData('Asset 1');
@@ -74,7 +75,7 @@ describe('DetailsDialog Integration Tests', () => {
   });
 
   afterEach(() => {
-    store.dispatch({ type: 'RESET_ALL' });
+    storeResetAll();
     jest.clearAllTimers();
   });
 
