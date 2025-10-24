@@ -16,7 +16,7 @@ import {
   removeAllModifiedLibraryFiles,
   selectModifiedLibraryFiles,
 } from 'preview/store/libraryConfigFiles.slice';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import {
   LibraryConfigFile,
@@ -25,11 +25,11 @@ import {
 import {
   removeAllModifiedFiles,
   selectModifiedFiles,
-} from '../../../store/file.slice';
-import { updateDescription } from '../../../../model/backend/gitlab/state/digitalTwin.slice';
-import { showSnackbar } from '../../../../store/snackbar.slice';
-import DigitalTwin, { formatName } from '../../../../model/backend/digitalTwin';
-import Editor from '../editor/Editor';
+} from 'preview/store/file.slice';
+import { updateDescription } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { showSnackbar } from 'store/snackbar.slice';
+import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
+import Editor from 'preview/route/digitaltwins/editor/Editor';
 
 interface ReconfigureDialogProps {
   showDialog: boolean;

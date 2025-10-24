@@ -51,7 +51,7 @@ import cartSlice, { addToCart } from 'preview/store/cart.slice';
 import '@testing-library/jest-dom';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 
-jest.mock('util/digitalTwinAdapter', () => ({
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue(digitalTwinDataMock),
   extractDataFromDigitalTwin: jest.fn().mockReturnValue({
     DTName: ASSET_NAME,
@@ -67,7 +67,7 @@ jest.mock('util/digitalTwinAdapter', () => ({
 }));
 
 // Mock the init module to prevent real GitLab initialization
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   initDigitalTwin: jest.fn().mockResolvedValue(digitalTwinDataMock),
 }));
 
@@ -162,7 +162,9 @@ describe('Sidebar', () => {
     const mockAsset = {
       ...mockLibraryAsset,
       configFiles: ['config1.json'],
-      getConfigFiles: jest.fn().mockImplementation(async () => Promise.resolve()),
+      getConfigFiles: jest
+        .fn()
+        .mockImplementation(async () => Promise.resolve()),
     };
 
     store.dispatch(addToCart(mockAsset));

@@ -1,6 +1,6 @@
 import DigitalTwin from 'model/backend/digitalTwin';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { initDigitalTwin } from 'preview/util/init';
+import { initDigitalTwin } from 'model/backend/util/init';
 
 /**
  * Creates a DigitalTwin instance from DigitalTwinData

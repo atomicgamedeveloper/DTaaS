@@ -1,5 +1,5 @@
-import { DTExecutionResult } from '../model/backend/gitlab/types/executionHistory';
-import { DB_CONFIG } from './types';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
+import { DB_CONFIG } from 'database/types';
 
 /**
  * Interface for execution history operations

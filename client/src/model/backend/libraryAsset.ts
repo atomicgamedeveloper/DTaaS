@@ -7,7 +7,7 @@ import {
   RepositoryTreeItem,
 } from 'model/backend/interfaces/backendInterfaces';
 import { LibraryAssetInterface } from 'model/backend/interfaces/sharedInterfaces';
-import LibraryManager from './libraryManager';
+import LibraryManager from 'model/backend/libraryManager';
 
 class LibraryAsset implements LibraryAssetInterface {
   public name: string;

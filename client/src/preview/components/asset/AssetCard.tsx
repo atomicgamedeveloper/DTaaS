@@ -16,11 +16,11 @@ import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
 import HistoryButton from 'components/asset/HistoryButton';
 import StartButton from 'preview/components/asset/StartButton';
-import { Asset } from '../../../model/backend/Asset';
+import { Asset } from 'model/backend/Asset';
+import ReconfigureButton from 'preview/components/asset/ReconfigureButton';
+import DeleteButton from 'preview/components/asset/DeleteButton';
+import AddToCartButton from 'preview/components/asset/AddToCartButton';
 import DetailsButton from './DetailsButton';
-import ReconfigureButton from './ReconfigureButton';
-import DeleteButton from './DeleteButton';
-import AddToCartButton from './AddToCartButton';
 
 interface AssetCardProps {
   asset: Asset;

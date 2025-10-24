@@ -12,7 +12,7 @@ jest.mock('preview/route/digitaltwins/create/CreateDialogs', () => ({
   default: () => <div data-testid="create-dialogs" />,
 }));
 
-jest.mock('route/digitaltwins/Snackbar', () => ({
+jest.mock('components/route/Snackbar', () => ({
   _esModule: true,
   default: () => <div data-testid="snackbar" />,
 }));

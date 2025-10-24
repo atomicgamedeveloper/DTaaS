@@ -233,8 +233,8 @@ Object.defineProperty(window, 'sessionStorage', {
 });
 
 // Mock the initDigitalTwin function
-jest.mock('preview/util/init', () => ({
-  ...jest.requireActual('preview/util/init'),
+jest.mock('model/backend/util/init', () => ({
+  ...jest.requireActual('model/backend/util/init'),
   initDigitalTwin: createAsyncMock(mockDigitalTwin),
   fetchLibraryAssets: jest.fn(),
   fetchDigitalTwins: jest.fn(),

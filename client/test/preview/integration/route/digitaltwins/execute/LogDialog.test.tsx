@@ -17,7 +17,7 @@ import digitalTwinReducer, {
 import executionHistoryReducer, {
   setExecutionHistoryEntries,
 } from 'model/backend/gitlab/state/executionHistory.slice';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 

@@ -8,7 +8,7 @@ import { previewStore as store } from 'test/preview/integration/integration.test
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 
 describe('PipelineUtils', () => {

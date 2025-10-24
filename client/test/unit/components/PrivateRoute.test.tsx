@@ -15,7 +15,7 @@ jest.mock('components/execution/ExecutionHistoryLoader', () => {
   return { __esModule: true, default: MockExecutionHistoryLoader };
 });
 
-jest.mock('route/digitaltwins/Snackbar', () => {
+jest.mock('components/route/Snackbar', () => {
   const MockCustomSnackbar = () => <div>Mock CustomSnackbar</div>;
   return { __esModule: true, default: MockCustomSnackbar };
 });

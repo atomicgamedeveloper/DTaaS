@@ -12,7 +12,7 @@ jest.mock('route/digitaltwins/execution/executionButtonHandlers', () => ({
 }));
 
 // Mock the digitalTwin adapter to avoid real initialization
-jest.mock('util/digitalTwinAdapter', () => ({
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'testAssetName',
     execute: jest.fn().mockResolvedValue(123),
@@ -26,7 +26,7 @@ jest.mock('util/digitalTwinAdapter', () => ({
 }));
 
 // Mock the initDigitalTwin function to avoid real GitLab initialization
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   initDigitalTwin: jest.fn().mockResolvedValue({
     DTName: 'testAssetName',
     pipelineId: null,

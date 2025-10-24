@@ -7,9 +7,9 @@ import snackbarSlice from 'store/snackbar.slice';
 import assetsSlice from 'preview/store/assets.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';
-import menuSlice from './menu.slice';
-import authSlice from './auth.slice';
-import settingsSlice from './settings.slice';
+import menuSlice from 'store/menu.slice';
+import authSlice from 'store/auth.slice';
+import settingsSlice from 'store/settings.slice';
 
 const loadSettings = () => {
   const serializedSettings = localStorage.getItem('settings');
@@ -54,7 +54,6 @@ const store = configureStore({
       serializableCheck: {
         ignoredActions: [
           'digitalTwin/setDigitalTwin',
-          'assets/setAsset',
           'assets/setAsset',
           'assets/deleteAsset',
         ],

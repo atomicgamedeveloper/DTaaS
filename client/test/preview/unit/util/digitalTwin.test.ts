@@ -1,6 +1,6 @@
 import GitlabInstance from 'model/backend/gitlab/instance';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
-import * as dtUtils from 'preview/util/digitalTwinUtils';
+import * as dtUtils from 'model/backend/util/digitalTwinUtils';
 import {
   getBranchName,
   getGroupName,
@@ -8,19 +8,16 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import indexedDBService from 'database/digitalTwins';
-// import * as envUtil from 'util/envUtil';
-import { getUpdatedLibraryFile } from 'preview/util/digitalTwinUtils';
+import { getUpdatedLibraryFile } from 'model/backend/util/digitalTwinUtils';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { getAuthority } from 'util/envUtil';
 
 jest.mock('database/digitalTwins');
 
-jest.mock('preview/util/digitalTwinUtils', () => ({
-  ...jest.requireActual('preview/util/digitalTwinUtils'),
+jest.mock('model/backend/util/digitalTwinUtils', () => ({
+  ...jest.requireActual('model/backend/util/digitalTwinUtils'),
   getUpdatedLibraryFile: jest.fn(),
 }));
-
-// jest.spyOn(envUtil, 'getAuthority').mockReturnValue('https://example.com');
 
 const mockedIndexedDBService = indexedDBService as jest.Mocked<
   typeof indexedDBService
@@ -30,13 +27,6 @@ const mockedIndexedDBService = indexedDBService as jest.Mocked<
   getExecutionHistoryById: jest.Mock;
   updateExecutionHistory: jest.Mock;
 };
-
-// Mock the envUtil module
-// jest.mock('util/envUtil', () => ({
-//   __esModule: true,
-//   ...jest.requireActual('util/envUtil'),
-//   getAuthority: jest.fn().mockReturnValue('https://example.com/AUTHORITY'),
-// }));
 
 const mockGitlabInstance = {
   api: mockBackendAPI,
@@ -65,10 +55,6 @@ describe('DigitalTwin', () => {
     mockGitlabInstance.getCommonProjectId = jest.fn().mockReturnValue(2);
     mockGitlabInstance.startPipeline = jest.fn().mockResolvedValue({ id: 123 });
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
-
-    // (envUtil.getAuthority as jest.Mock).mockReturnValue(
-    //   'https://example.com/AUTHORITY',
-    // );
 
     Object.defineProperty(window, 'sessionStorage', {
       value: {

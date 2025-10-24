@@ -1,6 +1,6 @@
 /* eslint-disable import/first */
 const getDTSubfolders = jest.fn();
-jest.mock('preview/util/digitalTwinUtils', () => ({
+jest.mock('model/backend/util/digitalTwinUtils', () => ({
   getDTSubfolders,
 }));
 
@@ -26,13 +26,13 @@ jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => ({
   setDigitalTwin,
 }));
 
-jest.deepUnmock('preview/util/init');
+jest.deepUnmock('model/backend/util/init');
 
 import {
   fetchDigitalTwins,
   fetchLibraryAssets,
   initDigitalTwin,
-} from 'preview/util/init';
+} from 'model/backend/util/init';
 import { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import {
   mockAuthority,

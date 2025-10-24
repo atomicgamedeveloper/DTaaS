@@ -22,7 +22,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(),
 }));
 
-jest.mock('util/digitalTwinAdapter', () => ({
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'test-dt',
     execute: jest.fn().mockResolvedValue(123),
@@ -41,7 +41,7 @@ jest.mock('util/digitalTwinAdapter', () => ({
   }),
 }));
 
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   initDigitalTwin: jest.fn().mockResolvedValue({
     DTName: 'test-dt',
     execute: jest.fn().mockResolvedValue(123),

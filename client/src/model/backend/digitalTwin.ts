@@ -23,13 +23,13 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import indexedDBService from 'database/digitalTwins';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
-import DTAssets from './DTAssets';
+import DTAssets from 'model/backend/DTAssets';
 import {
   isValidInstance,
   logError,
   logSuccess,
   getUpdatedLibraryFile,
-} from '../../preview/util/digitalTwinUtils';
+} from 'model/backend/util/digitalTwinUtils';
 
 export const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());

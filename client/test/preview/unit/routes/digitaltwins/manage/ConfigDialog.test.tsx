@@ -1,4 +1,4 @@
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import {
   act,
   fireEvent,
@@ -61,7 +61,7 @@ jest.mock('model/backend/digitalTwin', () => ({
   formatName: jest.fn().mockReturnValue('TestDigitalTwin'),
 }));
 
-jest.mock('util/digitalTwinAdapter', () => ({
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     DTName: 'TestDigitalTwin',
     DTAssets: {

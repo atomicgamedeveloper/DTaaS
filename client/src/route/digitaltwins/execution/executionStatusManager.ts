@@ -15,7 +15,7 @@ import {
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import { PIPELINE_POLL_INTERVAL } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { updatePipelineStateOnCompletion } from './executionStatusHandlers';
+import { updatePipelineStateOnCompletion } from 'route/digitaltwins/execution/executionStatusHandlers';
 
 export interface PipelineStatusParams {
   setButtonText: Dispatch<SetStateAction<string>>;

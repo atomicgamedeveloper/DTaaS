@@ -1,6 +1,6 @@
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import indexedDBService from 'database/digitalTwins';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 

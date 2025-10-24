@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import CustomSnackbar from 'route/digitaltwins/Snackbar';
+import CustomSnackbar from 'components/route/Snackbar';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store from 'store/store';
 import { hideSnackbar } from 'store/snackbar.slice';

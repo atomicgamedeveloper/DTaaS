@@ -8,7 +8,7 @@ import authReducer from 'store/auth.slice';
 import { mockUser } from 'test/__mocks__/global_mocks';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 
-jest.mock('route/digitaltwins/Snackbar', () => ({
+jest.mock('components/route/Snackbar', () => ({
   __esModule: true,
   default: () => <div data-testid="snackbar" />,
 }));

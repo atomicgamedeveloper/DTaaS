@@ -2,8 +2,14 @@
  * Interfaces, types, enums that are backend agnostic and work on Digital Twin concepts.
  */
 
-import { DigitalTwinPipelineState, ExecutionStatus } from './execution';
-import { ProjectId, BackendInterface } from './backendInterfaces';
+import {
+  DigitalTwinPipelineState,
+  ExecutionStatus,
+} from 'model/backend/interfaces/execution';
+import {
+  ProjectId,
+  BackendInterface,
+} from 'model/backend/interfaces/backendInterfaces';
 
 /**
  * Logical categories for Digital Twin files.

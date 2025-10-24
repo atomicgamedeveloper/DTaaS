@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
 import { DescriptionProvider } from 'model/backend/interfaces/sharedInterfaces';
 import LibraryAsset from 'model/backend/libraryAsset';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 
 interface DialogButtonProps {

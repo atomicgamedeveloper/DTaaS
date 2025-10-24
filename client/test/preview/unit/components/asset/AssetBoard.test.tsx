@@ -18,7 +18,7 @@ jest.mock('preview/store/assets.slice', () => ({
   ...jest.requireActual('preview/store/assets.slice'),
 }));
 
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   fetchAssets: jest.fn(),
 }));
 

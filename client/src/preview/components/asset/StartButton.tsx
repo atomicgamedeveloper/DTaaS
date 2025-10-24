@@ -5,7 +5,7 @@ import { handleStart } from 'route/digitaltwins/execution';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { selectExecutionHistoryByDTName } from 'store/selectors/executionHistory.selectors';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 interface StartButtonProps {

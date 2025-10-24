@@ -2,16 +2,14 @@ import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
-import DigitalTwin from '../../model/backend/digitalTwin';
-import { setAsset } from '../store/assets.slice';
-import LibraryAsset, {
-  getLibrarySubfolders,
-} from '../../model/backend/libraryAsset';
-import { getDTSubfolders } from './digitalTwinUtils';
-import { createGitlabInstance } from '../../model/backend/gitlab/gitlabFactory';
-import LibraryManager from '../../model/backend/libraryManager';
+import DigitalTwin from 'model/backend/digitalTwin';
+import { setAsset } from 'preview/store/assets.slice';
+import LibraryAsset, { getLibrarySubfolders } from 'model/backend/libraryAsset';
+import { getDTSubfolders } from 'model/backend/util/digitalTwinUtils';
+import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
+import LibraryManager from 'model/backend/libraryManager';
 
 const initialGitlabInstance = createGitlabInstance(
   sessionStorage.getItem('username') || '',

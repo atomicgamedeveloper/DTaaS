@@ -19,17 +19,17 @@ import {
 } from 'test/preview/__mocks__/global_mocks';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { storeResetAll } from '../../integration.testUtil';
+import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 
 jest.mock('database/digitalTwins');
 
-jest.mock('util/digitalTwinAdapter', () => {
+jest.mock('model/backend/util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );
   return adapterMocks.ADAPTER_MOCKS;
 });
-jest.mock('preview/util/init', () => {
+jest.mock('model/backend/util/init', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

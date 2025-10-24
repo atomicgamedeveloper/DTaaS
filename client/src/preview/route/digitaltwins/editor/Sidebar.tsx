@@ -9,12 +9,12 @@ import { getFilteredFileNames } from 'preview/util/fileUtils';
 import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import { selectDigitalTwinByName } from 'route/digitaltwins/execution';
 import DigitalTwin from 'model/backend/digitalTwin';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
-import { fetchData } from './sidebarFetchers';
-import { handleAddFileClick } from './sidebarFunctions';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
+import { fetchData } from 'preview/route/digitaltwins/editor/sidebarFetchers';
+import { handleAddFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
+import SidebarDialog from 'preview/route/digitaltwins/editor/SidebarDialog';
+import FileActionButtons from 'preview/route/digitaltwins/create/FileActionButtons';
 import { renderFileTreeItems, renderFileSection } from './sidebarRendering';
-import SidebarDialog from './SidebarDialog';
-import FileActionButtons from '../create/FileActionButtons';
 
 interface SidebarProps {
   name?: string;

@@ -4,7 +4,7 @@ import {
   setDigitalTwin,
   DigitalTwinData,
 } from 'model/backend/gitlab/state/digitalTwin.slice';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 

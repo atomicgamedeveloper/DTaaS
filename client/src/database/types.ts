@@ -1,4 +1,4 @@
-import { DTExecutionResult } from '../model/backend/gitlab/types/executionHistory';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
 /**
  * Represents the schema for the IndexedDB database

@@ -18,19 +18,19 @@ import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import LibraryAsset from 'model/backend/libraryAsset';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
-import { storeResetAll } from '../../integration.testUtil';
+import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
 
-jest.mock('util/digitalTwinAdapter', () => {
+jest.mock('model/backend/util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );
   return adapterMocks.ADAPTER_MOCKS;
 });
-jest.mock('preview/util/init', () => {
+jest.mock('model/backend/util/init', () => {
   const adapterMocks = jest.requireActual(
     'test/preview/__mocks__/adapterMocks',
   );

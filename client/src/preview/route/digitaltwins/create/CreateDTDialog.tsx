@@ -20,10 +20,10 @@ import DigitalTwin from 'model/backend/digitalTwin';
 import { showSnackbar } from 'store/snackbar.slice';
 import { addDefaultFiles, validateFiles } from 'preview/util/fileUtils';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import { initDigitalTwin } from 'preview/util/init';
+import { initDigitalTwin } from 'model/backend/util/init';
 import LibraryAsset from 'model/backend/libraryAsset';
 import useCart from 'preview/store/CartAccess';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import {
   setDigitalTwin,
   setShouldFetchDigitalTwins,

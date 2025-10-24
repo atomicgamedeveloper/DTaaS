@@ -10,7 +10,7 @@ import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import DigitalTwin from 'model/backend/digitalTwin';
 import LibraryAsset from 'model/backend/libraryAsset';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
-import { extractDataFromDigitalTwin } from 'util/digitalTwinAdapter';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 
 const setupStore = () => {
   const preSetItems: LibraryAsset[] = [mockLibraryAsset];

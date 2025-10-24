@@ -40,7 +40,7 @@ import {
 } from 'store/selectors/executionHistory.selectors';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { handleStop } from 'route/digitaltwins/execution/executionButtonHandlers';
-import { createDigitalTwinFromData } from 'util/digitalTwinAdapter';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';

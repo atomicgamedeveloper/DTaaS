@@ -15,7 +15,7 @@ import {
 import {
   fetchAndSetFileContent,
   fetchAndSetFileLibraryContent,
-} from './sidebarFetchers';
+} from 'preview/route/digitaltwins/editor/sidebarFetchers';
 
 export const handleFileClick = (
   fileName: string,

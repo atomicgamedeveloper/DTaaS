@@ -2,9 +2,9 @@ import * as React from 'react';
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import CustomSnackbar from 'route/digitaltwins/Snackbar';
+import CustomSnackbar from 'components/route/Snackbar';
 import ExecutionHistoryLoader from 'components/execution/ExecutionHistoryLoader';
-import WaitNavigateAndReload from './WaitAndNavigate';
+import WaitNavigateAndReload from 'route/auth/WaitAndNavigate';
 
 interface PrivateRouteProps {
   children: ReactNode;

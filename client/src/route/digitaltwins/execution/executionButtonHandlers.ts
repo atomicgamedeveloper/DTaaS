@@ -8,8 +8,8 @@ import {
   startPipeline,
   updatePipelineState,
   updatePipelineStateOnStop,
-} from './executionStatusHandlers';
-import { startPipelineStatusCheck } from './executionStatusManager';
+} from 'route/digitaltwins/execution/executionStatusHandlers';
+import { startPipelineStatusCheck } from 'route/digitaltwins/execution/executionStatusManager';
 
 export type PipelineHandlerDispatch = ThunkDispatch<
   RootState,

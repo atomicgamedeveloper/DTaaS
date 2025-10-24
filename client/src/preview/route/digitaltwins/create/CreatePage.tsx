@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Box, Button, TextField, Tooltip } from '@mui/material';
 import Editor from 'preview/route/digitaltwins/editor/Editor';
-import CreateDialogs from './CreateDialogs';
+import CreateDialogs from 'preview/route/digitaltwins/create/CreateDialogs';
 
 interface CreatePageProps {
   newDigitalTwinName: string;

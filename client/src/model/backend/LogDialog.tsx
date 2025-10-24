@@ -1,24 +1,24 @@
 import * as React from 'react';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-} from '@mui/material';
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { formatName } from 'model/backend/digitalTwin';
 import {
   fetchExecutionHistory,
   clearExecutionHistoryForDT,
 } from 'model/backend/gitlab/state/executionHistory.slice';
-import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { showSnackbar } from 'store/snackbar.slice';
 import { selectExecutionHistoryByDTName } from 'route/digitaltwins/execution';
+import UnifiedDialog from 'components/logDialog/UnifiedDialog';
+import DeleteAllConfirmationDialog from 'components/logDialog/DeleteAllConfirmationDialog';
 
 interface LogDialogProps {
   showLog: boolean;
@@ -26,47 +26,12 @@ interface LogDialogProps {
   name: string;
 }
 
-interface DeleteAllConfirmationDialogProps {
-  open: boolean;
-  dtName: string;
-  onClose: () => void;
-  onConfirm: () => void;
-}
-
-const DeleteAllConfirmationDialog: React.FC<
-  DeleteAllConfirmationDialogProps
-> = ({ open, dtName, onClose, onConfirm }) => (
-  <Dialog open={open} onClose={onClose}>
-    <DialogTitle>Confirm Clear All</DialogTitle>
-    <DialogContent>
-      <Typography>
-        Are you sure you want to delete <strong>all</strong> execution history
-        entries for <strong>{dtName}</strong>?
-        <br />
-        <br />
-        This action cannot be undone.
-      </Typography>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose} color="primary">
-        Cancel
-      </Button>
-      <Button onClick={onConfirm} color="error">
-        Delete All
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
-
-const handleCloseLog = (setShowLog: Dispatch<SetStateAction<boolean>>) => {
-  setShowLog(false);
-};
-
 function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
   const dispatch =
     useDispatch<ThunkDispatch<RootState, unknown, Action<string>>>();
 
-  const executions = useSelector(selectExecutionHistoryByDTName(name));
+  const executions = useSelector(selectExecutionHistoryByDTName(name)) ?? [];
+
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -76,60 +41,54 @@ function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
     }
   }, [dispatch, name, showLog]);
 
-  const handleViewLogs = () => {};
+  const handleCloseLog = useCallback(() => {
+    setDeleteAllDialogOpen(false);
+    setShowLog(false);
+  }, [setShowLog]);
 
-  const handleClearAllClick = () => {
+  const handleViewLogs = useCallback(() => {}, []);
+
+  const handleClearAllClick = useCallback(() => {
     if (executions.length === 0) {
-      setTimeout(() => {
-        dispatch(
-          showSnackbar({
-            message: 'Execution history is already empty',
-            severity: 'info',
-          }),
-        );
-      }, 100);
+      dispatch(
+        showSnackbar({
+          message: 'Execution history is already empty',
+          severity: 'info',
+        }),
+      );
       return;
     }
     setDeleteAllDialogOpen(true);
-  };
+  }, [dispatch, executions.length]);
 
-  const handleClearAllConfirm = () => {
+  const handleClearAllConfirm = useCallback(() => {
     dispatch(clearExecutionHistoryForDT(name));
     setDeleteAllDialogOpen(false);
-  };
+  }, [dispatch, name]);
 
-  const handleClearAllCancel = () => {
+  const handleClearAllCancel = useCallback(() => {
     setDeleteAllDialogOpen(false);
-  };
+  }, []);
 
-  const title = `${formatName(name)} Execution History`;
+  const title = useMemo(() => `${formatName(name)} Execution History`, [name]);
 
   return (
-    <Dialog
+    <UnifiedDialog
       open={showLog}
-      maxWidth="md"
-      fullWidth
-      onClose={() => handleCloseLog(setShowLog)}
-    >
-      <DeleteAllConfirmationDialog
-        open={deleteAllDialogOpen}
-        dtName={name}
-        onClose={handleClearAllCancel}
-        onConfirm={handleClearAllConfirm}
-      />
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
-        <ExecutionHistoryList dtName={name} onViewLogs={handleViewLogs} />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClearAllClick} color="error">
-          Clear All
-        </Button>
-        <Button onClick={() => handleCloseLog(setShowLog)} color="primary">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
+      title={title}
+      dtName={name}
+      onClose={handleCloseLog}
+      onClearAll={handleClearAllClick}
+      onViewLogs={handleViewLogs}
+      deleteAllDialog={
+        <DeleteAllConfirmationDialog
+          open={deleteAllDialogOpen}
+          dtName={formatName(name)}
+          onClose={handleClearAllCancel}
+          onConfirm={handleClearAllConfirm}
+        />
+      }
+    />
   );
 }
 

@@ -8,7 +8,7 @@ import DigitalTwin from 'model/backend/digitalTwin';
 import LibraryAsset from 'model/backend/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import { handleFileClick } from './sidebarFunctions';
+import { handleFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
 
 export const renderFileTreeItems = (
   label: string,

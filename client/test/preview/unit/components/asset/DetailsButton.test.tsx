@@ -17,7 +17,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('util/digitalTwinAdapter', () => ({
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
   createDigitalTwinFromData: jest.fn().mockResolvedValue({
     getFullDescription: jest.fn().mockResolvedValue('Mocked description'),
   }),
@@ -50,7 +50,7 @@ describe('DetailsButton', () => {
     const mockSetShowDetails = jest.fn();
 
     const { createDigitalTwinFromData } = jest.requireMock(
-      'util/digitalTwinAdapter',
+      'model/backend/util/digitalTwinAdapter',
     );
     createDigitalTwinFromData.mockResolvedValue({
       DTName: 'AssetName',

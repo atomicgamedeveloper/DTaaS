@@ -7,7 +7,7 @@ import {
   FileState,
   FileType,
 } from 'model/backend/interfaces/sharedInterfaces';
-import FileHandler from './fileHandler';
+import FileHandler from 'model/backend/fileHandler';
 
 export function getFilePath(
   file: FileState,

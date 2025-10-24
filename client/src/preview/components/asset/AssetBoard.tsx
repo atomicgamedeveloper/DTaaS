@@ -5,12 +5,15 @@ import {
   deleteAsset,
   selectAssetsByTypeAndPrivacy,
 } from 'preview/store/assets.slice';
-import { fetchDigitalTwins } from 'preview/util/init';
+import { fetchDigitalTwins } from 'model/backend/util/init';
 import { setShouldFetchDigitalTwins } from 'model/backend/gitlab/state/digitalTwin.slice';
 import { RootState } from 'store/store';
-import Filter from './Filter';
-import { Asset } from '../../../model/backend/Asset';
-import { AssetCardExecute, AssetCardManage } from './AssetCard';
+import Filter from 'preview/components/asset/Filter';
+import { Asset } from 'model/backend/Asset';
+import {
+  AssetCardExecute,
+  AssetCardManage,
+} from 'preview/components/asset/AssetCard';
 
 const outerGridContainerProps = {
   container: true,
