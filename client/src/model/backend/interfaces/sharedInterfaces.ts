@@ -10,6 +10,7 @@ import {
   ProjectId,
   BackendInterface,
 } from 'model/backend/interfaces/backendInterfaces';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
 /**
  * Logical categories for Digital Twin files.
@@ -384,4 +385,32 @@ export interface LibraryManagerInterface
    * The file handler instance for managing files related to the library asset
    */
   fileHandler: FileHandlerInterface;
+}
+
+// Snackbar interfaces
+export type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
+
+export interface ShowNotificationPayload {
+  message: string;
+  severity: NotificationSeverity;
+}
+
+export interface NotificationActions {
+  showNotification: (payload: ShowNotificationPayload) => {
+    type: string;
+    payload: ShowNotificationPayload;
+  };
+  hideNotification: () => { type: string };
+}
+
+// indexedDBService interface
+export interface IExecutionHistoryStorage {
+  init(): Promise<void>;
+  add(entry: DTExecutionResult): Promise<string>;
+  update(entry: DTExecutionResult): Promise<void>;
+  getById(id: string): Promise<DTExecutionResult | null>;
+  getByDTName(dtName: string): Promise<DTExecutionResult[]>;
+  getAll(): Promise<DTExecutionResult[]>;
+  delete(id: string): Promise<void>;
+  deleteByDTName(dtName: string): Promise<void>;
 }

@@ -175,7 +175,7 @@ export const handlePipelineCompletion = async (
     );
   } else {
     const { fetchLogsAndUpdateExecution } = await import(
-      './executionStatusHandlers'
+      'route/digitaltwins/execution/executionStatusHandlers'
     );
 
     const logsUpdated = await fetchLogsAndUpdateExecution(

@@ -1,6 +1,8 @@
 import { combineReducers, Middleware } from 'redux';
 import { configureStore } from '@reduxjs/toolkit';
-import executionHistorySlice from 'model/backend/gitlab/state/executionHistory.slice';
+import executionHistorySlice, {
+  setStorageService,
+} from 'model/backend/gitlab/state/executionHistory.slice';
 import digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import snackbarSlice from 'store/snackbar.slice';
@@ -10,6 +12,9 @@ import cartSlice from 'preview/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
+import indexedDBService from 'database/digitalTwins';
+
+setStorageService(indexedDBService);
 
 const loadSettings = () => {
   const serializedSettings = localStorage.getItem('settings');

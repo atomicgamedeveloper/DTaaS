@@ -3,8 +3,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import DTaaSMenu from './Menu';
-import Footer from './Footer';
+import DTaaSMenu from 'page/Menu';
+import Footer from 'page/Footer';
 
 function MenuLayout(props: { children: React.ReactNode }) {
   return (

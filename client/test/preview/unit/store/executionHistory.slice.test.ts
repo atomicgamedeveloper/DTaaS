@@ -1,3 +1,4 @@
+// executionHistory.slice.test.ts
 import executionHistoryReducer, {
   setLoading,
   setError,
@@ -12,6 +13,7 @@ import executionHistoryReducer, {
   clearEntries,
   fetchExecutionHistory,
   removeExecution,
+  setStorageService,
 } from 'model/backend/gitlab/state/executionHistory.slice';
 import {
   selectExecutionHistoryEntries,
@@ -26,18 +28,19 @@ import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { configureStore } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
 
-// Mock the IndexedDB service
-jest.mock('database/digitalTwins', () => ({
-  __esModule: true,
-  default: {
-    getByDTName: jest.fn(),
-    delete: jest.fn(),
-    getAll: jest.fn(),
-    add: jest.fn(),
-    update: jest.fn(),
-  },
-}));
+// Create a mock storage service
+const createMockStorageService = (): jest.Mocked<IExecutionHistoryStorage> => ({
+  init: jest.fn().mockResolvedValue(undefined),
+  add: jest.fn().mockResolvedValue('mock-id'),
+  update: jest.fn().mockResolvedValue(undefined),
+  getById: jest.fn().mockResolvedValue(null),
+  getByDTName: jest.fn().mockResolvedValue([]),
+  getAll: jest.fn().mockResolvedValue([]),
+  delete: jest.fn().mockResolvedValue(undefined),
+  deleteByDTName: jest.fn().mockResolvedValue(undefined),
+});
 
 const createTestStore = () =>
   configureStore({
@@ -65,9 +68,12 @@ type TestStore = ReturnType<typeof createTestStore>;
 
 describe('executionHistory slice', () => {
   let store: TestStore;
+  let mockStorageService: jest.Mocked<IExecutionHistoryStorage>;
 
   beforeEach(() => {
     store = createTestStore();
+    mockStorageService = createMockStorageService();
+    setStorageService(mockStorageService);
   });
 
   describe('reducers', () => {
@@ -428,14 +434,6 @@ describe('executionHistory slice', () => {
   });
 
   describe('async thunks', () => {
-    let mockIndexedDBService: jest.Mocked<
-      typeof import('database/digitalTwins').default
-    >;
-
-    beforeEach(() => {
-      mockIndexedDBService = jest.requireMock('database/digitalTwins').default;
-    });
-
     it('should handle fetchExecutionHistory success', async () => {
       const mockEntries = [
         {
@@ -448,7 +446,7 @@ describe('executionHistory slice', () => {
         },
       ];
 
-      mockIndexedDBService.getByDTName.mockResolvedValue(mockEntries);
+      mockStorageService.getByDTName.mockResolvedValue(mockEntries);
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         fetchExecutionHistory('test-dt'),
@@ -458,13 +456,12 @@ describe('executionHistory slice', () => {
       expect(state.entries).toEqual(mockEntries);
       expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
+      expect(mockStorageService.getByDTName).toHaveBeenCalledWith('test-dt');
     });
 
     it('should handle fetchExecutionHistory error', async () => {
       const errorMessage = 'Database error';
-      mockIndexedDBService.getByDTName.mockRejectedValue(
-        new Error(errorMessage),
-      );
+      mockStorageService.getByDTName.mockRejectedValue(new Error(errorMessage));
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         fetchExecutionHistory('test-dt'),
@@ -488,7 +485,7 @@ describe('executionHistory slice', () => {
       };
 
       store.dispatch(addExecutionHistoryEntry(entry));
-      mockIndexedDBService.delete.mockResolvedValue(undefined);
+      mockStorageService.delete.mockResolvedValue(undefined);
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         removeExecution('1'),
@@ -497,6 +494,7 @@ describe('executionHistory slice', () => {
       const state = store.getState().executionHistory;
       expect(state.entries.find((e) => e.id === '1')).toBeUndefined();
       expect(state.error).toBeNull();
+      expect(mockStorageService.delete).toHaveBeenCalledWith('1');
     });
 
     it('should handle removeExecution error', async () => {
@@ -511,7 +509,7 @@ describe('executionHistory slice', () => {
 
       store.dispatch(addExecutionHistoryEntry(entry));
       const errorMessage = 'Delete failed';
-      mockIndexedDBService.delete.mockRejectedValue(new Error(errorMessage));
+      mockStorageService.delete.mockRejectedValue(new Error(errorMessage));
 
       await (store.dispatch as (action: unknown) => Promise<void>)(
         removeExecution('1'),

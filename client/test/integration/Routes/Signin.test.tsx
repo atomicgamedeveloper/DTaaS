@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { setupIntegrationTest } from 'test/integration/integration.testUtil';
-import { testPublicLayout } from './routes.testUtil';
+import { testPublicLayout } from 'test/integration/Routes/routes.testUtil';
 
 // Bypass the config verification
 global.fetch = jest.fn().mockResolvedValue({

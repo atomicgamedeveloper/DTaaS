@@ -4,8 +4,8 @@ import Box from '@mui/material/Box';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeMenu, openMenu } from 'store/menu.slice';
 import { RootState } from 'store/store';
-import MenuToolbar from './MenuToolbar';
-import DrawerComponent from './DrawerComponent';
+import MenuToolbar from 'page/MenuToolbar';
+import DrawerComponent from 'page/DrawerComponent';
 
 const drawerwidth = 240;
 

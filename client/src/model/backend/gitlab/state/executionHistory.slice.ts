@@ -9,14 +9,14 @@ import {
   JobLog,
 } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
-import indexedDBService from 'database/digitalTwins';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { showSnackbar } from 'store/snackbar.slice';
+import { ShowNotificationPayload , IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleString();
 };
+
 const formatName = (name: string) =>
   name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
 
@@ -42,6 +42,12 @@ const initialState: ExecutionHistoryState = {
   selectedExecutionId: null,
   loading: false,
   error: null,
+};
+
+let storageService: IExecutionHistoryStorage;
+
+export const setStorageService = (service: IExecutionHistoryStorage) => {
+  storageService = service;
 };
 
 const executionHistorySlice = createSlice({
@@ -136,7 +142,7 @@ export const fetchExecutionHistory =
   async (dispatch) => {
     dispatch(setLoading(true));
     try {
-      const entries = await indexedDBService.getByDTName(dtName);
+      const entries = await storageService.getByDTName(dtName);
       dispatch(setExecutionHistoryEntriesForDT({ dtName, entries }));
 
       dispatch(checkRunningExecutions());
@@ -152,7 +158,7 @@ export const fetchExecutionHistory =
 export const fetchAllExecutionHistory = (): AppThunk => async (dispatch) => {
   dispatch(setLoading(true));
   try {
-    const entries = await indexedDBService.getAll();
+    const entries = await storageService.getAll();
     dispatch(setExecutionHistoryEntries(entries));
 
     dispatch(checkRunningExecutions());
@@ -170,7 +176,7 @@ export const addExecution =
   async (dispatch) => {
     dispatch(setLoading(true));
     try {
-      await indexedDBService.add(entry);
+      await storageService.add(entry);
       dispatch(addExecutionHistoryEntry(entry));
       dispatch(setError(null));
     } catch (error) {
@@ -185,7 +191,7 @@ export const updateExecution =
   async (dispatch) => {
     dispatch(setLoading(true));
     try {
-      await indexedDBService.update(entry);
+      await storageService.update(entry);
       dispatch(updateExecutionHistoryEntry(entry));
       dispatch(setError(null));
     } catch (error) {
@@ -210,14 +216,15 @@ export const removeExecution =
     dispatch(removeExecutionHistoryEntry(id));
 
     try {
-      await indexedDBService.delete(id);
+      await storageService.delete(id);
       dispatch(setError(null));
-      dispatch(
-        showSnackbar({
+      dispatch({
+        type: 'snackbar/showSnackbar',
+        payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
           severity: 'success',
-        }),
-      );
+        } as ShowNotificationPayload,
+      });
     } catch (error) {
       if (execution) {
         dispatch(addExecutionHistoryEntry(execution));
@@ -230,16 +237,17 @@ export const clearExecutionHistoryForDT =
   (dtName: string): AppThunk =>
   async (dispatch) => {
     try {
-      await indexedDBService.deleteByDTName(dtName);
+      await storageService.deleteByDTName(dtName);
 
       dispatch(removeEntriesForDT(dtName));
       dispatch(setError(null));
-      dispatch(
-        showSnackbar({
+      dispatch({
+        type: 'snackbar/showSnackbar',
+        payload: {
           message: `Deleted all entries from ${formatName(dtName)} execution history`,
           severity: 'success',
-        }),
-      );
+        } as ShowNotificationPayload,
+      });
     } catch (error) {
       dispatch(setError(`Failed to clear execution history: ${error}`));
     }

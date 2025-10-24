@@ -8,22 +8,29 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 export const mapGitlabStatusToExecutionStatus = (
   gitlabStatus: string,
 ): ExecutionStatus => {
+  let status: ExecutionStatus;
   switch (gitlabStatus.toLowerCase()) {
     case 'success':
-      return ExecutionStatus.COMPLETED;
+      status = ExecutionStatus.COMPLETED;
+      break;
     case 'failed':
-      return ExecutionStatus.FAILED;
+      status = ExecutionStatus.FAILED;
+      break;
     case 'running':
     case 'pending':
-      return ExecutionStatus.RUNNING;
+      status = ExecutionStatus.RUNNING;
+      break;
     case 'canceled':
     case 'cancelled':
-      return ExecutionStatus.CANCELED;
+      status = ExecutionStatus.CANCELED;
+      break;
     case 'skipped':
-      return ExecutionStatus.FAILED; // Treat skipped as failed
+      status = ExecutionStatus.FAILED; // Treat skipped as failed
+      break;
     default:
-      return ExecutionStatus.RUNNING; // Default to running for unknown statuses
+      status = ExecutionStatus.RUNNING; // Default to running for unknown statuses
   }
+  return status;
 };
 
 /**
@@ -80,23 +87,31 @@ export const isFinishedStatus = (status: string): boolean =>
  * @returns Human-readable status description
  */
 export const getStatusDescription = (status: string): string => {
+  let description: string;
   switch (status.toLowerCase()) {
     case 'success':
-      return 'Pipeline completed successfully';
+      description = 'Pipeline completed successfully';
+      break;
     case 'failed':
-      return 'Pipeline failed';
+      description = 'Pipeline failed';
+      break;
     case 'running':
-      return 'Pipeline is running';
+      description = 'Pipeline is running';
+      break;
     case 'pending':
-      return 'Pipeline is pending';
+      description = 'Pipeline is pending';
+      break;
     case 'canceled':
     case 'cancelled':
-      return 'Pipeline was canceled';
+      description = 'Pipeline was canceled';
+      break;
     case 'skipped':
-      return 'Pipeline was skipped';
+      description = 'Pipeline was skipped';
+      break;
     default:
-      return `Pipeline status: ${status}`;
+      description = `Pipeline status: ${status}`;
   }
+  return description;
 };
 
 /**

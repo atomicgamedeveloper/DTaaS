@@ -5,7 +5,7 @@ import Iframe from 'components/Iframe';
 import { TabData } from 'components/tab/subcomponents/TabRender';
 import { useURLforDT } from 'util/envUtil';
 import { Typography } from '@mui/material';
-import tabs from './DigitalTwinTabData';
+import tabs from 'route/digitaltwins/DigitalTwinTabData';
 
 function DTContent() {
   const DTurl = useURLforDT();

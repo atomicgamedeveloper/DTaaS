@@ -13,7 +13,7 @@ import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
   handleCloseFileNameDialog,
   handleFileSubmit,
-} from './sidebarFunctions';
+} from 'preview/route/digitaltwins/editor/sidebarFunctions';
 
 interface SidebarDialogProps {
   isOpen: boolean;

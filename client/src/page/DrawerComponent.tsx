@@ -3,9 +3,9 @@ import { styled, Theme, CSSObject } from '@mui/material/styles';
 import MuiDrawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
-import { transition } from './MenuToolbar';
-import MenuItems from './MenuItems';
-import DrawerHeaderComponent from './DrawerHeaderComponent';
+import { transition } from 'page/MenuToolbar';
+import MenuItems from 'page/MenuItems';
+import DrawerHeaderComponent from 'page/DrawerHeaderComponent';
 
 const drawerwidth = 240;
 

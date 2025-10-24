@@ -6,7 +6,7 @@ import { useURLforLIB } from 'util/envUtil';
 import { Typography } from '@mui/material';
 import { useAuth } from 'react-oidc-context';
 import { useGetAndSetUsername } from 'util/auth/Authentication';
-import { assetType, scope } from './LibraryTabData';
+import { assetType, scope } from 'route/library/LibraryTabData';
 
 export function createTabs() {
   return assetType.map((tab) => ({

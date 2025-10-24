@@ -12,8 +12,8 @@ import {
   ProjectSummary,
   JobSummary,
 } from 'model/backend/interfaces/backendInterfaces';
-import { Pipeline } from '../interfaces/execution';
-import { getBranchName } from './digitalTwinConfig/settingsUtility';
+import { Pipeline } from 'model/backend/interfaces/execution';
+import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 export class GitlabAPI implements BackendAPI {
   public client: InstanceType<typeof Gitlab>;

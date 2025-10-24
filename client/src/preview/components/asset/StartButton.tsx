@@ -7,6 +7,7 @@ import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { selectExecutionHistoryByDTName } from 'store/selectors/executionHistory.selectors';
 import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { DEBOUNCE_TIME } from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 interface StartButtonProps {
   assetName: string;
@@ -23,7 +24,6 @@ function StartButton({
     useSelector(selectExecutionHistoryByDTName(assetName)) || [];
 
   const [isDebouncing, setIsDebouncing] = useState(false);
-  const DEBOUNCE_TIME = 250;
 
   const runningExecutions = Array.isArray(executions)
     ? executions.filter(

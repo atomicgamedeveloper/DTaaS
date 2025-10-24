@@ -8,8 +8,8 @@ import { TabData } from 'components/tab/subcomponents/TabRender';
 import AssetBoard from 'preview/components/asset/AssetBoard';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { addOrUpdateFile } from 'preview/store/file.slice';
-import tabs from './DigitalTwinTabDataPreview';
-import CreatePage from './create/CreatePage';
+import tabs from 'preview/route/digitaltwins/DigitalTwinTabDataPreview';
+import CreatePage from 'preview/route/digitaltwins/create/CreatePage';
 
 interface DTTabProps {
   newDigitalTwinName: string;

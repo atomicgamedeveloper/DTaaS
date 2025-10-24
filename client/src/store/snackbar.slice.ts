@@ -1,5 +1,6 @@
 import { AlertColor } from '@mui/material';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 export interface SnackbarState {
   open: boolean;
@@ -17,13 +18,10 @@ const snackbarSlice = createSlice({
   name: 'snackbar',
   initialState,
   reducers: {
-    showSnackbar(
-      state,
-      action: PayloadAction<{ message: string; severity: AlertColor }>,
-    ) {
+    showSnackbar(state, action: PayloadAction<ShowNotificationPayload>) {
       state.open = true;
       state.message = action.payload.message;
-      state.severity = action.payload.severity;
+      state.severity = action.payload.severity as AlertColor;
     },
     hideSnackbar(state) {
       state.open = false;

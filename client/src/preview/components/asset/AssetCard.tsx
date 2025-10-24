@@ -20,7 +20,7 @@ import { Asset } from 'model/backend/Asset';
 import ReconfigureButton from 'preview/components/asset/ReconfigureButton';
 import DeleteButton from 'preview/components/asset/DeleteButton';
 import AddToCartButton from 'preview/components/asset/AddToCartButton';
-import DetailsButton from './DetailsButton';
+import DetailsButton from 'preview/components/asset/DetailsButton';
 
 interface AssetCardProps {
   asset: Asset;
