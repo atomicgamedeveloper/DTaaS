@@ -93,8 +93,8 @@ describe('HistoryButton Integration Test', () => {
   });
 
   it('shows badge with execution count when executions exist', async () => {
-    await dispatchAddExecHistoryEntry(store,{});
-    await dispatchAddExecHistoryEntry(store,{
+    await dispatchAddExecHistoryEntry(store, {});
+    await dispatchAddExecHistoryEntry(store, {
       id: '2',
       pipelineId: 456,
       status: ExecutionStatus.RUNNING,
@@ -104,20 +104,20 @@ describe('HistoryButton Integration Test', () => {
   });
 
   it('enables button when historyButtonDisabled is true but executions exist', async () => {
-    await dispatchAddExecHistoryEntry(store,{});
+    await dispatchAddExecHistoryEntry(store, {});
     renderHistoryButton(jest.fn(), true);
     const historyButton = getHistoryButtonElement();
     expect(historyButton).toBeEnabled();
   });
 
   it('filters executions by assetName', async () => {
-    await dispatchAddExecHistoryEntry(store,{});
-    await dispatchAddExecHistoryEntry(store,{
+    await dispatchAddExecHistoryEntry(store, {});
+    await dispatchAddExecHistoryEntry(store, {
       id: '2',
       dtName: 'different-asset',
       pipelineId: 456,
     });
-    await dispatchAddExecHistoryEntry(store,{
+    await dispatchAddExecHistoryEntry(store, {
       id: '3',
       pipelineId: 789,
       status: ExecutionStatus.RUNNING,

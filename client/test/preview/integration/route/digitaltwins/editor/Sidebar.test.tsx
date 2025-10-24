@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 const ASSET_NAME = 'Asset 1';
 const descriptionFiles = ['file1.md', 'file2.md'];
 const configFiles = ['config1.json', 'config2.json'];
@@ -103,7 +104,7 @@ describe('Sidebar', () => {
     digitalTwin.getLifecycleFiles = jest
       .fn()
       .mockResolvedValue(digitalTwin.lifecycleFiles);
-      digitalTwin.assetFiles = [];
+    digitalTwin.assetFiles = [];
   };
 
   const renderSidebar = async (name: string, tab: string) => {
@@ -161,9 +162,7 @@ describe('Sidebar', () => {
     const mockAsset = {
       ...mockLibraryAsset,
       configFiles: ['config1.json'],
-      getConfigFiles: jest.fn().mockImplementation(async () => {
-        return Promise.resolve();
-      }),
+      getConfigFiles: jest.fn().mockImplementation(async () => Promise.resolve()),
     };
 
     store.dispatch(addToCart(mockAsset));
@@ -217,15 +216,16 @@ describe('Sidebar', () => {
   });
 
   it('should open the sidebar dialog when a new file is added', async () => {
-    jest.spyOn(SidebarFunctions, 'handleAddFileClick')
+    jest
+      .spyOn(SidebarFunctions, 'handleAddFileClick')
       .mockImplementation((setIsFileNameDialogOpen) => {
         setIsFileNameDialogOpen(true);
       });
 
     await renderSidebar(ASSET_NAME, 'create');
-    
+
     const addFileButton = screen.getByText('Add new file');
-    
+
     await act(async () => {
       fireEvent.click(addFileButton);
     });
@@ -237,7 +237,7 @@ describe('Sidebar', () => {
 
   it('renders file section when no digital twin is selected', async () => {
     await renderSidebar('', 'create');
-    
+
     await waitFor(() => {
       expect(screen.getByText('Description')).toBeInTheDocument();
       expect(screen.getByText('Configuration')).toBeInTheDocument();

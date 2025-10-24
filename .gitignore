@@ -183,3 +183,6 @@ credentials.csv
 deploy/services/certs/*
 !deploy/services/certs/services.foo.com
 
+# qlty config
+.qlty
+!.qlty/qlty.toml
