@@ -45,6 +45,10 @@ describe('Integration tests for FilesResolver', () => {
     filesResolver = module.get<FilesResolver>(FilesResolver);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   const modes = ['local'];
 
   for (const mode of modes) {
