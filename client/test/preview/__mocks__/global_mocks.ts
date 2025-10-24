@@ -2,18 +2,19 @@ import DigitalTwin from 'model/backend/digitalTwin';
 import FileHandler from 'model/backend/fileHandler';
 import DTAssets from 'model/backend/DTAssets';
 import LibraryManager from 'model/backend/libraryManager';
-import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import { mockBackendInstance as backend } from 'test/__mocks__/global_mocks';
 import 'test/preview/__mocks__/constants.mock';
 import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
 
-export const mockAppURL = 'https://example.com/';
-export const mockURLforDT = 'https://example.com/URL_DT';
-export const mockURLforLIB = 'https://example.com/URL_LIB';
-export const mockURLforWorkbench = 'https://example.com/URL_WORKBENCH';
-export const mockClientID = 'mockedClientID';
-export const mockAuthority = 'https://example.com/AUTHORITY';
-export const mockRedirectURI = 'https://example.com/REDIRECT_URI';
-export const mockLogoutRedirectURI = 'https://example.com/LOGOUT_REDIRECT_URI';
+const createMockURL = (path: string) => `https://example.com/${path}`;
+
+export const mockAppURL = createMockURL('');
+export const mockURLforDT = createMockURL('URL_DT');
+export const mockURLforLIB = createMockURL('URL_LIB');
+export const mockURLforWorkbench = createMockURL('URL_WORKBENCH');
+export const mockAuthority = createMockURL('AUTHORITY');
+export const mockRedirectURI = createMockURL('REDIRECT_URI');
+export const mockLogoutRedirectURI = createMockURL('LOGOUT_REDIRECT_URI');
 export const mockGitLabScopes = 'example scopes';
 
 export type mockUserType = {
@@ -56,23 +57,37 @@ export type mockGitlabInstanceType = {
   getPipelineStatus: jest.Mock;
 };
 
+const mockCommonFileFunctions = {
+  getFileContent: jest.fn(),
+  getFileNames: jest.fn(),
+};
+
+const mockCommonFileDataProviders = {
+  getDescription: jest.fn(),
+  getFullDescription: jest.fn(),
+  getConfigFiles: jest.fn(),
+};
+
 export const mockFileHandler: FileHandler = {
   name: 'mockedName',
-  backend: mockBackendInstance,
+  backend,
   createFile: jest.fn(),
   updateFile: jest.fn(),
   deleteDT: jest.fn(),
-  getFileContent: jest.fn(),
-  getFileNames: jest.fn(),
+  ...mockCommonFileFunctions,
   getLibraryFileNames: jest.fn(),
   getLibraryConfigFileNames: jest.fn(),
   getFolders: jest.fn(),
 };
 
+const mockCommonDTDependencies = {
+  backend,
+  fileHandler: mockFileHandler,
+};
+
 export const mockDTAssets: DTAssets = {
   DTName: 'mockedDTName',
-  backend: mockBackendInstance,
-  fileHandler: mockFileHandler,
+  ...mockCommonDTDependencies,
   createFiles: jest.fn(),
   getFilesFromAsset: jest.fn(),
   updateFileContent: jest.fn(),
@@ -80,26 +95,25 @@ export const mockDTAssets: DTAssets = {
   appendTriggerToPipeline: jest.fn(),
   removeTriggerFromPipeline: jest.fn(),
   delete: jest.fn(),
-  getFileContent: jest.fn(),
+  ...mockCommonFileFunctions,
   getLibraryFileContent: jest.fn(),
-  getFileNames: jest.fn(),
   getLibraryConfigFileNames: jest.fn(),
   getFolders: jest.fn(),
 };
 
 export const mockLibraryManager: LibraryManager = {
   assetName: 'mockedAssetName',
-  backend: mockBackendInstance,
-  fileHandler: mockFileHandler,
-  getFileContent: jest.fn(),
-  getFileNames: jest.fn(),
+  ...mockCommonDTDependencies,
+  ...mockCommonFileFunctions,
 };
+
+const createAsyncMock = <T>(value: T) => jest.fn().mockResolvedValue(value);
 
 export const mockDigitalTwin: DigitalTwin = {
   DTName: 'mockedDTName',
   description: 'mockedDescription',
   fullDescription: 'mockedFullDescription',
-  backend: mockBackendInstance,
+  backend: mockCommonDTDependencies.backend,
   DTAssets: mockDTAssets,
   pipelineId: 1,
   lastExecutionStatus: 'mockedStatus',
@@ -114,16 +128,18 @@ export const mockDigitalTwin: DigitalTwin = {
   ],
   currentExecutionId: 'test-execution-id',
 
-  getDescription: jest.fn(),
-  getFullDescription: jest.fn(),
+  // Override getConfigFiles to return something
+  ...{
+    ...mockCommonFileDataProviders,
+    getConfigFiles: createAsyncMock(['configFile']),
+  },
   triggerPipeline: jest.fn(),
-  execute: jest.fn().mockResolvedValue(123),
+  execute: createAsyncMock(123),
   stop: jest.fn(),
-  create: jest.fn().mockResolvedValue('Success'),
+  create: createAsyncMock('Success'),
   delete: jest.fn(),
-  getDescriptionFiles: jest.fn().mockResolvedValue(['descriptionFile']),
-  getLifecycleFiles: jest.fn().mockResolvedValue(['lifecycleFile']),
-  getConfigFiles: jest.fn().mockResolvedValue(['configFile']),
+  getDescriptionFiles: createAsyncMock(['descriptionFile']),
+  getLifecycleFiles: createAsyncMock(['lifecycleFile']),
   prepareAllAssetFiles: jest.fn(),
   getAssetFiles: jest.fn(),
   updateExecutionStatus: jest.fn(),
@@ -137,15 +153,13 @@ export const mockLibraryAsset = {
   path: 'path',
   type: 'Digital Twins',
   isPrivate: true,
-  backend: mockBackendInstance,
+  backend: mockCommonDTDependencies.backend,
   description: 'description',
   fullDescription: 'fullDescription',
   libraryManager: mockLibraryManager,
   configFiles: [],
 
-  getDescription: jest.fn(),
-  getFullDescription: jest.fn(),
-  getConfigFiles: jest.fn(),
+  ...mockCommonFileDataProviders,
 };
 
 // Mock for execution history entries
@@ -160,19 +174,19 @@ export const mockExecutionHistoryEntry = {
 
 // Mock for indexedDBService
 export const mockIndexedDBService = {
-  init: jest.fn().mockResolvedValue(undefined),
+  init: createAsyncMock(undefined),
   add: jest.fn().mockImplementation((entry) => Promise.resolve(entry.id)),
-  update: jest.fn().mockResolvedValue(undefined),
-  getByDTName: jest.fn().mockResolvedValue([]),
-  getAll: jest.fn().mockResolvedValue([]),
+  update: createAsyncMock(undefined),
+  getByDTName: createAsyncMock([]),
+  getAll: createAsyncMock([]),
   getById: jest.fn().mockImplementation((id) =>
     Promise.resolve({
       ...mockExecutionHistoryEntry,
       id,
     }),
   ),
-  delete: jest.fn().mockResolvedValue(undefined),
-  deleteByDTName: jest.fn().mockResolvedValue(undefined),
+  delete: createAsyncMock(undefined),
+  deleteByDTName: createAsyncMock(undefined),
 };
 
 // Helper function to reset all indexedDBService mocks
@@ -221,7 +235,7 @@ Object.defineProperty(window, 'sessionStorage', {
 // Mock the initDigitalTwin function
 jest.mock('preview/util/init', () => ({
   ...jest.requireActual('preview/util/init'),
-  initDigitalTwin: jest.fn().mockResolvedValue(mockDigitalTwin),
+  initDigitalTwin: createAsyncMock(mockDigitalTwin),
   fetchLibraryAssets: jest.fn(),
   fetchDigitalTwins: jest.fn(),
 }));

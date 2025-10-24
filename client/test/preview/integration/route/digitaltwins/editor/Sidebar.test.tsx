@@ -1,3 +1,29 @@
+const ASSET_NAME = 'Asset 1';
+const descriptionFiles = ['file1.md', 'file2.md'];
+const configFiles = ['config1.json', 'config2.json'];
+const lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt'];
+
+const digitalTwinDataMock = {
+  DTName: ASSET_NAME,
+  descriptionFiles,
+  configFiles,
+  lifecycleFiles,
+  assetFiles: [],
+  getDescriptionFiles: jest.fn().mockResolvedValue(descriptionFiles),
+  getConfigFiles: jest.fn().mockResolvedValue(configFiles),
+  getLifecycleFiles: jest.fn().mockResolvedValue(lifecycleFiles),
+  DTAssets: {
+    getFileContent: jest.fn().mockResolvedValue('mock file content'),
+  },
+};
+
+jest.mock('preview/route/digitaltwins/editor/sidebarFetchers', () => ({
+  fetchData: jest.fn().mockResolvedValue(undefined),
+}));
+
+const setOpenDeleteFileDialogMock = jest.fn();
+const setOpenChangeFileNameDialogMock = jest.fn();
+
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
@@ -22,26 +48,12 @@ import DigitalTwin from 'model/backend/digitalTwin';
 import * as SidebarFunctions from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import cartSlice, { addToCart } from 'preview/store/cart.slice';
 import '@testing-library/jest-dom';
+import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 
 jest.mock('util/digitalTwinAdapter', () => ({
-  createDigitalTwinFromData: jest.fn().mockResolvedValue({
-    DTName: 'Asset 1',
-    descriptionFiles: ['file1.md', 'file2.md'],
-    configFiles: ['config1.json', 'config2.json'],
-    lifecycleFiles: ['lifecycle1.txt', 'lifecycle2.txt'],
-    getDescriptionFiles: jest.fn().mockResolvedValue(['file1.md', 'file2.md']),
-    getConfigFiles: jest
-      .fn()
-      .mockResolvedValue(['config1.json', 'config2.json']),
-    getLifecycleFiles: jest
-      .fn()
-      .mockResolvedValue(['lifecycle1.txt', 'lifecycle2.txt']),
-    DTAssets: {
-      getFileContent: jest.fn().mockResolvedValue('mock file content'),
-    },
-  }),
+  createDigitalTwinFromData: jest.fn().mockResolvedValue(digitalTwinDataMock),
   extractDataFromDigitalTwin: jest.fn().mockReturnValue({
-    DTName: 'Asset 1',
+    DTName: ASSET_NAME,
     description: 'Test Digital Twin Description',
     jobLogs: [],
     pipelineCompleted: false,
@@ -55,22 +67,7 @@ jest.mock('util/digitalTwinAdapter', () => ({
 
 // Mock the init module to prevent real GitLab initialization
 jest.mock('preview/util/init', () => ({
-  initDigitalTwin: jest.fn().mockResolvedValue({
-    DTName: 'Asset 1',
-    descriptionFiles: ['file1.md', 'file2.md'],
-    configFiles: ['config1.json', 'config2.json'],
-    lifecycleFiles: ['lifecycle1.txt', 'lifecycle2.txt'],
-    getDescriptionFiles: jest.fn().mockResolvedValue(['file1.md', 'file2.md']),
-    getConfigFiles: jest
-      .fn()
-      .mockResolvedValue(['config1.json', 'config2.json']),
-    getLifecycleFiles: jest
-      .fn()
-      .mockResolvedValue(['lifecycle1.txt', 'lifecycle2.txt']),
-    DTAssets: {
-      getFileContent: jest.fn().mockResolvedValue('mock file content'),
-    },
-  }),
+  initDigitalTwin: jest.fn().mockResolvedValue(digitalTwinDataMock),
 }));
 
 jest.mock('model/backend/gitlab/instance', () => ({
@@ -94,9 +91,9 @@ describe('Sidebar', () => {
 
   const setupDigitalTwin = (assetName: string) => {
     digitalTwin = new DigitalTwin(assetName, mockBackendInstance);
-    digitalTwin.descriptionFiles = ['file1.md', 'file2.md'];
-    digitalTwin.configFiles = ['config1.json', 'config2.json'];
-    digitalTwin.lifecycleFiles = ['lifecycle1.txt', 'lifecycle2.txt'];
+    digitalTwin.descriptionFiles = descriptionFiles;
+    digitalTwin.configFiles = configFiles;
+    digitalTwin.lifecycleFiles = lifecycleFiles;
     digitalTwin.getDescriptionFiles = jest
       .fn()
       .mockResolvedValue(digitalTwin.descriptionFiles);
@@ -106,14 +103,54 @@ describe('Sidebar', () => {
     digitalTwin.getLifecycleFiles = jest
       .fn()
       .mockResolvedValue(digitalTwin.lifecycleFiles);
+      digitalTwin.assetFiles = [];
+  };
+
+  const renderSidebar = async (name: string, tab: string) => {
+    await act(async () => {
+      render(
+        <Provider store={store}>
+          <Sidebar
+            name={name}
+            setFileName={setFileNameMock}
+            setFileContent={setFileContentMock}
+            setFileType={setFileTypeMock}
+            setFilePrivacy={setFilePrivacyMock}
+            setIsLibraryFile={setIsLibraryFileMock}
+            setLibraryAssetPath={setLibraryAssetPathMock}
+            tab={tab}
+            fileName="file1.md"
+            isLibraryFile={false}
+            setOpenDeleteFileDialog={setOpenDeleteFileDialogMock}
+            setOpenChangeFileNameDialog={setOpenChangeFileNameDialogMock}
+          />
+        </Provider>,
+      );
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+  };
+
+  const clickAndWaitFor = async (buttonText: string, expectedText: string) => {
+    const element = screen.getByText(buttonText);
+    await act(async () => {
+      fireEvent.click(element);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(expectedText)).toBeInTheDocument();
+    });
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     store = configureStore({
       reducer: combineReducers({
         cart: cartSlice,
         digitalTwin: digitalTwinReducer,
         files: fileSlice,
+        libraryConfigFiles: libraryConfigFilesSlice,
       }),
       middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
@@ -121,40 +158,36 @@ describe('Sidebar', () => {
         }),
     });
 
-    store.dispatch(addToCart(mockLibraryAsset));
+    const mockAsset = {
+      ...mockLibraryAsset,
+      configFiles: ['config1.json'],
+      getConfigFiles: jest.fn().mockImplementation(async () => {
+        return Promise.resolve();
+      }),
+    };
+
+    store.dispatch(addToCart(mockAsset));
 
     const files = [
-      { name: 'Asset 1', content: 'content1', isNew: false, isModified: false },
+      {
+        name: ASSET_NAME,
+        content: 'content1',
+        isNew: false,
+        isModified: false,
+      },
     ];
     store.dispatch(addOrUpdateFile(files[0]));
 
-    setupDigitalTwin('Asset 1');
+    setupDigitalTwin(ASSET_NAME);
 
-    const digitalTwinData = createMockDigitalTwinData('Asset 1');
+    const digitalTwinData = createMockDigitalTwinData(ASSET_NAME);
     store.dispatch(
-      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
+      setDigitalTwin({ assetName: ASSET_NAME, digitalTwin: digitalTwinData }),
     );
   });
 
   it('calls handleFileClick when a file type is clicked', async () => {
-    await act(async () => {
-      render(
-        <Provider store={store}>
-          <Sidebar
-            name={'Asset 1'}
-            setFileName={setFileNameMock}
-            setFileContent={setFileContentMock}
-            setFileType={setFileTypeMock}
-            setFilePrivacy={setFilePrivacyMock}
-            setIsLibraryFile={setIsLibraryFileMock}
-            setLibraryAssetPath={setLibraryAssetPathMock}
-            tab={'reconfigure'}
-            fileName="file1.md"
-            isLibraryFile={false}
-          />
-        </Provider>,
-      );
-    });
+    await renderSidebar(ASSET_NAME, 'reconfigure');
 
     await waitFor(() => {
       expect(screen.getByText('Description')).toBeInTheDocument();
@@ -162,12 +195,7 @@ describe('Sidebar', () => {
       expect(screen.getByText('Lifecycle')).toBeInTheDocument();
     });
 
-    const descriptionCategory = screen.getByText('Description');
-    await act(async () => {
-      fireEvent.click(descriptionCategory);
-    });
-
-    expect(descriptionCategory).toBeInTheDocument();
+    await clickAndWaitFor('Description', 'Description');
   });
 
   it('calls handle addFileCkick when add file is clicked', async () => {
@@ -176,24 +204,7 @@ describe('Sidebar', () => {
       'handleAddFileClick',
     );
 
-    await act(async () => {
-      render(
-        <Provider store={store}>
-          <Sidebar
-            name={'Asset 1'}
-            setFileName={setFileNameMock}
-            setFileContent={setFileContentMock}
-            setFileType={setFileTypeMock}
-            setFilePrivacy={setFilePrivacyMock}
-            setIsLibraryFile={setIsLibraryFileMock}
-            setLibraryAssetPath={setLibraryAssetPathMock}
-            tab={'create'}
-            fileName="file1.md"
-            isLibraryFile={false}
-          />
-        </Provider>,
-      );
-    });
+    await renderSidebar(ASSET_NAME, 'create');
 
     const addFile = screen.getByText('Add new file');
     await act(async () => {
@@ -206,62 +217,32 @@ describe('Sidebar', () => {
   });
 
   it('should open the sidebar dialog when a new file is added', async () => {
+    jest.spyOn(SidebarFunctions, 'handleAddFileClick')
+      .mockImplementation((setIsFileNameDialogOpen) => {
+        setIsFileNameDialogOpen(true);
+      });
+
+    await renderSidebar(ASSET_NAME, 'create');
+    
+    const addFileButton = screen.getByText('Add new file');
+    
     await act(async () => {
-      render(
-        <Provider store={store}>
-          <Sidebar
-            name={'Asset 1'}
-            setFileName={setFileNameMock}
-            setFileContent={setFileContentMock}
-            setFileType={setFileTypeMock}
-            setFilePrivacy={setFilePrivacyMock}
-            setIsLibraryFile={setIsLibraryFileMock}
-            setLibraryAssetPath={setLibraryAssetPathMock}
-            tab={'create'}
-            fileName="file1.md"
-            isLibraryFile={false}
-          />
-        </Provider>,
-      );
+      fireEvent.click(addFileButton);
     });
 
-    const addFile = screen.getByText('Add new file');
-    act(() => {
-      fireEvent.click(addFile);
-    });
-
-    waitFor(() => {
-      expect(screen.getByText('Enter the file name')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 
   it('renders file section when no digital twin is selected', async () => {
-    await act(async () => {
-      render(
-        <Provider store={store}>
-          <Sidebar
-            name={''}
-            setFileName={setFileNameMock}
-            setFileContent={setFileContentMock}
-            setFileType={setFileTypeMock}
-            setFilePrivacy={setFilePrivacyMock}
-            setIsLibraryFile={setIsLibraryFileMock}
-            setLibraryAssetPath={setLibraryAssetPathMock}
-            tab={'create'}
-            fileName="file1.md"
-            isLibraryFile={false}
-          />
-        </Provider>,
-      );
-    });
-
-    const lifecycle = screen.getByText('Lifecycle');
-    act(() => {
-      fireEvent.click(lifecycle);
-    });
-
-    waitFor(() => {
-      expect(screen.getByText('Asset 1')).toBeInTheDocument();
+    await renderSidebar('', 'create');
+    
+    await waitFor(() => {
+      expect(screen.getByText('Description')).toBeInTheDocument();
+      expect(screen.getByText('Configuration')).toBeInTheDocument();
+      expect(screen.getByText('Lifecycle')).toBeInTheDocument();
+      expect(screen.getByText('Asset 1 configuration')).toBeInTheDocument();
     });
   });
 });

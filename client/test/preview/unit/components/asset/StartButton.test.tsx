@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import * as React from 'react';
 import { handleStart } from 'route/digitaltwins/execution/executionButtonHandlers';
 import StartButton from 'preview/components/asset/StartButton';
-import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { ExecutionStatus, JobLog } from 'model/backend/interfaces/execution';
 import * as redux from 'react-redux';
 
 // Mock dependencies
@@ -53,6 +53,20 @@ jest.mock('react-redux', () => ({
 
 const mockDispatch = jest.fn();
 
+interface MockExecutionEntry {
+  id: string;
+  dtName: string;
+  pipelineId: number;
+  timestamp: number;
+  status: ExecutionStatus;
+  jobLogs: JobLog[];
+}
+
+interface MockReduxStateOverrides {
+  pipelineLoading?: boolean;
+  executionEntries?: MockExecutionEntry[];
+}
+
 describe('StartButton', () => {
   const assetName = 'testAssetName';
   const setHistoryButtonDisabled = jest.fn();
@@ -61,25 +75,40 @@ describe('StartButton', () => {
     pipelineLoading: false,
   };
 
-  beforeEach(() => {
-    mockDispatch.mockClear();
+  const testEntry = (overrides = {}) => ({
+    id: '1',
+    dtName: 'testAssetName',
+    pipelineId: 123,
+    timestamp: Date.now(),
+    status: ExecutionStatus.RUNNING,
+    jobLogs: [],
+    ...overrides,
+  });
 
+  const mockReduxState = (overrides: MockReduxStateOverrides = {}) => {
     (
       redux.useSelector as jest.MockedFunction<typeof redux.useSelector>
     ).mockImplementation((selector) => {
-      // Mock state for default case
       const state = {
         digitalTwin: {
           digitalTwin: {
-            [assetName]: mockDigitalTwin,
+            [assetName]: {
+              ...mockDigitalTwin,
+              pipelineLoading: overrides.pipelineLoading ?? false,
+            },
           },
         },
         executionHistory: {
-          entries: [],
+          entries: overrides.executionEntries ?? [],
         },
       };
       return selector(state);
     });
+  };
+
+  beforeEach(() => {
+    mockDispatch.mockClear();
+    mockReduxState();
   });
 
   const renderComponent = () =>
@@ -117,139 +146,41 @@ describe('StartButton', () => {
   });
 
   it('shows loading indicator when pipelineLoading is true', () => {
-    (
-      redux.useSelector as jest.MockedFunction<typeof redux.useSelector>
-    ).mockImplementation((selector) => {
-      const state = {
-        digitalTwin: {
-          digitalTwin: {
-            [assetName]: {
-              ...mockDigitalTwin,
-              pipelineLoading: true,
-            },
-          },
-        },
-        executionHistory: {
-          entries: [],
-        },
-      };
-      return selector(state);
-    });
-
+    mockReduxState({ pipelineLoading: true });
     renderComponent();
     expect(screen.getByTestId('circular-progress')).toBeInTheDocument();
   });
 
   it('shows loading indicator with count when there are running executions', () => {
-    (
-      redux.useSelector as jest.MockedFunction<typeof redux.useSelector>
-    ).mockImplementation((selector) => {
-      const state = {
-        digitalTwin: {
-          digitalTwin: {
-            [assetName]: mockDigitalTwin,
-          },
-        },
-        executionHistory: {
-          entries: [
-            {
-              id: '1',
-              dtName: assetName,
-              pipelineId: 123,
-              timestamp: Date.now(),
-              status: ExecutionStatus.RUNNING,
-              jobLogs: [],
-            },
-            {
-              id: '2',
-              dtName: assetName,
-              pipelineId: 456,
-              timestamp: Date.now(),
-              status: ExecutionStatus.RUNNING,
-              jobLogs: [],
-            },
-          ],
-        },
-      };
-      return selector(state);
-    });
-
+    const executionEntries = [
+      testEntry({}),
+      testEntry({ id: '2', pipelineId: 456 }),
+    ];
+    mockReduxState({ executionEntries });
     renderComponent();
     expect(screen.getByTestId('circular-progress')).toBeInTheDocument();
     expect(screen.getByText('(2)')).toBeInTheDocument();
   });
 
   it('does not show loading indicator when there are no running executions', () => {
-    (
-      redux.useSelector as jest.MockedFunction<typeof redux.useSelector>
-    ).mockImplementation((selector) => {
-      const state = {
-        digitalTwin: {
-          digitalTwin: {
-            [assetName]: mockDigitalTwin,
-          },
-        },
-        executionHistory: {
-          entries: [
-            {
-              id: '1',
-              dtName: assetName,
-              pipelineId: 123,
-              timestamp: Date.now(),
-              status: ExecutionStatus.COMPLETED,
-              jobLogs: [],
-            },
-          ],
-        },
-      };
-      return selector(state);
-    });
+    const executionEntries = [testEntry({ status: ExecutionStatus.COMPLETED })];
+    mockReduxState({ executionEntries });
 
     renderComponent();
     expect(screen.queryByTestId('circular-progress')).not.toBeInTheDocument();
   });
 
   it('handles different execution statuses correctly', () => {
-    (
-      redux.useSelector as jest.MockedFunction<typeof redux.useSelector>
-    ).mockImplementation((selector) => {
-      const state = {
-        digitalTwin: {
-          digitalTwin: {
-            [assetName]: mockDigitalTwin,
-          },
-        },
-        executionHistory: {
-          entries: [
-            {
-              id: '1',
-              dtName: assetName,
-              pipelineId: 123,
-              timestamp: Date.now(),
-              status: ExecutionStatus.RUNNING,
-              jobLogs: [],
-            },
-            {
-              id: '2',
-              dtName: assetName,
-              pipelineId: 456,
-              timestamp: Date.now(),
-              status: ExecutionStatus.COMPLETED,
-              jobLogs: [],
-            },
-            {
-              id: '3',
-              dtName: assetName,
-              pipelineId: 789,
-              timestamp: Date.now(),
-              status: ExecutionStatus.FAILED,
-              jobLogs: [],
-            },
-          ],
-        },
-      };
-      return selector(state);
-    });
+    const executionEntries = [
+      testEntry({ id: '1', pipelineId: 123, status: ExecutionStatus.RUNNING }),
+      testEntry({
+        id: '2',
+        pipelineId: 456,
+        status: ExecutionStatus.COMPLETED,
+      }),
+      testEntry({ id: '3', pipelineId: 789, status: ExecutionStatus.FAILED }),
+    ];
+    mockReduxState({ executionEntries });
 
     renderComponent();
     expect(screen.getByTestId('circular-progress')).toBeInTheDocument();

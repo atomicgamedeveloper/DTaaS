@@ -1,9 +1,8 @@
 import { JobLog } from 'model/backend/interfaces/execution';
 import cleanLog from 'model/backend/gitlab/cleanLog';
-import {
-  BackendInterface,
-  JobSummary,
-} from 'model/backend/interfaces/backendInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
+
+const jobLog = (jobName: string, log: string): JobLog => ({ jobName, log });
 
 /**
  * Fetches job logs from the backend for a specific pipeline
@@ -15,83 +14,24 @@ import {
 export const fetchJobLogs = async (
   backend: BackendInterface,
   pipelineId: number,
+  cleanLogFn: (log: string) => string = cleanLog,
 ): Promise<JobLog[]> => {
   const projectId = backend.getProjectId();
-
-  const rawJobs = await backend.getPipelineJobs(projectId, pipelineId);
-  const jobs: JobSummary[] = rawJobs.map((job) => job as JobSummary);
-
-  const logPromises = jobs.map(async (job) => {
-    if (!job || typeof job.id === 'undefined') {
-      return { jobName: 'Unknown', log: 'Job ID not available' };
+  const jobs = await backend.getPipelineJobs(projectId, pipelineId);
+  const jobLogs = jobs.map(async (job) => {
+    if (!job || job.id === undefined) {
+      return jobLog('Unknown', 'Job ID not available');
     }
-
+    const jobName = typeof job.name === 'string' ? job.name : 'Unknown';
     try {
-      let log = await backend.getJobTrace(projectId, job.id);
-
-      if (typeof log === 'string') {
-        log = cleanLog(log);
-      } else {
-        log = '';
-      }
-
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log,
-      };
+      const rawLog = await backend.getJobTrace(projectId, job.id);
+      const log = typeof rawLog === 'string' ? cleanLogFn(rawLog) : '';
+      return jobLog(jobName, log);
     } catch (_e) {
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log: 'Error fetching log content',
-      };
+      return jobLog(jobName, 'Error fetching log content');
     }
   });
-  return (await Promise.all(logPromises)).reverse();
-};
-
-/**
- * Core log fetching function - pure business logic
- * @param backend GitLab instance with API methods
- * @param pipelineId Pipeline ID to fetch logs for
- * @param cleanLogFn Function to clean log content
- * @returns Promise resolving to array of job logs
- */
-export const fetchPipelineJobLogs = async (
-  backend: BackendInterface,
-  pipelineId: number,
-  cleanLogFn: (log: string) => string,
-): Promise<JobLog[]> => {
-  const projectId = backend.getProjectId();
-  const rawJobs = await backend.getPipelineJobs(projectId, pipelineId);
-  // Convert unknown jobs to GitLabJob format
-  const jobs: JobSummary[] = rawJobs.map((job) => job as JobSummary);
-
-  const logPromises = jobs.map(async (job) => {
-    if (!job || typeof job.id === 'undefined') {
-      return { jobName: 'Unknown', log: 'Job ID not available' };
-    }
-
-    try {
-      let log = await backend.getJobTrace(projectId, job.id);
-
-      if (typeof log === 'string') {
-        log = cleanLogFn(log);
-      } else {
-        log = '';
-      }
-
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log,
-      };
-    } catch (_e) {
-      return {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log: 'Error fetching log content',
-      };
-    }
-  });
-  return (await Promise.all(logPromises)).reverse();
+  return (await Promise.all(jobLogs)).reverse();
 };
 
 /**
@@ -141,7 +81,6 @@ export const combineLogs = (
  */
 export const extractJobNames = (logs: JobLog[]): string[] => {
   if (!logs) return [];
-
   return logs.map((log) => log.jobName).filter(Boolean);
 };
 

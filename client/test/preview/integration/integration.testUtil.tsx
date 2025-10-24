@@ -9,6 +9,30 @@ import { configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import { mockAuthState, mockAuthStateType } from 'test/__mocks__/global_mocks';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { addExecutionHistoryEntry } from 'model/backend/gitlab/state/executionHistory.slice';
+
+export const dispatchAddExecHistoryEntry = async (
+  customStore: ReturnType<typeof configureStore>,
+  overrides = {},
+) => {
+  const defaultExecutionHistoryEntry = {
+    id: '1',
+    dtName: 'test-asset',
+    pipelineId: 123,
+    timestamp: Date.now(),
+    status: ExecutionStatus.COMPLETED,
+    jobLogs: [],
+  };
+  await act(async () => {
+    customStore.dispatch(
+      addExecutionHistoryEntry({
+        ...defaultExecutionHistoryEntry,
+        ...overrides,
+      }),
+    );
+  });
+};
 
 export const storeResetAll = () => store.dispatch({ type: 'RESET_ALL' });
 
