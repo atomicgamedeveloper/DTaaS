@@ -3,7 +3,6 @@ export {
   handleButtonClick,
   handleStart,
   handleStop,
-  stopPipelines,
 } from 'route/digitaltwins/execution/executionButtonHandlers';
 
 // UI handlers for pipeline operations
@@ -34,7 +33,7 @@ export {
   selectSelectedExecution,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'store/selectors/executionHistory.selectors';
+} from 'model/backend/state/executionHistory.selectors';
 
 export {
   selectDigitalTwinByName,

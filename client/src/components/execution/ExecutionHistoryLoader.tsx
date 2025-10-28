@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import {
   fetchAllExecutionHistory,
   checkRunningExecutions,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { EXECUTION_CHECK_INTERVAL } from 'model/backend/gitlab/digitalTwinConfig/constants';

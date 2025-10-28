@@ -17,7 +17,7 @@ import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { selectModifiedFiles } from 'preview/store/file.slice';
 import { selectModifiedLibraryFiles } from 'preview/store/libraryConfigFiles.slice';
 
-import * as digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
+import * as digitalTwinSlice from 'model/backend/state/digitalTwin.slice';
 import * as snackbarSlice from 'store/snackbar.slice';
 
 jest.mock('preview/store/file.slice', () => {
@@ -28,10 +28,8 @@ jest.mock('preview/store/file.slice', () => {
     default: actual.default, // ensure the reducer is not mocked
   };
 });
-jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => {
-  const actual = jest.requireActual(
-    'model/backend/gitlab/state/digitalTwin.slice',
-  );
+jest.mock('model/backend/state/digitalTwin.slice', () => {
+  const actual = jest.requireActual('model/backend/state/digitalTwin.slice');
   return {
     ...actual,
     updateDescription: jest.fn(),

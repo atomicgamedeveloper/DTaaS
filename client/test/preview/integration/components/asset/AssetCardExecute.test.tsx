@@ -10,8 +10,8 @@ import assetsReducer, {
 } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
-import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/digitalTwin.slice';
+import executionHistoryReducer from 'model/backend/state/executionHistory.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import {
   mockLibraryAsset,

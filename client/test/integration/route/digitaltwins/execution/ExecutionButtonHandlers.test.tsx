@@ -1,10 +1,11 @@
 import * as PipelineHandlers from 'route/digitaltwins/execution/executionButtonHandlers';
+import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
   DigitalTwinData,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import snackbarSlice, { SnackbarState } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
@@ -86,13 +87,18 @@ describe('PipelineHandler Integration Tests', () => {
 
   it('handles stop and catches error', async () => {
     const stopPipelinesMock = jest
-      .spyOn(PipelineHandlers, 'stopPipelines')
-      .mockRejectedValueOnce(new Error('error'));
+      .spyOn(PipelineCore, 'stopPipelines')
+      .mockResolvedValueOnce({
+        success: false,
+        error: new Error('error'),
+      });
+
     const { dispatch } = store;
 
     await PipelineHandlers.handleStop(digitalTwin, jest.fn(), dispatch);
 
     const snackbarState = store.getState().snackbar as SnackbarState;
+
     expect(snackbarState.message).toBe(
       `Execution stop failed for ${formatName(digitalTwin.DTName)}`,
     );

@@ -13,10 +13,10 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
   DigitalTwinData,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import executionHistoryReducer, {
   setExecutionHistoryEntries,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';

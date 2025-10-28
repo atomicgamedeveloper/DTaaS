@@ -17,7 +17,7 @@ import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';

@@ -1,19 +1,3 @@
-import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
-
-/**
- * Represents the schema for the IndexedDB database
- */
-export interface IndexedDBSchema {
-  executionHistory: {
-    key: string; // id
-    value: DTExecutionResult;
-    indexes: {
-      dtName: string;
-      timestamp: number;
-    };
-  };
-}
-
 /**
  * Database configuration
  */
@@ -30,3 +14,5 @@ export const DB_CONFIG = {
     },
   },
 };
+
+export default DB_CONFIG;

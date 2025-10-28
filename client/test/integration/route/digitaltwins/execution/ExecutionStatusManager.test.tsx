@@ -3,7 +3,7 @@ import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import {
   setDigitalTwin,
   DigitalTwinData,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';

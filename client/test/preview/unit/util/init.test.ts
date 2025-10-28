@@ -22,7 +22,7 @@ jest.mock('preview/store/assets.slice', () => ({
 }));
 
 const setDigitalTwin = jest.fn();
-jest.mock('model/backend/gitlab/state/digitalTwin.slice', () => ({
+jest.mock('model/backend/state/digitalTwin.slice', () => ({
   setDigitalTwin,
 }));
 

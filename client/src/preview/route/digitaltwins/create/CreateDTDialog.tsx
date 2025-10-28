@@ -27,7 +27,7 @@ import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapte
 import {
   setDigitalTwin,
   setShouldFetchDigitalTwins,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 
 interface CreateDTDialogProps {
   open: boolean;

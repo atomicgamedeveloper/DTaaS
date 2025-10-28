@@ -7,11 +7,11 @@ import HistoryButton from 'components/asset/HistoryButton';
 import LogDialog from 'model/backend/LogDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
   clearEntries,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import { v4 as uuidv4 } from 'uuid';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';

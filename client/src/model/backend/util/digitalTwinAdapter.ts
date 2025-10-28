@@ -1,5 +1,5 @@
 import DigitalTwin from 'model/backend/digitalTwin';
-import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { initDigitalTwin } from 'model/backend/util/init';
 
 /**

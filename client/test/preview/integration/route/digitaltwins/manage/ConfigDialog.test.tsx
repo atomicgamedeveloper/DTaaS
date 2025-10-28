@@ -7,7 +7,7 @@ import ReconfigureDialog from 'preview/route/digitaltwins/manage/ReconfigureDial
 import assetsReducer from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import snackbarSlice, { showSnackbar } from 'store/snackbar.slice';
 import fileSlice, { removeAllModifiedFiles } from 'preview/store/file.slice';
 import libraryConfigFilesSlice, {

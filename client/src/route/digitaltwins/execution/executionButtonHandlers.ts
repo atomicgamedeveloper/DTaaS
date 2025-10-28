@@ -1,8 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
-import { showSnackbar } from 'store/snackbar.slice';
-import { fetchExecutionHistory } from 'model/backend/gitlab/state/executionHistory.slice';
+import { fetchExecutionHistory } from 'model/backend/state/executionHistory.slice';
 import { RootState } from 'store/store';
 import {
   startPipeline,
@@ -10,6 +9,8 @@ import {
   updatePipelineStateOnStop,
 } from 'route/digitaltwins/execution/executionStatusHandlers';
 import { startPipelineStatusCheck } from 'route/digitaltwins/execution/executionStatusManager';
+import { stopPipelines } from 'model/backend/gitlab/execution/pipelineCore';
+import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 export type PipelineHandlerDispatch = ThunkDispatch<
   RootState,
@@ -109,50 +110,27 @@ export const handleStop = async (
   dispatch: PipelineHandlerDispatch,
   executionId?: string,
 ) => {
-  try {
-    await stopPipelines(digitalTwin, executionId);
-    dispatch(
-      showSnackbar({
+  const result = await stopPipelines(digitalTwin, executionId);
+
+  if (result.success) {
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: {
         message: `Execution stopped successfully for ${formatName(
           digitalTwin.DTName,
         )}`,
         severity: 'success',
-      }),
-    );
-  } catch (_error) {
-    dispatch(
-      showSnackbar({
+      } as ShowNotificationPayload,
+    });
+  } else {
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: {
         message: `Execution stop failed for ${formatName(digitalTwin.DTName)}`,
         severity: 'error',
-      }),
-    );
-  } finally {
-    updatePipelineStateOnStop(
-      digitalTwin,
-      setButtonText,
-      dispatch,
-      executionId,
-    );
+      } as ShowNotificationPayload,
+    });
   }
-};
 
-/**
- * Stops both parent and child pipelines for a digital twin
- * @param digitalTwin Digital twin instance
- * @param executionId Optional execution ID for concurrent executions
- */
-export const stopPipelines = async (
-  digitalTwin: DigitalTwin,
-  executionId?: string,
-) => {
-  const projectId = digitalTwin.backend.getProjectId();
-  if (projectId) {
-    if (executionId) {
-      await digitalTwin.stop(projectId, 'parentPipeline', executionId);
-      await digitalTwin.stop(projectId, 'childPipeline', executionId);
-    } else if (digitalTwin.pipelineId) {
-      await digitalTwin.stop(projectId, 'parentPipeline');
-      await digitalTwin.stop(projectId, 'childPipeline');
-    }
-  }
+  updatePipelineStateOnStop(digitalTwin, setButtonText, dispatch, executionId);
 };

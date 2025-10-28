@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
-import { setDigitalTwin } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { setDigitalTwin } from 'model/backend/state/digitalTwin.slice';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { setAsset } from 'preview/store/assets.slice';
 import LibraryAsset, { getLibrarySubfolders } from 'model/backend/libraryAsset';

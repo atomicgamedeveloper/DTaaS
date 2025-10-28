@@ -4,7 +4,7 @@ import DTAssets from 'model/backend/DTAssets';
 import LibraryManager from 'model/backend/libraryManager';
 import { mockBackendInstance as backend } from 'test/__mocks__/global_mocks';
 import 'test/preview/__mocks__/constants.mock';
-import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 
 const createMockURL = (path: string) => `https://example.com/${path}`;
 

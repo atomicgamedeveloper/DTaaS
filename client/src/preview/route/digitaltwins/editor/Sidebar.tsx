@@ -14,7 +14,10 @@ import { fetchData } from 'preview/route/digitaltwins/editor/sidebarFetchers';
 import { handleAddFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
 import SidebarDialog from 'preview/route/digitaltwins/editor/SidebarDialog';
 import FileActionButtons from 'preview/route/digitaltwins/create/FileActionButtons';
-import { renderFileTreeItems, renderFileSection } from 'preview/route/digitaltwins/editor/sidebarRendering';
+import {
+  renderFileTreeItems,
+  renderFileSection,
+} from 'preview/route/digitaltwins/editor/sidebarRendering';
 
 interface SidebarProps {
   name?: string;

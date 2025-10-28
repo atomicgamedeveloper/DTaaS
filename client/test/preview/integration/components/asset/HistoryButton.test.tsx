@@ -4,7 +4,7 @@ import HistoryButton from 'components/asset/HistoryButton';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import executionHistoryReducer from 'model/backend/gitlab/state/executionHistory.slice';
+import executionHistoryReducer from 'model/backend/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { dispatchAddExecHistoryEntry } from 'test/preview/integration/integration.testUtil';
 

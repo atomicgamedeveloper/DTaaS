@@ -15,7 +15,7 @@ const mockFetchExecutionHistory = jest.fn((name: string) => ({
   payload: name,
 }));
 
-jest.mock('model/backend/gitlab/state/executionHistory.slice', () => ({
+jest.mock('model/backend/state/executionHistory.slice', () => ({
   fetchExecutionHistory: jest.fn((name: string) =>
     mockFetchExecutionHistory(name),
   ),
@@ -53,7 +53,7 @@ describe('LogDialog', () => {
     mockFetchExecutionHistory.mockClear();
   });
   const executionHistorySlice = jest.requireMock(
-    'model/backend/gitlab/state/executionHistory.slice',
+    'model/backend/state/executionHistory.slice',
   );
   it('renders the LogDialog with logs available', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({

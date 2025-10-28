@@ -5,7 +5,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import * as React from 'react';

@@ -1,11 +1,16 @@
 import * as PipelineHandlers from 'route/digitaltwins/execution/executionButtonHandlers';
 import * as PipelineUtils from 'route/digitaltwins/execution/executionStatusHandlers';
 import * as PipelineChecks from 'route/digitaltwins/execution/executionStatusManager';
+import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { PipelineHandlerDispatch } from 'route/digitaltwins/execution/executionButtonHandlers';
 
 jest.mock('route/digitaltwins/execution/executionStatusManager', () => ({
   startPipelineStatusCheck: jest.fn(),
+}));
+
+jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
+  stopPipelines: jest.fn(),
 }));
 
 describe('ExecutionButtonHandlers', () => {
@@ -14,8 +19,18 @@ describe('ExecutionButtonHandlers', () => {
   const setLogButtonDisabled = jest.fn();
   const dispatch: PipelineHandlerDispatch = jest.fn();
 
+  beforeEach(() => {
+    (PipelineCore.stopPipelines as jest.Mock).mockResolvedValue({
+      success: true,
+    });
+  });
+
   it('handles button click when button text is Start', async () => {
     const handleStart = jest.spyOn(PipelineHandlers, 'handleStart');
+    (PipelineCore.stopPipelines as jest.Mock).mockResolvedValue({
+      success: true,
+    });
+
     await PipelineHandlers.handleButtonClick(
       'Start',
       setButtonText,
@@ -45,6 +60,10 @@ describe('ExecutionButtonHandlers', () => {
   });
 
   it('handles start when button text is Start', async () => {
+    (PipelineCore.stopPipelines as jest.Mock).mockResolvedValue({
+      success: true,
+    });
+
     const updatePipelineState = jest.spyOn(
       PipelineUtils,
       'updatePipelineState',
@@ -94,16 +113,16 @@ describe('ExecutionButtonHandlers', () => {
       'updatePipelineStateOnStop',
     );
 
-    const stopPipelines = jest
-      .spyOn(PipelineHandlers, 'stopPipelines')
-      .mockRejectedValueOnce(new Error('error'));
+    (PipelineCore.stopPipelines as jest.Mock).mockResolvedValue({
+      success: false,
+      error: new Error('error'),
+    });
     await PipelineHandlers.handleStop(digitalTwin, setButtonText, dispatch);
 
     expect(dispatch).toHaveBeenCalled();
     expect(updatePipelineStateOnStop).toHaveBeenCalled();
 
     updatePipelineStateOnStop.mockRestore();
-    stopPipelines.mockRestore();
   });
 
   it('handles stop with execution ID', async () => {
@@ -111,8 +130,11 @@ describe('ExecutionButtonHandlers', () => {
       PipelineUtils,
       'updatePipelineStateOnStop',
     );
+    (PipelineCore.stopPipelines as jest.Mock).mockResolvedValue({
+      success: true,
+    });
 
-    const stopPipelines = jest.spyOn(PipelineHandlers, 'stopPipelines');
+    const stopPipelines = jest.spyOn(PipelineCore, 'stopPipelines');
     const executionId = '123';
     await PipelineHandlers.handleStop(
       digitalTwin,

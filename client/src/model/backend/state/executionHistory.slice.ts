@@ -8,9 +8,12 @@ import {
   DTExecutionResult,
   JobLog,
 } from 'model/backend/gitlab/types/executionHistory';
-import { DigitalTwinData } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { ShowNotificationPayload , IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
+import {
+  ShowNotificationPayload,
+  IExecutionHistoryStorage,
+} from 'model/backend/interfaces/sharedInterfaces';
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -36,6 +39,8 @@ interface ExecutionHistoryState {
   loading: boolean;
   error: string | null;
 }
+
+export type { ExecutionHistoryState };
 
 const initialState: ExecutionHistoryState = {
   entries: [],
@@ -265,10 +270,11 @@ export const checkRunningExecutions =
     }
 
     try {
-      const module = await import('services/ExecutionStatusService');
+      const module = await import('model/backend/state/ExecutionStatusService');
       const updatedExecutions = await module.default.checkRunningExecutions(
         runningExecutions,
         state.digitalTwin.digitalTwin,
+        storageService,
       );
 
       updatedExecutions.forEach((updatedExecution: DTExecutionResult) => {

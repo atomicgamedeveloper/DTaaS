@@ -6,7 +6,7 @@ import {
   selectAssetsByTypeAndPrivacy,
 } from 'preview/store/assets.slice';
 import { fetchDigitalTwins } from 'model/backend/util/init';
-import { setShouldFetchDigitalTwins } from 'model/backend/gitlab/state/digitalTwin.slice';
+import { setShouldFetchDigitalTwins } from 'model/backend/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import Filter from 'preview/components/asset/Filter';
 import { Asset } from 'model/backend/Asset';

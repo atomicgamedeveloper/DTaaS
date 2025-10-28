@@ -9,7 +9,7 @@ import digitalTwinReducer, {
   setPipelineCompleted,
   setPipelineLoading,
   updateDescription,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';

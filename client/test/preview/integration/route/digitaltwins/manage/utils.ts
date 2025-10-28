@@ -3,7 +3,7 @@ import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import assetsReducer, { setAssets } from 'preview/store/assets.slice';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import snackbarReducer from 'store/snackbar.slice';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';

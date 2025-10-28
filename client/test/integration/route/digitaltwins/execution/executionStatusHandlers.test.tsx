@@ -3,7 +3,7 @@ import cleanLog from 'model/backend/gitlab/cleanLog';
 import {
   setDigitalTwin,
   DigitalTwinData,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { previewStore as store } from 'test/preview/integration/integration.testUtil';
 import { JobSchema } from '@gitbeaker/rest';
 import DigitalTwin from 'model/backend/digitalTwin';

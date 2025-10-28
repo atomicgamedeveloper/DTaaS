@@ -12,13 +12,13 @@ import { formatName } from 'model/backend/digitalTwin';
 import {
   fetchExecutionHistory,
   clearExecutionHistoryForDT,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
-import { showSnackbar } from 'store/snackbar.slice';
 import { selectExecutionHistoryByDTName } from 'route/digitaltwins/execution';
 import UnifiedDialog from 'components/logDialog/UnifiedDialog';
 import DeleteAllConfirmationDialog from 'components/logDialog/DeleteAllConfirmationDialog';
+import { ShowNotificationPayload } from './interfaces/sharedInterfaces';
 
 interface LogDialogProps {
   showLog: boolean;
@@ -51,9 +51,12 @@ function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
   const handleClearAllClick = useCallback(() => {
     if (executions.length === 0) {
       dispatch(
-        showSnackbar({
-          message: 'Execution history is already empty',
-          severity: 'info',
+        dispatch({
+          type: 'snackbar/showSnackbar',
+          payload: {
+            message: 'Execution history is already empty',
+            severity: 'info',
+          } as ShowNotificationPayload,
         }),
       );
       return;

@@ -395,14 +395,6 @@ export interface ShowNotificationPayload {
   severity: NotificationSeverity;
 }
 
-export interface NotificationActions {
-  showNotification: (payload: ShowNotificationPayload) => {
-    type: string;
-    payload: ShowNotificationPayload;
-  };
-  hideNotification: () => { type: string };
-}
-
 // indexedDBService interface
 export interface IExecutionHistoryStorage {
   init(): Promise<void>;

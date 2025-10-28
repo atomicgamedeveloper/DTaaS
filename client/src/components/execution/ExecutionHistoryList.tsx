@@ -32,12 +32,12 @@ import {
   fetchExecutionHistory,
   removeExecution,
   setSelectedExecutionId,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import {
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
   selectSelectedExecution,
-} from 'store/selectors/executionHistory.selectors';
+} from 'model/backend/state/executionHistory.selectors';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { handleStop } from 'route/digitaltwins/execution/executionButtonHandlers';
 import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';

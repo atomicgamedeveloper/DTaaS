@@ -12,10 +12,10 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
   setPipelineLoading,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import executionHistoryReducer, {
   addExecutionHistoryEntry,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import '@testing-library/jest-dom';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';

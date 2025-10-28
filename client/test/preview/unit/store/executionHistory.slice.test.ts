@@ -14,7 +14,7 @@ import executionHistoryReducer, {
   fetchExecutionHistory,
   removeExecution,
   setStorageService,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import {
   selectExecutionHistoryEntries,
   selectExecutionHistoryByDTName,
@@ -23,7 +23,7 @@ import {
   selectSelectedExecution,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'store/selectors/executionHistory.selectors';
+} from 'model/backend/state/executionHistory.selectors';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { configureStore } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';

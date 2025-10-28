@@ -13,7 +13,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import digitalTwinReducer, {
   DigitalTwinData,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { RootState } from 'store/store';
 import executionHistoryReducer, {
   setLoading,
@@ -25,7 +25,7 @@ import executionHistoryReducer, {
   updateExecutionLogs,
   removeExecutionHistoryEntry,
   setSelectedExecutionId,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import {
   selectExecutionHistoryEntries,
   selectExecutionHistoryById,
@@ -34,7 +34,7 @@ import {
   selectExecutionHistoryByDTName,
   selectExecutionHistoryLoading,
   selectExecutionHistoryError,
-} from 'store/selectors/executionHistory.selectors';
+} from 'model/backend/state/executionHistory.selectors';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 // Mock the pipelineHandler module

@@ -1,7 +1,7 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import * as React from 'react';
 import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
 import { Provider } from 'react-redux';

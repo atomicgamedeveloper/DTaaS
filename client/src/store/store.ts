@@ -2,8 +2,8 @@ import { combineReducers, Middleware } from 'redux';
 import { configureStore } from '@reduxjs/toolkit';
 import executionHistorySlice, {
   setStorageService,
-} from 'model/backend/gitlab/state/executionHistory.slice';
-import digitalTwinSlice from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/executionHistory.slice';
+import digitalTwinSlice from 'model/backend/state/digitalTwin.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import assetsSlice from 'preview/store/assets.slice';

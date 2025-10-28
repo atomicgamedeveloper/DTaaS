@@ -3,11 +3,11 @@ import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import indexedDBService from 'database/digitalTwins';
 import { showSnackbar } from 'store/snackbar.slice';
-import { updateExecutionStatus } from 'model/backend/gitlab/state/executionHistory.slice';
+import { updateExecutionStatus } from 'model/backend/state/executionHistory.slice';
 import {
   setPipelineCompleted,
   setPipelineLoading,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import {
   delay,
   hasTimedOut,

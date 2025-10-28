@@ -6,11 +6,11 @@ import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import store from 'store/store';
 import { configureStore } from '@reduxjs/toolkit';
-import digitalTwinReducer from 'model/backend/gitlab/state/digitalTwin.slice';
+import digitalTwinReducer from 'model/backend/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import { mockAuthState, mockAuthStateType } from 'test/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { addExecutionHistoryEntry } from 'model/backend/gitlab/state/executionHistory.slice';
+import { addExecutionHistoryEntry } from 'model/backend/state/executionHistory.slice';
 
 export const dispatchAddExecHistoryEntry = async (
   customStore: ReturnType<typeof configureStore>,

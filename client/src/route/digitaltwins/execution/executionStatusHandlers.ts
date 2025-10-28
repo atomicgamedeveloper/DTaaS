@@ -5,13 +5,13 @@ import {
   setJobLogs,
   setPipelineCompleted,
   setPipelineLoading,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import { JobLog } from 'model/backend/gitlab/types/executionHistory';
 import {
   updateExecutionLogs,
   updateExecutionStatus,
   setSelectedExecutionId,
-} from 'model/backend/gitlab/state/executionHistory.slice';
+} from 'model/backend/state/executionHistory.slice';
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
@@ -35,24 +35,24 @@ export const startPipeline = async (
 
   if (!pipelineId || !digitalTwin.currentExecutionId) {
     const executionStatusMessage = `Execution ${digitalTwin.lastExecutionStatus} for ${formatName(digitalTwin.DTName)}`;
-      dispatch({
-        type: 'snackbar/showSnackbar',
-        payload: {
-          message: executionStatusMessage,
-          severity: 'error',
-        } as ShowNotificationPayload,
-      });
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: {
+        message: executionStatusMessage,
+        severity: 'error',
+      } as ShowNotificationPayload,
+    });
     return null;
   }
 
   const executionStatusMessage = `Execution started successfully for ${formatName(digitalTwin.DTName)}. Wait until completion for the logs...`;
   dispatch({
-  type: 'snackbar/showSnackbar',
-  payload: {
-    message: executionStatusMessage,
-    severity: 'success',
-  } as ShowNotificationPayload,
-});
+    type: 'snackbar/showSnackbar',
+    payload: {
+      message: executionStatusMessage,
+      severity: 'success',
+    } as ShowNotificationPayload,
+  });
 
   dispatch(setSelectedExecutionId(digitalTwin.currentExecutionId));
   setLogButtonDisabled(false);

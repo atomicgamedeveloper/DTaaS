@@ -28,7 +28,7 @@ const setOpenChangeFileNameDialogMock = jest.fn();
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'model/backend/gitlab/state/digitalTwin.slice';
+} from 'model/backend/state/digitalTwin.slice';
 import fileSlice, { addOrUpdateFile } from 'preview/store/file.slice';
 import Sidebar from 'preview/route/digitaltwins/editor/Sidebar';
 import {
