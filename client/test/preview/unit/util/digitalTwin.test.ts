@@ -221,6 +221,33 @@ describe('DigitalTwin', () => {
     expect(dt.lastExecutionStatus).toBe(ExecutionStatus.CANCELED);
   });
 
+  it('should handle database errors when updating execution during stop', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+    mockedIndexedDBService.update.mockRejectedValue(new Error('Update failed'));
+    (mockBackendAPI.cancelPipeline as jest.Mock).mockResolvedValue({});
+
+    dt.currentExecutionId = 'exec1';
+    dt.pipelineId = 123;
+
+    await dt.stop(1, 'parentPipeline');
+
+    expect(dt.lastExecutionStatus).toBe(ExecutionStatus.ERROR);
+    expect(dt.backend.logs).toContainEqual(
+      expect.objectContaining({
+        status: 'error',
+        DTName: 'test-DTName',
+      }),
+    );
+  });
+
   it('should stop the child pipeline and update status', async () => {
     (mockBackendAPI.cancelPipeline as jest.Mock).mockResolvedValue({});
 
@@ -342,6 +369,14 @@ describe('DigitalTwin', () => {
     );
   });
 
+  it('should handle database errors when fetching execution history', async () => {
+    mockedIndexedDBService.getByDTName.mockRejectedValue(
+      new Error('Database error'),
+    );
+
+    await expect(dt.getExecutionHistory()).rejects.toThrow('Database error');
+  });
+
   it('should get execution history by ID', async () => {
     const mockExecution = {
       id: 'exec1',
@@ -389,6 +424,25 @@ describe('DigitalTwin', () => {
     });
   });
 
+  it('should handle database errors when updating execution logs', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+    mockedIndexedDBService.update.mockRejectedValue(new Error('Update failed'));
+
+    const newJobLogs = [{ jobName: 'job1', log: 'log1' }];
+
+    await expect(dt.updateExecutionLogs('exec1', newJobLogs)).rejects.toThrow(
+      'Update failed',
+    );
+  });
+
   it('should update instance job logs when executionId matches currentExecutionId', async () => {
     const mockExecution = {
       id: 'exec1',
@@ -425,6 +479,23 @@ describe('DigitalTwin', () => {
       ...mockExecution,
       status: ExecutionStatus.COMPLETED,
     });
+  });
+
+  it('should handle database errors when updating execution status', async () => {
+    const mockExecution = {
+      id: 'exec1',
+      dtName: 'test-DTName',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+    mockedIndexedDBService.getById.mockResolvedValue(mockExecution);
+    mockedIndexedDBService.update.mockRejectedValue(new Error('Update failed'));
+
+    await expect(
+      dt.updateExecutionStatus('exec1', ExecutionStatus.COMPLETED),
+    ).rejects.toThrow('Update failed');
   });
 
   it('should update instance status when executionId matches currentExecutionId', async () => {
@@ -465,6 +536,24 @@ describe('DigitalTwin', () => {
       ...mockExecution,
       status: ExecutionStatus.CANCELED,
     });
+  });
+
+  it('should handle database errors when saving execution history', async () => {
+    (mockGitlabInstance.startPipeline as jest.Mock).mockResolvedValue({
+      id: 123,
+    });
+    mockedIndexedDBService.add.mockRejectedValue(new Error('Database error'));
+
+    const pipelineId = await dt.execute();
+
+    expect(pipelineId).toBeNull();
+    expect(dt.lastExecutionStatus).toBe(ExecutionStatus.ERROR);
+    expect(dt.backend.logs).toContainEqual(
+      expect.objectContaining({
+        status: 'error',
+        DTName: 'test-DTName',
+      }),
+    );
   });
 
   it('should stop a child pipeline for a specific execution by ID', async () => {

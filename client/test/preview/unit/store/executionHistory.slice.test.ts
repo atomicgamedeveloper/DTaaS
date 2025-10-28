@@ -1,4 +1,3 @@
-// executionHistory.slice.test.ts
 import executionHistoryReducer, {
   setLoading,
   setError,
@@ -9,11 +8,17 @@ import executionHistoryReducer, {
   updateExecutionStatus,
   updateExecutionLogs,
   removeExecutionHistoryEntry,
+  removeEntriesForDT,
   setSelectedExecutionId,
   clearEntries,
   fetchExecutionHistory,
   removeExecution,
   setStorageService,
+  fetchAllExecutionHistory,
+  addExecution,
+  updateExecution,
+  clearExecutionHistoryForDT,
+  checkRunningExecutions,
 } from 'model/backend/state/executionHistory.slice';
 import {
   selectExecutionHistoryEntries,
@@ -272,6 +277,43 @@ describe('executionHistory slice', () => {
       expect(store.getState().executionHistory.entries).toEqual([entry2]);
     });
 
+    it('should handle removeEntriesForDT', () => {
+      const entries = [
+        {
+          id: '1',
+          dtName: 'dt1',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+        {
+          id: '2',
+          dtName: 'dt2',
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        },
+        {
+          id: '3',
+          dtName: 'dt1',
+          pipelineId: 789,
+          timestamp: Date.now(),
+          status: ExecutionStatus.FAILED,
+          jobLogs: [],
+        },
+      ];
+
+      store.dispatch(setExecutionHistoryEntries(entries));
+      store.dispatch(removeEntriesForDT('dt1'));
+
+      const state = store.getState().executionHistory.entries;
+      expect(state.length).toBe(1);
+      expect(state).toEqual([entries[1]]);
+      expect(state.find((e) => e.dtName === 'dt1')).toBeUndefined();
+    });
+
     it('should handle setSelectedExecutionId', () => {
       store.dispatch(setSelectedExecutionId('1'));
       expect(store.getState().executionHistory.selectedExecutionId).toBe('1');
@@ -457,6 +499,165 @@ describe('executionHistory slice', () => {
       expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
       expect(mockStorageService.getByDTName).toHaveBeenCalledWith('test-dt');
+    });
+
+    it('should handle fetchAllExecutionHistory success', async () => {
+      const mockEntries = [
+        {
+          id: '1',
+          dtName: 'test-dt-1',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+      ];
+
+      mockStorageService.getAll.mockResolvedValue(mockEntries);
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        fetchAllExecutionHistory(),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries).toEqual(mockEntries);
+      expect(state.loading).toBe(false);
+      expect(state.error).toBeNull();
+      expect(mockStorageService.getAll).toHaveBeenCalled();
+    });
+
+    it('should handle fetchAllExecutionHistory success', async () => {
+      const mockEntries = [
+        {
+          id: '1',
+          dtName: 'test-dt-1',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+      ];
+
+      mockStorageService.getAll.mockResolvedValue(mockEntries);
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        fetchAllExecutionHistory(),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries).toEqual(mockEntries);
+      expect(state.loading).toBe(false);
+      expect(state.error).toBeNull();
+      expect(mockStorageService.getAll).toHaveBeenCalled();
+    });
+
+    it('should handle addExecution success', async () => {
+      const entry = {
+        id: '1',
+        dtName: 'test-dt',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      mockStorageService.add.mockResolvedValue('1');
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        addExecution(entry),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries).toContainEqual(entry);
+      expect(state.loading).toBe(false);
+      expect(state.error).toBeNull();
+      expect(mockStorageService.add).toHaveBeenCalledWith(entry);
+    });
+
+    it('should handle updateExecution success', async () => {
+      const entry = {
+        id: '1',
+        dtName: 'test-dt',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
+
+      store.dispatch(addExecutionHistoryEntry(entry));
+
+      const updatedEntry = {
+        ...entry,
+        status: ExecutionStatus.COMPLETED,
+      };
+
+      mockStorageService.update.mockResolvedValue(undefined);
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        updateExecution(updatedEntry),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries[0]).toEqual(updatedEntry);
+      expect(state.loading).toBe(false);
+      expect(state.error).toBeNull();
+      expect(mockStorageService.update).toHaveBeenCalledWith(updatedEntry);
+    });
+
+    it('should handle clearExecutionHistoryForDT success', async () => {
+      const entries = [
+        {
+          id: '1',
+          dtName: 'test-dt',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+        {
+          id: '2',
+          dtName: 'other-dt',
+          pipelineId: 456,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        },
+      ];
+
+      store.dispatch(setExecutionHistoryEntries(entries));
+      mockStorageService.deleteByDTName.mockResolvedValue(undefined);
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        clearExecutionHistoryForDT('test-dt'),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries.length).toBe(1);
+      expect(state.entries[0].dtName).toBe('other-dt');
+      expect(state.error).toBeNull();
+      expect(mockStorageService.deleteByDTName).toHaveBeenCalledWith('test-dt');
+    });
+
+    it('should handle checkRunningExecutions with no running executions', async () => {
+      const entries = [
+        {
+          id: '1',
+          dtName: 'test-dt',
+          pipelineId: 123,
+          timestamp: Date.now(),
+          status: ExecutionStatus.COMPLETED,
+          jobLogs: [],
+        },
+      ];
+
+      store.dispatch(setExecutionHistoryEntries(entries));
+
+      await (store.dispatch as (action: unknown) => Promise<void>)(
+        checkRunningExecutions(),
+      );
+
+      const state = store.getState().executionHistory;
+      expect(state.entries).toEqual(entries);
     });
 
     it('should handle fetchExecutionHistory error', async () => {
