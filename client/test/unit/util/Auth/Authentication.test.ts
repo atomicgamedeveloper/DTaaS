@@ -54,7 +54,7 @@ describe('useSignOut', () => {
     );
     (useAppURL as jest.Mock).mockReturnValue('https://foo.com/');
     (cleanURL as jest.Mock).mockReturnValue('https://foo.com');
-    Object.defineProperty(window, 'document', {
+    Object.defineProperty(globalThis, 'document', {
       value: {
         cookie: '',
         addEventListener: jest.fn(),
@@ -62,13 +62,13 @@ describe('useSignOut', () => {
       },
       writable: true,
     });
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: {
         clear: mockClear,
       },
       writable: true,
     });
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(globalThis, 'location', {
       value: { reload: jest.fn() },
       writable: true,
     });

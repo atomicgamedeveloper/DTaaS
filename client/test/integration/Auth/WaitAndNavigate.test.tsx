@@ -18,7 +18,7 @@ Object.defineProperty(AbortSignal, 'timeout', {
 
 const authStateWithError = { ...mockAuthState, error: Error('Test Error') };
 const setup = () => setupIntegrationTest('/library', authStateWithError);
-Object.defineProperty(window, 'location', {
+Object.defineProperty(globalThis, 'location', {
   value: {
     ...window.location,
     reload: jest.fn(),

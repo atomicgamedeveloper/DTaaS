@@ -77,7 +77,7 @@ describe('PipelineChecks', () => {
     );
     checkParentPipelineStatusSpy.mockImplementation(() => Promise.resolve());
 
-    jest.spyOn(global.Date, 'now').mockReturnValue(startTime);
+    jest.spyOn(globalThis.Date, 'now').mockReturnValue(startTime);
 
     await PipelineChecks.startPipelineStatusCheck(params);
 

@@ -162,9 +162,7 @@ describe('Sidebar', () => {
     const mockAsset = {
       ...mockLibraryAsset,
       configFiles: ['config1.json'],
-      getConfigFiles: jest
-        .fn()
-        .mockImplementation(async () => Promise.resolve()),
+      getConfigFiles: jest.fn().mockImplementation(async () => []),
     };
 
     store.dispatch(addToCart(mockAsset));

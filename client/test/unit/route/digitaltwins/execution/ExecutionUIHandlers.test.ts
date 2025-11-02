@@ -102,7 +102,7 @@ describe('ExecutionsUIHandlers', () => {
 
     dispatch.mockReset();
 
-    await updatePipelineStateOnStop(
+    updatePipelineStateOnStop(
       digitalTwin,
       setButtonText,
       dispatch,

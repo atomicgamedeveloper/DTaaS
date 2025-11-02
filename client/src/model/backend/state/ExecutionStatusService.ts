@@ -24,7 +24,7 @@ class ExecutionStatusService {
       runningExecutions.map(async (execution) => {
         try {
           const digitalTwinData = digitalTwinsData[execution.dtName];
-          if (!digitalTwinData || !digitalTwinData.gitlabProjectId) {
+          if (digitalTwinData?.gitlabProjectId == null) {
             return;
           }
           const digitalTwin = await createDigitalTwinFromData(
@@ -33,7 +33,7 @@ class ExecutionStatusService {
           );
           const parentPipelineStatus =
             await digitalTwin.backend.getPipelineStatus(
-              digitalTwin.backend.getProjectId()!,
+              digitalTwin.backend.getProjectId(),
               execution.pipelineId,
             );
           if (parentPipelineStatus === 'failed') {
@@ -52,7 +52,7 @@ class ExecutionStatusService {
           try {
             const childPipelineStatus =
               await digitalTwin.backend.getPipelineStatus(
-                digitalTwin.backend.getProjectId()!,
+                digitalTwin.backend.getProjectId(),
                 childPipelineId,
               );
             if (
@@ -73,10 +73,10 @@ class ExecutionStatusService {
               await executionStorage.update(updatedExecution);
               updatedExecutions.push(updatedExecution);
             }
-          } catch (_error) {
+          } catch {
             // Child pipeline might not exist yet or other error - silently ignore
           }
-        } catch (_error) {
+        } catch {
           // Silently ignore errors for individual executions
         }
       }),

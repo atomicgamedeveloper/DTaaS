@@ -166,7 +166,7 @@ const createTestStore = (
         shouldFetchDigitalTwins: false,
       },
     },
-  }) as TestStore;
+  });
 };
 
 const waitForAccordionTransitions = async () => {
@@ -448,11 +448,9 @@ describe('ExecutionHistoryList', () => {
 
   it('sorts executions by timestamp in descending order', () => {
     testStore = createTestStore(mockExecutions);
-
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector) => selector(testStore.getState()),
     );
-
     render(
       <Provider store={testStore}>
         <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
@@ -550,12 +548,13 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const accordions = screen
+    const accordion = screen
       .getAllByRole('button')
-      .filter((button) =>
+      .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    fireEvent.click(accordions[0]);
+
+    fireEvent.click(accordion!);
 
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -612,12 +611,12 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const accordions = screen
+    const accordion = screen
       .getAllByRole('button')
-      .filter((button) =>
+      .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    fireEvent.click(accordions[0]);
+    fireEvent.click(accordion!);
     await waitForAccordionTransitions();
 
     await new Promise<void>((resolve) => {
@@ -642,9 +641,7 @@ describe('ExecutionHistoryList', () => {
       status: ExecutionStatus.COMPLETED,
       jobLogs: [],
     };
-
     testStore = createTestStore([executionWithNoLogs]);
-
     testStore.dispatch(setSelectedExecutionId('exec-no-logs'));
 
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
@@ -663,12 +660,12 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const accordions = screen
+    const accordion = screen
       .getAllByRole('button')
-      .filter((button) =>
+      .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    fireEvent.click(accordions[0]);
+    fireEvent.click(accordion!);
     await waitForAccordionTransitions();
 
     await new Promise<void>((resolve) => {

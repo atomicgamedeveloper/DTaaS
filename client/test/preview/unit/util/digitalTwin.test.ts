@@ -56,7 +56,7 @@ describe('DigitalTwin', () => {
     mockGitlabInstance.startPipeline = jest.fn().mockResolvedValue({ id: 123 });
     dt = new DigitalTwin('test-DTName', mockGitlabInstance);
 
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: {
         getItem: jest.fn(() => 'testUser'),
         setItem: jest.fn(),

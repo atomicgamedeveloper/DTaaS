@@ -32,7 +32,7 @@ import {
 } from 'model/backend/util/digitalTwinUtils';
 
 export const formatName = (name: string) =>
-  name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
+  name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase()); // replaceAll not supported
 
 class DigitalTwin implements DigitalTwinInterface {
   public DTName: string;
@@ -83,7 +83,7 @@ class DigitalTwin implements DigitalTwinInterface {
     try {
       const fileContent = await this.DTAssets.getFileContent('description.md');
       this.description = fileContent;
-    } catch (_error) {
+    } catch {
       this.description = `There is no description.md file`;
     }
   }
@@ -93,13 +93,13 @@ class DigitalTwin implements DigitalTwinInterface {
     try {
       const fileContent = await this.DTAssets.getFileContent('README.md');
       this.fullDescription = fileContent.replace(
-        /(!\[[^\]]*\])\(([^)]+)\)/g,
+        /(!\[[^\]]*\])\(([^)]+)\)/g, // replaceAll not supported
         (match: string, altText: string, imagePath: string) => {
           const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
           return `${altText}(${fullUrl})`;
         },
       );
-    } catch (_error) {
+    } catch {
       this.fullDescription = `There is no README.md file`;
     }
   }
@@ -166,27 +166,14 @@ class DigitalTwin implements DigitalTwinInterface {
     executionId?: string,
   ): Promise<void> {
     const runnerTag = getRunnerTag();
-    let pipelineId: number | null = null;
-
-    if (executionId) {
-      const execution = await indexedDBService.getById(executionId);
-      if (execution) {
-        pipelineId = execution.pipelineId;
-        if (pipeline !== 'parentPipeline') {
-          pipelineId += 1;
-        }
-      }
-    } else {
-      pipelineId =
-        pipeline === 'parentPipeline' ? this.pipelineId : this.pipelineId! + 1;
-    }
+    const pipelineId = await this.resolvePipelineId(pipeline, executionId);
 
     if (!pipelineId) {
       return;
     }
 
     try {
-      await this.backend.api.cancelPipeline(projectId, pipelineId!);
+      await this.backend.api.cancelPipeline(projectId, pipelineId);
       this.backend.logs.push({
         status: 'canceled',
         DTName: this.DTName,
@@ -194,20 +181,9 @@ class DigitalTwin implements DigitalTwinInterface {
       });
       this.lastExecutionStatus = ExecutionStatus.CANCELED;
 
-      if (executionId) {
-        const execution = await indexedDBService.getById(executionId);
-        if (execution) {
-          execution.status = ExecutionStatus.CANCELED;
-          await indexedDBService.update(execution);
-        }
-      } else if (this.currentExecutionId) {
-        const execution = await indexedDBService.getById(
-          this.currentExecutionId,
-        );
-        if (execution) {
-          execution.status = ExecutionStatus.CANCELED;
-          await indexedDBService.update(execution);
-        }
+      const idToUpdate = executionId || this.currentExecutionId;
+      if (idToUpdate) {
+        await this.updateExecutionStatus(idToUpdate, ExecutionStatus.CANCELED);
       }
 
       this.activePipelineIds = this.activePipelineIds.filter(
@@ -222,6 +198,27 @@ class DigitalTwin implements DigitalTwinInterface {
       });
       this.lastExecutionStatus = ExecutionStatus.ERROR;
     }
+  }
+
+  /**
+   * Resolve the pipeline ID based on execution context
+   */
+  private async resolvePipelineId(
+    pipeline: string,
+    executionId?: string,
+  ): Promise<number | null> {
+    if (executionId) {
+      const execution = await indexedDBService.getById(executionId);
+      if (execution) {
+        return pipeline === 'parentPipeline'
+          ? execution.pipelineId
+          : execution.pipelineId + 1;
+      }
+      return null;
+    }
+    return pipeline === 'parentPipeline'
+      ? this.pipelineId
+      : this.pipelineId! + 1;
   }
 
   /**
@@ -329,7 +326,7 @@ class DigitalTwin implements DigitalTwinInterface {
       await this.DTAssets.delete();
 
       return `${this.DTName} deleted successfully`;
-    } catch (_error) {
+    } catch {
       return `Error deleting ${this.DTName} digital twin`;
     }
   }
@@ -426,7 +423,7 @@ class DigitalTwin implements DigitalTwinInterface {
       }
 
       this.assetFiles = result;
-    } catch (_error) {
+    } catch {
       return [];
     }
     return result;

@@ -46,7 +46,7 @@ describe('ExecutionButtonHandlers', () => {
 
   it('handles button click when button text is Stop', async () => {
     const handleStop = jest.spyOn(PipelineHandlers, 'handleStop');
-    await PipelineHandlers.handleButtonClick(
+    PipelineHandlers.handleButtonClick(
       'Stop',
       setButtonText,
       digitalTwin,

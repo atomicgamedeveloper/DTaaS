@@ -51,7 +51,7 @@ export const handleTimeout = async (
     const execution = await indexedDBService.getById(executionId);
     if (execution) {
       execution.status = ExecutionStatus.TIMEOUT;
-      await indexedDBService.update(execution);
+      await Promise.resolve(indexedDBService.update(execution));
     }
 
     dispatch(
@@ -99,16 +99,7 @@ export const checkParentPipelineStatus = async ({
     pipelineId,
   );
 
-  if (pipelineStatus === 'success') {
-    await checkChildPipelineStatus({
-      setButtonText,
-      digitalTwin,
-      setLogButtonDisabled,
-      dispatch,
-      startTime,
-      executionId,
-    });
-  } else if (pipelineStatus === 'failed') {
+  if (pipelineStatus === 'success' || pipelineStatus === 'failed') {
     await checkChildPipelineStatus({
       setButtonText,
       digitalTwin,
@@ -118,7 +109,7 @@ export const checkParentPipelineStatus = async ({
       executionId,
     });
   } else if (hasTimedOut(startTime)) {
-    handleTimeout(
+    await handleTimeout(
       digitalTwin.DTName,
       setButtonText,
       setLogButtonDisabled,
@@ -127,7 +118,7 @@ export const checkParentPipelineStatus = async ({
     );
   } else {
     await delay(PIPELINE_POLL_INTERVAL);
-    checkParentPipelineStatus({
+    await checkParentPipelineStatus({
       setButtonText,
       digitalTwin,
       setLogButtonDisabled,
@@ -162,18 +153,7 @@ export const handlePipelineCompletion = async (
       ? ExecutionStatus.COMPLETED
       : ExecutionStatus.FAILED;
 
-  if (!executionId) {
-    const jobLogs = await fetchJobLogs(digitalTwin.backend, pipelineId);
-    await updatePipelineStateOnCompletion(
-      digitalTwin,
-      jobLogs,
-      setButtonText,
-      setLogButtonDisabled,
-      dispatch,
-      undefined,
-      status,
-    );
-  } else {
+  if (executionId) {
     const { fetchLogsAndUpdateExecution } = await import(
       'route/digitaltwins/execution/executionStatusHandlers'
     );
@@ -210,6 +190,17 @@ export const handlePipelineCompletion = async (
         assetName: digitalTwin.DTName,
         pipelineLoading: false,
       }),
+    );
+  } else {
+    const jobLogs = await fetchJobLogs(digitalTwin.backend, pipelineId);
+    await updatePipelineStateOnCompletion(
+      digitalTwin,
+      jobLogs,
+      setButtonText,
+      setLogButtonDisabled,
+      dispatch,
+      undefined,
+      status,
     );
   }
 
@@ -271,7 +262,7 @@ export const checkChildPipelineStatus = async ({
       executionId,
     );
   } else if (hasTimedOut(startTime)) {
-    handleTimeout(
+    await handleTimeout(
       digitalTwin.DTName,
       setButtonText,
       setLogButtonDisabled,

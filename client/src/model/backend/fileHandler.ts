@@ -179,7 +179,7 @@ class FileHandler implements FileHandlerInterface {
           isValidFileType(item, FileType.CONFIGURATION),
         )
         .map((file: RepositoryTreeItem) => file.name);
-    } catch (_error) {
+    } catch {
       return [];
     }
   }
@@ -196,7 +196,7 @@ class FileHandler implements FileHandlerInterface {
       return response
         .filter((item: { type: string }) => item.type === 'tree')
         .map((folder: { path: string }) => folder.path);
-    } catch (_error) {
+    } catch {
       return [];
     }
   }

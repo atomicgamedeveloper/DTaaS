@@ -178,16 +178,16 @@ ${triggerKey}:
 
       const updatedContent = fileContent.replace(triggerPattern, '');
 
-      if (updatedContent !== fileContent) {
-        const commitMessage = `Remove trigger for ${this.DTName} from .gitlab-ci.yml`;
-        await this.fileHandler.updateFile(
-          filePath,
-          updatedContent,
-          commitMessage,
-        );
-      } else {
+      if (updatedContent === fileContent) {
         return `No trigger found for ${this.DTName} in ${filePath}`;
       }
+
+      const commitMessage = `Remove trigger for ${this.DTName} from .gitlab-ci.yml`;
+      await this.fileHandler.updateFile(
+        filePath,
+        updatedContent,
+        commitMessage,
+      );
       return `Trigger removed from pipeline for ${this.DTName}`;
     } catch (error) {
       return `Error removing trigger from pipeline: ${error}`;

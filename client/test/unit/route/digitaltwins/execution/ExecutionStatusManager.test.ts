@@ -64,8 +64,8 @@ describe('ExecutionStatusManager', () => {
       .spyOn(PipelineChecks, 'checkChildPipelineStatus')
       .mockResolvedValue(undefined);
 
-  it('handles timeout', () => {
-    PipelineChecks.handleTimeout(
+  it('handles timeout', async () => {
+    await PipelineChecks.handleTimeout(
       DTName,
       setButtonText,
       setLogButtonDisabled,
@@ -154,7 +154,7 @@ describe('ExecutionStatusManager', () => {
       .spyOn(PipelineChecks, 'checkParentPipelineStatus')
       .mockResolvedValue(undefined);
 
-    jest.spyOn(global.Date, 'now').mockReturnValue(startTime);
+    jest.spyOn(globalThis.Date, 'now').mockReturnValue(startTime);
 
     spyOnGetPipelineStatus('success');
     // Mock getPipelineJobs to return empty array to prevent fetchJobLogs from failing

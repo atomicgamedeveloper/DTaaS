@@ -10,8 +10,8 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { DEBOUNCE_TIME } from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 interface StartButtonProps {
-  assetName: string;
-  setHistoryButtonDisabled: Dispatch<SetStateAction<boolean>>;
+  readonly assetName: string;
+  readonly setHistoryButtonDisabled: Dispatch<SetStateAction<boolean>>;
 }
 
 function StartButton({

@@ -15,7 +15,7 @@ const mockSessionStorage = {
   clear: jest.fn(),
 };
 
-Object.defineProperty(window, 'sessionStorage', {
+Object.defineProperty(globalThis, 'sessionStorage', {
   value: mockSessionStorage,
   writable: true,
 });

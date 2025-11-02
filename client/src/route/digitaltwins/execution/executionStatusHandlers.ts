@@ -17,7 +17,7 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 // Re-export for test compatibility
-export { fetchJobLogs };
+export { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 
 /**
  * Starts a digital twin pipeline execution with UI feedback
@@ -209,10 +209,7 @@ export const fetchLogsAndUpdateExecution = async (
   try {
     const jobLogs = await fetchJobLogs(digitalTwin.backend, pipelineId);
 
-    if (
-      jobLogs.length === 0 ||
-      jobLogs.every((log) => !log.log || log.log.trim() === '')
-    ) {
+    if (jobLogs.every((log) => !log.log || log.log.trim() === '')) {
       return false;
     }
 
@@ -234,7 +231,7 @@ export const fetchLogsAndUpdateExecution = async (
     );
 
     return true;
-  } catch (_error) {
+  } catch {
     return false;
   }
 };

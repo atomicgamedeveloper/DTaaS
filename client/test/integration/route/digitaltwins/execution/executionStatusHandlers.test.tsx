@@ -29,7 +29,6 @@ describe('PipelineUtils', () => {
 
     digitalTwin.execute = jest.fn().mockImplementation(async () => {
       digitalTwin.lastExecutionStatus = ExecutionStatus.SUCCESS;
-      return Promise.resolve();
     });
   });
 

@@ -42,6 +42,7 @@ describe('PipelineHandler Integration Tests', () => {
 
   it('handles button click when button text is Stop', async () => {
     const { dispatch } = store;
+
     await PipelineHandlers.handleButtonClick(
       'Start',
       jest.fn(),
@@ -59,13 +60,11 @@ describe('PipelineHandler Integration Tests', () => {
     );
 
     const snackbarState = store.getState().snackbar;
-
     const expectedSnackbarState = {
       open: true,
       message: 'Execution mockedStatus for MockedDTName',
       severity: 'error',
     };
-
     expect(snackbarState).toEqual(expectedSnackbarState);
   });
 

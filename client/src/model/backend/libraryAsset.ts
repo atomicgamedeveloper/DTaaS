@@ -51,7 +51,7 @@ class LibraryAsset implements LibraryAssetInterface {
           'description.md',
         );
         this.description = fileContent;
-      } catch (_error) {
+      } catch {
         this.description = `There is no description.md file`;
       }
     }
@@ -73,7 +73,7 @@ class LibraryAsset implements LibraryAssetInterface {
             return `${altText}(${fullUrl})`;
           },
         );
-      } catch (_error) {
+      } catch {
         this.fullDescription = `There is no README.md file`;
       }
     } else {

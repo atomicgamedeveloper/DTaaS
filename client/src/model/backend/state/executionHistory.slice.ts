@@ -21,7 +21,7 @@ const formatTimestamp = (timestamp: number): string => {
 };
 
 const formatName = (name: string) =>
-  name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
+  name.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase()); // replaceAll is unavailable
 
 type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
@@ -277,7 +277,7 @@ export const checkRunningExecutions =
         storageService,
       );
 
-      updatedExecutions.forEach((updatedExecution: DTExecutionResult) => {
+      updatedExecutions.forEach((updatedExecution) => {
         dispatch(updateExecutionHistoryEntry(updatedExecution));
       });
     } catch (error) {

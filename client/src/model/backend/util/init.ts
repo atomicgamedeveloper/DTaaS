@@ -30,7 +30,6 @@ export const fetchLibraryAssets = async (
       type as keyof typeof AssetTypes,
       initialGitlabInstance,
     );
-
     const assets = await Promise.all(
       subfolders.map(async (subfolder) => {
         const gitlabInstance = createGitlabInstance(
@@ -53,7 +52,10 @@ export const fetchLibraryAssets = async (
         return libraryAsset;
       }),
     );
-    assets.forEach((asset) => dispatch(setAsset(asset)));
+
+    assets.forEach((asset) => {
+      dispatch(setAsset(asset));
+    });
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }
@@ -65,13 +67,12 @@ export const fetchDigitalTwins = async (
 ) => {
   try {
     await initialGitlabInstance.init();
-
     const subfolders = await getDTSubfolders(
       initialGitlabInstance.getProjectId(),
       initialGitlabInstance.api,
     );
-
     await fetchLibraryAssets(dispatch, setError, 'Digital Twins', true);
+
     const digitalTwins = await Promise.all(
       subfolders.map(async (asset) => {
         const gitlabInstance = createGitlabInstance(
@@ -85,6 +86,7 @@ export const fetchDigitalTwins = async (
         return { assetName: asset.name, digitalTwin };
       }),
     );
+
     digitalTwins.forEach(({ assetName, digitalTwin }) => {
       const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
       dispatch(setDigitalTwin({ assetName, digitalTwin: digitalTwinData }));

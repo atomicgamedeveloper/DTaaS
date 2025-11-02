@@ -19,7 +19,7 @@ export const fetchJobLogs = async (
   const projectId = backend.getProjectId();
   const jobs = await backend.getPipelineJobs(projectId, pipelineId);
   const jobLogs = jobs.map(async (job) => {
-    if (!job || job.id === undefined) {
+    if (job?.id === undefined) {
       return jobLog('Unknown', 'Job ID not available');
     }
     const jobName = typeof job.name === 'string' ? job.name : 'Unknown';
@@ -27,7 +27,7 @@ export const fetchJobLogs = async (
       const rawLog = await backend.getJobTrace(projectId, job.id);
       const log = typeof rawLog === 'string' ? cleanLogFn(rawLog) : '';
       return jobLog(jobName, log);
-    } catch (_e) {
+    } catch {
       return jobLog(jobName, 'Error fetching log content');
     }
   });

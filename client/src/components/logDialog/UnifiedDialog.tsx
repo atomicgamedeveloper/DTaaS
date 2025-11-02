@@ -9,13 +9,13 @@ import {
 import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
 
 interface UnifiedDialogProps {
-  open: boolean;
-  title: string;
-  dtName: string; // raw key
-  onClose: () => void;
-  onClearAll: () => void;
-  onViewLogs: () => void;
-  deleteAllDialog: React.ReactNode;
+  readonly open: boolean;
+  readonly title: string;
+  readonly dtName: string;
+  readonly onClose: () => void;
+  readonly onClearAll: () => void;
+  readonly onViewLogs: () => void;
+  readonly deleteAllDialog: React.ReactNode;
 }
 
 function UnifiedDialog({

@@ -5,9 +5,8 @@ import indexedDBService from 'database/digitalTwins';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 if (typeof globalThis.structuredClone !== 'function') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  globalThis.structuredClone = (obj: any): any =>
-    JSON.parse(JSON.stringify(obj));
+  globalThis.structuredClone = <T>(obj: T): T =>
+    JSON.parse(JSON.stringify(obj)) as T; // Simple deep clone for test purposes
 }
 
 async function clearDatabase() {
@@ -238,19 +237,23 @@ describe('IndexedDBService (Real Implementation)', () => {
   describe('error handling', () => {
     it('should handle database initialization errors', async () => {
       const originalOpen = indexedDB.open;
-      indexedDB.open = jest.fn().mockImplementation(() => {
-        const request = {
-          onerror: null as ((event: Event) => void) | null,
-          onsuccess: null as ((event: Event) => void) | null,
-          onupgradeneeded: null as
-            | ((event: IDBVersionChangeEvent) => void)
-            | null,
-        };
+
+      const mockRequest = {
+        onerror: null as ((event: Event) => void) | null,
+        onsuccess: null as ((event: Event) => void) | null,
+        onupgradeneeded: null as
+          | ((event: IDBVersionChangeEvent) => void)
+          | null,
+      };
+
+      const mockOpenImplementation = () => {
         setTimeout(() => {
-          if (request.onerror) request.onerror(new Event('error'));
+          if (mockRequest.onerror) mockRequest.onerror(new Event('error'));
         }, 0);
-        return request;
-      });
+        return mockRequest;
+      };
+
+      indexedDB.open = jest.fn().mockImplementation(mockOpenImplementation);
 
       const { default: IndexedDBService } = await import(
         'database/digitalTwins'
@@ -377,18 +380,24 @@ describe('IndexedDBService (Real Implementation)', () => {
     });
 
     it('should handle large datasets', async () => {
-      const largeDataset = Array.from({ length: 50 }, (_, i) => ({
+      const createJobLog = (j: number, i: number) => ({
+        jobName: `job-${j}`,
+        log: `Log content for job ${j} in execution ${i}`,
+      });
+
+      const createDatasetEntry = (i: number) => ({
         id: `large-${i}`,
         dtName: `dt-${i % 5}`, // 5 different DTs
         pipelineId: 1000 + i,
         timestamp: Date.now() + i * 1000,
         status:
           i % 2 === 0 ? ExecutionStatus.COMPLETED : ExecutionStatus.RUNNING,
-        jobLogs: Array.from({ length: 3 }, (__, j) => ({
-          jobName: `job-${j}`,
-          log: `Log content for job ${j} in execution ${i}`,
-        })),
-      }));
+        jobLogs: Array.from({ length: 3 }, (__, j) => createJobLog(j, i)),
+      });
+
+      const largeDataset = Array.from({ length: 50 }, (_, i) =>
+        createDatasetEntry(i),
+      );
 
       await Promise.all(
         largeDataset.map((entry) => indexedDBService.add(entry)),

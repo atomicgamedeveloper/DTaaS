@@ -125,7 +125,7 @@ describe('fetchAssets', () => {
   });
 
   it('initializes a DigitalTwin with initDigitalTwin', async () => {
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: {
         getItem: jest.fn(() => null),
       },
@@ -141,7 +141,7 @@ describe('fetchAssets', () => {
   });
 
   it('initializes a DigitalTwin with initDigitalTwin with sessionStorage', async () => {
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: {
         getItem: jest.fn((itemName) => {
           if (itemName === 'username') return 'my username';

@@ -18,12 +18,12 @@ import { RootState } from 'store/store';
 import { selectExecutionHistoryByDTName } from 'route/digitaltwins/execution';
 import UnifiedDialog from 'components/logDialog/UnifiedDialog';
 import DeleteAllConfirmationDialog from 'components/logDialog/DeleteAllConfirmationDialog';
-import { ShowNotificationPayload } from './interfaces/sharedInterfaces';
+import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 interface LogDialogProps {
-  showLog: boolean;
-  setShowLog: Dispatch<SetStateAction<boolean>>;
-  name: string;
+  readonly showLog: boolean;
+  readonly setShowLog: Dispatch<SetStateAction<boolean>>;
+  readonly name: string;
 }
 
 function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {

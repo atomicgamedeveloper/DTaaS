@@ -22,9 +22,9 @@ export interface IExecutionHistory {
 class IndexedDBService implements IExecutionHistory {
   private db: IDBDatabase | undefined;
 
-  private dbName: string;
+  private readonly dbName: string;
 
-  private dbVersion: number;
+  private readonly dbVersion: number;
 
   private initPromise: Promise<void> | undefined;
 

@@ -75,11 +75,6 @@ describe('statusChecking', () => {
       expect(isSuccessStatus('running')).toBe(false);
       expect(isSuccessStatus('pending')).toBe(false);
     });
-
-    /*     it('should return false for null/undefined status', () => {
-      expect(isSuccessStatus(null)).toBe(false);
-      expect(isSuccessStatus(undefined)).toBe(false);
-    }); */
   });
 
   describe('isFailureStatus', () => {
@@ -95,11 +90,6 @@ describe('statusChecking', () => {
       expect(isFailureStatus('running')).toBe(false);
       expect(isFailureStatus('canceled')).toBe(false);
     });
-    /* 
-    it('should return false for null/undefined status', () => {
-      expect(isFailureStatus(null)).toBe(false);
-      expect(isFailureStatus(undefined)).toBe(false);
-    }); */
   });
 
   describe('isRunningStatus', () => {

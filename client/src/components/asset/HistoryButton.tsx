@@ -5,9 +5,9 @@ import { useSelector } from 'react-redux';
 import { selectExecutionHistoryByDTName } from 'model/backend/state/executionHistory.selectors';
 
 interface HistoryButtonProps {
-  setShowLog: Dispatch<React.SetStateAction<boolean>>;
-  historyButtonDisabled: boolean;
-  assetName: string;
+  readonly setShowLog: Dispatch<React.SetStateAction<boolean>>;
+  readonly historyButtonDisabled: boolean;
+  readonly assetName: string;
 }
 
 export const handleToggleHistory = (
@@ -28,7 +28,7 @@ function HistoryButton({
 
   return (
     <Badge
-      badgeContent={executionCount > 0 ? executionCount : 0}
+      badgeContent={Math.max(executionCount, 0)}
       color="secondary"
       overlap="circular"
       invisible={executionCount === 0}

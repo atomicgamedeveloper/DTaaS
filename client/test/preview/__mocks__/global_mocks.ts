@@ -129,10 +129,8 @@ export const mockDigitalTwin: DigitalTwin = {
   currentExecutionId: 'test-execution-id',
 
   // Override getConfigFiles to return something
-  ...{
-    ...mockCommonFileDataProviders,
-    getConfigFiles: createAsyncMock(['configFile']),
-  },
+  ...mockCommonFileDataProviders,
+  getConfigFiles: createAsyncMock(['configFile']),
   triggerPipeline: jest.fn(),
   execute: createAsyncMock(123),
   stop: jest.fn(),
@@ -216,7 +214,7 @@ export const createMockDigitalTwinData = (dtName: string): DigitalTwinData => ({
 });
 
 // Mock sessionStorage for tests
-Object.defineProperty(window, 'sessionStorage', {
+Object.defineProperty(globalThis, 'sessionStorage', {
   value: {
     getItem: jest.fn((key: string) => {
       const mockValues: { [key: string]: string } = {
