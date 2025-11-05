@@ -138,4 +138,95 @@ describe('LogDialog', () => {
 
     expect(mockDispatch).not.toHaveBeenCalled();
   });
+
+  it('handles clear all button click when executions exist', () => {
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
+      { id: 'exec1', name: 'execution1' },
+      { id: 'exec2', name: 'execution2' },
+    ]);
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+
+    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
+    fireEvent.click(clearAllButton);
+
+    expect(screen.getByText('Confirm Clear All')).toBeInTheDocument();
+  });
+
+  it('shows info notification when clear all is clicked with empty execution history', () => {
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue(
+      [],
+    );
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+
+    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
+    fireEvent.click(clearAllButton);
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'snackbar/showSnackbar',
+      payload: {
+        message: 'Execution history is already empty',
+        severity: 'info',
+      },
+    });
+  });
+
+  it('handles clear all confirmation', () => {
+    const mockClearAction = {
+      type: 'clearExecutionHistoryForDT',
+      payload: 'testDT',
+    };
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
+      { id: 'exec1', name: 'execution1' },
+    ]);
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+
+    executionHistorySlice.clearExecutionHistoryForDT = jest.fn(
+      () => mockClearAction,
+    );
+
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+
+    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
+    fireEvent.click(clearAllButton);
+
+    const confirmButton = screen.getByRole('button', { name: /delete all/i });
+    fireEvent.click(confirmButton);
+
+    expect(mockDispatch).toHaveBeenCalledWith(mockClearAction);
+  });
+
+  it('handles clear all cancellation', () => {
+    const mockClearAction = {
+      type: 'clearExecutionHistoryForDT',
+      payload: 'testDT',
+    };
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
+      { id: 'exec1', name: 'execution1' },
+    ]);
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+
+    executionHistorySlice.clearExecutionHistoryForDT = jest.fn(
+      () => mockClearAction,
+    );
+
+    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+
+    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
+    fireEvent.click(clearAllButton);
+
+    expect(screen.getByText('Confirm Clear All')).toBeInTheDocument();
+
+    mockDispatch.mockClear();
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    fireEvent.click(cancelButton);
+
+    expect(mockDispatch).not.toHaveBeenCalledWith(mockClearAction);
+  });
 });

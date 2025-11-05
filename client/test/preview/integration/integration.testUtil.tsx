@@ -10,7 +10,9 @@ import digitalTwinReducer from 'model/backend/state/digitalTwin.slice';
 import snackbarSlice from 'store/snackbar.slice';
 import { mockAuthState, mockAuthStateType } from 'test/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { addExecutionHistoryEntry } from 'model/backend/state/executionHistory.slice';
+import executionHistoryReducer, {
+  addExecutionHistoryEntry,
+} from 'model/backend/state/executionHistory.slice';
 
 export const dispatchAddExecHistoryEntry = async (
   customStore: ReturnType<typeof configureStore>,
@@ -40,6 +42,7 @@ export const previewStore = configureStore({
   reducer: {
     digitalTwin: digitalTwinReducer,
     snackbar: snackbarSlice,
+    executionHistory: executionHistoryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
