@@ -56,7 +56,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('database/digitalTwins', () => ({
+jest.mock('database/executionHistoryDB', () => ({
   __esModule: true,
   default: {
     getByDTName: jest.fn(),

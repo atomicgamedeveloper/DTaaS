@@ -21,7 +21,7 @@ import {
   ProjectId,
 } from 'model/backend/interfaces/backendInterfaces';
 import { v4 as uuidv4 } from 'uuid';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import DTAssets from 'model/backend/DTAssets';
 import {

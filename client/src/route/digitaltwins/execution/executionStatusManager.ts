@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 import { showSnackbar } from 'store/snackbar.slice';
 import { updateExecutionStatus } from 'model/backend/state/executionHistory.slice';
 import {

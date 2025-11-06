@@ -24,7 +24,7 @@ function HistoryButton({
   const executions =
     useSelector(selectExecutionHistoryByDTName(assetName)) || [];
 
-  const executionCount = executions.length;
+  const executionCount = Array.isArray(executions) ? executions.length : 0;
 
   return (
     <Badge

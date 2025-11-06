@@ -21,7 +21,7 @@ import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 
-jest.mock('database/digitalTwins');
+jest.mock('database/executionHistoryDB');
 
 jest.mock('model/backend/util/digitalTwinAdapter', () => {
   const adapterMocks = jest.requireActual(

@@ -3,7 +3,7 @@ import * as PipelineUtils from 'route/digitaltwins/execution/executionStatusHand
 import * as PipelineCore from 'model/backend/gitlab/execution/pipelineCore';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { PipelineStatusParams } from 'route/digitaltwins/execution/executionStatusManager';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 jest.mock('model/backend/digitalTwin', () => ({

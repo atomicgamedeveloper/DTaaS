@@ -61,7 +61,7 @@ jest.mock('@mui/material/CircularProgress', () => ({
 }));
 
 // Mock the indexedDBService
-jest.mock('database/digitalTwins', () => ({
+jest.mock('database/executionHistoryDB', () => ({
   __esModule: true,
   default: {
     init: jest.fn().mockResolvedValue(undefined),

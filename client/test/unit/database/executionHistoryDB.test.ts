@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import 'fake-indexeddb/auto';
 import { ExecutionHistoryEntry } from 'model/backend/gitlab/types/executionHistory';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
 if (typeof globalThis.structuredClone !== 'function') {
@@ -238,7 +238,9 @@ describe('IndexedDBService (Real Implementation)', () => {
 
     indexedDB.open = jest.fn().mockImplementation(mockOpenImplementation);
 
-    const { default: IndexedDBService } = await import('database/digitalTwins');
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
     const newService = Object.create(Object.getPrototypeOf(IndexedDBService));
     newService.db = null;
     newService.dbName = 'test-db';
@@ -380,5 +382,193 @@ describe('IndexedDBService (Real Implementation)', () => {
 
     const dt0Entries = await indexedDBService.getByDTName('dt-0');
     expect(dt0Entries.length).toBe(10); // Every 5th entry
+  });
+
+  it('should reject add operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    const entry: ExecutionHistoryEntry = {
+      id: 'test-uninit',
+      dtName: 'test-dt',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+
+    await expect(uninitializedService.add(entry)).rejects.toThrow(
+      'Database not initialized - init() must be called first',
+    );
+  });
+
+  it('should call init before adding entry', async () => {
+    const initSpy = jest.spyOn(indexedDBService, 'init');
+
+    const entry: ExecutionHistoryEntry = {
+      id: 'test-init-call',
+      dtName: 'test-dt',
+      pipelineId: 456,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+
+    await indexedDBService.add(entry);
+
+    expect(initSpy).toHaveBeenCalled();
+
+    initSpy.mockRestore();
+
+    await indexedDBService.delete(entry.id);
+  });
+
+  it('should successfully return entry ID after add', async () => {
+    const entry: ExecutionHistoryEntry = {
+      id: 'test-return-id',
+      dtName: 'test-dt',
+      pipelineId: 789,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+
+    const resultId = await indexedDBService.add(entry);
+
+    expect(resultId).toBe('test-return-id');
+    expect(resultId).toBe(entry.id);
+
+    const retrieved = await indexedDBService.getById(entry.id);
+    expect(retrieved).not.toBeNull();
+    expect(retrieved?.id).toBe(resultId);
+
+    await indexedDBService.delete(entry.id);
+  });
+
+  it('should reject update operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    const entry: ExecutionHistoryEntry = {
+      id: 'test-update-uninit',
+      dtName: 'test-dt',
+      pipelineId: 123,
+      timestamp: Date.now(),
+      status: ExecutionStatus.RUNNING,
+      jobLogs: [],
+    };
+
+    await expect(uninitializedService.update(entry)).rejects.toThrow(
+      'Database not initialized',
+    );
+  });
+
+  it('should reject getById operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    await expect(uninitializedService.getById('test-id')).rejects.toThrow(
+      'Database not initialized',
+    );
+  });
+
+  it('should reject getByDTName operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    await expect(uninitializedService.getByDTName('test-dt')).rejects.toThrow(
+      'Database not initialized',
+    );
+  });
+
+  it('should reject getAll operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    await expect(uninitializedService.getAll()).rejects.toThrow(
+      'Database not initialized',
+    );
+  });
+
+  it('should reject delete operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    await expect(uninitializedService.delete('test-id')).rejects.toThrow(
+      'Database not initialized',
+    );
+  });
+
+  it('should reject deleteByDTName operation when database is not initialized', async () => {
+    const { default: IndexedDBService } = await import(
+      'database/executionHistoryDB'
+    );
+    const uninitializedService = Object.create(
+      Object.getPrototypeOf(IndexedDBService),
+    );
+    uninitializedService.db = undefined;
+    uninitializedService.dbName = 'test-db';
+    uninitializedService.dbVersion = 1;
+    uninitializedService.initPromise = undefined;
+    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+
+    await expect(
+      uninitializedService.deleteByDTName('test-dt'),
+    ).rejects.toThrow('Database not initialized');
   });
 });

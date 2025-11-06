@@ -12,7 +12,7 @@ import cartSlice from 'preview/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 
 setStorageService(indexedDBService);
 

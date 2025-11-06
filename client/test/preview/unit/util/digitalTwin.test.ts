@@ -7,12 +7,12 @@ import {
   getRunnerTag,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
-import indexedDBService from 'database/digitalTwins';
+import indexedDBService from 'database/executionHistoryDB';
 import { getUpdatedLibraryFile } from 'model/backend/util/digitalTwinUtils';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { getAuthority } from 'util/envUtil';
 
-jest.mock('database/digitalTwins');
+jest.mock('database/executionHistoryDB');
 
 jest.mock('model/backend/util/digitalTwinUtils', () => ({
   ...jest.requireActual('model/backend/util/digitalTwinUtils'),

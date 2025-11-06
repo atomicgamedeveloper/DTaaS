@@ -21,7 +21,7 @@ import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapte
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 
-jest.mock('database/digitalTwins', () => ({
+jest.mock('database/executionHistoryDB', () => ({
   __esModule: true,
   default: {
     getByDTName: jest.fn().mockResolvedValue([]),
