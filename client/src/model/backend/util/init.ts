@@ -53,9 +53,9 @@ export const fetchLibraryAssets = async (
       }),
     );
 
-    assets.forEach((asset) => {
+    for (const asset of assets) {
       dispatch(setAsset(asset));
-    });
+    }
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }
@@ -87,10 +87,10 @@ export const fetchDigitalTwins = async (
       }),
     );
 
-    digitalTwins.forEach(({ assetName, digitalTwin }) => {
+    for (const { assetName, digitalTwin } of digitalTwins) {
       const digitalTwinData = extractDataFromDigitalTwin(digitalTwin);
       dispatch(setDigitalTwin({ assetName, digitalTwin: digitalTwinData }));
-    });
+    }
   } catch (err) {
     setError(`An error occurred while fetching assets: ${err}`);
   }

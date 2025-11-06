@@ -189,11 +189,11 @@ export const mockIndexedDBService = {
 
 // Helper function to reset all indexedDBService mocks
 export const resetIndexedDBServiceMocks = () => {
-  Object.values(mockIndexedDBService).forEach((mock) => {
+  for (const mock of Object.values(mockIndexedDBService)) {
     if (typeof mock === 'function' && typeof mock.mockClear === 'function') {
       mock.mockClear();
     }
-  });
+  }
 };
 
 /**

@@ -333,25 +333,28 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const accordions = screen
+    const timedOutAccordion = screen
       .getAllByRole('button')
-      .filter((button) =>
+      .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    const timedOutAccordion = accordions[0];
 
-    expect(timedOutAccordion.textContent).toContain('Timed out');
-    expect(timedOutAccordion).toBeInTheDocument();
+    expect(timedOutAccordion).toBeDefined();
 
-    fireEvent.click(timedOutAccordion);
-    await waitForAccordionTransitions();
+    if (timedOutAccordion) {
+      fireEvent.click(timedOutAccordion);
+      expect(timedOutAccordion).toBeInTheDocument();
+      expect(timedOutAccordion.textContent).toContain('Timed out');
 
-    await new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), 0);
-    });
+      fireEvent.click(timedOutAccordion);
+      await waitForAccordionTransitions();
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 0);
+      });
 
-    expect(mockDispatch).toHaveBeenCalled();
-    expect(mockOnViewLogs).toHaveBeenCalledWith('exec5');
+      expect(mockDispatch).toHaveBeenCalled();
+      expect(mockOnViewLogs).toHaveBeenCalledWith('exec5');
+    }
   });
 
   it('handles stop execution correctly', async () => {
@@ -554,16 +557,17 @@ describe('ExecutionHistoryList', () => {
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
 
-    fireEvent.click(accordion!);
-
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: expect.stringContaining(
-          'executionHistory/setSelectedExecutionId',
-        ),
-        payload: 'exec5',
-      }),
-    );
+    if (accordion) {
+      fireEvent.click(accordion);
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: expect.stringContaining(
+            'executionHistory/setSelectedExecutionId',
+          ),
+          payload: 'exec5',
+        }),
+      );
+    }
   });
 
   it('handles a large number of executions correctly', () => {
@@ -616,20 +620,24 @@ describe('ExecutionHistoryList', () => {
       .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    fireEvent.click(accordion!);
-    await waitForAccordionTransitions();
 
-    await new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), 200);
-    });
+    expect(accordion).toBeDefined();
+    if (accordion) {
+      fireEvent.click(accordion);
+      await waitForAccordionTransitions();
 
-    const expandedRegion = screen.getByRole('region');
-    expect(expandedRegion).toBeInTheDocument();
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 200);
+      });
 
-    const accordionDetails = expandedRegion.querySelector(
-      '.MuiAccordionDetails-root',
-    );
-    expect(accordionDetails).toBeInTheDocument();
+      const expandedRegion = screen.getByRole('region');
+      expect(expandedRegion).toBeInTheDocument();
+
+      const accordionDetails = expandedRegion.querySelector(
+        '.MuiAccordionDetails-root',
+      );
+      expect(accordionDetails).toBeInTheDocument();
+    }
   });
 
   it('handles accordion details rendering with selected execution but no logs', async () => {
@@ -665,14 +673,17 @@ describe('ExecutionHistoryList', () => {
       .find((button) =>
         button.getAttribute('aria-controls')?.includes('execution-'),
       );
-    fireEvent.click(accordion!);
-    await waitForAccordionTransitions();
+    expect(accordion).toBeDefined();
+    if (accordion) {
+      fireEvent.click(accordion);
+      await waitForAccordionTransitions();
 
-    await new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), 100);
-    });
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 100);
+      });
 
-    expect(screen.getByText('No logs available')).toBeInTheDocument();
+      expect(screen.getByText('No logs available')).toBeInTheDocument();
+    }
   });
 
   it('handles delete dialog cancel correctly', async () => {

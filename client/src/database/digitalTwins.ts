@@ -39,7 +39,7 @@ class IndexedDBService implements IExecutionHistory {
    */
   public async init(): Promise<void> {
     if (this.db) {
-      return Promise.resolve();
+      return;
     }
 
     if (this.initPromise) {
@@ -68,9 +68,9 @@ class IndexedDBService implements IExecutionHistory {
             keyPath: DB_CONFIG.stores.executionHistory.keyPath,
           });
 
-          DB_CONFIG.stores.executionHistory.indexes.forEach((index) => {
+          for (const index of DB_CONFIG.stores.executionHistory.indexes) {
             store.createIndex(index.name, index.keyPath);
-          });
+          }
         }
       };
     });

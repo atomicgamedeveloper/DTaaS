@@ -277,9 +277,9 @@ export const checkRunningExecutions =
         storageService,
       );
 
-      updatedExecutions.forEach((updatedExecution) => {
+      for (const updatedExecution of updatedExecutions) {
         dispatch(updateExecutionHistoryEntry(updatedExecution));
-      });
+      }
     } catch (error) {
       dispatch(setError(`Failed to check execution status: ${error}`));
     }

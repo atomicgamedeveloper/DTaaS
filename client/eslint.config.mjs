@@ -101,6 +101,11 @@ export default [{
         "import/extensions": "off",
         "no-use-before-define": "off",
         "no-unreachable": "error",
+
+        // Conflict with SonarCube fixes
+        "consistent-return": "off",
+        "no-restricted-syntax": "off",
+        
     },
 }, {
     files: ["**/*.ts", "**/*.tsx"],

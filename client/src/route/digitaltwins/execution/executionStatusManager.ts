@@ -70,9 +70,11 @@ export const handleTimeout = async (
  * Starts pipeline status checking process
  * @param params Pipeline status parameters
  */
-export const startPipelineStatusCheck = (params: PipelineStatusParams) => {
+export const startPipelineStatusCheck = async (
+  params: PipelineStatusParams,
+) => {
   const startTime = Date.now();
-  checkParentPipelineStatus({ ...params, startTime });
+  await checkParentPipelineStatus({ ...params, startTime });
 };
 
 /**

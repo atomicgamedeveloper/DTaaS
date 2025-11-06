@@ -26,7 +26,7 @@ export type PipelineHandlerDispatch = ThunkDispatch<
  * @param setLogButtonDisabled React state setter for log button
  * @param dispatch Redux dispatch function
  */
-export const handleButtonClick = (
+export const handleButtonClick = async (
   buttonText: string,
   setButtonText: Dispatch<SetStateAction<string>>,
   digitalTwin: DigitalTwin,
