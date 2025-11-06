@@ -1,20 +1,6 @@
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { DB_CONFIG } from 'database/types';
-
-/**
- * Interface for execution history operations
- * Abstracts away the underlying storage implementation
- */
-export interface IExecutionHistory {
-  init(): Promise<void>;
-  add(entry: DTExecutionResult): Promise<string>;
-  update(entry: DTExecutionResult): Promise<void>;
-  getById(id: string): Promise<DTExecutionResult | null>;
-  getByDTName(dtName: string): Promise<DTExecutionResult[]>;
-  getAll(): Promise<DTExecutionResult[]>;
-  delete(id: string): Promise<void>;
-  deleteByDTName(dtName: string): Promise<void>;
-}
+import { IExecutionHistory } from 'model/backend/interfaces/execution';
 
 /**
  * For interacting with IndexedDB
