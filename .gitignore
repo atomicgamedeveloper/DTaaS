@@ -200,3 +200,8 @@ deploy/services/certs/*
 # qlty config
 .qlty
 !.qlty/qlty.toml
+
+#pytest coverage files
+*.cover
+*.coverage
+coverage.xml
