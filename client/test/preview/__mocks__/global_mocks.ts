@@ -57,16 +57,13 @@ export type mockGitlabInstanceType = {
   getPipelineStatus: jest.Mock;
 };
 
-const mockCommonFileFunctions = {
+const createCommonMocks = () => ({
   getFileContent: jest.fn(),
   getFileNames: jest.fn(),
-};
-
-const mockCommonFileDataProviders = {
   getDescription: jest.fn(),
   getFullDescription: jest.fn(),
   getConfigFiles: jest.fn(),
-};
+});
 
 export const mockFileHandler: FileHandler = {
   name: 'mockedName',
@@ -74,20 +71,18 @@ export const mockFileHandler: FileHandler = {
   createFile: jest.fn(),
   updateFile: jest.fn(),
   deleteDT: jest.fn(),
-  ...mockCommonFileFunctions,
+  getFileContent: jest.fn(),
+  getFileNames: jest.fn(),
   getLibraryFileNames: jest.fn(),
   getLibraryConfigFileNames: jest.fn(),
   getFolders: jest.fn(),
 };
 
-const mockCommonDTDependencies = {
-  backend,
-  fileHandler: mockFileHandler,
-};
-
 export const mockDTAssets: DTAssets = {
   DTName: 'mockedDTName',
-  ...mockCommonDTDependencies,
+  backend,
+  fileHandler: mockFileHandler,
+  ...createCommonMocks(),
   createFiles: jest.fn(),
   getFilesFromAsset: jest.fn(),
   updateFileContent: jest.fn(),
@@ -95,7 +90,6 @@ export const mockDTAssets: DTAssets = {
   appendTriggerToPipeline: jest.fn(),
   removeTriggerFromPipeline: jest.fn(),
   delete: jest.fn(),
-  ...mockCommonFileFunctions,
   getLibraryFileContent: jest.fn(),
   getLibraryConfigFileNames: jest.fn(),
   getFolders: jest.fn(),
@@ -103,8 +97,10 @@ export const mockDTAssets: DTAssets = {
 
 export const mockLibraryManager: LibraryManager = {
   assetName: 'mockedAssetName',
-  ...mockCommonDTDependencies,
-  ...mockCommonFileFunctions,
+  backend,
+  fileHandler: mockFileHandler,
+  getFileContent: jest.fn(),
+  getFileNames: jest.fn(),
 };
 
 const createAsyncMock = <T>(value: T) => jest.fn().mockResolvedValue(value);
@@ -113,7 +109,7 @@ export const mockDigitalTwin: DigitalTwin = {
   DTName: 'mockedDTName',
   description: 'mockedDescription',
   fullDescription: 'mockedFullDescription',
-  backend: mockCommonDTDependencies.backend,
+  backend,
   DTAssets: mockDTAssets,
   pipelineId: 1,
   lastExecutionStatus: 'mockedStatus',
@@ -128,8 +124,7 @@ export const mockDigitalTwin: DigitalTwin = {
   ],
   currentExecutionId: 'test-execution-id',
 
-  // Override getConfigFiles to return something
-  ...mockCommonFileDataProviders,
+  ...createCommonMocks(),
   getConfigFiles: createAsyncMock(['configFile']),
   triggerPipeline: jest.fn(),
   execute: createAsyncMock(123),
@@ -151,13 +146,12 @@ export const mockLibraryAsset = {
   path: 'path',
   type: 'Digital Twins',
   isPrivate: true,
-  backend: mockCommonDTDependencies.backend,
+  backend,
   description: 'description',
   fullDescription: 'fullDescription',
   libraryManager: mockLibraryManager,
   configFiles: [],
-
-  ...mockCommonFileDataProviders,
+  ...createCommonMocks(),
 };
 
 // Mock for execution history entries

@@ -49,14 +49,55 @@ describe('LogDialog', () => {
   });
   const setShowLog = jest.fn();
 
+  const renderLogDialog = (
+    name = 'testDT',
+    showLog = true,
+    customSetShowLog = setShowLog,
+  ) =>
+    render(
+      <LogDialog name={name} showLog={showLog} setShowLog={customSetShowLog} />,
+    );
+
+  const setupMocks = <T,>(
+    selectorValue: T,
+    dispatchImplementation?: jest.Mock,
+  ): void => {
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue(
+      selectorValue,
+    );
+    (useDispatch as unknown as jest.Mock).mockReturnValue(
+      dispatchImplementation ?? mockDispatch,
+    );
+  };
+
   beforeEach(() => {
     mockFetchExecutionHistory.mockClear();
   });
   const executionHistorySlice = jest.requireMock(
     'model/backend/state/executionHistory.slice',
   );
+
   it('renders the LogDialog with logs available', () => {
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
+    setupMocks({
+      jobLogs: [{ jobName: 'job', log: 'testLog' }],
+    });
+
+    executionHistorySlice.fetchExecutionHistory.mockImplementation(
+      (name: string) => mockFetchExecutionHistory(name),
+    );
+
+    mockDispatch.mockImplementation((action) => {
+      if (typeof action === 'function') {
+        return action(mockDispatch, () => ({}), undefined);
+      }
+      return action;
+    });
+
+    renderLogDialog();
+  });
+
+  it('renders the LogDialog with logs available', () => {
+    setupMocks({
       jobLogs: [{ jobName: 'job', log: 'testLog' }],
     });
     executionHistorySlice.fetchExecutionHistory.mockImplementation(
@@ -70,83 +111,69 @@ describe('LogDialog', () => {
       return action;
     });
 
-    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+    renderLogDialog();
   });
 
   it('renders the LogDialog with execution history', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
     expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
   });
 
   it('renders the execution history list by default', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     expect(screen.getByTestId('execution-history-list')).toBeInTheDocument();
   });
 
   it('handles close button click', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     fireEvent.click(screen.getByRole('button', { name: /Close/i }));
-
     expect(setShowLog).toHaveBeenCalledWith(false);
   });
 
   it('fetches execution history when dialog is shown', () => {
     const mockAction = { type: 'fetchExecutionHistory', payload: 'testDT' };
     mockFetchExecutionHistory.mockReturnValue(mockAction);
-
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     expect(mockDispatch).toHaveBeenCalledWith(mockAction);
   });
 
   it('handles view logs functionality correctly', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     fireEvent.click(screen.getByText('View Logs'));
-
     expect(screen.getByText('View Logs')).toBeInTheDocument();
   });
 
   it('displays the correct title', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     expect(screen.getByText('TestDT Execution History')).toBeInTheDocument();
   });
 
   it('does not render the dialog when showLog is false', () => {
-    render(<LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />);
-
+    renderLogDialog('testDT', false);
     expect(
       screen.queryByTestId('execution-history-list'),
     ).not.toBeInTheDocument();
   });
 
   it('passes the correct dtName to ExecutionHistoryList', () => {
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
-
+    renderLogDialog();
     expect(screen.getByTestId('dt-name')).toHaveTextContent('testDT');
   });
 
   it('does not fetch execution history when dialog is not shown', () => {
     mockDispatch.mockClear();
-
-    render(<LogDialog name="testDT" showLog={false} setShowLog={setShowLog} />);
-
+    renderLogDialog('testDT', false);
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('handles clear all button click when executions exist', () => {
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
+    setupMocks([
       { id: 'exec1', name: 'execution1' },
       { id: 'exec2', name: 'execution2' },
     ]);
-    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
 
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+    renderLogDialog();
 
     const clearAllButton = screen.getByRole('button', { name: /clear all/i });
     fireEvent.click(clearAllButton);
@@ -155,12 +182,8 @@ describe('LogDialog', () => {
   });
 
   it('shows info notification when clear all is clicked with empty execution history', () => {
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue(
-      [],
-    );
-    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+    setupMocks([]);
+    renderLogDialog();
 
     const clearAllButton = screen.getByRole('button', { name: /clear all/i });
     fireEvent.click(clearAllButton);
@@ -180,22 +203,15 @@ describe('LogDialog', () => {
       payload: 'testDT',
     };
 
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
-      { id: 'exec1', name: 'execution1' },
-    ]);
-    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-
+    setupMocks([{ id: 'exec1', name: 'execution1' }]);
     executionHistorySlice.clearExecutionHistoryForDT = jest.fn(
       () => mockClearAction,
     );
 
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+    renderLogDialog();
 
-    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
-    fireEvent.click(clearAllButton);
-
-    const confirmButton = screen.getByRole('button', { name: /delete all/i });
-    fireEvent.click(confirmButton);
+    fireEvent.click(screen.getByRole('button', { name: /clear all/i }));
+    fireEvent.click(screen.getByRole('button', { name: /delete all/i }));
 
     expect(mockDispatch).toHaveBeenCalledWith(mockClearAction);
   });
@@ -206,27 +222,19 @@ describe('LogDialog', () => {
       payload: 'testDT',
     };
 
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue([
-      { id: 'exec1', name: 'execution1' },
-    ]);
-    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
-
+    setupMocks([{ id: 'exec1', name: 'execution1' }]);
     executionHistorySlice.clearExecutionHistoryForDT = jest.fn(
       () => mockClearAction,
     );
 
-    render(<LogDialog name="testDT" showLog={true} setShowLog={setShowLog} />);
+    renderLogDialog();
 
-    const clearAllButton = screen.getByRole('button', { name: /clear all/i });
-    fireEvent.click(clearAllButton);
-
+    fireEvent.click(screen.getByRole('button', { name: /clear all/i }));
     expect(screen.getByText('Confirm Clear All')).toBeInTheDocument();
 
     mockDispatch.mockClear();
 
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    fireEvent.click(cancelButton);
-
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(mockDispatch).not.toHaveBeenCalledWith(mockClearAction);
   });
 });
