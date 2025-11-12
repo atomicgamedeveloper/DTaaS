@@ -89,13 +89,13 @@ class DigitalTwin implements DigitalTwinInterface {
   }
 
   async getFullDescription(): Promise<void> {
-    const imagesPath = `${getDTDirectory()}/${this.DTName}/`;
+    const imagesPath = `${getDTDirectory()}/${this.DTName}`;
     try {
       const fileContent = await this.DTAssets.getFileContent('README.md');
       this.fullDescription = fileContent.replace(
         /(!\[[^\]]*\])\(([^)]+)\)/g, // replaceAll not supported
         (match: string, altText: string, imagePath: string) => {
-          const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}${imagePath}`;
+          const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
           return `${altText}(${fullUrl})`;
         },
       );

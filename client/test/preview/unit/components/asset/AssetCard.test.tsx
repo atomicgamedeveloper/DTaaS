@@ -13,7 +13,7 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
 }));
 
-jest.mock('model/backend/LogDialog', () => ({
+jest.mock('components/LogDialog', () => ({
   __esModule: true,
   default: () => <div data-testid="log-dialog" />,
 }));

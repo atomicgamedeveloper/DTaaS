@@ -15,6 +15,8 @@ jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
 }));
 
 jest.mock('model/backend/state/executionHistory.slice', () => ({
+  __esModule: true,
+  default: jest.fn((state = {}) => state),
   fetchExecutionHistory: jest.fn(),
   setStorageService: jest.fn(),
   updateExecutionStatus: jest.fn(),

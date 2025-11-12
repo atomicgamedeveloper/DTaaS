@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import LogDialog from 'model/backend/LogDialog';
+import LogDialog from 'components/LogDialog';
 
 // Mock Redux hooks
 jest.mock('react-redux', () => ({
@@ -10,15 +10,57 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
-const mockFetchExecutionHistory = jest.fn((name: string) => ({
-  type: 'fetchExecutionHistory',
-  payload: name,
-}));
+jest.mock('model/backend/state/executionHistory.slice', () => {
+  const executionHistoryReducer = (
+    state = {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
+    action: any,
+  ) => {
+    return state;
+  };
 
-jest.mock('model/backend/state/executionHistory.slice', () => ({
-  fetchExecutionHistory: jest.fn((name: string) =>
-    mockFetchExecutionHistory(name),
-  ),
+  return {
+    __esModule: true,
+    default: executionHistoryReducer,
+    fetchExecutionHistory: jest.fn((name: string) => ({
+      type: 'fetchExecutionHistory',
+      payload: name,
+    })),
+    setStorageService: jest.fn(),
+    clearExecutionHistoryForDT: jest.fn((name: string) => ({
+      type: 'clearExecutionHistoryForDT',
+      payload: name,
+    })),
+    updateExecutionStatus: jest.fn(),
+    setLoading: jest.fn(),
+    setError: jest.fn(),
+    setExecutionHistoryEntries: jest.fn(),
+    setExecutionHistoryEntriesForDT: jest.fn(),
+    addExecutionHistoryEntry: jest.fn(),
+    updateExecutionHistoryEntry: jest.fn(),
+    updateExecutionLogs: jest.fn(),
+    removeExecutionHistoryEntry: jest.fn(),
+    removeEntriesForDT: jest.fn(),
+    setSelectedExecutionId: jest.fn(),
+    clearEntries: jest.fn(),
+  };
+});
+
+// Mock the IndexedDB service
+jest.mock('database/executionHistoryDB', () => ({
+  __esModule: true,
+  default: {
+    getByDTName: jest.fn(),
+    getAll: jest.fn(),
+    add: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    deleteByDTName: jest.fn(),
+  },
 }));
 
 jest.mock('components/execution/ExecutionHistoryList', () => {
@@ -43,7 +85,7 @@ jest.mock('components/execution/ExecutionHistoryList', () => {
 describe('LogDialog', () => {
   const mockDispatch = jest.fn().mockImplementation((action) => {
     if (typeof action === 'function') {
-      return action(mockDispatch);
+      return action(mockDispatch, () => ({}), undefined);
     }
     return action;
   });
@@ -71,8 +113,12 @@ describe('LogDialog', () => {
   };
 
   beforeEach(() => {
-    mockFetchExecutionHistory.mockClear();
+    jest.clearAllMocks();
+
+    // Set up default mocks for every test
+    setupMocks([]); // Default empty execution history
   });
+
   const executionHistorySlice = jest.requireMock(
     'model/backend/state/executionHistory.slice',
   );
@@ -80,35 +126,6 @@ describe('LogDialog', () => {
   it('renders the LogDialog with logs available', () => {
     setupMocks({
       jobLogs: [{ jobName: 'job', log: 'testLog' }],
-    });
-
-    executionHistorySlice.fetchExecutionHistory.mockImplementation(
-      (name: string) => mockFetchExecutionHistory(name),
-    );
-
-    mockDispatch.mockImplementation((action) => {
-      if (typeof action === 'function') {
-        return action(mockDispatch, () => ({}), undefined);
-      }
-      return action;
-    });
-
-    renderLogDialog();
-  });
-
-  it('renders the LogDialog with logs available', () => {
-    setupMocks({
-      jobLogs: [{ jobName: 'job', log: 'testLog' }],
-    });
-    executionHistorySlice.fetchExecutionHistory.mockImplementation(
-      (name: string) => mockFetchExecutionHistory(name),
-    );
-
-    mockDispatch.mockImplementation((action) => {
-      if (typeof action === 'function') {
-        return action(mockDispatch, () => ({}), undefined);
-      }
-      return action;
     });
 
     renderLogDialog();
@@ -132,10 +149,11 @@ describe('LogDialog', () => {
   });
 
   it('fetches execution history when dialog is shown', () => {
-    const mockAction = { type: 'fetchExecutionHistory', payload: 'testDT' };
-    mockFetchExecutionHistory.mockReturnValue(mockAction);
     renderLogDialog();
-    expect(mockDispatch).toHaveBeenCalledWith(mockAction);
+    expect(executionHistorySlice.fetchExecutionHistory).toHaveBeenCalledWith(
+      'testDT',
+    );
+    expect(mockDispatch).toHaveBeenCalled();
   });
 
   it('handles view logs functionality correctly', () => {

@@ -9,7 +9,7 @@ import { formatName } from 'model/backend/digitalTwin';
 import { useSelector } from 'react-redux';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { RootState } from 'store/store';
-import LogDialog from 'model/backend/LogDialog';
+import LogDialog from 'components/LogDialog';
 import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import ReconfigureDialog from 'preview/route/digitaltwins/manage/ReconfigureDialog';
 import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';

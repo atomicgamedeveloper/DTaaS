@@ -8,6 +8,7 @@ import {
 } from 'model/backend/interfaces/backendInterfaces';
 import { LibraryAssetInterface } from 'model/backend/interfaces/sharedInterfaces';
 import LibraryManager from 'model/backend/libraryManager';
+import { getAuthority } from 'util/envUtil';
 
 class LibraryAsset implements LibraryAssetInterface {
   public name: string;
@@ -67,9 +68,9 @@ class LibraryAsset implements LibraryAssetInterface {
           'README.md',
         );
         this.fullDescription = fileContent.replace(
-          /(!\[[^\]]*\])\(([^)]+)\)/g,
-          (match, altText, imagePath) => {
-            const fullUrl = `${authority}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+          /(!\[[^\]]*\])\(([^)]+)\)/g, // replaceAll not supported
+          (match: string, altText: string, imagePath: string) => {
+            const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
         );
