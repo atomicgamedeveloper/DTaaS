@@ -11,15 +11,18 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('model/backend/state/executionHistory.slice', () => {
+  const defaultState = {
+    entries: [],
+    selectedExecutionId: null,
+    loading: false,
+    error: null,
+  };
+
   const executionHistoryReducer = (
     action: { type: string; payload?: unknown },
-    state = {
-      entries: [],
-      selectedExecutionId: null,
-      loading: false,
-      error: null,
-    },
+    state = defaultState,
   ) => state;
+
   return {
     __esModule: true,
     default: executionHistoryReducer,
