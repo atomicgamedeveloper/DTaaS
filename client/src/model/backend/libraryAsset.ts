@@ -1,5 +1,8 @@
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  getBranchName,
+  getGroupName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { Asset } from 'model/backend/Asset';
 import {
   BackendInterface,
@@ -8,7 +11,6 @@ import {
 } from 'model/backend/interfaces/backendInterfaces';
 import { LibraryAssetInterface } from 'model/backend/interfaces/sharedInterfaces';
 import LibraryManager from 'model/backend/libraryManager';
-import { getAuthority } from 'util/envUtil';
 
 class LibraryAsset implements LibraryAssetInterface {
   public name: string;
@@ -70,7 +72,7 @@ class LibraryAsset implements LibraryAssetInterface {
         this.fullDescription = fileContent.replace(
           /(!\[[^\]]*\])\(([^)]+)\)/g, // replaceAll not supported
           (match: string, altText: string, imagePath: string) => {
-            const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+            const fullUrl = `${authority}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/${getBranchName()}/${imagesPath}/${imagePath}`;
             return `${altText}(${fullUrl})`;
           },
         );

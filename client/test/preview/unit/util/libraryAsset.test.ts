@@ -2,7 +2,10 @@ import LibraryAsset, { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import LibraryManager from 'model/backend/libraryManager';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  getBranchName,
+  getGroupName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { mockLibraryManager } from 'test/preview/__mocks__/global_mocks';
 import { getAuthority } from 'util/envUtil';
 
@@ -91,7 +94,7 @@ describe('LibraryAsset', () => {
 
     await libraryAsset.getFullDescription(getAuthority());
     expect(libraryAsset.fullDescription).toBe(
-      `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/main/path/to/library/image.png)`,
+      `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/${getBranchName()}/path/to/library/image.png)`,
     );
   });
 

@@ -109,7 +109,7 @@ describe('DigitalTwin', () => {
     await dt.getFullDescription();
 
     expect(dt.fullDescription).toBe(
-      `Test README content with an image ![alt text](${getAuthority()}/${getGroupName()}/testUser/-/raw/main/digital_twins/test-DTName/image.png)`,
+      `Test README content with an image ![alt text](${getAuthority()}/${getGroupName()}/testUser/-/raw/${getBranchName()}/digital_twins/test-DTName/image.png)`,
     );
 
     expect(mockBackendAPI.getRepositoryFileContent).toHaveBeenCalledWith(

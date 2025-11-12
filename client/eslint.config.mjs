@@ -94,7 +94,8 @@ export default [{
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
         "no-console": "error",
-        "import/first": "error",
+        // Complicates mocking
+        // "import/first": "error",
         "react/prop-types": "off",
         "linebreak-style": 0,
         "import/no-unresolved": "off",

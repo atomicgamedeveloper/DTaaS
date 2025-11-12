@@ -95,7 +95,7 @@ class DigitalTwin implements DigitalTwinInterface {
       this.fullDescription = fileContent.replace(
         /(!\[[^\]]*\])\(([^)]+)\)/g, // replaceAll not supported
         (match: string, altText: string, imagePath: string) => {
-          const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/main/${imagesPath}/${imagePath}`;
+          const fullUrl = `${getAuthority()}/${getGroupName()}/${sessionStorage.getItem('username')}/-/raw/${getBranchName()}/${imagesPath}/${imagePath}`;
           return `${altText}(${fullUrl})`;
         },
       );
