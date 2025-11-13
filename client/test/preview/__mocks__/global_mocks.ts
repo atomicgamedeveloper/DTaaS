@@ -197,6 +197,7 @@ export const resetIndexedDBServiceMocks = () => {
 export const createMockDigitalTwinData = (dtName: string): DigitalTwinData => ({
   DTName: dtName,
   description: 'Test Digital Twin Description',
+  fullDescription: 'Test README',
   jobLogs: [],
   pipelineCompleted: false,
   pipelineLoading: false,

@@ -21,7 +21,6 @@ import digitalTwinReducer, {
 import snackbarSlice from 'store/snackbar.slice';
 import fileSlice from 'preview/store/file.slice';
 import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
-import DigitalTwin from 'model/backend/digitalTwin';
 import LibraryAsset from 'model/backend/libraryAsset';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
 import LibraryManager from 'model/backend/libraryManager';
@@ -31,9 +30,6 @@ import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
-
-const mockDigitalTwin = new DigitalTwin('Asset 1', mockBackendInstance);
-mockDigitalTwin.fullDescription = 'Digital Twin Description';
 
 const mockLibraryManager = new LibraryManager('Asset 1', mockBackendInstance);
 
@@ -93,9 +89,7 @@ describe('DetailsDialog Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Test Digital Twin Description'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Test README')).toBeInTheDocument();
     });
   });
 

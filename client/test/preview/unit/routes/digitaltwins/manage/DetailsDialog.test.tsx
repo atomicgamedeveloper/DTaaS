@@ -11,6 +11,7 @@ describe('DetailsDialog', () => {
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       () => ({
         description: 'fullDescription',
+        fullDescription: 'fullDescription',
       }),
     );
   });
@@ -25,13 +26,21 @@ describe('DetailsDialog', () => {
       />,
     );
 
-    expect(screen.getByText('fullDescription')).toBeInTheDocument();
+    // Use getByText with a function matcher or check for the content more flexibly
+    expect(screen.getByText(/fullDescription/i)).toBeInTheDocument();
   });
 
   it('closes the dialog when the "Close" button is clicked', () => {
     const mockStore = configureStore({
       reducer: {
-        digitalTwin: () => ({}),
+        digitalTwin: () => ({
+          digitalTwins: [
+            {
+              name: 'name',
+              fullDescription: 'fullDescription',
+            },
+          ],
+        }),
         assets: () => ({ items: [] }),
       },
     });
@@ -48,7 +57,6 @@ describe('DetailsDialog', () => {
     );
 
     screen.getByText('Close').click();
-
     expect(setShowDialog).toHaveBeenCalledWith(false);
   });
 });

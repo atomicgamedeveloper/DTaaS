@@ -49,7 +49,7 @@ function DetailsDialog({
       <DialogContent dividers>
         <div
           dangerouslySetInnerHTML={{
-            __html: md.render(asset!.description),
+            __html: md.render(asset!.fullDescription),
           }}
           style={{
             maxWidth: '100%',

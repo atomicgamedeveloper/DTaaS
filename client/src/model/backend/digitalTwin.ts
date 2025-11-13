@@ -77,6 +77,10 @@ class DigitalTwin implements DigitalTwinInterface {
     this.DTName = DTName;
     this.backend = backend;
     this.DTAssets = new DTAssets(DTName, this.backend);
+
+    // Set description and readme
+    this.getDescription();
+    this.getFullDescription();
   }
 
   async getDescription(): Promise<void> {

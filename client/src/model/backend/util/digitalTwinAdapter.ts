@@ -49,6 +49,7 @@ export const extractDataFromDigitalTwin = (
 ): DigitalTwinData => ({
   DTName: digitalTwin.DTName,
   description: digitalTwin.description || '',
+  fullDescription: digitalTwin.fullDescription || '',
   jobLogs: digitalTwin.jobLogs || [],
   pipelineCompleted: digitalTwin.pipelineCompleted,
   pipelineLoading: digitalTwin.pipelineLoading,

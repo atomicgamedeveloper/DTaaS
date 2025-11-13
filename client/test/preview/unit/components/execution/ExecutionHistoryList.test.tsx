@@ -138,6 +138,7 @@ const createTestStore = (
   const digitalTwinData: DigitalTwinData = {
     DTName: 'test-dt',
     description: 'Test Digital Twin Description',
+    fullDescription: 'Test README',
     jobLogs: [],
     pipelineCompleted: false,
     pipelineLoading: false,

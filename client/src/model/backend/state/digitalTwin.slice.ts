@@ -6,6 +6,7 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 export interface DigitalTwinData {
   DTName: string;
   description: string;
+  fullDescription: string;
   jobLogs: JobLog[];
   pipelineCompleted: boolean;
   pipelineLoading: boolean;
