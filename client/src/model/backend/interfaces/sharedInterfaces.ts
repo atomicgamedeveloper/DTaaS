@@ -2,8 +2,15 @@
  * Interfaces, types, enums that are backend agnostic and work on Digital Twin concepts.
  */
 
-import { DigitalTwinPipelineState } from './execution';
-import { ProjectId, BackendInterface } from './backendInterfaces';
+import {
+  DigitalTwinPipelineState,
+  ExecutionStatus,
+} from 'model/backend/interfaces/execution';
+import {
+  ProjectId,
+  BackendInterface,
+} from 'model/backend/interfaces/backendInterfaces';
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
 /**
  * Logical categories for Digital Twin files.
@@ -143,7 +150,7 @@ export interface DescriptionProvider {
    * Fetches the README.md content for the digital twin.
    * @returns A promise that resolves when the full description is fetched.
    */
-  getFullDescription(): Promise<void>;
+  getFullDescription(authority?: string): Promise<void>;
 }
 
 export interface DigitalTwinFileProvider {
@@ -175,6 +182,7 @@ export interface DigitalTwinInterface
     DigitalTwinFileProvider {
   backend: BackendInterface;
   DTAssets: DTAssetsInterface;
+  lastExecutionStatus: ExecutionStatus | null;
 }
 // libraryConfigFile.slice.ts
 
@@ -377,4 +385,24 @@ export interface LibraryManagerInterface
    * The file handler instance for managing files related to the library asset
    */
   fileHandler: FileHandlerInterface;
+}
+
+// Snackbar interfaces
+export type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
+
+export interface ShowNotificationPayload {
+  message: string;
+  severity: NotificationSeverity;
+}
+
+// indexedDBService interface
+export interface IExecutionHistoryStorage {
+  init(): Promise<void>;
+  add(entry: DTExecutionResult): Promise<string>;
+  update(entry: DTExecutionResult): Promise<void>;
+  getById(id: string): Promise<DTExecutionResult | null>;
+  getByDTName(dtName: string): Promise<DTExecutionResult[]>;
+  getAll(): Promise<DTExecutionResult[]>;
+  delete(id: string): Promise<void>;
+  deleteByDTName(dtName: string): Promise<void>;
 }

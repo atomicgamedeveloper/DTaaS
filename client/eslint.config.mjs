@@ -94,13 +94,19 @@ export default [{
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
         "no-console": "error",
-        "import/first": "error",
+        // Complicates mocking
+        // "import/first": "error",
         "react/prop-types": "off",
         "linebreak-style": 0,
         "import/no-unresolved": "off",
         "import/extensions": "off",
         "no-use-before-define": "off",
         "no-unreachable": "error",
+
+        // Conflict with SonarCube fixes
+        "consistent-return": "off",
+        "no-restricted-syntax": "off",
+        
     },
 }, {
     files: ["**/*.ts", "**/*.tsx"],

@@ -8,141 +8,122 @@ import { ExecutionStatus } from 'model/backend/interfaces/execution';
 export const mapGitlabStatusToExecutionStatus = (
   gitlabStatus: string,
 ): ExecutionStatus => {
-  let executionStatus: ExecutionStatus;
+  let status: ExecutionStatus;
   switch (gitlabStatus.toLowerCase()) {
     case 'success':
-      executionStatus = ExecutionStatus.COMPLETED;
+      status = ExecutionStatus.COMPLETED;
       break;
     case 'failed':
-      executionStatus = ExecutionStatus.FAILED;
+      status = ExecutionStatus.FAILED;
       break;
     case 'running':
     case 'pending':
-      executionStatus = ExecutionStatus.RUNNING;
+      status = ExecutionStatus.RUNNING;
       break;
     case 'canceled':
     case 'cancelled':
-      executionStatus = ExecutionStatus.CANCELED;
+      status = ExecutionStatus.CANCELED;
       break;
     case 'skipped':
-      executionStatus = ExecutionStatus.FAILED; // Treat skipped as failed
+      status = ExecutionStatus.FAILED; // Treat skipped as failed
       break;
     default:
-      executionStatus = ExecutionStatus.RUNNING; // Default to running for unknown statuses
+      status = ExecutionStatus.RUNNING; // Default to running for unknown statuses
   }
-  return executionStatus;
+  return status;
 };
 
 /**
  * Determines if a GitLab status indicates success
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns True if status indicates success
  */
-export const isSuccessStatus = (status: string | null | undefined): boolean =>
-  status?.toLowerCase() === 'success';
+export const isSuccessStatus = (status: string): boolean =>
+  status.toLowerCase() === 'success';
 
 /**
  * Determines if a GitLab status indicates failure
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns True if status indicates failure
  */
-export const isFailureStatus = (status: string | null | undefined): boolean => {
-  if (!status) return false;
+export const isFailureStatus = (status: string): boolean => {
   const lowerStatus = status.toLowerCase();
   return lowerStatus === 'failed' || lowerStatus === 'skipped';
 };
 
 /**
  * Determines if a GitLab status indicates the pipeline is still running
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns True if status indicates pipeline is running
  */
-export const isRunningStatus = (status: string | null | undefined): boolean => {
-  if (!status) return false;
+export const isRunningStatus = (status: string): boolean => {
   const lowerStatus = status.toLowerCase();
   return lowerStatus === 'running' || lowerStatus === 'pending';
 };
 
 /**
  * Determines if a GitLab status indicates the pipeline was canceled
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns True if status indicates cancellation
  */
-export const isCanceledStatus = (
-  status: string | null | undefined,
-): boolean => {
-  if (!status) return false;
+export const isCanceledStatus = (status: string): boolean => {
   const lowerStatus = status.toLowerCase();
   return lowerStatus === 'canceled' || lowerStatus === 'cancelled';
 };
 
 /**
  * Determines if a status indicates the pipeline has finished (success or failure)
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns True if pipeline has finished
  */
-export const isFinishedStatus = (status: string | null | undefined): boolean =>
+export const isFinishedStatus = (status: string): boolean =>
   isSuccessStatus(status) ||
   isFailureStatus(status) ||
   isCanceledStatus(status);
 
 /**
  * Gets a human-readable description of the pipeline status
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns Human-readable status description
  */
-export const getStatusDescription = (
-  status: string | null | undefined,
-): string => {
+export const getStatusDescription = (status: string): string => {
   let description: string;
-  if (!status) {
-    description = 'Pipeline status: unknown';
-  } else {
-    switch (status.toLowerCase()) {
-      case 'success':
-        description = 'Pipeline completed successfully';
-        break;
-      case 'failed':
-        description = 'Pipeline failed';
-        break;
-      case 'running':
-        description = 'Pipeline is running';
-        break;
-      case 'pending':
-        description = 'Pipeline is pending';
-        break;
-      case 'canceled':
-      case 'cancelled':
-        description = 'Pipeline was canceled';
-        break;
-      case 'skipped':
-        description = 'Pipeline was skipped';
-        break;
-      default:
-        description = `Pipeline status: ${status}`;
-        break;
-    }
+  switch (status.toLowerCase()) {
+    case 'success':
+      description = 'Pipeline completed successfully';
+      break;
+    case 'failed':
+      description = 'Pipeline failed';
+      break;
+    case 'running':
+      description = 'Pipeline is running';
+      break;
+    case 'pending':
+      description = 'Pipeline is pending';
+      break;
+    case 'canceled':
+    case 'cancelled':
+      description = 'Pipeline was canceled';
+      break;
+    case 'skipped':
+      description = 'Pipeline was skipped';
+      break;
+    default:
+      description = `Pipeline status: ${status}`;
   }
   return description;
 };
 
 /**
  * Determines the severity level of a status for UI display
- * @param status GitLab pipeline status (can be null/undefined)
+ * @param status GitLab pipeline status
  * @returns Severity level ('success', 'error', 'warning', 'info')
  */
 export const getStatusSeverity = (
-  status: string | null | undefined,
+  status: string,
 ): 'success' | 'error' | 'warning' | 'info' => {
-  let severity: 'success' | 'error' | 'warning' | 'info';
-  if (isSuccessStatus(status)) {
-    severity = 'success';
-  } else if (isFailureStatus(status)) {
-    severity = 'error';
-  } else if (isCanceledStatus(status)) {
-    severity = 'warning';
-  } else {
-    severity = 'info'; // Default to info for running/pending/unknown statuses
-  }
-  return severity;
+  if (isSuccessStatus(status)) return 'success';
+  if (isFailureStatus(status)) return 'error';
+  if (isCanceledStatus(status)) return 'warning';
+  return 'info'; // For running, pending, etc.
 };

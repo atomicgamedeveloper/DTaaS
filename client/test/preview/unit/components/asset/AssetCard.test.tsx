@@ -6,19 +6,14 @@ import {
 import * as React from 'react';
 import { Provider, useSelector } from 'react-redux';
 import store from 'store/store';
-import { formatName } from 'preview/util/digitalTwin';
+import { formatName } from 'model/backend/digitalTwin';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
 }));
 
-jest.mock('preview/route/digitaltwins/Snackbar', () => ({
-  __esModule: true,
-  default: () => <div data-testid="custom-snackbar" />,
-}));
-
-jest.mock('preview/route/digitaltwins/execute/LogDialog', () => ({
+jest.mock('components/LogDialog', () => ({
   __esModule: true,
   default: () => <div data-testid="log-dialog" />,
 }));
@@ -63,6 +58,12 @@ const setupMockStore = (assetDescription: string, twinDescription: string) => {
         asset: { description: twinDescription },
       },
     },
+    executionHistory: {
+      entries: [],
+      selectedExecutionId: null,
+      loading: false,
+      error: null,
+    },
   };
   (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
     (selector) => selector(state),
@@ -87,7 +88,6 @@ describe('AssetCard', () => {
 
     expect(screen.getByText(formatName(asset.name))).toBeInTheDocument();
     expect(screen.getByText('Asset description')).toBeInTheDocument();
-    expect(screen.getByTestId('custom-snackbar')).toBeInTheDocument();
     expect(screen.getByTestId('details-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('reconfigure-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('delete-dialog')).toBeInTheDocument();
@@ -99,7 +99,6 @@ describe('AssetCard', () => {
 
     expect(screen.getByText(formatName(asset.name))).toBeInTheDocument();
     expect(screen.getByText('Asset description')).toBeInTheDocument();
-    expect(screen.getByTestId('custom-snackbar')).toBeInTheDocument();
     expect(screen.getByTestId('log-dialog')).toBeInTheDocument();
   });
 });

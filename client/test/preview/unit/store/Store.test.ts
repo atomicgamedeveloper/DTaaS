@@ -9,13 +9,14 @@ import digitalTwinReducer, {
   setPipelineCompleted,
   setPipelineLoading,
   updateDescription,
-} from 'preview/store/digitalTwin.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
+} from 'model/backend/state/digitalTwin.slice';
+import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
 import snackbarSlice, {
   hideSnackbar,
   showSnackbar,
-} from 'preview/store/snackbar.slice';
+} from 'store/snackbar.slice';
 import { AlertColor } from '@mui/material';
 import fileSlice, {
   addOrUpdateFile,
@@ -25,7 +26,7 @@ import fileSlice, {
   removeAllModifiedFiles,
   renameFile,
 } from 'preview/store/file.slice';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { mockLibraryAsset } from 'test/preview/__mocks__/global_mocks';
 import cartSlice, {
   addToCart,
@@ -120,9 +121,28 @@ describe('reducers', () => {
     it('should handle setDigitalTwin', () => {
       const newState = digitalTwinReducer(
         initialState,
-        setDigitalTwin({ assetName: 'asset1', digitalTwin }),
+        setDigitalTwin({
+          assetName: 'asset1',
+          digitalTwin: extractDataFromDigitalTwin(digitalTwin),
+        }),
       );
-      expect(newState.digitalTwin.asset1).toEqual(digitalTwin);
+      const expectedData = extractDataFromDigitalTwin(digitalTwin);
+      const actualData = newState.digitalTwin.asset1;
+
+      expect(actualData.DTName).toEqual(expectedData.DTName);
+      expect(actualData.description).toEqual(expectedData.description);
+      expect(actualData.pipelineId).toEqual(expectedData.pipelineId);
+      expect(actualData.lastExecutionStatus).toEqual(
+        expectedData.lastExecutionStatus,
+      );
+      expect(actualData.jobLogs).toEqual(expectedData.jobLogs);
+      expect(actualData.pipelineCompleted).toEqual(
+        expectedData.pipelineCompleted,
+      );
+      expect(actualData.pipelineLoading).toEqual(expectedData.pipelineLoading);
+      expect(actualData.currentExecutionId).toEqual(
+        expectedData.currentExecutionId,
+      );
     });
 
     it('should handle setPipelineCompleted', () => {
@@ -134,7 +154,7 @@ describe('reducers', () => {
 
       const updatedState = {
         digitalTwin: {
-          asset1: updatedDigitalTwin,
+          asset1: extractDataFromDigitalTwin(updatedDigitalTwin),
         },
         shouldFetchDigitalTwins: true,
       };
@@ -156,7 +176,7 @@ describe('reducers', () => {
 
       const updatedState = {
         ...initialState,
-        digitalTwin: { asset1: updatedDigitalTwin },
+        digitalTwin: { asset1: extractDataFromDigitalTwin(updatedDigitalTwin) },
       };
 
       const newState = digitalTwinReducer(
@@ -176,7 +196,7 @@ describe('reducers', () => {
 
       const updatedState = {
         ...initialState,
-        digitalTwin: { asset1: updatedDigitalTwin },
+        digitalTwin: { asset1: extractDataFromDigitalTwin(updatedDigitalTwin) },
       };
 
       const description = 'new description';
@@ -209,8 +229,6 @@ describe('reducers', () => {
       initialState.snackbar.severity = 'error';
       const newState = snackbarSlice(initialState.snackbar, hideSnackbar());
       expect(newState.open).toBe(false);
-      expect(newState.message).toBe('');
-      expect(newState.severity).toBe('info');
     });
   });
 

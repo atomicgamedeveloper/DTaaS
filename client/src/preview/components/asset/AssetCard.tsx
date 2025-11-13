@@ -5,23 +5,22 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import { AlertColor, CardActions, Grid } from '@mui/material';
 import styled from '@emotion/styled';
-import { formatName } from 'preview/util/digitalTwin';
-import CustomSnackbar from 'preview/route/digitaltwins/Snackbar';
+import { formatName } from 'model/backend/digitalTwin';
 import { useSelector } from 'react-redux';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { RootState } from 'store/store';
-import LogDialog from 'preview/route/digitaltwins/execute/LogDialog';
+import LogDialog from 'components/LogDialog';
 import DetailsDialog from 'preview/route/digitaltwins/manage/DetailsDialog';
 import ReconfigureDialog from 'preview/route/digitaltwins/manage/ReconfigureDialog';
 import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
-import StartStopButton from './StartStopButton';
-import LogButton from './LogButton';
-import { Asset } from './Asset';
-import DetailsButton from './DetailsButton';
-import ReconfigureButton from './ReconfigureButton';
-import DeleteButton from './DeleteButton';
-import AddToCartButton from './AddToCartButton';
+import HistoryButton from 'components/asset/HistoryButton';
+import StartButton from 'preview/components/asset/StartButton';
+import { Asset } from 'model/backend/Asset';
+import ReconfigureButton from 'preview/components/asset/ReconfigureButton';
+import DeleteButton from 'preview/components/asset/DeleteButton';
+import AddToCartButton from 'preview/components/asset/AddToCartButton';
+import DetailsButton from 'preview/components/asset/DetailsButton';
 
 interface AssetCardProps {
   asset: Asset;
@@ -127,16 +126,17 @@ function CardButtonsContainerExecute({
   assetName,
   setShowLog,
 }: CardButtonsContainerExecuteProps) {
-  const [logButtonDisabled, setLogButtonDisabled] = useState(true);
+  const [historyButtonDisabled, setHistoryButtonDisabled] = useState(false);
   return (
     <CardActions style={{ justifyContent: 'flex-end' }}>
-      <StartStopButton
+      <StartButton
         assetName={assetName}
-        setLogButtonDisabled={setLogButtonDisabled}
+        setHistoryButtonDisabled={setHistoryButtonDisabled}
       />
-      <LogButton
+      <HistoryButton
         setShowLog={setShowLog}
-        logButtonDisabled={logButtonDisabled}
+        historyButtonDisabled={historyButtonDisabled}
+        assetName={assetName}
       />
     </CardActions>
   );
@@ -202,7 +202,6 @@ function AssetCardManage({ asset, onDelete }: AssetCardManageProps) {
             />
           }
         />
-        <CustomSnackbar />
         <DetailsDialog
           showDialog={showDetailsLog}
           setShowDialog={setShowDetailsLog}
@@ -242,7 +241,6 @@ function AssetCardExecute({ asset }: AssetCardProps) {
             />
           }
         />
-        <CustomSnackbar />
         <LogDialog
           showLog={showLog}
           setShowLog={setShowLog}

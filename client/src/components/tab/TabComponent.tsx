@@ -1,6 +1,11 @@
 import * as React from 'react';
-import TabRender, { TabData } from './subcomponents/TabRender';
-import { Tab, TabList, TabPanel, Tabs } from './subcomponents/TabStyles';
+import TabRender, { TabData } from 'components/tab/subcomponents/TabRender';
+import {
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+} from 'components/tab/subcomponents/TabStyles';
 
 export function constructURL(assetType: string, scope: string, libURL: string) {
   let assetTab = assetType.toLowerCase();

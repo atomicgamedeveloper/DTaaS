@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import CustomSnackbar from 'preview/route/digitaltwins/Snackbar';
+import CustomSnackbar from 'components/route/Snackbar';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import snackbarReducer, { showSnackbar } from 'preview/store/snackbar.slice';
+import snackbarReducer, { showSnackbar } from 'store/snackbar.slice';
 
 jest.useFakeTimers();
 

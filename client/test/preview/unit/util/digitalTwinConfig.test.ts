@@ -1,6 +1,6 @@
 import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import GitlabInstance from 'model/backend/gitlab/instance';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 
 const mockApi = mockBackendAPI;

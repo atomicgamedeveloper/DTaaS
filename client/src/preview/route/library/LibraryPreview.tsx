@@ -4,7 +4,7 @@ import TabComponent from 'components/tab/TabComponent';
 import { Paper, Typography } from '@mui/material';
 import ShoppingCart from 'preview/components/cart/ShoppingCart';
 import AssetLibrary from 'preview/components/asset/AssetLibrary';
-import { assetType, scope } from './LibraryTabDataPreview';
+import { assetType, scope } from 'preview/route/library/LibraryTabDataPreview';
 
 export function createTabs() {
   return assetType.map((tab) => ({

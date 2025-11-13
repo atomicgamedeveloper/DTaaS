@@ -1,14 +1,20 @@
-import { combineReducers } from 'redux';
-import { configureStore, Middleware } from '@reduxjs/toolkit';
-import digitalTwinSlice from 'preview/store/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import { combineReducers, Middleware } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
+import executionHistorySlice, {
+  setStorageService,
+} from 'model/backend/state/executionHistory.slice';
+import digitalTwinSlice from 'model/backend/state/digitalTwin.slice';
+import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import assetsSlice from 'preview/store/assets.slice';
 import fileSlice from 'preview/store/file.slice';
 import cartSlice from 'preview/store/cart.slice';
-import libraryConfigFilesSlice from 'preview/store/libraryConfigFiles.slice';
-import menuSlice from './menu.slice';
-import authSlice from './auth.slice';
-import settingsSlice from './settings.slice';
+import menuSlice from 'store/menu.slice';
+import authSlice from 'store/auth.slice';
+import settingsSlice from 'store/settings.slice';
+import indexedDBService from 'database/executionHistoryDB';
+
+setStorageService(indexedDBService);
 
 const loadSettings = () => {
   const serializedSettings = localStorage.getItem('settings');
@@ -25,6 +31,7 @@ const rootReducer = combineReducers({
   cart: cartSlice,
   libraryConfigFiles: libraryConfigFilesSlice,
   settings: settingsSlice,
+  executionHistory: executionHistorySlice,
 });
 
 const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
@@ -50,7 +57,11 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['digitalTwin/setDigitalTwin', 'assets/setAsset'],
+        ignoredActions: [
+          'digitalTwin/setDigitalTwin',
+          'assets/setAsset',
+          'assets/deleteAsset',
+        ],
         ignoredPaths: ['digitalTwin.digitalTwin', 'assets.items'], // Suppress non-serializable check for GitlabAPI
       },
     }).concat(settingsPersistMiddleware),

@@ -9,7 +9,7 @@ import {
   mockUserType,
 } from 'test/__mocks__/global_mocks';
 import { setupIntegrationTest } from 'test/integration/integration.testUtil';
-import { testLayout } from './routes.testUtil';
+import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
 const setup = async (user: mockUserType) =>
   setupIntegrationTest('/account', { ...mockAuthState, user });

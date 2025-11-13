@@ -6,7 +6,7 @@ import {
   itHasMultipleChildren,
   itHasSingleChild,
   renderLayoutWithRouter,
-} from './page.testUtil';
+} from 'test/unit/page/page.testUtil';
 
 jest.unmock('page/Layout');
 

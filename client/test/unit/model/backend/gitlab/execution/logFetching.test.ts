@@ -46,15 +46,6 @@ describe('logFetching', () => {
       );
     });
 
-    it('should return empty array when projectId is null', async () => {
-      const instanceWithoutProject = {
-        ...mockBackendInstance,
-        getProjectId: jest.fn().mockReturnValue(null),
-      };
-      const result = await fetchJobLogs(instanceWithoutProject, 456);
-      expect(result).toEqual([]);
-    });
-
     it('should handle jobs without id', async () => {
       (mockBackendInstance.getPipelineJobs as jest.Mock).mockResolvedValue([
         { name: 'job1' },

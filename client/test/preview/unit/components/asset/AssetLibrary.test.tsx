@@ -11,7 +11,7 @@ jest.mock('preview/store/assets.slice', () => ({
   selectAssetsByTypeAndPrivacy: jest.fn(() => []),
 }));
 
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   fetchLibraryAssets: jest.fn(() => Promise.resolve()),
 }));
 

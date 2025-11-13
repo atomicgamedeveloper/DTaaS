@@ -4,11 +4,11 @@ import {
   LibraryConfigFile,
   FileState,
 } from 'model/backend/interfaces/sharedInterfaces';
-import DigitalTwin from 'preview/util/digitalTwin';
-import LibraryAsset from 'preview/util/libraryAsset';
+import DigitalTwin from 'model/backend/digitalTwin';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import { handleFileClick } from './sidebarFunctions';
+import { handleFileClick } from 'preview/route/digitaltwins/editor/sidebarFunctions';
 
 export const renderFileTreeItems = (
   label: string,
@@ -78,7 +78,7 @@ export const renderFileSection = (
   label: string,
   type: string,
   filesToRender: string[],
-  asset: DigitalTwin | LibraryAsset,
+  asset: DigitalTwin | LibraryAsset | null,
   setFileName: Dispatch<SetStateAction<string>>,
   setFileContent: Dispatch<SetStateAction<string>>,
   setFileType: Dispatch<SetStateAction<string>>,
@@ -107,10 +107,14 @@ export const renderFileSection = (
           key={`${baseLabel}-${item}-${index}`}
           itemId={`${baseLabel}-${item}`}
           label={item}
-          onClick={() =>
+          onClick={() => {
+            if (!asset) {
+              // Handle the case where there's no asset
+              return;
+            }
             handleFileClick(
               item,
-              asset!,
+              asset,
               setFileName,
               setFileContent,
               setFileType,
@@ -122,8 +126,8 @@ export const renderFileSection = (
               dispatch,
               library || undefined,
               fileLibrary || undefined,
-            )
-          }
+            );
+          }}
         />
       ))}
     </TreeItem>

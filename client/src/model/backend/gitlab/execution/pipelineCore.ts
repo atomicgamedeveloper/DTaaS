@@ -1,3 +1,4 @@
+import DigitalTwin from 'model/backend/digitalTwin';
 import {
   MAX_EXECUTION_TIME,
   PIPELINE_POLL_INTERVAL,
@@ -83,3 +84,41 @@ export const shouldContinuePolling = (
  * @returns Polling interval in milliseconds
  */
 export const getPollingInterval = (): number => PIPELINE_POLL_INTERVAL;
+
+/**
+ * Result of a pipeline stop operation
+ */
+export interface StopPipelineResult {
+  success: boolean;
+  error?: Error;
+}
+
+/**
+ * Stops both parent and child pipelines for a digital twin
+ * @param digitalTwin Digital twin instance
+ * @param executionId Optional execution ID for concurrent executions
+ * @returns Result object indicating success/failure
+ */
+export const stopPipelines = async (
+  digitalTwin: DigitalTwin,
+  executionId?: string,
+): Promise<StopPipelineResult> => {
+  try {
+    const projectId = digitalTwin.backend.getProjectId();
+    if (projectId) {
+      if (executionId) {
+        await digitalTwin.stop(projectId, 'parentPipeline', executionId);
+        await digitalTwin.stop(projectId, 'childPipeline', executionId);
+      } else if (digitalTwin.pipelineId) {
+        await digitalTwin.stop(projectId, 'parentPipeline');
+        await digitalTwin.stop(projectId, 'childPipeline');
+      }
+    }
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error : new Error('Unknown error'),
+    };
+  }
+};

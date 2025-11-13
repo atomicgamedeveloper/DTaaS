@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import { TabData } from 'components/tab/subcomponents/TabRender';
-import SettingsForm from './SettingsForm';
+import SettingsForm from 'route/account/SettingsForm';
 
 function ListGroups(groups: string[]): React.ReactNode[] {
   const boldGroups = groups.map((group) =>

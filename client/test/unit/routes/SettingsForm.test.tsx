@@ -17,7 +17,7 @@ import {
   setBranchName,
 } from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
-import { renderWithRouter } from '../unit.testUtil';
+import { renderWithRouter } from 'test/unit/unit.testUtil';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),

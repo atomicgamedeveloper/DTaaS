@@ -1,3 +1,5 @@
+import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
+
 export enum ExecutionStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
@@ -29,3 +31,18 @@ export type Pipeline = {
 export type TriggerToken = {
   token: string;
 };
+
+/**
+ * Interface for execution history operations
+ * Abstracts away the underlying storage implementation
+ */
+export interface IExecutionHistory {
+  init(): Promise<void>;
+  add(entry: DTExecutionResult): Promise<string>;
+  update(entry: DTExecutionResult): Promise<void>;
+  getById(id: string): Promise<DTExecutionResult | null>;
+  getByDTName(dtName: string): Promise<DTExecutionResult[]>;
+  getAll(): Promise<DTExecutionResult[]>;
+  delete(id: string): Promise<void>;
+  deleteByDTName(dtName: string): Promise<void>;
+}

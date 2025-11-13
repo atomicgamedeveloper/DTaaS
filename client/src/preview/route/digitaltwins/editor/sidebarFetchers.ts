@@ -1,7 +1,7 @@
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { updateFileState } from 'preview/util/fileUtils';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 

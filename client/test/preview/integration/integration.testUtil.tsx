@@ -6,14 +6,43 @@ import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import store from 'store/store';
 import { configureStore } from '@reduxjs/toolkit';
-import digitalTwinReducer from 'preview/store/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
+import digitalTwinReducer from 'model/backend/state/digitalTwin.slice';
+import snackbarSlice from 'store/snackbar.slice';
 import { mockAuthState, mockAuthStateType } from 'test/__mocks__/global_mocks';
+import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import executionHistoryReducer, {
+  addExecutionHistoryEntry,
+} from 'model/backend/state/executionHistory.slice';
+
+export const dispatchAddExecHistoryEntry = async (
+  customStore: ReturnType<typeof configureStore>,
+  overrides = {},
+) => {
+  const defaultExecutionHistoryEntry = {
+    id: '1',
+    dtName: 'test-asset',
+    pipelineId: 123,
+    timestamp: Date.now(),
+    status: ExecutionStatus.COMPLETED,
+    jobLogs: [],
+  };
+  await act(async () => {
+    customStore.dispatch(
+      addExecutionHistoryEntry({
+        ...defaultExecutionHistoryEntry,
+        ...overrides,
+      }),
+    );
+  });
+};
+
+export const storeResetAll = () => store.dispatch({ type: 'RESET_ALL' });
 
 export const previewStore = configureStore({
   reducer: {
     digitalTwin: digitalTwinReducer,
     snackbar: snackbarSlice,
+    executionHistory: executionHistoryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

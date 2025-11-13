@@ -8,15 +8,21 @@ jest.mock('react-oidc-context', () => ({
   useAuth: jest.fn(),
 }));
 
-// Bypass the config verification
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({ data: 'success' }),
+jest.mock('components/execution/ExecutionHistoryLoader', () => {
+  const MockExecutionHistoryLoader = () => (
+    <div>Mock ExecutionHistoryLoader</div>
+  );
+  return { __esModule: true, default: MockExecutionHistoryLoader };
 });
-Object.defineProperty(AbortSignal, 'timeout', {
-  value: jest.fn(),
-  writable: false,
+
+jest.mock('components/route/Snackbar', () => {
+  const MockCustomSnackbar = () => <div>Mock CustomSnackbar</div>;
+  return { __esModule: true, default: MockCustomSnackbar };
+});
+
+jest.mock('route/auth/WaitAndNavigate', () => {
+  const MockWaitNavigateAndReload = () => <div>Mock WaitNavigateAndReload</div>;
+  return { __esModule: true, default: MockWaitNavigateAndReload };
 });
 
 const TestComponent = () => <div>Test Component</div>;
@@ -46,6 +52,10 @@ const setupTest = (authState: AuthState) => {
 };
 
 describe('PrivateRoute', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
   test('renders loading and redirects correctly when authenticated/not authentic', async () => {
     setupTest({
       isLoading: false,
@@ -77,6 +87,8 @@ describe('PrivateRoute', () => {
     });
 
     expect(screen.getByText('Test Component')).toBeInTheDocument();
+    expect(screen.getByText(/ExecutionHistoryLoader/i)).toBeInTheDocument();
+    expect(screen.getByText(/CustomSnackbar/i)).toBeInTheDocument();
   });
 
   test('renders error', () => {
@@ -87,5 +99,6 @@ describe('PrivateRoute', () => {
     });
 
     expect(screen.getByText('Oops... Test error')).toBeInTheDocument();
+    expect(screen.getByText('Mock WaitNavigateAndReload')).toBeInTheDocument();
   });
 });

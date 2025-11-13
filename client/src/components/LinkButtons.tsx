@@ -4,7 +4,7 @@ import Tooltip from '@mui/material/Tooltip';
 import styled from '@emotion/styled';
 import { KeyLinkPair } from 'util/envUtil';
 import { Typography } from '@mui/material';
-import LinkIcons from './LinkIconsLib';
+import LinkIcons from 'components/LinkIconsLib';
 
 const IconLabel = styled('div')({
   display: 'flex',
@@ -91,4 +91,4 @@ interface LinkButtonProps {
 };
 
 export default LinkButtons;
-export { default as LinkIcons } from './LinkIconsLib';
+export { default as LinkIcons } from 'components/LinkIconsLib';

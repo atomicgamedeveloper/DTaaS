@@ -1,10 +1,27 @@
-import LibraryAsset, { getLibrarySubfolders } from 'preview/util/libraryAsset';
+import LibraryAsset, { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
-import LibraryManager from 'preview/util/libraryManager';
+import LibraryManager from 'model/backend/libraryManager';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import { getGroupName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  getBranchName,
+  getGroupName,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { mockLibraryManager } from 'test/preview/__mocks__/global_mocks';
+import { getAuthority } from 'util/envUtil';
 
-jest.mock('preview/util/libraryManager');
+jest.mock('model/backend/libraryManager');
+
+const mockSessionStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: mockSessionStorage,
+  writable: true,
+});
 
 describe('LibraryAsset', () => {
   let backend: BackendInterface;
@@ -30,9 +47,11 @@ describe('LibraryAsset', () => {
       getPipelineStatus: jest.fn(),
     } as unknown as BackendInterface;
 
-    libraryManager = new LibraryManager('test', backend);
-    libraryManager.assetName = 'test';
-    libraryManager.backend = backend;
+    libraryManager = {
+      ...mockLibraryManager,
+      backend,
+      assetName: 'test',
+    } as unknown as LibraryManager;
     libraryAsset = new LibraryAsset(
       libraryManager,
       'path/to/library',
@@ -67,10 +86,15 @@ describe('LibraryAsset', () => {
   it('should get full description with image URLs replaced', async () => {
     const fileContent = '![alt text](image.png)';
     libraryManager.getFileContent = jest.fn().mockResolvedValue(fileContent);
-    sessionStorage.setItem('username', 'user');
-    await libraryAsset.getFullDescription();
+
+    mockSessionStorage.getItem.mockImplementation((key: string) => {
+      if (key === 'username') return 'user';
+      return null;
+    });
+
+    await libraryAsset.getFullDescription(getAuthority());
     expect(libraryAsset.fullDescription).toBe(
-      `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/main/path/to/library/image.png)`,
+      `![alt text](https://example.com/AUTHORITY/${getGroupName()}/user/-/raw/${getBranchName()}/path/to/library/image.png)`,
     );
   });
 
@@ -78,7 +102,7 @@ describe('LibraryAsset', () => {
     libraryManager.getFileContent = jest
       .fn()
       .mockRejectedValue(new Error('Error'));
-    await libraryAsset.getFullDescription();
+    await libraryAsset.getFullDescription(getAuthority());
     expect(libraryAsset.fullDescription).toBe('There is no README.md file');
   });
 

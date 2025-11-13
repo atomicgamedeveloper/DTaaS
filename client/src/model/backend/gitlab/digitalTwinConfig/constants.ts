@@ -10,6 +10,10 @@ export const BRANCH_NAME = 'master';
 // Pipeline execution settings
 export const MAX_EXECUTION_TIME = 10 * 60 * 1000;
 export const PIPELINE_POLL_INTERVAL = 5 * 1000;
+export const DEBOUNCE_TIME = 250; // Duration before being able to click start again in ms
+
+// ExecutionHistoryLoader
+export const EXECUTION_CHECK_INTERVAL = 10000;
 
 // Maps tabs to project folders (based on asset types)
 export enum AssetTypes {

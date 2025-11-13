@@ -1,3 +1,4 @@
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import {
   act,
   fireEvent,
@@ -10,34 +11,62 @@ import * as React from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store, { RootState } from 'store/store';
 
-import { showSnackbar } from 'preview/store/snackbar.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
-import { selectDigitalTwinByName } from 'preview/store/digitalTwin.slice';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 import { selectModifiedFiles } from 'preview/store/file.slice';
 import { selectModifiedLibraryFiles } from 'preview/store/libraryConfigFiles.slice';
 
-jest.mock('preview/store/file.slice', () => ({
-  ...jest.requireActual('preview/store/file.slice'),
-  saveAllFiles: jest.fn().mockResolvedValue(Promise.resolve()),
-}));
+import * as digitalTwinSlice from 'model/backend/state/digitalTwin.slice';
+import * as snackbarSlice from 'store/snackbar.slice';
 
-jest.mock('preview/store/digitalTwin.slice', () => ({
-  ...jest.requireActual('preview/store/digitalTwin.slice'),
-  updateDescription: jest.fn(),
-}));
+jest.mock('preview/store/file.slice', () => {
+  const actual = jest.requireActual('preview/store/file.slice');
+  return {
+    ...actual,
+    selectModifiedFiles: jest.fn(),
+    default: actual.default, // ensure the reducer is not mocked
+  };
+});
+jest.mock('model/backend/state/digitalTwin.slice', () => {
+  const actual = jest.requireActual('model/backend/state/digitalTwin.slice');
+  return {
+    ...actual,
+    updateDescription: jest.fn(),
+    selectDigitalTwinByName: jest.fn(),
+    default: actual.default, // ensure the reducer is not mocked
+  };
+});
+jest.mock('store/snackbar.slice', () => {
+  const actual = jest.requireActual('store/snackbar.slice');
+  return {
+    ...actual,
+    showSnackbar: jest.fn(),
+    hideSnackbar: jest.fn(),
+    default: actual.default,
+  };
+});
 
-jest.mock('preview/store/snackbar.slice', () => ({
-  ...jest.requireActual('preview/store/snackbar.slice'),
-  showSnackbar: jest.fn(),
-}));
+(digitalTwinSlice.updateDescription as unknown as jest.Mock) = jest.fn();
+(snackbarSlice.showSnackbar as unknown as jest.Mock) = jest.fn();
 
 jest.mock('preview/route/digitaltwins/editor/Sidebar', () => ({
   __esModule: true,
   default: () => <div>Sidebar</div>,
 }));
 
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   formatName: jest.fn().mockReturnValue('TestDigitalTwin'),
+}));
+
+jest.mock('model/backend/util/digitalTwinAdapter', () => ({
+  createDigitalTwinFromData: jest.fn().mockResolvedValue({
+    DTName: 'TestDigitalTwin',
+    DTAssets: {
+      updateFileContent: jest.fn().mockResolvedValue(undefined),
+      updateLibraryFileContent: jest.fn().mockResolvedValue(undefined),
+    },
+  }),
 }));
 
 describe('ReconfigureDialog', () => {
@@ -52,7 +81,7 @@ describe('ReconfigureDialog', () => {
 
     (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
       (selector: (state: RootState) => unknown) => {
-        if (selector === selectDigitalTwinByName('mockedDTName')) {
+        if (selector === selectDigitalTwinByName('TestDigitalTwin')) {
           return mockDigitalTwin;
         }
         if (selector === selectModifiedFiles) {
@@ -69,13 +98,7 @@ describe('ReconfigureDialog', () => {
               isNew: false,
               isModified: true,
             },
-            {
-              name: 'newFile.md',
-              content: 'New file content',
-              isNew: true,
-              isModified: false,
-            },
-          ].filter((file) => !file.isNew);
+          ];
         }
         if (selector === selectModifiedLibraryFiles) {
           return [
@@ -185,11 +208,18 @@ describe('ReconfigureDialog', () => {
 
   it('shows error snackbar on file update failure', async () => {
     const dispatch = useDispatch();
-    const saveButton = screen.getByRole('button', { name: /Save/i });
 
-    mockDigitalTwin.DTAssets.updateFileContent = jest
-      .fn()
-      .mockRejectedValueOnce(new Error('Error updating file'));
+    (createDigitalTwinFromData as jest.Mock).mockResolvedValueOnce({
+      DTName: 'TestDigitalTwin',
+      DTAssets: {
+        updateFileContent: jest
+          .fn()
+          .mockRejectedValue(new Error('Error updating file')),
+        updateLibraryFileContent: jest.fn().mockResolvedValue(undefined),
+      },
+    });
+
+    const saveButton = screen.getByRole('button', { name: /Save/i });
 
     act(() => {
       saveButton.click();
@@ -212,6 +242,14 @@ describe('ReconfigureDialog', () => {
 
   it('saves changes and calls handleFileUpdate for each modified file', async () => {
     const handleFileUpdateSpy = jest.spyOn(Reconfigure, 'handleFileUpdate');
+
+    (createDigitalTwinFromData as jest.Mock).mockResolvedValue({
+      DTName: 'TestDigitalTwin',
+      DTAssets: {
+        updateFileContent: jest.fn().mockResolvedValue(undefined),
+        updateLibraryFileContent: jest.fn().mockResolvedValue(undefined),
+      },
+    });
 
     const saveButton = screen.getByRole('button', { name: /Save/i });
     act(() => {

@@ -1,3 +1,4 @@
+import 'test/preview/__mocks__/adapterMocks';
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -5,10 +6,12 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import DeleteDialog from 'preview/route/digitaltwins/manage/DeleteDialog';
 import digitalTwinReducer, {
   setDigitalTwin,
-} from 'preview/store/digitalTwin.slice';
-import snackbarSlice from 'preview/store/snackbar.slice';
-import DigitalTwin from 'preview/util/digitalTwin';
+} from 'model/backend/state/digitalTwin.slice';
+import snackbarSlice from 'store/snackbar.slice';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { mockBackendInstance } from 'test/__mocks__/global_mocks';
+import { createMockDigitalTwinData } from 'test/preview/__mocks__/global_mocks';
+import { storeResetAll } from 'test/preview/integration/integration.testUtil';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -30,13 +33,21 @@ const store = configureStore({
 
 describe('DeleteDialog Integration Tests', () => {
   const setupTest = () => {
+    storeResetAll();
+
+    const digitalTwinData = createMockDigitalTwinData('Asset 1');
     store.dispatch(
-      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: mockDigitalTwin }),
+      setDigitalTwin({ assetName: 'Asset 1', digitalTwin: digitalTwinData }),
     );
   };
 
   beforeEach(() => {
     setupTest();
+  });
+
+  afterEach(() => {
+    storeResetAll();
+    jest.clearAllTimers();
   });
 
   it('closes DeleteDialog on Cancel button click', async () => {

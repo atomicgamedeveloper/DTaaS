@@ -2,7 +2,7 @@ import * as React from 'react';
 import Layout from 'page/Layout';
 import TabComponent from 'components/tab/TabComponent';
 import { TabData } from 'components/tab/subcomponents/TabRender';
-import tabs from './AccountTabData';
+import tabs from 'route/account/AccountTabData';
 
 function AccountContent() {
   const AccountTab: TabData[] = tabs.map((tab) => ({

@@ -3,7 +3,7 @@ import {
   itShowsTheTooltipWhenHoveringButton,
   setupIntegrationTest,
 } from 'test/integration/integration.testUtil';
-import { testLayout } from './routes.testUtil';
+import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
 window.env = {
   ...window.env,

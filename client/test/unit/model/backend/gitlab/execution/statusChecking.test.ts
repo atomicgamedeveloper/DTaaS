@@ -75,11 +75,6 @@ describe('statusChecking', () => {
       expect(isSuccessStatus('running')).toBe(false);
       expect(isSuccessStatus('pending')).toBe(false);
     });
-
-    it('should return false for null/undefined status', () => {
-      expect(isSuccessStatus(null)).toBe(false);
-      expect(isSuccessStatus(undefined)).toBe(false);
-    });
   });
 
   describe('isFailureStatus', () => {
@@ -94,11 +89,6 @@ describe('statusChecking', () => {
       expect(isFailureStatus('success')).toBe(false);
       expect(isFailureStatus('running')).toBe(false);
       expect(isFailureStatus('canceled')).toBe(false);
-    });
-
-    it('should return false for null/undefined status', () => {
-      expect(isFailureStatus(null)).toBe(false);
-      expect(isFailureStatus(undefined)).toBe(false);
     });
   });
 
@@ -160,11 +150,6 @@ describe('statusChecking', () => {
       expect(getStatusDescription('cancelled')).toBe('Pipeline was canceled');
       expect(getStatusDescription('skipped')).toBe('Pipeline was skipped');
       expect(getStatusDescription('unknown')).toBe('Pipeline status: unknown');
-    });
-
-    it('should handle null/undefined status', () => {
-      expect(getStatusDescription(null)).toBe('Pipeline status: unknown');
-      expect(getStatusDescription(undefined)).toBe('Pipeline status: unknown');
     });
   });
 

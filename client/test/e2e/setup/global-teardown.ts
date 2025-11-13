@@ -1,5 +1,5 @@
 import MCR from 'monocart-coverage-reports';
-import coverageOptions from './mcr.config';
+import coverageOptions from 'test/e2e/setup/mcr.config';
 
 async function globalTeardown() {
   const mcr = MCR(coverageOptions);

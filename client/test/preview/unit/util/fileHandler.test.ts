@@ -1,4 +1,4 @@
-import FileHandler from 'preview/util/fileHandler';
+import FileHandler from 'model/backend/fileHandler';
 import GitlabInstance from 'model/backend/gitlab/instance';
 import { mockBackendAPI } from 'test/__mocks__/global_mocks';
 import { FileType } from 'model/backend/interfaces/sharedInterfaces';

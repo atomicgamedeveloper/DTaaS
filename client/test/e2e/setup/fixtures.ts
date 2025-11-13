@@ -1,6 +1,6 @@
 import { test as testBase } from '@playwright/test';
 import MCR from 'monocart-coverage-reports';
-import coverageOptions from './mcr.config';
+import coverageOptions from 'test/e2e/setup/mcr.config';
 
 // fixtures
 const test = testBase.extend<{

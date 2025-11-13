@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import useCart from 'preview/store/CartAccess';
 import { removeAllFiles } from 'preview/store/libraryConfigFiles.slice';
 import { useDispatch } from 'react-redux';
-import CartList from './CartList';
+import CartList from 'preview/components/cart/CartList';
 
 function ShoppingCart() {
   const { actions } = useCart();

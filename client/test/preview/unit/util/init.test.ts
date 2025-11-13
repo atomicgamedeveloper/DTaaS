@@ -1,17 +1,17 @@
 /* eslint-disable import/first */
 const getDTSubfolders = jest.fn();
-jest.mock('preview/util/digitalTwinUtils', () => ({
+jest.mock('model/backend/util/digitalTwinUtils', () => ({
   getDTSubfolders,
 }));
 
 const DigitalTwin = jest.fn();
-jest.mock('preview/util/digitalTwin', () => ({
+jest.mock('model/backend/digitalTwin', () => ({
   default: DigitalTwin,
 }));
 
 const mockGetLibrarySubfolders = jest.fn();
 const mockLibraryAsset = jest.fn();
-jest.mock('preview/util/libraryAsset', () => ({
+jest.mock('model/backend/libraryAsset', () => ({
   getLibrarySubfolders: mockGetLibrarySubfolders,
   default: mockLibraryAsset,
 }));
@@ -22,16 +22,18 @@ jest.mock('preview/store/assets.slice', () => ({
 }));
 
 const setDigitalTwin = jest.fn();
-jest.mock('preview/store/digitalTwin.slice', () => ({
+jest.mock('model/backend/state/digitalTwin.slice', () => ({
   setDigitalTwin,
 }));
+
+jest.deepUnmock('model/backend/util/init');
 
 import {
   fetchDigitalTwins,
   fetchLibraryAssets,
   initDigitalTwin,
-} from 'preview/util/init';
-import { getLibrarySubfolders } from 'preview/util/libraryAsset';
+} from 'model/backend/util/init';
+import { getLibrarySubfolders } from 'model/backend/libraryAsset';
 import {
   mockAuthority,
   mockBackendAPI,
@@ -123,6 +125,11 @@ describe('fetchAssets', () => {
   });
 
   it('initializes a DigitalTwin with initDigitalTwin', async () => {
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      value: {
+        getItem: jest.fn(() => null),
+      },
+    });
     const DT = await initDigitalTwin('my digital twin');
     expect(createGitlabInstance).toHaveBeenCalledWith('', '', mockAuthority);
     expect(mockBackendInstance.init).toHaveBeenCalled();
@@ -134,7 +141,7 @@ describe('fetchAssets', () => {
   });
 
   it('initializes a DigitalTwin with initDigitalTwin with sessionStorage', async () => {
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: {
         getItem: jest.fn((itemName) => {
           if (itemName === 'username') return 'my username';

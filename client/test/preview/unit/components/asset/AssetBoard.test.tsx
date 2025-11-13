@@ -18,7 +18,7 @@ jest.mock('preview/store/assets.slice', () => ({
   ...jest.requireActual('preview/store/assets.slice'),
 }));
 
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   fetchAssets: jest.fn(),
 }));
 
@@ -51,7 +51,16 @@ describe('AssetBoard', () => {
       (selector) =>
         selector({
           assets: { items: mockAssets },
-          digitalTwin: { shouldFetchDigitalTwins: false },
+          digitalTwin: {
+            shouldFetchDigitalTwins: false,
+            digitalTwin: {}, // Add empty digitalTwin object to prevent null error
+          },
+          executionHistory: {
+            entries: [],
+            selectedExecutionId: null,
+            loading: false,
+            error: null,
+          },
         }),
     );
   });

@@ -4,7 +4,9 @@ import { Button } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { selectAssetByPathAndPrivacy } from 'preview/store/assets.slice';
 import { DescriptionProvider } from 'model/backend/interfaces/sharedInterfaces';
-import { selectDigitalTwinByName } from '../../store/digitalTwin.slice';
+import LibraryAsset from 'model/backend/libraryAsset';
+import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
+import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
 
 interface DialogButtonProps {
   assetName: string;
@@ -49,11 +51,20 @@ function DetailsButton({
       variant="contained"
       size="small"
       color="primary"
-      onClick={() => {
+      onClick={async () => {
         if (library && asset) {
-          handleToggleDetailsLibraryDialog(asset, setShowDetails);
+          handleToggleDetailsLibraryDialog(
+            asset as LibraryAsset,
+            setShowDetails,
+          );
         } else if (asset) {
-          handleToggleDetailsDialog(asset, setShowDetails);
+          if ('DTName' in asset) {
+            const digitalTwinInstance = await createDigitalTwinFromData(
+              asset,
+              assetName,
+            );
+            handleToggleDetailsDialog(digitalTwinInstance, setShowDetails);
+          }
         }
       }}
     >

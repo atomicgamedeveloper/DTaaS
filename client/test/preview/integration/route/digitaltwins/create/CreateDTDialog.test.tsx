@@ -5,14 +5,14 @@ import { Provider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import fileSlice from 'preview/store/file.slice';
 import { validateFiles } from 'preview/util/fileUtils';
-import { initDigitalTwin } from 'preview/util/init';
+import { initDigitalTwin } from 'model/backend/util/init';
 import cartSlice from 'preview/store/cart.slice';
 
 jest.mock('preview/util/fileUtils', () => ({
   validateFiles: jest.fn(),
   addDefaultFiles: jest.fn(),
 }));
-jest.mock('preview/util/init', () => ({
+jest.mock('model/backend/util/init', () => ({
   initDigitalTwin: jest.fn(),
 }));
 

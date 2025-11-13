@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Box, Grid, Tabs, Tab } from '@mui/material';
-import EditorTab from './EditorTab';
-import PreviewTab from './PreviewTab';
-import Sidebar from './Sidebar';
+import EditorTab from 'preview/route/digitaltwins/editor/EditorTab';
+import PreviewTab from 'preview/route/digitaltwins/editor/PreviewTab';
+import Sidebar from 'preview/route/digitaltwins/editor/Sidebar';
 
 interface EditorProps {
   DTName?: string;

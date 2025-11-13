@@ -1,4 +1,4 @@
-import { getDTSubfolders } from 'preview/util/digitalTwinUtils';
+import { getDTSubfolders } from 'model/backend/util/digitalTwinUtils';
 import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 const mockApi = {

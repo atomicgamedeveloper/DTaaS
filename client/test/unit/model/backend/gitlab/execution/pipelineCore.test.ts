@@ -7,7 +7,9 @@ import {
   isPipelineRunning,
   shouldContinuePolling,
   getPollingInterval,
+  stopPipelines,
 } from 'model/backend/gitlab/execution/pipelineCore';
+import { mockDigitalTwin } from 'test/preview/__mocks__/global_mocks';
 
 describe('pipelineCore', () => {
   describe('delay', () => {
@@ -116,6 +118,149 @@ describe('pipelineCore', () => {
       const interval = getPollingInterval();
       expect(typeof interval).toBe('number');
       expect(interval).toBeGreaterThan(0);
+    });
+  });
+
+  describe('stopPipelines', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should successfully stop pipelines with executionId', async () => {
+      const projectId = 'project-123';
+      const executionId = 'exec-456';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      (mockDigitalTwin.stop as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await stopPipelines(mockDigitalTwin, executionId);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(mockDigitalTwin.stop).toHaveBeenCalledTimes(2);
+      expect(mockDigitalTwin.stop).toHaveBeenCalledWith(
+        projectId,
+        'parentPipeline',
+        executionId,
+      );
+      expect(mockDigitalTwin.stop).toHaveBeenCalledWith(
+        projectId,
+        'childPipeline',
+        executionId,
+      );
+    });
+
+    it('should successfully stop pipelines using pipelineId when no executionId', async () => {
+      const projectId = 'project-123';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      mockDigitalTwin.pipelineId = 789;
+      (mockDigitalTwin.stop as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await stopPipelines(mockDigitalTwin);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(mockDigitalTwin.stop).toHaveBeenCalledTimes(2);
+      expect(mockDigitalTwin.stop).toHaveBeenCalledWith(
+        projectId,
+        'parentPipeline',
+      );
+      expect(mockDigitalTwin.stop).toHaveBeenCalledWith(
+        projectId,
+        'childPipeline',
+      );
+    });
+
+    it('should return success when no projectId available', async () => {
+      mockDigitalTwin.backend.getProjectId = jest.fn().mockReturnValue(null);
+
+      const result = await stopPipelines(mockDigitalTwin);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(mockDigitalTwin.stop).not.toHaveBeenCalled();
+    });
+
+    it('should return success when projectId exists but no executionId or pipelineId', async () => {
+      const projectId = 'project-123';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      mockDigitalTwin.pipelineId = null;
+
+      const result = await stopPipelines(mockDigitalTwin);
+
+      expect(result.success).toBe(true);
+      expect(result.error).toBeUndefined();
+      expect(mockDigitalTwin.stop).not.toHaveBeenCalled();
+    });
+
+    it('should handle Error objects thrown during stop', async () => {
+      const projectId = 'project-123';
+      const executionId = 'exec-456';
+      const errorMessage = 'Failed to stop pipeline';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      (mockDigitalTwin.stop as jest.Mock).mockRejectedValue(
+        new Error(errorMessage),
+      );
+
+      const result = await stopPipelines(mockDigitalTwin, executionId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect(result.error?.message).toBe(errorMessage);
+    });
+
+    it('should handle non-Error objects thrown during stop', async () => {
+      const projectId = 'project-123';
+      const executionId = 'exec-456';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      (mockDigitalTwin.stop as jest.Mock).mockRejectedValue('String error');
+
+      const result = await stopPipelines(mockDigitalTwin, executionId);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect(result.error?.message).toBe('Unknown error');
+    });
+
+    it('should handle error during parent pipeline stop', async () => {
+      const projectId = 'project-123';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      mockDigitalTwin.pipelineId = 789;
+      (mockDigitalTwin.stop as jest.Mock).mockRejectedValueOnce(
+        new Error('Parent stop failed'),
+      );
+
+      const result = await stopPipelines(mockDigitalTwin);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('Parent stop failed');
+    });
+
+    it('should handle error during child pipeline stop', async () => {
+      const projectId = 'project-123';
+      mockDigitalTwin.backend.getProjectId = jest
+        .fn()
+        .mockReturnValue(projectId);
+      mockDigitalTwin.pipelineId = 789;
+      (mockDigitalTwin.stop as jest.Mock)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('Child stop failed'));
+
+      const result = await stopPipelines(mockDigitalTwin);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('Child stop failed');
     });
   });
 });

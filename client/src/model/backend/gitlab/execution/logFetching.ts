@@ -1,9 +1,8 @@
 import { JobLog } from 'model/backend/interfaces/execution';
 import cleanLog from 'model/backend/gitlab/cleanLog';
-import {
-  BackendInterface,
-  JobSummary,
-} from 'model/backend/interfaces/backendInterfaces';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
+
+const jobLog = (jobName: string, log: string): JobLog => ({ jobName, log });
 
 /**
  * Fetches job logs from the backend for a specific pipeline
@@ -15,61 +14,24 @@ import {
 export const fetchJobLogs = async (
   backend: BackendInterface,
   pipelineId: number,
+  cleanLogFn: (log: string) => string = cleanLog,
 ): Promise<JobLog[]> => {
   const projectId = backend.getProjectId();
-  if (!projectId) {
-    return [];
-  }
-
   const jobs = await backend.getPipelineJobs(projectId, pipelineId);
-
-  const logPromises = jobs.map((job: JobSummary) =>
-    fetchSingleJobLog(backend, job),
-  );
-  return (await Promise.all(logPromises)).reverse();
-};
-
-/**
- * Fetches the log for a single job from the backend.
- * @param backend - An object containing the backend's project ID and a method to fetch the job trace.
- * @param job - The job for which the log should be fetched.
- * @returns A promise that resolves to a `JobLog` object containing the job name and its log content.
- */
-export const fetchSingleJobLog = async (
-  backend: BackendInterface,
-  job: JobSummary,
-): Promise<JobLog> => {
-  const projectId = backend.getProjectId();
-  let result: JobLog;
-
-  if (!projectId || job?.id === undefined) {
-    result = {
-      jobName: typeof job?.name === 'string' ? job.name : 'Unknown',
-      log: job?.id === undefined ? 'Job ID not available' : '',
-    };
-  } else {
-    try {
-      let log = await backend.getJobTrace(projectId, job.id);
-
-      if (typeof log === 'string') {
-        log = cleanLog(log);
-      } else {
-        log = '';
-      }
-
-      result = {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log,
-      };
-    } catch (_e) {
-      result = {
-        jobName: typeof job.name === 'string' ? job.name : 'Unknown',
-        log: 'Error fetching log content',
-      };
+  const jobLogs = jobs.map(async (job) => {
+    if (job?.id === undefined) {
+      return jobLog('Unknown', 'Job ID not available');
     }
-  }
-
-  return result;
+    const jobName = typeof job.name === 'string' ? job.name : 'Unknown';
+    try {
+      const rawLog = await backend.getJobTrace(projectId, job.id);
+      const log = typeof rawLog === 'string' ? cleanLogFn(rawLog) : '';
+      return jobLog(jobName, log);
+    } catch {
+      return jobLog(jobName, 'Error fetching log content');
+    }
+  });
+  return (await Promise.all(jobLogs)).reverse();
 };
 
 /**
@@ -119,7 +81,6 @@ export const combineLogs = (
  */
 export const extractJobNames = (logs: JobLog[]): string[] => {
   if (!logs) return [];
-
   return logs.map((log) => log.jobName).filter(Boolean);
 };
 
@@ -143,22 +104,27 @@ export const findJobLog = (
  * @param logs Array of job logs to analyze
  * @returns Number of jobs that appear to have succeeded
  */
-export const countSuccessfulJobs = (logs: JobLog[]): number =>
-  Array.isArray(logs)
-    ? logs.filter(
-        (log) =>
-          typeof log.log === 'string' && /success|completed/i.test(log.log),
-      ).length
-    : 0;
+export const countSuccessfulJobs = (logs: JobLog[]): number => {
+  if (!logs) return 0;
+
+  return logs.filter((log) => {
+    if (!log.log) return false;
+    const logContent = log.log.toLowerCase();
+    return logContent.includes('success') || logContent.includes('completed');
+  }).length;
+};
 
 /**
  * Counts the number of failed jobs based on log content
  * @param logs Array of job logs to analyze
  * @returns Number of jobs that appear to have failed
  */
-export const countFailedJobs = (logs: JobLog[]): number =>
-  Array.isArray(logs)
-    ? logs.filter(
-        (log) => typeof log.log === 'string' && /(error|failed)/i.test(log.log),
-      ).length
-    : 0;
+export const countFailedJobs = (logs: JobLog[]): number => {
+  if (!logs) return 0;
+
+  return logs.filter((log) => {
+    if (!log.log) return false;
+    const logContent = log.log.toLowerCase();
+    return logContent.includes('error') || logContent.includes('failed');
+  }).length;
+};

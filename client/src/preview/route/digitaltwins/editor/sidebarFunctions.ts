@@ -3,10 +3,10 @@ import {
   LibraryConfigFile,
   FileState,
 } from 'model/backend/interfaces/sharedInterfaces';
-import DigitalTwin from 'preview/util/digitalTwin';
+import DigitalTwin from 'model/backend/digitalTwin';
 import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
-import LibraryAsset from 'preview/util/libraryAsset';
+import LibraryAsset from 'model/backend/libraryAsset';
 import { addOrUpdateLibraryFile } from 'preview/store/libraryConfigFiles.slice';
 import {
   getFileTypeFromExtension,
@@ -15,7 +15,7 @@ import {
 import {
   fetchAndSetFileContent,
   fetchAndSetFileLibraryContent,
-} from './sidebarFetchers';
+} from 'preview/route/digitaltwins/editor/sidebarFetchers';
 
 export const handleFileClick = (
   fileName: string,

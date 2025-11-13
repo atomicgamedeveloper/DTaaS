@@ -8,6 +8,11 @@ import authReducer from 'store/auth.slice';
 import { mockUser } from 'test/__mocks__/global_mocks';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 
+jest.mock('components/route/Snackbar', () => ({
+  __esModule: true,
+  default: () => <div data-testid="snackbar" />,
+}));
+
 jest.mock('util/auth/Authentication', () => ({
   useGetAndSetUsername: () => jest.fn(),
 }));
@@ -22,18 +27,14 @@ jest.mock('page/Menu', () => ({
   default: () => <div data-testid="menu" />,
 }));
 
-// Bypass the config verification
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({ data: 'success' }),
-});
-
-Object.defineProperty(AbortSignal, 'timeout', {
-  value: jest.fn(),
-  writable: false,
-});
-
+jest.mock('components/execution/ExecutionHistoryLoader', () => ({
+  __esModule: true,
+  fetchAllExecutionHistory: () => ({
+    type: 'execution/fetchAllExecutionHistory',
+  }),
+  checkRunningExecutions: () => ({ type: 'execution/checkRunningExecutions' }),
+  default: () => null,
+}));
 const store = createStore(authReducer);
 
 type AuthState = {

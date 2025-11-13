@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { getValidationResults, ValidationType } from 'util/configUtil';
 import { Paper, Typography } from '@mui/material';
-import { ConfigItem, loadingComponent } from './ConfigItems';
+import { ConfigItem, loadingComponent } from 'route/config/ConfigItems';
 
 const paperStyle = {
   p: 2,

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, within, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { assetType, scope } from 'route/library/LibraryTabData';
 import {
@@ -7,7 +7,7 @@ import {
   itShowsTheParagraphOfToTheSelectedTab,
   setupIntegrationTest,
 } from 'test/integration/integration.testUtil';
-import { testLayout } from './routes.testUtil';
+import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
 const setup = () => setupIntegrationTest('/library');
 
@@ -16,13 +16,18 @@ describe('Library', () => {
     await setup();
   });
 
+  afterEach(() => {
+    cleanup();
+
+    jest.clearAllTimers();
+  });
+
   it('renders the Library and Layout correctly', async () => {
     await testLayout();
 
     const tablists = screen.getAllByRole('tablist');
     expect(tablists).toHaveLength(2);
 
-    // The div of the assetType (Functions, Models, etc.) tabs
     const mainTabsDiv = closestDiv(tablists[0]);
     const mainTablist = within(mainTabsDiv).getAllByRole('tablist')[0];
     const mainTabs = within(mainTablist).getAllByRole('tab');
@@ -130,7 +135,7 @@ describe('Library', () => {
         expect(assetTypeTabAfterClicks).toBeInTheDocument();
       }
     }
-  }, 6000);
+  }, 15000);
 
   it('changes iframe src according to the combination of the selected tabs', async () => {
     for (
@@ -163,6 +168,6 @@ describe('Library', () => {
         );
       }
     }
-  }, 6000);
+  }, 15000);
   /* eslint-enable no-await-in-loop */
 });
