@@ -3,7 +3,9 @@ import { Remarkable } from 'remarkable';
 import 'katex/dist/katex.min.css';
 // @ts-expect-error: Ignoring TypeScript error due to missing type definitions for 'remarkable-katex'.
 import * as RemarkableKatex from 'remarkable-katex';
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import { Prism as SyntaxHighlighterBase } from 'react-syntax-highlighter';
+
+const SyntaxHighlighter = SyntaxHighlighterBase as any;
 
 interface PreviewProps {
   fileContent: string;

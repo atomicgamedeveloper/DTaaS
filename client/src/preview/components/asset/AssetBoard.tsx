@@ -37,11 +37,7 @@ const AssetGridItem: React.FC<{
 }> = ({ asset, tab, onDelete }) => (
   <Grid
     key={asset.path}
-    item
-    xs={12}
-    sm={6}
-    md={4}
-    lg={3}
+    size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
     sx={{ minWidth: 250 }}
   >
     {tab === 'Execute' ? (

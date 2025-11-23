@@ -41,7 +41,7 @@ function Layout(props: {
         >
           <Grid container spacing={3} sx={{ minHeight: '100%' }}>
             {React.Children.map(props.children, (child) => (
-              <Grid item xs={12} md={12} lg={12}>
+              <Grid size={{ xs: 12, md: 12, lg: 12 }}>
                 {child}
               </Grid>
             ))}

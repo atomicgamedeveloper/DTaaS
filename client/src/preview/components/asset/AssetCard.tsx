@@ -82,7 +82,7 @@ function CardActionAreaContainer(asset: Asset, library?: boolean) {
 
   return (
     <Grid container>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <CardContent
           sx={{
             padding: '5px 0px 0px 0px',
