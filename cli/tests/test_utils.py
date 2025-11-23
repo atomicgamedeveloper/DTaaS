@@ -10,7 +10,10 @@ def test_import_yaml_users():
             "${DTAAS_DIR}/files/${username}:/workspace",
         ],
         "environment": ["AUTHENTICATE_VIA_JUPYTER=", "WORKSPACE_BASE_URL=${username}"],
-        "shm_size": "512m",
+        "shm_size": "${shm_size}",
+        "cpus": "${cpus}",
+        "mem_limit": "${mem_limit}",
+        "pids_limit": "${pids_limit}",
         "labels": [
             "traefik.enable=true",
             "traefik.http.routers.${username}.entryPoints=web",
@@ -20,7 +23,7 @@ def test_import_yaml_users():
         "networks": ["users"],
     }
 
-    template, err = utils.importYaml("users.local.yml")
+    template, err = utils.import_yaml("users.local.yml")
     if err is not None:
         raise Exception(err)
 
@@ -28,22 +31,22 @@ def test_import_yaml_users():
 
 
 def test_import_yaml_compose():
-    expected = getTestComposeObject()
+    expected = get_test_compose_object()
 
-    compose, err = utils.importYaml("tests/data/compose.users.test.yml")
+    compose, err = utils.import_yaml("tests/data/compose.users.test.yml")
     if err is not None:
         raise Exception(err)
     assert expected == compose
 
 
 def test_import_toml():
-    toml, err = utils.importToml("tests/dtaas.test.toml")
+    toml, err = utils.import_toml("tests/dtaas.test.toml")
     if err is not None:
         raise Exception(err)
 
     expected = {
         "name": "Digital Twin as a Service (DTaaS)",
-        "version": "0.1.2",
+        "version": "0.2.0",
         "owner": "The INTO-CPS-Association",
         "git-repo": "https://github.com/into-cps-association/DTaaS.git",
         "common": {
@@ -74,16 +77,16 @@ def test_replace_all():
         "listval2",
         "listval3",
     ]
-    template = getReplaceAllObject(templateRandomVals)
+    template = get_replace_all_object(templateRandomVals)
 
     expectedRandomVals = ["one", "two", "three", "foo", "bar", "qux"]
-    expected = getReplaceAllObject(expectedRandomVals)
+    expected = get_replace_all_object(expectedRandomVals)
 
     mapping = {}
     for i in range(len(templateRandomVals)):
         mapping[templateRandomVals[i]] = expectedRandomVals[i]
 
-    ans, err = utils.replaceAll(template, mapping)
+    ans, err = utils.replace_all(template, mapping)
     if err is not None:
         raise Exception(err)
 
@@ -91,14 +94,14 @@ def test_replace_all():
 
 
 def test_export_yaml():
-    data = getTestComposeObject()
+    data = get_test_compose_object()
 
-    err = utils.exportYaml(data, "tests/data/compose.users.exp.yml")
+    err = utils.export_yaml(data, "tests/data/compose.users.exp.yml")
     if err is not None:
         raise Exception(err)
 
-    expected, err1 = utils.importYaml("tests/data/compose.users.test.yml")
-    actual, err2 = utils.importYaml("tests/data/compose.users.exp.yml")
+    expected, err1 = utils.import_yaml("tests/data/compose.users.test.yml")
+    actual, err2 = utils.import_yaml("tests/data/compose.users.exp.yml")
 
     if err1:
         raise Exception(err1)
@@ -108,31 +111,30 @@ def test_export_yaml():
     assert expected == actual
 
 
-def getReplaceAllObject(randomVals):
+def get_replace_all_object(random_vals):
     obj = {
-        "key1": randomVals[0],
-        "key2": [randomVals[3], randomVals[4], randomVals[5]],
+        "key1": random_vals[0],
+        "key2": [random_vals[3], random_vals[4], random_vals[5]],
         "dictkey1": {
-            "dict1key1": randomVals[1],
-            "dict2key2": [randomVals[3], randomVals[5]],
-            "dict3key3": {"key3": randomVals[0], "key4": {"listkey": [randomVals[4]]}},
+            "dict1key1": random_vals[1],
+            "dict2key2": [random_vals[3], random_vals[5]],
+            "dict3key3": {"key3": random_vals[0], "key4": {"listkey": [random_vals[4]]}},
         },
         "dictkey2": {
             "dict2key1": {
-                "key5": randomVals[2],
-                "key6": randomVals[3],
-                "key7": [randomVals[4], randomVals[5]],
+                "key5": random_vals[2],
+                "key6": random_vals[3],
+                "key7": [random_vals[4], random_vals[5]],
             },
-            "dict2key2": randomVals[1],
-            "dict2key3": randomVals[4],
+            "dict2key2": random_vals[1],
+            "dict2key3": random_vals[4],
         },
     }
-
     return obj
 
 
-def getTestComposeObject():
-    testCompose = {
+def get_test_compose_object():
+    test_compose = {
         "version": "3",
         "services": {
             "testuser": {
@@ -163,4 +165,4 @@ def getTestComposeObject():
         },
     }
 
-    return testCompose
+    return test_compose
