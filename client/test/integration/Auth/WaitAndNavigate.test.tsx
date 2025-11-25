@@ -18,13 +18,6 @@ Object.defineProperty(AbortSignal, 'timeout', {
 
 const authStateWithError = { ...mockAuthState, error: Error('Test Error') };
 const setup = () => setupIntegrationTest('/library', authStateWithError);
-Object.defineProperty(globalThis, 'location', {
-  value: {
-    ...window.location,
-    reload: jest.fn(),
-  },
-  writable: true,
-});
 
 describe('WaitAndNavigate', () => {
   it('redirects to the WaitAndNavigate page when getting useAuth throws an error', async () => {

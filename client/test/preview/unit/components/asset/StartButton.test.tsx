@@ -107,8 +107,14 @@ describe('StartButton', () => {
   };
 
   beforeEach(() => {
+    jest.useFakeTimers();
     mockDispatch.mockClear();
     mockReduxState();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
   });
 
   const renderComponent = () =>
@@ -135,11 +141,8 @@ describe('StartButton', () => {
 
     await act(async () => {
       fireEvent.click(startButton);
-    });
-
-    // Wait a bit for async operations
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
+      // Fast-forward timers to complete debounce
+      jest.runAllTimers();
     });
 
     expect(handleStart).toHaveBeenCalled();

@@ -21,7 +21,7 @@ const typographyStyle = {
 
 const DeveloperConfig = (
   validationResults: Record<string, ValidationType>,
-): JSX.Element => (
+): React.ReactElement => (
   <Paper
     sx={{
       ...paperStyle,
@@ -48,7 +48,7 @@ const DeveloperConfig = (
   </Paper>
 );
 
-const userConfigInvalidText: JSX.Element = (
+const userConfigInvalidText: React.ReactElement = (
   <>
     Invalid Application Configuration. Please contact the administrator of your
     DTaaS installation.
@@ -59,7 +59,7 @@ const userConfigInvalidText: JSX.Element = (
   </>
 );
 
-const userConfigValidText: JSX.Element = (
+const userConfigValidText: React.ReactElement = (
   <>
     <p>Configuration appears to be valid.</p>
     <a href="/">Return to login</a>
@@ -68,7 +68,7 @@ const userConfigValidText: JSX.Element = (
 
 const UserConfig = (
   validationResults: Record<string, ValidationType>,
-): JSX.Element => {
+): React.ReactElement => {
   const hasConfigErrors = useConfigErrors(validationResults);
   return (
     <Paper

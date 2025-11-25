@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
 import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';

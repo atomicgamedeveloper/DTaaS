@@ -17,7 +17,10 @@ export function constructURL(assetType: string, scope: string, libURL: string) {
   return `${libURL}tree/${scopeTab}${assetTab}`;
 }
 
-function renderScopeTabList(scope: TabData[][], subIndex: number): JSX.Element {
+function renderScopeTabList(
+  scope: TabData[][],
+  subIndex: number,
+): React.ReactElement {
   return (
     <TabList>
       {scope &&
@@ -30,7 +33,7 @@ function renderScopeTabList(scope: TabData[][], subIndex: number): JSX.Element {
 function renderScopeTabPanels(
   scope: TabData[][],
   subIndex: number,
-): JSX.Element {
+): React.ReactElement {
   return (
     <>
       {scope &&
@@ -47,7 +50,7 @@ function renderScopeTabPanels(
 export function TabComponent(props: {
   assetType: TabData[];
   scope: TabData[][];
-}): JSX.Element {
+}): React.ReactElement {
   return (
     <Tabs>
       <TabList>

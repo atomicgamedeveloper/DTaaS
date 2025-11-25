@@ -77,7 +77,7 @@ interface LinkButtonProps {
               >
                 {React.cloneElement(button.icon, {
                   style: { fontSize: `${size?.toString() ?? 4}rem` },
-                })}
+                } as React.HTMLAttributes<HTMLElement>)}
               </IconButton>
               {button.name !== 'ToolbarIcon' && (
                 <Typography variant="h6">{button.name}</Typography>

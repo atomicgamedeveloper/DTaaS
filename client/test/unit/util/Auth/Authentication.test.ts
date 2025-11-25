@@ -54,24 +54,22 @@ describe('useSignOut', () => {
     );
     (useAppURL as jest.Mock).mockReturnValue('https://foo.com/');
     (cleanURL as jest.Mock).mockReturnValue('https://foo.com');
-    Object.defineProperty(globalThis, 'document', {
-      value: {
-        cookie: '',
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-      },
+
+    // Reset document.cookie using descriptor
+    Object.defineProperty(document, 'cookie', {
+      value: '',
       writable: true,
+      configurable: true,
     });
-    Object.defineProperty(globalThis, 'sessionStorage', {
-      value: {
-        clear: mockClear,
-      },
-      writable: true,
-    });
-    Object.defineProperty(globalThis, 'location', {
-      value: { reload: jest.fn() },
-      writable: true,
-    });
+
+    // Mock sessionStorage.clear
+    jest.spyOn(Storage.prototype, 'clear').mockImplementation(mockClear);
+
+    // Mock location.reload
+    delete (window as unknown as { location?: Location }).location;
+    (window as unknown as { location: { reload: jest.Mock } }).location = {
+      reload: jest.fn(),
+    };
   });
 
   it('expires _xsrf cookie', async () => {

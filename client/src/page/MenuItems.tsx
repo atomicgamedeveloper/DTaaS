@@ -16,7 +16,7 @@ const tolinkStyle = {
 interface MenuItemEntry {
   index: number;
   name: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
   link: string;
 }
 

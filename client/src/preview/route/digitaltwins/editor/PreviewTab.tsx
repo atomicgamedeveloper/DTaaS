@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css';
 import * as RemarkableKatex from 'remarkable-katex';
 import { Prism as SyntaxHighlighterBase } from 'react-syntax-highlighter';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SyntaxHighlighter = SyntaxHighlighterBase as any;
 
 interface PreviewProps {

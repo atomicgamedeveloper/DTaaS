@@ -8,7 +8,7 @@ interface TabRenderProps {
 
 export interface TabData {
   label: string;
-  body: JSX.Element;
+  body: React.ReactElement;
 }
 
 function TabRender(props: TabRenderProps) {

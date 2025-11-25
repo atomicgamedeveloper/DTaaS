@@ -35,7 +35,7 @@ function BoxForSignIn(props: { children: React.ReactNode }) {
   );
 }
 
-const avatar: JSX.Element = (
+const avatar: React.ReactElement = (
   <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
     <LockOutlinedIcon />
   </Avatar>
