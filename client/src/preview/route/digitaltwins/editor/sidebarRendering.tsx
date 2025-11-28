@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { TreeItem, TreeItemProps } from '@mui/x-tree-view/TreeItem';
 import {
   LibraryConfigFile,

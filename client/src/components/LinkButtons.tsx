@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { cloneElement } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import styled from '@emotion/styled';
@@ -75,7 +75,7 @@ interface LinkButtonProps {
                   title: `${button.name}-btn`,
                 })}
               >
-                {React.cloneElement(button.icon, {
+                {cloneElement(button.icon, {
                   style: { fontSize: `${size?.toString() ?? 4}rem` },
                 } as React.HTMLAttributes<HTMLElement>)}
               </IconButton>

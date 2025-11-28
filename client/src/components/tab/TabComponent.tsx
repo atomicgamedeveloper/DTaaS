@@ -1,4 +1,3 @@
-import * as React from 'react';
 import TabRender, { TabData } from 'components/tab/subcomponents/TabRender';
 import {
   Tab,

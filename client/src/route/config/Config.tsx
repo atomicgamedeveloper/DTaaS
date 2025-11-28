@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { getValidationResults, ValidationType } from 'util/configUtil';
 import { Paper, Typography } from '@mui/material';
 import { ConfigItem, loadingComponent } from 'route/config/ConfigItems';
@@ -122,7 +121,7 @@ const useConfigErrors = (validationResults: Record<string, ValidationType>) =>
 const Config = (props: { role: string }) => {
   const { validationResults, isLoading } = useValidationResults();
 
-  const configVerification = React.useMemo(
+  const configVerification = useMemo(
     () =>
       props.role === 'user'
         ? UserConfig(validationResults)

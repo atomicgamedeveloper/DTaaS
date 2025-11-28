@@ -1,4 +1,3 @@
-import * as React from 'react';
 import Config from 'route/config/Config';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

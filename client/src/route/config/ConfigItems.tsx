@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { ValidationType } from 'util/configUtil';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';

@@ -106,7 +106,10 @@ export default [{
         // Conflict with SonarCube fixes
         "consistent-return": "off",
         "no-restricted-syntax": "off",
-        
+
+        // Not needed with React 17+ new JSX transform
+        "react/react-in-jsx-scope": "off",
+
     },
 }, {
     files: ["**/*.ts", "**/*.tsx"],

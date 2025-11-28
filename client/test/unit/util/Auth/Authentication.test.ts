@@ -41,6 +41,17 @@ describe('useSignOut', () => {
     writable: true,
   });
 
+  // Mock location.reload once to avoid JSDOM navigation errors
+  try {
+    Object.defineProperty(window.location, 'reload', {
+      value: jest.fn(),
+      writable: true,
+      configurable: true,
+    });
+  } catch {
+    // Ignore errors if property is already defined
+  }
+
   beforeEach(() => {
     (useAuth as jest.Mock).mockReturnValue({
       signoutRedirect: mockSignoutRedirect,
@@ -64,12 +75,6 @@ describe('useSignOut', () => {
 
     // Mock sessionStorage.clear
     jest.spyOn(Storage.prototype, 'clear').mockImplementation(mockClear);
-
-    // Mock location.reload
-    delete (window as unknown as { location?: Location }).location;
-    (window as unknown as { location: { reload: jest.Mock } }).location = {
-      reload: jest.fn(),
-    };
   });
 
   it('expires _xsrf cookie', async () => {

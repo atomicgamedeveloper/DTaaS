@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import * as React from 'react';
 import { handleStart } from 'route/digitaltwins/execution/executionButtonHandlers';
 import StartButton from 'preview/components/asset/StartButton';
 import { ExecutionStatus, JobLog } from 'model/backend/interfaces/execution';
@@ -113,7 +112,9 @@ describe('StartButton', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
     jest.useRealTimers();
   });
 

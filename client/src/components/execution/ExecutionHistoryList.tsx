@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -285,6 +284,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                   {execution.status === ExecutionStatus.RUNNING && (
                     <Tooltip title="Stop Execution">
                       <IconButton
+                        component="div"
                         edge="end"
                         aria-label="stop"
                         onClick={(e) => handleStopExecution(execution.id, e)}
@@ -296,6 +296,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                   )}
                   <Tooltip title="Delete">
                     <IconButton
+                      component="div"
                       edge="end"
                       aria-label="delete"
                       onClick={(e) => handleDeleteClick(execution.id, e)}

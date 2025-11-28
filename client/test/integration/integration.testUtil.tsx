@@ -7,7 +7,6 @@ import {
   act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import { ITabs } from 'route/IData';
 import store from 'store/store';

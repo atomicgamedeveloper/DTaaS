@@ -2,7 +2,6 @@ import { cleanup, render, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppProvider } from 'AppProvider';
 import routes from 'routes';
-import * as React from 'react';
 import { useAuth } from 'react-oidc-context';
 import store from 'store/store';
 import { configureStore } from '@reduxjs/toolkit';

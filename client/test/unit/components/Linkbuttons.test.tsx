@@ -1,4 +1,3 @@
-import * as React from 'react';
 import LinkButtons, { LinkIcons } from 'components/LinkButtons';
 import { render, screen } from '@testing-library/react';
 import { KeyLinkPair } from 'util/envUtil';

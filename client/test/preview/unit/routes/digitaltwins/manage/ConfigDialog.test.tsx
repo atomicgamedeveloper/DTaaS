@@ -7,7 +7,6 @@ import {
   waitFor,
 } from '@testing-library/react';
 import ReconfigureDialog, * as Reconfigure from 'preview/route/digitaltwins/manage/ReconfigureDialog';
-import * as React from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import store, { RootState } from 'store/store';
 

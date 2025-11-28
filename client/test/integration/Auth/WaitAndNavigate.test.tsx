@@ -1,8 +1,12 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { mockAuthState } from 'test/__mocks__/global_mocks';
 import { setupIntegrationTest } from 'test/integration/integration.testUtil';
+import * as WaitAndNavigate from 'route/auth/WaitAndNavigate';
 
 jest.useFakeTimers();
+
+// Mock the reloadPage function to avoid jsdom navigation errors
+jest.spyOn(WaitAndNavigate, 'reloadPage').mockImplementation(() => {});
 
 // Bypass the config verification
 global.fetch = jest.fn().mockResolvedValue({

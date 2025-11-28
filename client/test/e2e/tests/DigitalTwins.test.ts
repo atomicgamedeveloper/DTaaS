@@ -65,18 +65,23 @@ test.describe('Digital Twin Log Cleaning', () => {
       page.getByRole('heading', { name: /Hello world Execution History/ }),
     ).toBeVisible();
 
+    // Wait for execution history to load
+    await expect(
+      historyDialog.getByText('Execution History', { exact: true }),
+    ).toBeVisible();
+
     // Wait for execution to complete using dynamic waiting instead of fixed timeout
     await expect(async () => {
       const completedExecutions = historyDialog
-        .locator('[role="button"][aria-controls*="execution-"]')
-        .filter({ hasText: /Status: Completed|Failed|Canceled/ });
+        .locator('.MuiAccordionSummary-root')
+        .filter({ hasText: /Status: (Completed|Failed|Canceled)/ });
       const completedCount = await completedExecutions.count();
       expect(completedCount).toBeGreaterThanOrEqual(1);
     }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
 
     const completedExecution = historyDialog
-      .locator('[role="button"][aria-controls*="execution-"]')
-      .filter({ hasText: /Status: Completed|Failed|Canceled/ })
+      .locator('.MuiAccordionSummary-root')
+      .filter({ hasText: /Status: (Completed|Failed|Canceled)/ })
       .first();
 
     // Expand the accordion to view the logs for the completed execution
