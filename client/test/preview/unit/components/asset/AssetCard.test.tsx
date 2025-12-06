@@ -66,14 +66,7 @@ const setupMockStore = (assetDescription: string, twinDescription: string) => {
     },
   };
   (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
-    (selector) => {
-      const result = selector(state);
-      // Return the twin description when accessing state.digitalTwin.digitalTwin[assetName]
-      if (result && typeof result === 'object' && 'description' in result) {
-        return result;
-      }
-      return result;
-    },
+    (selector) => selector(state),
   );
 };
 

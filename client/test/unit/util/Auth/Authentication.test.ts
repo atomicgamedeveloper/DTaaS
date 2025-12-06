@@ -23,7 +23,7 @@ describe('useSignOut', () => {
     writable: false,
   });
 
-  Object.defineProperty(global, 'fetch', {
+  Object.defineProperty(globalThis, 'fetch', {
     value: jest.fn(async (URL, signal) => {
       signal();
       switch (URL) {
@@ -43,7 +43,7 @@ describe('useSignOut', () => {
 
   // Mock location.reload once to avoid JSDOM navigation errors
   try {
-    Object.defineProperty(window.location, 'reload', {
+    Object.defineProperty(globalThis.location, 'reload', {
       value: jest.fn(),
       writable: true,
       configurable: true,
@@ -82,7 +82,7 @@ describe('useSignOut', () => {
     const signOut = useSignOut();
     await signOut(auth);
 
-    expect(window.document.cookie).toBe(
+    expect(globalThis.document.cookie).toBe(
       '_xsrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;',
     );
   });
@@ -116,7 +116,7 @@ describe('useSignOut', () => {
     const signOut = useSignOut();
     const fetchBody = { signal: AbortSignal.timeout(30000) };
     await signOut(auth);
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       'https://foo.com/_oauth/logout',
       fetchBody,
     );
@@ -125,7 +125,7 @@ describe('useSignOut', () => {
   it('throws an error if fetch rejects', async () => {
     const auth = useAuth();
     const signOut = useSignOut();
-    global.fetch = jest.fn().mockRejectedValueOnce('foo');
+    globalThis.fetch = jest.fn().mockRejectedValueOnce('foo');
     await expect(signOut(auth)).rejects.toThrow(
       Error('Error occurred during logout: foo'),
     );

@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import * as path from 'path';
+import path from 'node:path';
 
 const envPath = path.join(process.cwd(), 'client/test/.env');
 dotenv.config({ path: envPath });

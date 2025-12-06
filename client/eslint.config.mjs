@@ -110,6 +110,32 @@ export default [{
         // Not needed with React 17+ new JSX transform
         "react/react-in-jsx-scope": "off",
 
+        // Sonar Cube based rules
+        "no-restricted-globals": ["error",
+            {
+                "name": "global",
+                "message": "Use 'globalThis' instead of 'global' for cross-platform compatibility."
+            }
+        ],
+        "no-restricted-imports": ["error",
+            {
+                "paths": [
+                    {
+                        "name": "util",
+                        "message": "Use 'node:util' instead of 'util' to explicitly import Node.js built-in modules."
+                    },
+                    {
+                        "name": "path",
+                        "message": "Use 'node:path' instead of 'path' to explicitly import Node.js built-in modules."
+                    },
+                    {
+                        "name": "fs",
+                        "message": "Use 'node:fs' instead of 'fs' to explicitly import Node.js built-in modules."
+                    }
+                ]
+            }
+        ],
+
     },
 }, {
     files: ["**/*.ts", "**/*.tsx"],
@@ -134,6 +160,11 @@ export default [{
             pragma: "React",
             version: "detect",
         },
+    },
+
+    rules: {
+        // TypeScript-specific rules that require type information
+        "@typescript-eslint/no-unnecessary-type-assertion": "error",
     },
 }, {
     files: ["src/**/*.slice.ts"],

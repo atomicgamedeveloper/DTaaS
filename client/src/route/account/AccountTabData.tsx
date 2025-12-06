@@ -46,7 +46,7 @@ function GroupParagraph(groups: string[], name: ReactNode) {
 
 function ProfileTab() {
   const { user } = useAuth();
-  const name = (user?.profile.preferred_username as string | undefined) ?? '';
+  const name = user?.profile.preferred_username ?? '';
   const pfp = user?.profile.picture;
   const profileUrl = user?.profile.profile;
 

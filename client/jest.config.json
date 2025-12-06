@@ -5,7 +5,8 @@
     "^.+\\.tsx?$": ["ts-jest", {
       "tsconfig": {
         "jsx": "react-jsx",
-        "noUnusedLocals": false
+        "noUnusedLocals": false,
+        "types": ["jest", "node", "react"]
       }
     }]
   },

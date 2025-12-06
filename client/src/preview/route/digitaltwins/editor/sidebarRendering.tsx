@@ -51,7 +51,7 @@ export const renderFileTreeItems = (
             onClick={() =>
               handleFileClick(
                 item,
-                asset!,
+                asset,
                 setFileName,
                 setFileContent,
                 setFileType,

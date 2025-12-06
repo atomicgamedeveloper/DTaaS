@@ -33,7 +33,7 @@ describe('Config', () => {
   };
   beforeEach(() => {
     window.env = { ...initialEnv };
-    global.fetch = jest.fn().mockResolvedValue(mockResponse);
+    globalThis.fetch = jest.fn().mockResolvedValue(mockResponse);
   });
 
   afterEach(() => {

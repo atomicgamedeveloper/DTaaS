@@ -5,7 +5,7 @@
     "sourceMap": true, //generate .map files
     "target": "es6", //target es6
     "jsx": "react-jsx", //use react jsx runtime (required for React 19)
-    "types": ["react", "node"], //use react and node types
+    "types": ["react", "node", "jest"], //use react, node and jest types
     "module": "esnext", //use esnext modules
     "moduleResolution": "node", //use node module resolution strategy node
     "experimentalDecorators": true, //allow experimental decorators for es7

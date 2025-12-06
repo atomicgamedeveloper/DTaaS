@@ -6,7 +6,7 @@ describe('Iframe', () => {
 
   beforeEach(() => {
     render(<Iframe url="https://example.com/" title="Example" />);
-    iframe = screen.getByTitle('Example') as HTMLIFrameElement;
+    iframe = screen.getByTitle('Example');
   });
 
   it('renders an iframe element with the correct src and title', () => {

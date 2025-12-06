@@ -9,7 +9,7 @@ jest.useFakeTimers();
 jest.spyOn(WaitAndNavigate, 'reloadPage').mockImplementation(() => {});
 
 // Bypass the config verification
-global.fetch = jest.fn().mockResolvedValue({
+globalThis.fetch = jest.fn().mockResolvedValue({
   ok: true,
   status: 200,
   json: async () => ({ data: 'success' }),
