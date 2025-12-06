@@ -23,10 +23,12 @@ setup('authenticate', async ({ page }) => {
   await page.fill('#user_login', testUsername.toString()); // Insert valid GitLab testing username.
   await page.fill('#user_password', testPassword.toString()); // Insert valid GitLab testing password.
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.getByRole('button', { name: 'Authorize' }).click();
-  await expect(
-    page.getByRole('button', { name: 'Open settings' }),
-  ).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Authorize' })
+    .click({ timeout: 15000 });
+  await expect(page.getByRole('button', { name: 'Open settings' })).toBeVisible(
+    { timeout: 10000 },
+  );
   const storage = await page.context().storageState();
   storage.cookies = storage.cookies.map((cookie) => {
     if (cookie.name === 'preferred_language') {
