@@ -23,64 +23,49 @@ The following services can be installed:
 ## Installation steps
 
 Please follow the steps outlined here for installation.
-The `services.foo.com` website hostname is used for illustration.
-Please replace the same with your server's hostname.
+`script/service_setup.py`, is provided to streamline the setup of TLS certificates
+and permissions for MongoDB, InfluxDB, and RabbitMQ services.
 
-* Obtain the TLS certificates from letsencrypt and copy them.
+The script has the following features:
 
-  ```bash
-  cp -R /etc/letsencrypt/archive/services.foo.com certs/.
-  mv certs/services.foo.com/privkey1.pem certs/services.foo.com/privkey.pem
-  mv certs/services.foo.com/fullchain1.pem certs/services.foo.com/fullchain.pem
-  ```
+* **Automation:** Automates all manual certificate and permission steps for
+ MongoDB, InfluxDB, and RabbitMQ as described above.
+* **Cross-platform:** Works on Linux, macOS, and Windows.
+* **Configuration-driven:** Reads all required user IDs, group IDs, and hostnames
+from `config/services.env`.
 
-* Combine and adjust permissions of certificates for MongoDB user
-  in docker container.
+### Create Config
 
-  ```bash
-  cat certs/services.foo.com/privkey.pem \
-    certs/services.foo.com/fullchain.pem > certs/foo.com/combined.pem
-  chmod 600 certs/services.foo.com/combined.pem
-  chown 999:999 certs/services.foo.com/combined.pem
-  ```
+1. Copy `config/services.env.template` into `config/services.env`.
+2. Update `config/services.env` with the correct values for your environment.
+3. Run the script with root privilege.
 
-* Adjust permissions of certificates for InfluxDB user in docker container.
+### Install
 
-  ```bash
-  cp certs/services.foo.com/privkey.pem \
-    certs/services.foo.com/privkey-influxdb.pem
-  chown 1000:1000 certs/services.foo.com/privkey-influxdb.pem
-  ```
+Install Python dependencies before running the script:
 
-* Adjust permissions of certificates for RabbitMQ user in docker container.
-  
-  ```bash
-  cp certs/services.foo.com/privkey.pem certs/services.foo.com/privkey-rabbitmq.pem
-  chown 999 certs/services.foo.com/privkey-rabbitmq.pem
-  ```
+```bash
+pip install -r script/requirements.txt
+```
 
-* Note down your userid and groupid on Linux systems.
-  
-  ```bash
-  $id -u #outputs userid
-  $id -g #outputs groupid
-  ```
+Run the installation script
 
-* Use configuration template and create service configuration.
-  Remember to update the services.env file with the appropriate values.
+```bash
+cd deploy/services
+sudo python3 script/service_setup.py
+```
 
-  ```bash
-  cp config/services.env.template config/services.env
-  ```
+The script will:
 
-* Start or stop services.
-  
-  ```bash
-  docker compose -f compose.services.secure.yml \
-    --env-file config/services.env up -d
-  docker compose -f compose.services.secure.yml \
-    --env-file config/services.env down
-  ```
+* Combine and set permissions for MongoDB certificates.
+* Copy and set permissions for InfluxDB and RabbitMQ certificates.
+* Use the correct UID/GID values from `config/services.env`.
+* Start the Docker Compose services automatically after setup.
+
+If any required variable is missing, the script will exit with an error message.
+
+This automation reduces manual errors and ensures your service containers have
+the correct certificate files and permissions for secure operation.
 
 ## Use
 
