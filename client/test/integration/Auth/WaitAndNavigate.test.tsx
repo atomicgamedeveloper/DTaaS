@@ -6,7 +6,9 @@ import * as WaitAndNavigate from 'route/auth/WaitAndNavigate';
 jest.useFakeTimers();
 
 // Mock the reloadPage function to avoid jsdom navigation errors
-jest.spyOn(WaitAndNavigate, 'reloadPage').mockImplementation(() => {});
+const reloadPageMock = jest
+  .spyOn(WaitAndNavigate, 'reloadPage')
+  .mockImplementation(() => {});
 
 // Bypass the config verification
 globalThis.fetch = jest.fn().mockResolvedValue({
@@ -24,6 +26,10 @@ const authStateWithError = { ...mockAuthState, error: Error('Test Error') };
 const setup = () => setupIntegrationTest('/library', authStateWithError);
 
 describe('WaitAndNavigate', () => {
+  beforeEach(() => {
+    reloadPageMock.mockClear();
+  });
+
   it('redirects to the WaitAndNavigate page when getting useAuth throws an error', async () => {
     await act(async () => {
       await setup();
@@ -42,8 +48,6 @@ describe('WaitAndNavigate', () => {
   });
 
   it('calls reloadPage after navigation', async () => {
-    const reloadPageSpy = jest.spyOn(WaitAndNavigate, 'reloadPage');
-
     await act(async () => {
       await setup();
     });
@@ -53,9 +57,7 @@ describe('WaitAndNavigate', () => {
     });
 
     await waitFor(() => {
-      expect(reloadPageSpy).toHaveBeenCalled();
+      expect(reloadPageMock).toHaveBeenCalled();
     });
-
-    reloadPageSpy.mockRestore();
   });
 });

@@ -280,6 +280,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                   display="flex"
                   alignItems="center"
                   onClick={(e) => e.stopPropagation()}
+                  data-testid="action-buttons-container"
                 >
                   {execution.status === ExecutionStatus.RUNNING && (
                     <Tooltip title="Stop Execution">

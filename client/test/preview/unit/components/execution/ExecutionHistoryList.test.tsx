@@ -778,10 +778,10 @@ describe('ExecutionHistoryList', () => {
       </Provider>,
     );
 
-    const deleteButtons = screen.getAllByLabelText('delete');
-    expect(deleteButtons.length).toBeGreaterThan(0);
+    const actionContainers = screen.getAllByTestId('action-buttons-container');
+    expect(actionContainers.length).toBeGreaterThan(0);
 
-    fireEvent.click(deleteButtons[0]);
+    fireEvent.click(actionContainers[0]);
 
     await act(async () => {
       await new Promise((resolve) => {
