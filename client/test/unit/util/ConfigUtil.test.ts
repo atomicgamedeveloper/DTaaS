@@ -14,14 +14,14 @@ Object.defineProperty(AbortSignal, 'timeout', {
 
 describe('configUtil', () => {
   let networkError: Error;
-  const initialEnv = { ...window.env };
+  const initialEnv = { ...globalThis.env };
   beforeEach(() => {
     globalThis.fetch = jest.fn().mockResolvedValue(mockResponse);
     networkError = new Error('Network error');
   });
 
   afterEach(() => {
-    window.env = { ...initialEnv };
+    globalThis.env = { ...initialEnv };
     jest.resetAllMocks();
   });
 
@@ -75,10 +75,10 @@ describe('configUtil', () => {
   });
 
   describe('getValidationResults', () => {
-    test('getValidationResults object includes all keys of window.env', async () => {
+    test('getValidationResults object includes all keys of globalThis.env', async () => {
       const results: ValidationType = await getValidationResults();
       const resultKeys: string[] = Object.keys(results);
-      const envKeys: string[] = Object.keys(window.env);
+      const envKeys: string[] = Object.keys(globalThis.env);
 
       const missingKeys: string[] = envKeys.filter(
         (key) => !resultKeys.includes(key),
@@ -91,7 +91,7 @@ describe('configUtil', () => {
       expect(unexpectedKeys).toEqual([]);
     });
     test('getValidationResult AUTH_AUTHORITY has error if it fails reachability', async () => {
-      window.env.REACT_APP_AUTH_AUTHORITY = 'https://foo.bar';
+      globalThis.env.REACT_APP_AUTH_AUTHORITY = 'https://foo.bar';
       globalThis.fetch = jest.fn().mockRejectedValue(networkError);
       const results: Record<string, ValidationType> =
         await getValidationResults();
@@ -101,7 +101,7 @@ describe('configUtil', () => {
     });
 
     test('getValidationResult ENVIRONMENT has error if it fails parse', async () => {
-      window.env.REACT_APP_ENVIRONMENT = 'foo';
+      globalThis.env.REACT_APP_ENVIRONMENT = 'foo';
       const results: Record<string, ValidationType> =
         await getValidationResults();
       expect(results.REACT_APP_ENVIRONMENT.error).toBeDefined();

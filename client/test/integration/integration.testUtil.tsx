@@ -21,7 +21,7 @@ export const normalizer = getDefaultNormalizer({
 });
 
 const renderWithAppProvider = (route: string) => {
-  window.history.pushState({}, 'Test page', route);
+  globalThis.history.pushState({}, 'Test page', route);
   return render(
     AppProvider({
       children: (

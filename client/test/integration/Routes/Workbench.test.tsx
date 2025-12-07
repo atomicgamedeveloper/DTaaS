@@ -5,8 +5,8 @@ import {
 } from 'test/integration/integration.testUtil';
 import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
-window.env = {
-  ...window.env,
+globalThis.env = {
+  ...globalThis.env,
   REACT_APP_URL: 'http://example.com/',
   REACT_APP_URL_BASENAME: 'basename',
   REACT_APP_WORKBENCHLINK_VNCDESKTOP: '/tools/vnc/?password=vncpassword',

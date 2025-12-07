@@ -111,7 +111,7 @@ describe('useSignOut', () => {
     expect(mockremoveUser).toHaveBeenCalled();
   });
 
-  it('fetches the URI from window.env', async () => {
+  it('fetches the URI from globalThis.env', async () => {
     const auth = useAuth();
     const signOut = useSignOut();
     const fetchBody = { signal: AbortSignal.timeout(30000) };

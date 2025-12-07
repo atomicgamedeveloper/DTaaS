@@ -174,4 +174,19 @@ export default [{
             props: false,
         }],
     },
+}, {
+    files: ["test/**/*.ts", "test/**/*.tsx"],
+
+    rules: {
+        "no-restricted-globals": ["error",
+            {
+                "name": "global",
+                "message": "Use 'globalThis' instead of 'global' for cross-platform compatibility."
+            },
+            {
+                "name": "window",
+                "message": "Use 'globalThis' instead of 'window' for cross-platform compatibility in tests."
+            }
+        ],
+    },
 }];

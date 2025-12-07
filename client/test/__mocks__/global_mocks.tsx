@@ -106,8 +106,8 @@ jest.mock('util/envUtil', () => ({
   ],
 }));
 
-window.env = {
-  ...window.env,
+globalThis.env = {
+  ...globalThis.env,
   REACT_APP_ENVIRONMENT: 'test',
   REACT_APP_URL: mockAppURL,
   REACT_APP_URL_BASENAME: 'mock_url_basename',
