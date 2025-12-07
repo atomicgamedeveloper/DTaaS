@@ -763,6 +763,34 @@ describe('ExecutionHistoryList', () => {
     );
     expect(runningElements.length).toBeGreaterThan(0);
   });
+
+  it('prevents accordion expansion when clicking action buttons area', async () => {
+    mockOnViewLogs.mockClear();
+    testStore = createTestStore(mockExecutions);
+
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockImplementation(
+      (selector) => selector(testStore.getState()),
+    );
+
+    render(
+      <Provider store={testStore}>
+        <ExecutionHistoryList dtName={dtName} onViewLogs={mockOnViewLogs} />
+      </Provider>,
+    );
+
+    const deleteButtons = screen.getAllByLabelText('delete');
+    expect(deleteButtons.length).toBeGreaterThan(0);
+
+    fireEvent.click(deleteButtons[0]);
+
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    });
+
+    expect(mockOnViewLogs).not.toHaveBeenCalled();
+  });
 });
 
 describe('ExecutionHistory Redux Slice', () => {

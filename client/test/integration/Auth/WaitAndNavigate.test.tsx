@@ -40,4 +40,22 @@ describe('WaitAndNavigate', () => {
       expect(screen.getByText(/Sign In with GitLab/i)).toBeVisible();
     });
   });
+
+  it('calls reloadPage after navigation', async () => {
+    const reloadPageSpy = jest.spyOn(WaitAndNavigate, 'reloadPage');
+
+    await act(async () => {
+      await setup();
+    });
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    await waitFor(() => {
+      expect(reloadPageSpy).toHaveBeenCalled();
+    });
+
+    reloadPageSpy.mockRestore();
+  });
 });
