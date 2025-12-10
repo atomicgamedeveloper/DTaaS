@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import path from 'node:path';
 
 const envPath = path.join(process.cwd(), 'client/test/.env');
-dotenv.config({ path: envPath });
+dotenv.config({ path: envPath, quiet: true });
 
 const testUsername = process.env.REACT_APP_TEST_USERNAME ?? '';
 

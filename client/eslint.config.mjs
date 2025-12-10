@@ -51,6 +51,7 @@ export default [{
             ...globals.browser,
             ...globals.jest,
             ...jest.environments.globals.globals,
+            ...globals.node,
             Atomics: "readonly",
             SharedArrayBuffer: "readonly",
         },

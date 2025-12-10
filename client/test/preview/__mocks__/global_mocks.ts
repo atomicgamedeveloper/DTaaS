@@ -2,20 +2,17 @@ import DigitalTwin from 'model/backend/digitalTwin';
 import FileHandler from 'model/backend/fileHandler';
 import DTAssets from 'model/backend/DTAssets';
 import LibraryManager from 'model/backend/libraryManager';
-import {
-  mockBackendInstance as backend,
-  mockUser,
-  mockAuthState,
-  type mockUserType,
-  type mockAuthStateType,
-  type mockGitlabInstanceType,
-} from 'test/__mocks__/global_mocks';
+import { mockBackendInstance as backend } from 'test/__mocks__/global_mocks';
 import 'test/preview/__mocks__/constants.mock';
 import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 
 // Re-export imported types and mocks for convenience
-export type { mockUserType, mockAuthStateType, mockGitlabInstanceType };
-export { mockUser, mockAuthState };
+export type {
+  mockUserType,
+  mockAuthStateType,
+  mockGitlabInstanceType,
+} from 'test/__mocks__/global_mocks';
+export { mockUser, mockAuthState } from 'test/__mocks__/global_mocks';
 
 const createMockURL = (path: string) => `https://example.com/${path}`;
 

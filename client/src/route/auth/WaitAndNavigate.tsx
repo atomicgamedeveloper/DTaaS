@@ -5,7 +5,7 @@ import { wait } from 'util/auth/Authentication';
 
 // Extracted for testability, can be mocked in tests
 export const reloadPage = () => {
-  window.location.reload();
+  globalThis.location.reload();
 };
 
 /* WaitNavigateAndReload was made in case of an auth.error to show the
