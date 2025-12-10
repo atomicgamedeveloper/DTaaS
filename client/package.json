@@ -16,6 +16,7 @@
   ],
   "license": "SEE LICENSE IN <LICENSE.md>",
   "private": false,
+  "type": "module",
   "scripts": {
     "analyze": "yarn build && npx source-map-explorer 'build/static/js/*.js'",
     "build": "npx react-scripts build",
