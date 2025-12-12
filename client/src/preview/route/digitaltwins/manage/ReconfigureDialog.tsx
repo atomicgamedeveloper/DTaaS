@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { useState, Dispatch, SetStateAction } from 'react';
 import {
   Dialog,

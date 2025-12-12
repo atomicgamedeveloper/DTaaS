@@ -91,7 +91,6 @@ export async function itShowsTheTooltipWhenHoveringButton(toolTipText: string) {
   });
 }
 
-/* eslint-disable no-await-in-loop */
 export async function itShowsTheParagraphOfToTheSelectedTab(
   tablistsData: ITabs[][],
 ) {
@@ -119,4 +118,3 @@ export async function itShowsTheParagraphOfToTheSelectedTab(
     }
   }
 }
-/* eslint-enable no-await-in-loop */

@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 const getDTSubfolders = jest.fn();
 jest.mock('model/backend/util/digitalTwinUtils', () => ({
   getDTSubfolders,

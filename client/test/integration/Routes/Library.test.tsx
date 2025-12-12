@@ -62,7 +62,6 @@ describe('Library', () => {
     await itShowsTheParagraphOfToTheSelectedTab([assetType, scope]);
   });
 
-  /* eslint-disable no-await-in-loop */
   it('selects the first scope tab when you select an assetType tab', async () => {
     // Starting from 1 as the first tab is already selected so we won't need to click it
     for (
@@ -169,5 +168,4 @@ describe('Library', () => {
       }
     }
   }, 15000);
-  /* eslint-enable no-await-in-loop */
 });

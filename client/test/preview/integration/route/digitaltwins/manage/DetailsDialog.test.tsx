@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 jest.mock('model/backend/util/digitalTwinAdapter', () => ADAPTER_MOCKS);
 jest.mock('model/backend/util/init', () => INIT_MOCKS);
 jest.mock('model/backend/gitlab/instance', () => GITLAB_MOCKS);

@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import path from 'node:path';

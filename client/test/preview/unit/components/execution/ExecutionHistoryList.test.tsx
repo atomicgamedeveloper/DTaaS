@@ -361,7 +361,7 @@ describe('ExecutionHistoryList', () => {
     mockDispatch.mockClear();
 
     // Ensure the adapter mock has the correct implementation
-    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const adapter = require('model/backend/util/digitalTwinAdapter');
 
     adapter.createDigitalTwinFromData.mockImplementation(
@@ -378,7 +378,7 @@ describe('ExecutionHistoryList', () => {
       }),
     );
 
-    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pipelineHandler = require('route/digitaltwins/execution/executionButtonHandlers');
     const handleStopSpy = jest
       .spyOn(pipelineHandler, 'handleStop')

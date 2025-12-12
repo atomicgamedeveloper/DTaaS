@@ -47,7 +47,6 @@ describe('Digital Twins', () => {
     await itShowsTheParagraphOfToTheSelectedTab([tabs]);
   });
 
-  /* eslint-disable no-await-in-loop */
   it('changes iframe src according to the selected tab', async () => {
     for (let tabsIndex = 0; tabsIndex < tabs.length; tabsIndex += 1) {
       const tabsData = tabs[tabsIndex];
@@ -62,5 +61,4 @@ describe('Digital Twins', () => {
       expect(iframe).toHaveProperty('src', `https://example.com/URL_DT`);
     }
   });
-  /* eslint-enable no-await-in-loop */
 });

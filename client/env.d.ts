@@ -27,6 +27,5 @@ declare global {
     env: NodeJS.ProcessEnv;
   }
 
-  // eslint-disable-next-line vars-on-top
   var env: NodeJS.ProcessEnv;
 }

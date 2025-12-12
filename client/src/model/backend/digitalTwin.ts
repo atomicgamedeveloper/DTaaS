@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import { getAuthority } from 'util/envUtil';
 import {
   getGroupName,
@@ -237,7 +236,7 @@ class DigitalTwin implements DigitalTwinInterface {
    * @param executionId The execution ID
    * @returns Promise that resolves with the execution history entry or undefined if not found
    */
-  // eslint-disable-next-line class-methods-use-this
+
   async getExecutionHistoryById(
     executionId: string,
   ): Promise<DTExecutionResult | undefined> {

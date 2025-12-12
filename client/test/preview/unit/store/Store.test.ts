@@ -1,5 +1,3 @@
-/* eslint-disable no-shadow */
-
 import assetsSlice, {
   deleteAsset,
   setAssets,
