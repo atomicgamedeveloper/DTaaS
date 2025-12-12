@@ -34,7 +34,6 @@ export default [{
 }, ...compat.extends(
     "eslint:recommended",
     "plugin:react/recommended",
-    "airbnb-base",
     "plugin:@typescript-eslint/recommended",
     "prettier",
 ), {
