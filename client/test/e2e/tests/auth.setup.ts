@@ -29,6 +29,7 @@ setup('authenticate', async ({ page }) => {
     { timeout: 30000 },
   );
   const storage = await page.context().storageState();
+
   storage.cookies = storage.cookies.map((cookie) => {
     if (cookie.name === 'preferred_language') {
       cookie.httpOnly = false;

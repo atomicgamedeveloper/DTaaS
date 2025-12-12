@@ -133,19 +133,23 @@ class FileHandler implements FileHandlerInterface {
       );
 
       const fileNames: string[] = [];
-      for (const file of response) {
+
+      const nestedFilesPromises = response.map(async (file) => {
         if (file.type === 'tree') {
           const nestedFiles = await this.getLibraryFileNames(
             `${filePath}/${file.name}`,
             isPrivate,
           );
-          fileNames.push(
-            ...nestedFiles.map((nestedFile) => `${file.name}/${nestedFile}`),
-          );
-        } else if (!isImageFile(file.name) && !file.name.endsWith('.fmu')) {
-          fileNames.push(file.name);
+          return nestedFiles.map((nestedFile) => `${file.name}/${nestedFile}`);
         }
-      }
+        if (!isImageFile(file.name) && !file.name.endsWith('.fmu')) {
+          return [file.name];
+        }
+        return [];
+      });
+
+      const allNestedFiles = await Promise.all(nestedFilesPromises);
+      allNestedFiles.forEach((files) => fileNames.push(...files));
 
       return fileNames;
     } catch {

@@ -94,14 +94,10 @@ export async function itShowsTheTooltipWhenHoveringButton(toolTipText: string) {
 export async function itShowsTheParagraphOfToTheSelectedTab(
   tablistsData: ITabs[][],
 ) {
-  for (
-    let tablistsIndex = 0;
-    tablistsIndex < tablistsData.length;
-    tablistsIndex += 1
-  ) {
-    const tablistData = tablistsData[tablistsIndex];
-    for (let tabIndex = 0; tabIndex < tablistData.length; tabIndex += 1) {
-      const tabData = tablistData[tabIndex];
+  await tablistsData.reduce(async (previousPromise, tablistData) => {
+    await previousPromise;
+    await tablistData.reduce(async (prevTabPromise, tabData, tabIndex) => {
+      await prevTabPromise;
       const isFirstTab = tabIndex === 0;
       const tab = screen.getByRole('tab', {
         name: tabData.label,
@@ -115,6 +111,6 @@ export async function itShowsTheParagraphOfToTheSelectedTab(
         normalizer,
       });
       expect(tabParagraph).toBeInTheDocument();
-    }
-  }
+    }, Promise.resolve());
+  }, Promise.resolve());
 }

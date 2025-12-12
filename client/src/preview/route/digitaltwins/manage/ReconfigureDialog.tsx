@@ -133,13 +133,16 @@ export const saveChanges = async (
   dispatch: ReturnType<typeof useDispatch>,
   name: string,
 ) => {
-  for (const file of modifiedFiles) {
-    await handleFileUpdate(file, digitalTwin, dispatch);
-  }
+  const fileUpdatePromises = [
+    ...modifiedFiles.map((file) =>
+      handleFileUpdate(file, digitalTwin, dispatch),
+    ),
+    ...modifiedLibraryFiles.map((file) =>
+      handleFileUpdate(file, digitalTwin, dispatch),
+    ),
+  ];
 
-  for (const file of modifiedLibraryFiles) {
-    await handleFileUpdate(file, digitalTwin, dispatch);
-  }
+  await Promise.all(fileUpdatePromises);
 
   showSuccessSnackbar(dispatch, name);
   dispatch(removeAllModifiedFiles());

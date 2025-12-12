@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 const ASSET_NAME = 'Asset 1';
 const descriptionFiles = ['file1.md', 'file2.md'];
 const configFiles = ['config1.json', 'config2.json'];

@@ -358,19 +358,13 @@ class DigitalTwin implements DigitalTwinInterface {
       isFromCommonLibrary: boolean;
     }>
   > {
-    const assetFilesToCreate: Array<{
-      name: string;
-      content: string;
-      isNew: boolean;
-      isFromCommonLibrary: boolean;
-    }> = [];
-
-    for (const asset of cartAssets) {
+    const assetPromises = cartAssets.map(async (asset) => {
       const assetFiles = await this.DTAssets.getFilesFromAsset(
         asset.path,
         asset.isPrivate,
       );
-      for (const assetFile of assetFiles) {
+
+      return assetFiles.map((assetFile) => {
         const updatedFile = getUpdatedLibraryFile(
           assetFile.name,
           asset.path,
@@ -378,14 +372,17 @@ class DigitalTwin implements DigitalTwinInterface {
           libraryFiles,
         );
 
-        assetFilesToCreate.push({
+        return {
           name: `${asset.name}/${assetFile.name}`,
           content: updatedFile ? updatedFile.fileContent : assetFile.content,
           isNew: true,
           isFromCommonLibrary: !asset.isPrivate,
-        });
-      }
-    }
+        };
+      });
+    });
+
+    const nestedFiles = await Promise.all(assetPromises);
+    const assetFilesToCreate = nestedFiles.flat();
     return assetFilesToCreate;
   }
 
@@ -401,28 +398,33 @@ class DigitalTwin implements DigitalTwinInterface {
         (folder) => !folder.includes(excludeFolder),
       );
 
-      for (const folder of validFolders) {
+      const folderPromises = validFolders.map(async (folder) => {
         if (folder.endsWith('/common')) {
           const subFolders = await this.DTAssets.getFolders(folder);
-          for (const subFolder of subFolders) {
+          const subFolderPromises = subFolders.map(async (subFolder) => {
             const fileNames =
               await this.DTAssets.getLibraryConfigFileNames(subFolder);
 
-            result.push({
+            return {
               assetPath: subFolder,
               fileNames,
-            });
-          }
-        } else {
-          const fileNames =
-            await this.DTAssets.getLibraryConfigFileNames(folder);
+            };
+          });
+          return Promise.all(subFolderPromises);
+        }
 
-          result.push({
+        const fileNames = await this.DTAssets.getLibraryConfigFileNames(folder);
+
+        return [
+          {
             assetPath: folder,
             fileNames,
-          });
-        }
-      }
+          },
+        ];
+      });
+
+      const nestedResults = await Promise.all(folderPromises);
+      result.push(...nestedResults.flat());
 
       this.assetFiles = result;
     } catch {

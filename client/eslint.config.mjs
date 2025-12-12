@@ -34,6 +34,7 @@ export default [{
 }, ...compat.extends(
     "eslint:recommended",
     "plugin:react/recommended",
+    "airbnb-base",
     "plugin:@typescript-eslint/recommended",
     "prettier",
 ), {
@@ -71,20 +72,37 @@ export default [{
         react: {
             version: "detect",
         },
+
+        "import/resolver": {
+            node: {
+                extensions: [".js", ".jsx"],
+            },
+        },
     },
 
     rules: {
+        "import/no-extraneous-dependencies": ["error", {
+            devDependencies: true,
+        }],
+
         "@typescript-eslint/no-unused-vars": [
             "error",
             {
                 "caughtErrorsIgnorePattern": "^_",
             }
         ],
+        "class-methods-use-this": "off",
+        "no-underscore-dangle": "off",
+        "no-param-reassign": "off",
+        "global-require": "off",
+        "vars-on-top": "off",
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
         "no-console": "error",
         "react/prop-types": "off",
         "linebreak-style": 0,
+        "import/no-unresolved": "off",
+        "import/extensions": "off",
         "no-use-before-define": "off",
         "no-unreachable": "error",
 
@@ -95,7 +113,7 @@ export default [{
         // Not needed with React 17+ new JSX transform
         "react/react-in-jsx-scope": "off",
 
-        // Sonar Cube based rules
+        // SonarCube based rules
         "no-restricted-globals": ["error",
             {
                 "name": "global",

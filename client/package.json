@@ -20,8 +20,8 @@
   "scripts": {
     "analyze": "yarn build && npx source-map-explorer 'build/static/js/*.js'",
     "build": "cross-env DISABLE_ESLINT_PLUGIN=true npx react-scripts build",
-    "build:fast": "cross-env GENERATE_SOURCEMAP=false npx react-scripts build",
-    "build:prod": "cross-env GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true npx react-scripts build",
+    "build:fast": "cross-env DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false npx react-scripts build",
+    "build:prod": "cross-env DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false npx react-scripts build",
     "clean": "npx rimraf build/ dist/ coverage/ playwright-report/ test-results/ test.svg src.svg",
     "clean:all": "yarn clean && npx rimraf node_modules/",
     "config:dev": "npx shx cp config/dev.js public/env.js && npx shx cp config/dev.js build/env.js",
@@ -107,6 +107,7 @@
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
     "eslint": "^9.39.1",
+    "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jest": "^29.2.1",
