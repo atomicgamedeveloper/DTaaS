@@ -173,6 +173,7 @@ test.svg
 
 # config files
 runner.yml
+runner.yaml
 
 # Jupter Lab
 .workspace
@@ -205,3 +206,7 @@ deploy/services/certs/*
 *.cover
 *.coverage
 coverage.xml
+
+#ignore developer files
+docker/.env
+docker/conf.dev
