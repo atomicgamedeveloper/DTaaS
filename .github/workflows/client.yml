@@ -15,8 +15,8 @@ jobs:
   client:
     name: Test react website
     permissions:
-      contents: read  # ✅ Required for checking out the code
-      actions: write  # ✅ Required for uploading artifacts
+      contents: read  # Required for checking out the code
+      actions: write  # Required for uploading artifacts
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
@@ -66,8 +66,8 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: client/coverage/all/coverage-final.json
-          flags: client-unit-integration-tests 
-        
+          flags: client-unit-integration-tests
+
       - name: Run e2e tests
         continue-on-error: true
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Upload Playwright Report (Linux)
         # v6.0.0
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        if: ${{ !cancelled() && runner.os == 'Linux'}}
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
         with:
           name: playwright-report-linux
           path: client/playwright-report/**
@@ -101,7 +101,7 @@ jobs:
   get-version:
     name: Get version
     permissions:
-      contents: read  # ✅ Required for checking out the code
+      contents: read  # Required for checking out the code
     runs-on: ubuntu-latest
     steps:
         - name: Checkout Repository
@@ -119,19 +119,19 @@ jobs:
 
   publish-docker-image-ghcr:
     permissions:
-      contents: read  # ✅ Required for checking out the code
-      packages: write  # ✅ Push to github package registry
+      contents: read  # Required for checking out the code
+      packages: write  # Push to github package registry
     if: | 
       github.event_name == 'push' &&
       (
         startsWith(github.ref, 'refs/heads/feature/') ||
         startsWith(github.ref, 'refs/heads/release-v')
       )
-      
+
     name: Publish Docker image (GHCR)
     needs: [client, get-version]
     uses: ./.github/workflows/docker-ghcr.yml
-    with: 
+    with:
       image-name: dtaas-web
       version: ${{ needs.get-version.outputs.version }}
       dockerfile: client.built.dockerfile
@@ -139,19 +139,19 @@ jobs:
 
   publish-docker-image-dockerhub:
     permissions:
-      contents: read  # ✅ Required for checking out the code
-      packages: write  # ✅ Required for publishing to github package registry
-    if: | 
+      contents: read  # Required for checking out the code
+      packages: write  # Required for publishing to github package registry
+    if: |
       github.event_name == 'push' &&
       (
         startsWith(github.ref, 'refs/heads/feature/') ||
         startsWith(github.ref, 'refs/heads/release-v')
       )
-      
+
     name: Publish Docker image (DockerHub)
     needs: [client, get-version]
     uses: ./.github/workflows/docker-dockerhub.yml
-    with: 
+    with:
       image-name: dtaas-web
       version: ${{ needs.get-version.outputs.version }}
       dockerfile: client.built.dockerfile

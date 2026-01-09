@@ -2,7 +2,7 @@ services:
   traefik:
     image: traefik:v2.10
     restart: unless-stopped
-    command: 
+    command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--entryPoints.web.address=:80"
@@ -24,7 +24,7 @@ services:
       - users
 
   client:
-    build: 
+    build:
       context: ${DTAAS_DIR}/
       dockerfile: ${DTAAS_DIR}/docker/client.dockerfile
     restart: unless-stopped
@@ -40,7 +40,7 @@ services:
       - frontend
 
   libms:
-    build: 
+    build:
       context: ${DTAAS_DIR}/
       dockerfile: ${DTAAS_DIR}/docker/libms.dockerfile
     restart: unless-stopped
@@ -55,7 +55,7 @@ services:
       - "traefik.http.routers.libms.middlewares=traefik-forward-auth"
     networks:
       - frontend
-  
+
   user1:
     image: mltooling/ml-workspace-minimal:0.13.2
     restart: unless-stopped
@@ -73,12 +73,12 @@ services:
       - "traefik.http.routers.u1.middlewares=traefik-forward-auth"
     networks:
       - users
-  
+
   user2:
     image: mltooling/ml-workspace-minimal:0.13.2
     restart: unless-stopped
     volumes:
-      - ${DTAAS_DIR}/files/common:/workspace/common 
+      - ${DTAAS_DIR}/files/common:/workspace/common
       - ${DTAAS_DIR}/files/${USERNAME2}:/workspace
     environment:
       - AUTHENTICATE_VIA_JUPYTER=

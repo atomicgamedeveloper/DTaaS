@@ -1,5 +1,5 @@
 # Reusable workflow for building and pushing a Docker Image to GHCR.
-# 
+#
 # Username is the repository owner converted to lowercase
 # Password is taken from the auto-generated GitHub token
 
@@ -24,16 +24,16 @@ env:
   password: ${{ secrets.GITHUB_TOKEN }}
 
 permissions:
-  contents: read  # ✅ Required for checking out the code
-  packages: write  # ✅ Push to github package registry
+  contents: read  # Required for checking out the code
+  packages: write  # Push to github package registry
 
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
 
     permissions:
-      packages: write  # ✅ Push to github package registry
-      contents: read  # ✅ Required for checking out the code
+      packages: write  # Push to github package registry
+      contents: read  # Required for checking out the code
 
     steps:
       - name: Checkout Repository

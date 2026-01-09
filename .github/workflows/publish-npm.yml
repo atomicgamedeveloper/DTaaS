@@ -23,8 +23,8 @@ jobs:
   publish-package:
     runs-on: ubuntu-latest
     permissions:
-      packages: write  # ✅ Push to github package registry
-      contents: read  # ✅ Required for checking out the code
+      packages: write  # Push to github package registry
+      contents: read   # Required for checking out the code
     defaults:
       run:
         working-directory: ${{ inputs.directory }}
@@ -50,7 +50,7 @@ jobs:
 
       - name: Publish npm package
         env:
-         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           yarn install
           yarn build
