@@ -58,6 +58,16 @@ class IndexedDBService implements IExecutionHistory {
             store.createIndex(index.name, index.keyPath);
           }
         }
+
+        if (!db.objectStoreNames.contains('measurementHistory')) {
+          const store = db.createObjectStore('measurementHistory', {
+            keyPath: DB_CONFIG.stores.measurementHistory.keyPath,
+          });
+
+          for (const index of DB_CONFIG.stores.measurementHistory.indexes) {
+            store.createIndex(index.name, index.keyPath);
+          }
+        }
       };
     });
 

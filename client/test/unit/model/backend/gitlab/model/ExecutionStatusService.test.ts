@@ -46,6 +46,10 @@ describe('ExecutionStatusService', () => {
     ).mockImplementation((status) =>
       status === 'success' ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILED,
     );
+    (statusChecking.isFinishedStatus as jest.Mock).mockImplementation(
+      (status) =>
+        status === 'success' || status === 'failed' || status === 'canceled',
+    );
   });
 
   describe('checkRunningExecutions', () => {

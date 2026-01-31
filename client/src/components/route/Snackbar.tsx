@@ -10,7 +10,13 @@ const CustomSnackbar: React.FC = () => {
     (state: RootState) => state.snackbar,
   );
 
-  const handleClose = () => {
+  const handleClose = (
+    _event: React.SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
     dispatch(hideSnackbar());
   };
 

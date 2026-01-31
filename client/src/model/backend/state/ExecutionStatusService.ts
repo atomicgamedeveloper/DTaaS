@@ -1,7 +1,6 @@
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
-import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
 
 class ExecutionStatusService {
@@ -16,7 +15,7 @@ class ExecutionStatusService {
     const { fetchJobLogs } = await import(
       'model/backend/gitlab/execution/logFetching'
     );
-    const { mapGitlabStatusToExecutionStatus } = await import(
+    const { mapGitlabStatusToExecutionStatus, isFinishedStatus } = await import(
       'model/backend/gitlab/execution/statusChecking'
     );
     const updatedExecutions: DTExecutionResult[] = [];
@@ -36,10 +35,13 @@ class ExecutionStatusService {
               digitalTwin.backend.getProjectId(),
               execution.pipelineId,
             );
-          if (parentPipelineStatus === 'failed') {
+          if (
+            parentPipelineStatus === 'failed' ||
+            parentPipelineStatus === 'canceled'
+          ) {
             const updatedExecution = {
               ...execution,
-              status: ExecutionStatus.FAILED,
+              status: mapGitlabStatusToExecutionStatus(parentPipelineStatus),
             };
             await executionStorage.update(updatedExecution);
             updatedExecutions.push(updatedExecution);
@@ -55,10 +57,7 @@ class ExecutionStatusService {
                 digitalTwin.backend.getProjectId(),
                 childPipelineId,
               );
-            if (
-              childPipelineStatus === 'success' ||
-              childPipelineStatus === 'failed'
-            ) {
+            if (isFinishedStatus(childPipelineStatus)) {
               const newStatus =
                 mapGitlabStatusToExecutionStatus(childPipelineStatus);
               const jobLogs = await fetchJobLogs(
