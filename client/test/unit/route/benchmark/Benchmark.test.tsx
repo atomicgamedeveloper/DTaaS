@@ -405,4 +405,92 @@ describe('Benchmark', () => {
     });
     expect(store.getState().snackbar.message).toBe('Benchmark restarted');
   });
+
+  it('updates currentExecutions from benchmarkState when running', async () => {
+    jest.useFakeTimers();
+
+    const benchmarkStateMock = jest.requireMock(
+      'model/backend/gitlab/measure/benchmark.execution',
+    ).benchmarkState;
+
+    benchmarkStateMock.activePipelines = [
+      {
+        dtName: 'test-dt',
+        pipelineId: 123,
+        config: { 'Runner tag': 'linux' },
+        status: 'running',
+        phase: 'parent',
+      },
+    ];
+    benchmarkStateMock.executionResults = [
+      {
+        dtName: 'completed-dt',
+        pipelineId: 100,
+        status: 'success',
+        config: { 'Runner tag': 'linux' },
+      },
+    ];
+
+    mockStartMeasurement.mockImplementationOnce((setters) => {
+      setters.setIsRunning(true);
+      return new Promise(() => {});
+    });
+
+    renderBenchmark();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+
+    await act(async () => {
+      jest.advanceTimersByTime(600);
+    });
+
+    benchmarkStateMock.activePipelines = [];
+    benchmarkStateMock.executionResults = [];
+
+    jest.useRealTimers();
+  });
+
+  it('renders TrialCards for tasks with trials', () => {
+    const mockTasks = jest.requireMock(
+      'model/backend/gitlab/measure/benchmark.runner',
+    ).tasks;
+    mockTasks[0].Trials = [
+      {
+        'Time Start': new Date(),
+        'Time End': new Date(),
+        Execution: [],
+        Status: 'SUCCESS',
+        Error: undefined,
+      },
+    ];
+
+    renderBenchmark();
+
+    expect(screen.getByTestId('trial-card-0')).toBeInTheDocument();
+
+    mockTasks[0].Trials = [];
+  });
+
+  it('renders running trial card when currentTaskIndex matches', async () => {
+    mockStartMeasurement.mockImplementationOnce((setters) => {
+      setters.setCurrentTaskIndex(0);
+      setters.setCurrentExecutions([
+        {
+          dtName: 'running-dt',
+          pipelineId: 999,
+          status: 'running',
+          config: { 'Runner tag': 'linux' },
+        },
+      ]);
+      return Promise.resolve();
+    });
+
+    renderBenchmark();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+  });
 });

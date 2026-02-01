@@ -21,7 +21,7 @@ test.describe('Benchmark Page', () => {
     await expect(page.locator('text=404 Not Found')).not.toBeVisible();
 
     // Verify correct URL
-    await expect(page).toHaveURL(/.*admin\/measure/);
+    await expect(page).toHaveURL(/admin\/measure/);
 
     // Verify page title renders (basic smoke test)
     await expect(

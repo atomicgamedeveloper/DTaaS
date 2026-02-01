@@ -279,4 +279,30 @@ describe('MeasurementDBService (Real Implementation)', () => {
       'Database not initialized',
     );
   });
+
+  it('should return existing init promise when called concurrently', async () => {
+    const { default: MeasurementDBService } = await import(
+      'database/measurementHistoryDB'
+    );
+    const service = Object.create(Object.getPrototypeOf(MeasurementDBService));
+    service.db = undefined;
+    service.dbName = 'concurrent-test-db';
+    service.dbVersion = 1;
+    service.initPromise = undefined;
+
+    const originalOpen = indexedDB.open;
+    let openCallCount = 0;
+    indexedDB.open = jest.fn(() => {
+      openCallCount += 1;
+      return originalOpen.call(indexedDB, service.dbName, service.dbVersion);
+    });
+
+    const promise1 = service.init();
+    const promise2 = service.init();
+
+    await Promise.all([promise1, promise2]);
+    expect(openCallCount).toBe(1);
+
+    indexedDB.open = originalOpen;
+  });
 });
