@@ -22,7 +22,7 @@ import {
   Configuration,
   ExecutionResult,
   ActivePipeline,
-} from './benchmark.types';
+} from 'model/backend/gitlab/measure/benchmark.types';
 
 export const DEFAULT_CONFIG: Configuration = {
   'Branch name': BRANCH_NAME,
@@ -120,7 +120,7 @@ function updatePipelineStatus(
 }
 
 export async function cancelActivePipelines(): Promise<void> {
-  for (const { backend, pipelineId } of [...benchmarkState.activePipelines]) {
+  for (const { backend, pipelineId } of benchmarkState.activePipelines) {
     try {
       const projectId = backend.getProjectId();
       await backend.api.cancelPipeline(projectId, pipelineId);
@@ -192,9 +192,7 @@ async function executeDigitalTwinPipeline(
     throw new Error(`Failed to start pipeline for ${dtName}.`);
   }
 
-  if (benchmarkState.currentTrialMinPipelineId === null) {
-    benchmarkState.currentTrialMinPipelineId = pipelineId;
-  }
+  benchmarkState.currentTrialMinPipelineId ??= pipelineId;
 
   const startTime = Date.now();
   benchmarkState.activePipelines.push({

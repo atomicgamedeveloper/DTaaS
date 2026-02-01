@@ -1,4 +1,4 @@
-import { TimedTask } from './benchmark.types';
+import { TimedTask } from 'model/backend/gitlab/measure/benchmark.types';
 
 export const benchmarkConfig = {
   trials: 3,

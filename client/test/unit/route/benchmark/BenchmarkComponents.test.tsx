@@ -281,7 +281,7 @@ describe('BenchmarkComponents', () => {
         const props = {
           ...defaultProps,
           [handlerKey]: handler,
-          ...(propKey !== 'none' ? { [propKey]: true } : {}),
+          ...(propKey === 'none' ? {} : { [propKey]: true }),
         };
         render(<BenchmarkControls {...props} />);
 
@@ -306,7 +306,7 @@ describe('BenchmarkComponents', () => {
         const props = {
           ...defaultProps,
           [handlerKey]: handler,
-          ...(propKey !== 'none' ? { [propKey]: true } : {}),
+          ...(propKey === 'none' ? {} : { [propKey]: true }),
         };
         render(<BenchmarkControls {...props} />);
 
@@ -472,7 +472,7 @@ describe('BenchmarkComponents', () => {
     });
 
     it('renders completion summary when all tasks are complete (mix of SUCCESS and FAILURE)', () => {
-      mockGetTotalTime.mockReturnValue(30.0);
+      mockGetTotalTime.mockReturnValue(30);
       const results = [
         createMockTask({ Status: 'SUCCESS' }),
         createMockTask({ Status: 'FAILURE' }),

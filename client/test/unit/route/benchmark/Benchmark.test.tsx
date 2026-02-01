@@ -78,7 +78,9 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
         data-testid="iterations-input"
         type="number"
         value={props.iterations}
-        onChange={(e) => props.onIterationsChange(parseInt(e.target.value, 10))}
+        onChange={(e) =>
+          props.onIterationsChange(Number.parseInt(e.target.value, 10))
+        }
       />
       <input
         data-testid="runner-tag-input"

@@ -344,7 +344,7 @@ describe('benchmark.runner', () => {
         {
           backend: {
             getProjectId: () => {
-              throw new Error();
+              throw new Error('Mock getProjectId error');
             },
             api: { cancelPipeline: jest.fn() },
           } as unknown as BackendInterface,
@@ -422,7 +422,8 @@ describe('benchmark.runner', () => {
       benchmarkConfig.trials = 3;
       let count = 0;
       (tasks[0].Function as jest.Mock).mockImplementation(async () => {
-        if (++count === 2) state.shouldStopPipelines = true;
+        count += 1;
+        if (count === 2) state.shouldStopPipelines = true;
         return [
           {
             dtName: 'hello-world',

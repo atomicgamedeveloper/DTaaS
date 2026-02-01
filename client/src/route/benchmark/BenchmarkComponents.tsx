@@ -26,7 +26,7 @@ import {
   downloadResultsJson,
 } from 'model/backend/gitlab/measure/benchmark.runner';
 
-export function ExecutionCard({ execution }: ExecutionCardProps) {
+export function ExecutionCard({ execution }: Readonly<ExecutionCardProps>) {
   const statusColor = getExecutionStatusColor(execution.status);
 
   return (
@@ -53,7 +53,7 @@ export function ExecutionCard({ execution }: ExecutionCardProps) {
   );
 }
 
-export function TrialCard({ trial, trialIndex }: TrialCardProps) {
+export function TrialCard({ trial, trialIndex }: Readonly<TrialCardProps>) {
   return (
     <Box
       sx={{
@@ -108,9 +108,9 @@ export function TrialCard({ trial, trialIndex }: TrialCardProps) {
           Starting...
         </Typography>
       )}
-      {trial.Execution.map((execution, executionIndex) => (
+      {trial.Execution.map((execution) => (
         <ExecutionCard
-          key={`execution-${executionIndex}`}
+          key={`execution-${execution.dtName}-${execution.pipelineId ?? 'pending'}`}
           execution={execution}
         />
       ))}
@@ -135,10 +135,10 @@ export function TrialCard({ trial, trialIndex }: TrialCardProps) {
 export function TaskControls({
   task,
   onDownloadTask,
-}: {
+}: Readonly<{
   task: TimedTask;
   onDownloadTask: (task: TimedTask) => void;
-}) {
+}>) {
   const expectedTrials = task.ExpectedTrials ?? 0;
   const completedTrials = task.Trials.filter(
     (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
@@ -309,7 +309,7 @@ export function BenchmarkControls({
               size="small"
               value={iterations}
               onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
+                const val = Number.parseInt(e.target.value, 10);
                 handleIterationsChange(val);
               }}
               disabled={isRunning}
@@ -425,7 +425,7 @@ export function CompletionSummary({
   results,
   isRunning,
   hasStarted,
-}: CompletionSummaryProps) {
+}: Readonly<CompletionSummaryProps>) {
   const totalTime = getTotalTime(results);
   const allComplete = results.every(
     (task) => task.Status === 'SUCCESS' || task.Status === 'FAILURE',

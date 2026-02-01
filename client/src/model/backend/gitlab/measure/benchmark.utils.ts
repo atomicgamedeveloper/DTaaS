@@ -1,4 +1,7 @@
-import { TimedTask, Status } from './benchmark.types';
+import {
+  TimedTask,
+  Status,
+} from 'model/backend/gitlab/measure/benchmark.types';
 
 export const statusColorMap: Record<Status, string> = {
   NOT_STARTED: '#9e9e9e',
@@ -71,7 +74,7 @@ export function downloadResultsJson(results: TimedTask[]): void {
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = `benchmark-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+  link.download = `benchmark-${new Date().toISOString().slice(0, 19).split(':').join('-')}.json`;
   link.click();
 
   URL.revokeObjectURL(url);
@@ -101,9 +104,9 @@ export function downloadTaskResultJson(task: TimedTask): void {
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement('a');
-  const taskNameSlug = task['Task Name'].toLowerCase().replace(/\s+/g, '-');
+  const taskNameSlug = task['Task Name'].toLowerCase().split(/\s+/).join('-');
   link.href = url;
-  link.download = `benchmark-${taskNameSlug}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+  link.download = `benchmark-${taskNameSlug}-${new Date().toISOString().slice(0, 19).split(':').join('-')}.json`;
   link.click();
 
   URL.revokeObjectURL(url);

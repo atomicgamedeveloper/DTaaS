@@ -7,33 +7,23 @@ import {
   BenchmarkSetters,
   Status,
   Trial,
-} from './benchmark.types';
+} from 'model/backend/gitlab/measure/benchmark.types';
 import {
   benchmarkState,
   runDigitalTwin,
   cancelActivePipelines,
   saveOriginalSettings,
   restoreOriginalSettings,
-} from './benchmark.execution';
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import {
-  secondsDifference,
   computeAverageTime,
   computeFinalStatus,
-  statusColorMap,
-  getExecutionStatusColor,
-  getTotalTime,
-  downloadResultsJson,
-  downloadTaskResultJson,
-} from './benchmark.utils';
+} from 'model/backend/gitlab/measure/benchmark.utils';
 import {
-  tasks,
   benchmarkConfig,
-  setTrials,
-  setAlternateRunnerTag,
   resetTasks,
-  DEFAULT_TASK,
-  addTask,
-} from './benchmark.tasks';
+  tasks,
+} from 'model/backend/gitlab/measure/benchmark.tasks';
 
 export {
   statusColorMap,
@@ -42,12 +32,14 @@ export {
   getTotalTime,
   downloadResultsJson,
   downloadTaskResultJson,
+} from 'model/backend/gitlab/measure/benchmark.utils';
+export {
   tasks,
   setTrials,
   setAlternateRunnerTag,
   DEFAULT_TASK as DEFAULT_MEASUREMENT,
   addTask as addNewTimedTask,
-};
+} from 'model/backend/gitlab/measure/benchmark.tasks';
 
 let isRestarting = false;
 

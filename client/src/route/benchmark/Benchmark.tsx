@@ -39,7 +39,7 @@ import {
   BenchmarkPageHeader,
   BenchmarkControls,
   CompletionSummary,
-} from './BenchmarkComponents';
+} from 'route/benchmark/BenchmarkComponents';
 
 function BenchmarkTableRow({
   task,
@@ -47,13 +47,13 @@ function BenchmarkTableRow({
   currentTaskIndex,
   currentExecutions,
   onDownloadTask,
-}: {
+}: Readonly<{
   task: TimedTask;
   index: number;
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
   onDownloadTask: (task: TimedTask) => void;
-}) {
+}>) {
   return (
     <TableRow>
       <TableCell>
@@ -79,12 +79,12 @@ function BenchmarkTableRow({
         {task.Status === 'NOT_STARTED' ? '—' : task.Status}
       </TableCell>
       <TableCell align="center">
-        {task['Average Time (s)'] !== undefined ? (
-          `${task['Average Time (s)'].toFixed(1)}s`
-        ) : (
+        {task['Average Time (s)'] === undefined ? (
           <Typography variant="body1" color="text.disabled">
             —
           </Typography>
+        ) : (
+          `${task['Average Time (s)'].toFixed(1)}s`
         )}
       </TableCell>
       <TableCell align="center">
@@ -95,7 +95,7 @@ function BenchmarkTableRow({
         )}
         {task.Trials.map((trial, trialIndex) => (
           <TrialCard
-            key={`trial-${trialIndex}`}
+            key={`trial-${task['Task Name']}-${trial['Time Start']?.toISOString() ?? trialIndex}`}
             trial={trial}
             trialIndex={trialIndex}
           />
@@ -125,12 +125,12 @@ function BenchmarkTable({
   currentTaskIndex,
   currentExecutions,
   onDownloadTask,
-}: {
+}: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
   onDownloadTask: (task: TimedTask) => void;
-}) {
+}>) {
   return (
     <TableContainer
       component={Paper}
@@ -162,7 +162,7 @@ function BenchmarkTable({
         <TableBody>
           {results.map((task, index) => (
             <BenchmarkTableRow
-              key={index}
+              key={task['Task Name']}
               task={task}
               index={index}
               currentTaskIndex={currentTaskIndex}
@@ -192,7 +192,7 @@ function BenchmarkContent({
   onStop,
   onPurge,
   onDownloadTask,
-}: {
+}: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
@@ -208,7 +208,7 @@ function BenchmarkContent({
   onStop: () => void;
   onPurge: () => void;
   onDownloadTask: (task: TimedTask) => void;
-}) {
+}>) {
   const { hasStarted, completedTasks, totalTasks } =
     getBenchmarkStatus(results);
 
