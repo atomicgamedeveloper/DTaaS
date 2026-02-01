@@ -44,7 +44,6 @@ function getChildPipelineId(parentPipelineId: number): number {
   return parentPipelineId + 1;
 }
 
-// Store original settings to restore after benchmark
 let originalSettings: {
   RUNNER_TAG: string;
   BRANCH_NAME: string;
@@ -100,7 +99,7 @@ async function* pollPipelineUntilComplete(
         yield status;
       }
     } catch {
-      // Error polling pipeline. Continue polling
+      // continue polling
     }
   }
   return status;
@@ -129,7 +128,7 @@ export async function cancelActivePipelines(): Promise<void> {
         .cancelPipeline(projectId, getChildPipelineId(pipelineId))
         .catch(() => {});
     } catch {
-      // Error cancelling pipeline. Continue with others
+      // continue with others
     }
   }
 }
@@ -187,7 +186,7 @@ async function executeDigitalTwinPipeline(
   config: Configuration,
 ): Promise<ExecutionResult> {
   const digitalTwin = new DigitalTwin(dtName, backend);
-  const pipelineId = await digitalTwin.execute();
+  const pipelineId = await digitalTwin.execute(true);
 
   if (!pipelineId) {
     throw new Error(`Failed to start pipeline for ${dtName}.`);

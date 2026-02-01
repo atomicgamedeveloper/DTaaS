@@ -35,7 +35,6 @@ import {
   addTask,
 } from './benchmark.tasks';
 
-// Re-export for backward compatibility
 export {
   statusColorMap,
   getExecutionStatusColor,
@@ -224,11 +223,21 @@ async function executeTask(
   });
 
   if (finalStatus === 'SUCCESS' && measurementDBService) {
-    const addPromise = measurementDBService.add(completedTask);
-    if (addPromise && typeof addPromise.catch === 'function') {
-      addPromise.catch(() => {
-        // Silently ignore storage errors to not interrupt benchmark
-      });
+    try {
+      // Create a copy without the Function property for IndexedDB storage
+      const taskToSave = {
+        'Task Name': completedTask['Task Name'],
+        Description: completedTask.Description,
+        Trials: completedTask.Trials,
+        'Time Start': completedTask['Time Start'],
+        'Time End': completedTask['Time End'],
+        'Average Time (s)': completedTask['Average Time (s)'],
+        Status: completedTask.Status,
+        ExpectedTrials: completedTask.ExpectedTrials,
+      };
+      await measurementDBService.add(taskToSave as TimedTask);
+    } catch {
+      // ignore storage errors
     }
   }
 }
@@ -247,6 +256,14 @@ export async function startMeasurement(
   benchmarkState.shouldStopPipelines = false;
   setters.setIsRunning(true);
   saveOriginalSettings();
+
+  setters.setResults((previous) =>
+    previous.map((task) =>
+      task.Status === 'NOT_STARTED'
+        ? { ...task, Status: 'PENDING' as Status }
+        : task,
+    ),
+  );
 
   const updateTask = createTaskUpdater(setters.setResults);
 
@@ -393,7 +410,7 @@ export function handleBeforeUnload(
           .cancelPipeline(projectId, getChildPipelineId(pipelineId))
           .catch(() => {});
       } catch {
-        // Ignore errors from unloading
+        // ignore
       }
     }
   }

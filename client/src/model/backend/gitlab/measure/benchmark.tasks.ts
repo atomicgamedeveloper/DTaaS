@@ -1,6 +1,5 @@
 import { TimedTask } from './benchmark.types';
 
-// Benchmark configuration - centralized state
 export const benchmarkConfig = {
   trials: 3,
   runnerTag1: 'linux',
@@ -22,11 +21,10 @@ export const DEFAULT_TASK: TimedTask = {
   'Time Start': undefined,
   'Time End': undefined,
   'Average Time (s)': undefined,
-  Status: 'PENDING',
+  Status: 'NOT_STARTED',
   Function: async () => [],
 };
 
-// Task registry
 export const tasks: TimedTask[] = [];
 
 export function addTask(taskDefinition: Partial<TimedTask>): void {
@@ -43,11 +41,10 @@ export function resetTasks(): TimedTask[] {
     'Time Start': undefined,
     'Time End': undefined,
     'Average Time (s)': undefined,
-    Status: 'PENDING' as const,
+    Status: 'NOT_STARTED' as const,
   }));
 }
 
-// Task definitions
 addTask({
   'Task Name': 'Valid Setup Digital Twin Execution',
   Description: 'Running the Hello World Digital Twin with current setup.',

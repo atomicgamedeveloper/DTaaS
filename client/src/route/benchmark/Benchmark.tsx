@@ -30,12 +30,14 @@ import {
   setTrials as setBenchmarkTrials,
   setAlternateRunnerTag as setBenchmarkRunnerTag,
 } from 'model/backend/gitlab/measure/benchmark.runner';
+import { getBenchmarkStatus } from 'model/backend/gitlab/measure/benchmark.utils';
 import { benchmarkState } from 'model/backend/gitlab/measure/benchmark.execution';
 import measurementDBService from 'database/measurementHistoryDB';
 import {
   TrialCard,
   TaskControls,
   BenchmarkPageHeader,
+  BenchmarkControls,
   CompletionSummary,
 } from './BenchmarkComponents';
 
@@ -54,19 +56,27 @@ function BenchmarkTableRow({
 }) {
   return (
     <TableRow>
-      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
-        <TaskControls task={task} onDownloadTask={onDownloadTask} />
-      </TableCell>
       <TableCell>
-        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-          {task['Task Name']}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {task.Description}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+          <Typography
+            variant="body2"
+            color="grey.500"
+            sx={{ minWidth: '20px', mt: 0.2 }}
+          >
+            {index + 1}
+          </Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+              {task['Task Name']}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {task.Description}
+            </Typography>
+          </Box>
+        </Box>
       </TableCell>
       <TableCell align="center" sx={{ color: statusColorMap[task.Status] }}>
-        {task.Status}
+        {task.Status === 'NOT_STARTED' ? '—' : task.Status}
       </TableCell>
       <TableCell align="center">
         {task['Average Time (s)'] !== undefined ? (
@@ -78,7 +88,7 @@ function BenchmarkTableRow({
         )}
       </TableCell>
       <TableCell align="center">
-        {task.Status === 'PENDING' && (
+        {(task.Status === 'NOT_STARTED' || task.Status === 'PENDING') && (
           <Typography variant="body1" color="text.disabled">
             —
           </Typography>
@@ -103,6 +113,9 @@ function BenchmarkTableRow({
           />
         )}
       </TableCell>
+      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+        <TaskControls task={task} onDownloadTask={onDownloadTask} />
+      </TableCell>
     </TableRow>
   );
 }
@@ -122,27 +135,27 @@ function BenchmarkTable({
     <TableContainer
       component={Paper}
       sx={{
-        maxHeight: '70vh',
+        maxHeight: '50vh',
         overflow: 'auto',
       }}
     >
       <Table size="small" sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '12%', fontWeight: 'bold' }}>
-              Data
-            </TableCell>
             <TableCell sx={{ width: '37%', fontWeight: 'bold' }}>
               Task
             </TableCell>
             <TableCell align="center" sx={{ width: '10%', fontWeight: 'bold' }}>
               Status
             </TableCell>
-            <TableCell align="center" sx={{ width: '20%', fontWeight: 'bold' }}>
+            <TableCell align="center" sx={{ width: '15%', fontWeight: 'bold' }}>
               Average Duration
             </TableCell>
-            <TableCell align="center" sx={{ width: '30%', fontWeight: 'bold' }}>
-              Executions
+            <TableCell align="center" sx={{ width: '26%', fontWeight: 'bold' }}>
+              Trials
+            </TableCell>
+            <TableCell align="center" sx={{ width: '12%', fontWeight: 'bold' }}>
+              Data
             </TableCell>
           </TableRow>
         </TableHead>
@@ -179,7 +192,6 @@ function BenchmarkContent({
   onStop,
   onPurge,
   onDownloadTask,
-  onSettingsSaved,
 }: {
   results: TimedTask[];
   currentTaskIndex: number | null;
@@ -196,38 +208,57 @@ function BenchmarkContent({
   onStop: () => void;
   onPurge: () => void;
   onDownloadTask: (task: TimedTask) => void;
-  onSettingsSaved: () => void;
 }) {
-  const hasStarted = results.some((task) => task.Status !== 'PENDING');
+  const { hasStarted, completedTasks, totalTasks } =
+    getBenchmarkStatus(results);
 
   return (
-    <Layout sx={{ display: 'flex' }}>
-      <Box sx={{ width: '100%', p: 3 }}>
-        <BenchmarkPageHeader
-          isRunning={isRunning}
-          hasStarted={hasStarted}
-          hasStopped={hasStopped}
-          iterations={iterations}
-          alternateRunnerTag={alternateRunnerTag}
-          onIterationsChange={onIterationsChange}
-          onAlternateRunnerTagChange={onAlternateRunnerTagChange}
-          onStart={onStart}
-          onContinue={onContinue}
-          onRestart={onRestart}
-          onStop={onStop}
-          onPurge={onPurge}
-          onSettingsSaved={onSettingsSaved}
-        />
-        <BenchmarkTable
-          results={results}
-          currentTaskIndex={currentTaskIndex}
-          currentExecutions={currentExecutions}
-          onDownloadTask={onDownloadTask}
-        />
-        <CompletionSummary results={results} />
+    <Layout sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ width: '100%', p: 3, alignSelf: 'center' }}>
+        <BenchmarkPageHeader />
+        <Paper sx={{ p: 3 }}>
+          <BenchmarkControls
+            isRunning={isRunning}
+            hasStarted={hasStarted}
+            hasStopped={hasStopped}
+            iterations={iterations}
+            alternateRunnerTag={alternateRunnerTag}
+            completedTasks={completedTasks}
+            totalTasks={totalTasks}
+            onIterationsChange={onIterationsChange}
+            onAlternateRunnerTagChange={onAlternateRunnerTagChange}
+            onStart={onStart}
+            onContinue={onContinue}
+            onRestart={onRestart}
+            onStop={onStop}
+            onPurge={onPurge}
+          />
+          <BenchmarkTable
+            results={results}
+            currentTaskIndex={currentTaskIndex}
+            currentExecutions={currentExecutions}
+            onDownloadTask={onDownloadTask}
+          />
+          <CompletionSummary
+            results={results}
+            isRunning={isRunning}
+            hasStarted={hasStarted}
+          />
+        </Paper>
       </Box>
     </Layout>
   );
+}
+
+function isTaskComplete(task: TimedTask): boolean {
+  return task.Status === 'SUCCESS' || task.Status === 'FAILURE';
+}
+
+function areAllBenchmarksComplete(taskResults: TimedTask[]): boolean {
+  if (taskResults.length === 0) return false;
+  const hasNoStopped = !taskResults.some((task) => task.Status === 'STOPPED');
+  const allTasksComplete = taskResults.every(isTaskComplete);
+  return hasNoStopped && allTasksComplete;
 }
 
 function Benchmark() {
@@ -241,6 +272,7 @@ function Benchmark() {
   const [iterations, setIterations] = useState(3);
   const [alternateRunnerTag, setAlternateRunnerTag] = useState('windows');
   const isRunningRef = useRef(false);
+  const hasShownCompletionSnackbar = useRef(false);
 
   const setters: BenchmarkSetters = {
     setIsRunning,
@@ -291,6 +323,21 @@ function Benchmark() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   });
 
+  useEffect(() => {
+    if (
+      areAllBenchmarksComplete(results) &&
+      !hasShownCompletionSnackbar.current
+    ) {
+      hasShownCompletionSnackbar.current = true;
+      dispatch(
+        showSnackbar({
+          message: 'All benchmarks completed',
+          severity: 'success',
+        }),
+      );
+    }
+  }, [results, dispatch]);
+
   const handleStart = () => {
     setBenchmarkTrials(iterations);
     setBenchmarkRunnerTag(alternateRunnerTag);
@@ -308,6 +355,7 @@ function Benchmark() {
   const handleRestart = () => {
     setBenchmarkTrials(iterations);
     setBenchmarkRunnerTag(alternateRunnerTag);
+    hasShownCompletionSnackbar.current = false;
     dispatch(
       showSnackbar({ message: 'Benchmark restarted', severity: 'info' }),
     );
@@ -324,17 +372,9 @@ function Benchmark() {
   const handlePurge = async () => {
     await measurementDBService.purge();
     setResults([...tasks]);
+    hasShownCompletionSnackbar.current = false;
     dispatch(
       showSnackbar({ message: 'Benchmark data purged', severity: 'success' }),
-    );
-  };
-
-  const handleSettingsSaved = () => {
-    dispatch(
-      showSnackbar({
-        message: 'Benchmark settings saved',
-        severity: 'success',
-      }),
     );
   };
 
@@ -355,7 +395,6 @@ function Benchmark() {
       onStop={handleStop}
       onPurge={handlePurge}
       onDownloadTask={downloadTaskResultJson}
-      onSettingsSaved={handleSettingsSaved}
     />
   );
 }

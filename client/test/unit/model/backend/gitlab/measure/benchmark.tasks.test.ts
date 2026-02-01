@@ -101,8 +101,8 @@ describe('benchmark.tasks', () => {
       expect(DEFAULT_TASK['Average Time (s)']).toBeUndefined();
     });
 
-    it('should have PENDING status', () => {
-      expect(DEFAULT_TASK.Status).toBe('PENDING');
+    it('should have NOT_STARTED status', () => {
+      expect(DEFAULT_TASK.Status).toBe('NOT_STARTED');
     });
 
     it('should have a Function that returns empty array', async () => {
@@ -188,7 +188,7 @@ describe('benchmark.tasks', () => {
       const addedTask = tasks[initialLength];
       expect(addedTask['Task Name']).toBe('Custom Task');
       expect(addedTask.Description).toBe('Custom description');
-      expect(addedTask.Status).toBe('PENDING');
+      expect(addedTask.Status).toBe('NOT_STARTED');
       expect(addedTask.Trials).toEqual([]);
     });
 
@@ -212,7 +212,7 @@ describe('benchmark.tasks', () => {
       const addedTask = tasks[initialLength];
       expect(addedTask['Task Name']).toBe('');
       expect(addedTask.Description).toBe('');
-      expect(addedTask.Status).toBe('PENDING');
+      expect(addedTask.Status).toBe('NOT_STARTED');
     });
   });
 
@@ -245,10 +245,10 @@ describe('benchmark.tasks', () => {
       });
     });
 
-    it('should return tasks with PENDING status', () => {
+    it('should return tasks with NOT_STARTED status', () => {
       const resetResults = resetTasks();
       resetResults.forEach((task) => {
-        expect(task.Status).toBe('PENDING');
+        expect(task.Status).toBe('NOT_STARTED');
       });
     });
 

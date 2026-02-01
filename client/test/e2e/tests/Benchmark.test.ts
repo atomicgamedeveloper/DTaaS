@@ -31,7 +31,7 @@ test.describe('Benchmark Page', () => {
 
   test('Should update form input values', async ({ page }) => {
     // Test iterations input
-    const iterationsInput = page.getByLabel('Iterations');
+    const iterationsInput = page.getByLabel('Trials');
     await iterationsInput.fill('5');
     await expect(iterationsInput).toHaveValue('5');
 

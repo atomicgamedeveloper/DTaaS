@@ -118,9 +118,10 @@ class DigitalTwin implements DigitalTwinInterface {
 
   /**
    * Execute a Digital Twin and create an execution history entry
+   * @param skipHistorySave If true, skip saving to executionHistory (used for benchmarks)
    * @returns Promise that resolves with the pipeline ID or null if execution failed
    */
-  async execute(): Promise<number | null> {
+  async execute(skipHistorySave: boolean = false): Promise<number | null> {
     const runnerTag = getRunnerTag();
     if (!isValidInstance(this)) {
       logError(this, runnerTag, 'Missing projectId or triggerToken');
@@ -137,16 +138,18 @@ class DigitalTwin implements DigitalTwinInterface {
       const executionId = uuidv4();
       this.currentExecutionId = executionId;
 
-      const executionEntry: DTExecutionResult = {
-        id: executionId,
-        dtName: this.DTName,
-        pipelineId: response.id,
-        timestamp: Date.now(),
-        status: ExecutionStatus.RUNNING,
-        jobLogs: [],
-      };
+      if (!skipHistorySave) {
+        const executionEntry: DTExecutionResult = {
+          id: executionId,
+          dtName: this.DTName,
+          pipelineId: response.id,
+          timestamp: Date.now(),
+          status: ExecutionStatus.RUNNING,
+          jobLogs: [],
+        };
 
-      await indexedDBService.add(executionEntry);
+        await indexedDBService.add(executionEntry);
+      }
 
       return response.id;
     } catch (error) {

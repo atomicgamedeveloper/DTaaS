@@ -1,6 +1,7 @@
 import { TimedTask, Status } from './benchmark.types';
 
 export const statusColorMap: Record<Status, string> = {
+  NOT_STARTED: '#9e9e9e',
   PENDING: '#9e9e9e',
   RUNNING: '#1976d2',
   FAILURE: '#d32f2f',
@@ -37,7 +38,9 @@ export function getTotalTime(results: TimedTask[]): number | null {
     return null;
   }
 
-  const firstStart = Math.min(...startTimes.map((duration) => duration.getTime()));
+  const firstStart = Math.min(
+    ...startTimes.map((duration) => duration.getTime()),
+  );
   const lastEnd = Math.max(...endTimes.map((duration) => duration.getTime()));
 
   return (lastEnd - firstStart) / 1000;
@@ -134,4 +137,20 @@ export function computeFinalStatus(
 
   const hasAnyFailures = trials.some((trial) => trial.Status === 'FAILURE');
   return hasAnyFailures ? 'FAILURE' : 'SUCCESS';
+}
+
+export function getBenchmarkStatus(results: TimedTask[]): {
+  hasStarted: boolean;
+  completedTasks: number;
+  totalTasks: number;
+} {
+  const hasStarted = results.some(
+    (task) => task.Status !== 'NOT_STARTED' && task.Status !== 'PENDING',
+  );
+  const completedTasks = results.filter(
+    (task) => task.Status === 'SUCCESS' || task.Status === 'FAILURE',
+  ).length;
+  const totalTasks = results.length;
+
+  return { hasStarted, completedTasks, totalTasks };
 }

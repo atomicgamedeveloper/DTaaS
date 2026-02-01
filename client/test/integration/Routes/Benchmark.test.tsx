@@ -19,11 +19,21 @@ describe('Benchmark Page', () => {
   });
 
   it('displays the benchmark table with headers', async () => {
-    expect(screen.getByText('Data')).toBeInTheDocument();
-    expect(screen.getByText('Task')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getByText('Average Duration')).toBeInTheDocument();
-    expect(screen.getByText('Executions')).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Data' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Task' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Status' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Average Duration' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Trials' }),
+    ).toBeInTheDocument();
   });
 
   it('displays all benchmark tasks', async () => {
@@ -51,7 +61,7 @@ describe('Benchmark Page', () => {
   });
 
   it('displays iterations input field', async () => {
-    const iterationsInput = screen.getByLabelText('Iterations');
+    const iterationsInput = screen.getByLabelText('Trials');
     expect(iterationsInput).toBeInTheDocument();
     expect(iterationsInput).toHaveValue(3);
   });
@@ -62,7 +72,7 @@ describe('Benchmark Page', () => {
   });
 
   it('allows changing the iterations value', async () => {
-    const iterationsInput = screen.getByLabelText('Iterations');
+    const iterationsInput = screen.getByLabelText('Trials');
 
     await userEvent.tripleClick(iterationsInput);
     await userEvent.keyboard('5');
@@ -84,9 +94,13 @@ describe('Benchmark Page', () => {
     expect(restartButton).toBeDisabled();
   });
 
-  it('shows all tasks with PENDING status initially', async () => {
-    const pendingStatuses = screen.getAllByText('PENDING');
-    expect(pendingStatuses.length).toBe(5);
+  it('shows all tasks with NOT_STARTED status initially', async () => {
+    // NOT_STARTED status is displayed as '—' in the UI
+    const statusCells = screen.getAllByRole('cell');
+    const dashStatuses = statusCells.filter((cell) =>
+      cell.textContent?.includes('—'),
+    );
+    expect(dashStatuses.length).toBeGreaterThanOrEqual(5);
   });
 
   it('displays task descriptions', async () => {
@@ -109,7 +123,7 @@ describe('Benchmark Page', () => {
   });
 
   it('shows tooltip when hovering over iterations input', async () => {
-    const iterationsInput = screen.getByLabelText('Iterations');
+    const iterationsInput = screen.getByLabelText('Trials');
 
     await userEvent.hover(iterationsInput);
 

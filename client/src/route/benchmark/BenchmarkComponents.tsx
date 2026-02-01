@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -139,8 +139,6 @@ export function TaskControls({
   task: TimedTask;
   onDownloadTask: (task: TimedTask) => void;
 }) {
-  // Allow download when all expected trials have completed (SUCCESS or FAILURE)
-  // Uses task.ExpectedTrials (set when task started) so UI changes don't affect download availability
   const expectedTrials = task.ExpectedTrials ?? 0;
   const completedTrials = task.Trials.filter(
     (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
@@ -172,12 +170,38 @@ export function TaskControls({
   );
 }
 
-export function BenchmarkPageHeader({
+export function BenchmarkPageHeader() {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 1,
+        }}
+      >
+        <Typography variant="h5">Digital Twin Benchmark</Typography>
+      </Box>
+      <Typography variant="body2" color="text.secondary">
+        Run performance benchmarks for Digital Twin executions. Each task runs
+        multiple a number of trials to calculate average time per task. Click
+        Start to begin the benchmark suite, or Stop to cancel running
+        executions. After all tasks are through, you will be able to download a
+        summary.
+      </Typography>
+    </Box>
+  );
+}
+
+export function BenchmarkControls({
   isRunning,
   hasStarted,
   hasStopped,
   iterations,
   alternateRunnerTag,
+  completedTasks,
+  totalTasks,
   onIterationsChange,
   onAlternateRunnerTagChange,
   onStart,
@@ -185,30 +209,16 @@ export function BenchmarkPageHeader({
   onRestart,
   onStop,
   onPurge,
-  onSettingsSaved,
 }: BenchmarkPageHeaderProps & {
   onPurge: () => void;
-  onSettingsSaved?: () => void;
 }) {
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
-  const lastSavedIterations = useRef(iterations);
-  const lastSavedRunnerTag = useRef(alternateRunnerTag);
+  const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
 
   const handleIterationsChange = (newValue: number) => {
     if (newValue >= 1) {
       onIterationsChange(newValue);
-      if (newValue !== lastSavedIterations.current) {
-        lastSavedIterations.current = newValue;
-        onSettingsSaved?.();
-      }
-    }
-  };
-
-  const handleRunnerTagBlur = () => {
-    if (alternateRunnerTag !== lastSavedRunnerTag.current) {
-      lastSavedRunnerTag.current = alternateRunnerTag;
-      onSettingsSaved?.();
     }
   };
 
@@ -228,6 +238,15 @@ export function BenchmarkPageHeader({
   const handleRestartConfirm = () => {
     setRestartDialogOpen(false);
     onRestart();
+  };
+
+  const handlePurgeClick = () => {
+    setPurgeDialogOpen(true);
+  };
+
+  const handlePurgeConfirm = () => {
+    setPurgeDialogOpen(false);
+    onPurge();
   };
 
   const getPrimaryButton = () => {
@@ -255,12 +274,14 @@ export function BenchmarkPageHeader({
         </Button>
       );
     }
+    const isComplete = completedTasks === totalTasks && totalTasks > 0;
     return (
       <Button
         variant="contained"
         color="primary"
         onClick={onStart}
         size="small"
+        disabled={isComplete}
       >
         Start
       </Button>
@@ -268,20 +289,22 @@ export function BenchmarkPageHeader({
   };
 
   return (
-    <Box sx={{ mb: 2 }}>
+    <Box>
       <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 1,
-        }}
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 3 }}
       >
-        <Typography variant="h5">Digital Twin Benchmark</Typography>
+        <Typography variant="body1" sx={{ color: 'primary.main' }}>
+          Trials Completed: {completedTasks * iterations}/
+          {totalTasks * iterations}
+        </Typography>
+
         <Box display="flex" alignItems="center" gap={1}>
           <Tooltip title="Number of times each task is repeated to calculate average execution time">
             <TextField
-              label="Iterations"
+              label="Trials"
               type="number"
               size="small"
               value={iterations}
@@ -297,19 +320,21 @@ export function BenchmarkPageHeader({
               sx={{ width: 80 }}
             />
           </Tooltip>
+
           <Tooltip title="Runner tag used for multi-runner tests. The primary runner tag is configured in Account Settings.">
             <TextField
               label="Secondary Runner Tag"
               size="small"
               value={alternateRunnerTag}
               onChange={(e) => onAlternateRunnerTagChange(e.target.value)}
-              onBlur={handleRunnerTagBlur}
               disabled={isRunning}
               slotProps={{ inputLabel: { shrink: true } }}
               sx={{ width: 170 }}
             />
           </Tooltip>
+
           {getPrimaryButton()}
+
           <Button
             variant="outlined"
             color="primary"
@@ -319,10 +344,11 @@ export function BenchmarkPageHeader({
           >
             Restart
           </Button>
+
           <Button
             variant="outlined"
             color="primary"
-            onClick={onPurge}
+            onClick={handlePurgeClick}
             disabled={isRunning}
             size="small"
           >
@@ -330,13 +356,6 @@ export function BenchmarkPageHeader({
           </Button>
         </Box>
       </Box>
-      <Typography variant="body2" color="text.secondary">
-        Run performance benchmarks for Digital Twin executions. Each task runs
-        multiple a number of trials to calculate average time per task. Click
-        Start to begin the benchmark suite, or Stop to cancel running
-        executions. After all tasks are through, you will be able to download a
-        summary.
-      </Typography>
       <Dialog open={stopDialogOpen} onClose={() => setStopDialogOpen(false)}>
         <DialogTitle>Stop Benchmark?</DialogTitle>
         <DialogContent>
@@ -356,8 +375,6 @@ export function BenchmarkPageHeader({
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Restart Confirmation Dialog */}
       <Dialog
         open={restartDialogOpen}
         onClose={() => setRestartDialogOpen(false)}
@@ -380,34 +397,76 @@ export function BenchmarkPageHeader({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={purgeDialogOpen} onClose={() => setPurgeDialogOpen(false)}>
+        <DialogTitle>Purge Benchmark Data?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to purge all benchmark data? This will
+            permanently delete all results and cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPurgeDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handlePurgeConfirm}
+            color="primary"
+            variant="contained"
+          >
+            Purge
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
 
-export function CompletionSummary({ results }: CompletionSummaryProps) {
+export function CompletionSummary({
+  results,
+  isRunning,
+  hasStarted,
+}: CompletionSummaryProps) {
   const totalTime = getTotalTime(results);
-  const allSuccess = results.every((task) => task.Status === 'SUCCESS');
+  const allComplete = results.every(
+    (task) => task.Status === 'SUCCESS' || task.Status === 'FAILURE',
+  );
 
-  if (!allSuccess || totalTime === null) {
-    return null;
+  if (allComplete && totalTime !== null) {
+    return (
+      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+        <Typography variant="body2">
+          Completed in {totalTime.toFixed(1)}s |{' '}
+          <Typography
+            component="span"
+            variant="body2"
+            sx={{
+              color: 'primary.main',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+            onClick={() => downloadResultsJson(results)}
+          >
+            Download JSON
+          </Typography>
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (isRunning || hasStarted) {
+    return (
+      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+        <Typography variant="body2">
+          Benchmark data generation in progress
+        </Typography>
+      </Box>
+    );
   }
 
   return (
     <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
       <Typography variant="body2">
-        Completed in {totalTime.toFixed(1)}s |{' '}
-        <Typography
-          component="span"
-          variant="body2"
-          sx={{
-            color: 'primary.main',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-          }}
-          onClick={() => downloadResultsJson(results)}
-        >
-          Download JSON
-        </Typography>
+        Click Start to generate benchmark data
       </Typography>
     </Box>
   );

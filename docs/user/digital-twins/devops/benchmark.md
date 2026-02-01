@@ -59,6 +59,18 @@ aspects of Digital Twin execution:
 - **Average Duration**: Mean execution time across all trials for each task
 - **Total Time**: Overall time for the complete benchmark suite (shown after completion)
 
+### Benchmark Table Columns
+
+The benchmark results table displays the following columns:
+
+| Column | Description |
+| ------ | ----------- |
+| Task | Task number, name, and description |
+| Status | Current execution status (NOT_STARTED, PENDING, RUNNING, SUCCESS, FAILURE, or STOPPED) |
+| Average Duration | Mean execution time across all completed trials, displayed in seconds |
+| Trials | Visual cards showing each trial's execution details and status. Each trial represents one iteration of the task |
+| Data | Download button to export individual task results as JSON |
+
 ## Data Storage
 
 Benchmark measurements are stored separately from regular execution history
@@ -81,6 +93,11 @@ After all tasks complete, a "Download JSON" link appears at the bottom
 of the page to export the complete benchmark results.
 
 ### JSON Format
+
+The exported JSON contains detailed information about each task and its
+trials. Note that "Trials" in the JSON represents individual iterations of
+a task, and each trial contains an "Execution" array with the pipeline
+execution details.
 
 ```JSON
 {

@@ -1,4 +1,10 @@
-export type Status = 'PENDING' | 'RUNNING' | 'FAILURE' | 'SUCCESS' | 'STOPPED';
+export type Status =
+  | 'NOT_STARTED'
+  | 'PENDING'
+  | 'RUNNING'
+  | 'FAILURE'
+  | 'SUCCESS'
+  | 'STOPPED';
 
 export type Configuration = {
   'Branch name': string;
@@ -68,6 +74,8 @@ export interface BenchmarkPageHeaderProps {
   hasStopped: boolean;
   iterations: number;
   alternateRunnerTag: string;
+  completedTasks: number;
+  totalTasks: number;
   onIterationsChange: (value: number) => void;
   onAlternateRunnerTagChange: (value: string) => void;
   onStart: () => void;
@@ -78,6 +86,8 @@ export interface BenchmarkPageHeaderProps {
 
 export interface CompletionSummaryProps {
   results: TimedTask[];
+  isRunning: boolean;
+  hasStarted: boolean;
 }
 
 export interface ExecutionCardProps {

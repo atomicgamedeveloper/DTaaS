@@ -3,53 +3,40 @@ import '@testing-library/jest-dom';
 import { Provider, useDispatch } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import Benchmark from 'route/benchmark/Benchmark';
-import { TimedTask, Trial } from 'model/backend/gitlab/measure/benchmark.types';
 
-jest.mock('page/Layout', () => {
-  const MockLayout = ({
-    children,
-  }: {
-    children: React.ReactNode;
-    sx?: Record<string, unknown>;
-  }) => <div data-testid="mock-layout">{children}</div>;
-  return { __esModule: true, default: MockLayout };
-});
+jest.mock('page/Layout', () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-layout">{children}</div>
+  ),
+}));
 
 jest.mock('route/benchmark/BenchmarkComponents', () => ({
-  TrialCard: ({ trialIndex }: { trial: Trial; trialIndex: number }) => (
+  TrialCard: ({ trialIndex }: { trialIndex: number }) => (
     <div data-testid={`trial-card-${trialIndex}`}>Trial {trialIndex + 1}</div>
   ),
   TaskControls: ({
     task,
     onDownloadTask,
   }: {
-    task: TimedTask;
-    onDownloadTask: (task: TimedTask) => void;
+    task: unknown;
+    onDownloadTask: (t: unknown) => void;
   }) => (
     <div data-testid="task-controls">
       <button onClick={() => onDownloadTask(task)}>Download</button>
     </div>
   ),
-  BenchmarkPageHeader: ({
-    isRunning,
-    hasStarted,
-    hasStopped,
-    iterations,
-    alternateRunnerTag,
-    onIterationsChange,
-    onAlternateRunnerTagChange,
-    onStart,
-    onContinue,
-    onRestart,
-    onStop,
-    onPurge,
-    onSettingsSaved,
-  }: {
+  BenchmarkPageHeader: () => (
+    <div data-testid="benchmark-header">Digital Twin Benchmark</div>
+  ),
+  BenchmarkControls: (props: {
     isRunning: boolean;
     hasStarted: boolean;
     hasStopped: boolean;
     iterations: number;
     alternateRunnerTag: string;
+    completedTasks: number;
+    totalTasks: number;
     onIterationsChange: (v: number) => void;
     onAlternateRunnerTagChange: (v: string) => void;
     onStart: () => void;
@@ -57,50 +44,50 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
     onRestart: () => void;
     onStop: () => void;
     onPurge: () => void;
-    onSettingsSaved: () => void;
   }) => (
-    <div data-testid="benchmark-header">
-      <span data-testid="is-running">{isRunning ? 'running' : 'stopped'}</span>
+    <div data-testid="benchmark-controls">
+      <span data-testid="is-running">
+        {props.isRunning ? 'running' : 'stopped'}
+      </span>
       <span data-testid="has-started">
-        {hasStarted ? 'started' : 'not-started'}
+        {props.hasStarted ? 'started' : 'not-started'}
       </span>
       <span data-testid="has-stopped">
-        {hasStopped ? 'has-stopped' : 'not-stopped'}
+        {props.hasStopped ? 'has-stopped' : 'not-stopped'}
       </span>
-      <span data-testid="iterations">{iterations}</span>
-      <span data-testid="runner-tag">{alternateRunnerTag}</span>
-      <button data-testid="start-btn" onClick={onStart}>
+      <span data-testid="iterations">{props.iterations}</span>
+      <span data-testid="runner-tag">{props.alternateRunnerTag}</span>
+      <span data-testid="completed-tasks">{props.completedTasks}</span>
+      <span data-testid="total-tasks">{props.totalTasks}</span>
+      <button data-testid="start-btn" onClick={props.onStart}>
         Start
       </button>
-      <button data-testid="continue-btn" onClick={onContinue}>
+      <button data-testid="continue-btn" onClick={props.onContinue}>
         Continue
       </button>
-      <button data-testid="restart-btn" onClick={onRestart}>
+      <button data-testid="restart-btn" onClick={props.onRestart}>
         Restart
       </button>
-      <button data-testid="stop-btn" onClick={onStop}>
+      <button data-testid="stop-btn" onClick={props.onStop}>
         Stop
       </button>
-      <button data-testid="purge-btn" onClick={onPurge}>
+      <button data-testid="purge-btn" onClick={props.onPurge}>
         Purge
-      </button>
-      <button data-testid="settings-btn" onClick={onSettingsSaved}>
-        Save Settings
       </button>
       <input
         data-testid="iterations-input"
         type="number"
-        value={iterations}
-        onChange={(e) => onIterationsChange(parseInt(e.target.value, 10))}
+        value={props.iterations}
+        onChange={(e) => props.onIterationsChange(parseInt(e.target.value, 10))}
       />
       <input
         data-testid="runner-tag-input"
-        value={alternateRunnerTag}
-        onChange={(e) => onAlternateRunnerTagChange(e.target.value)}
+        value={props.alternateRunnerTag}
+        onChange={(e) => props.onAlternateRunnerTagChange(e.target.value)}
       />
     </div>
   ),
-  CompletionSummary: ({ results }: { results: TimedTask[] }) => (
+  CompletionSummary: ({ results }: { results: unknown[] }) => (
     <div data-testid="completion-summary">Tasks: {results.length}</div>
   ),
 }));
@@ -109,13 +96,13 @@ const mockStartMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockContinueMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockRestartMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockStopAllPipelines = jest.fn().mockResolvedValue(undefined);
-const mockHandleBeforeUnload = jest.fn();
 const mockDownloadTaskResultJson = jest.fn();
 const mockSetTrials = jest.fn();
 const mockSetAlternateRunnerTag = jest.fn();
 
 jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
   statusColorMap: {
+    NOT_STARTED: '#9e9e9e',
     PENDING: '#9e9e9e',
     RUNNING: '#1976d2',
     FAILURE: '#d32f2f',
@@ -126,7 +113,7 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
   continueMeasurement: (...args: unknown[]) => mockContinueMeasurement(...args),
   restartMeasurement: (...args: unknown[]) => mockRestartMeasurement(...args),
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
-  handleBeforeUnload: (...args: unknown[]) => mockHandleBeforeUnload(...args),
+  handleBeforeUnload: jest.fn(),
   downloadTaskResultJson: (...args: unknown[]) =>
     mockDownloadTaskResultJson(...args),
   tasks: [
@@ -137,17 +124,15 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
       'Time Start': undefined,
       'Time End': undefined,
       'Average Time (s)': undefined,
-      Status: 'PENDING',
-      Function: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            dtName: 'hello-world',
-            pipelineId: 1,
-            status: 'success',
-            config: {},
-          },
-        ]),
+      Status: 'NOT_STARTED',
+      Function: jest.fn().mockResolvedValue([
+        {
+          dtName: 'hello-world',
+          pipelineId: 1,
+          status: 'success',
+          config: {},
+        },
+      ]),
     },
     {
       'Task Name': 'Task 2',
@@ -156,17 +141,15 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
       'Time Start': undefined,
       'Time End': undefined,
       'Average Time (s)': undefined,
-      Status: 'PENDING',
-      Function: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            dtName: 'hello-world',
-            pipelineId: 1,
-            status: 'success',
-            config: {},
-          },
-        ]),
+      Status: 'NOT_STARTED',
+      Function: jest.fn().mockResolvedValue([
+        {
+          dtName: 'hello-world',
+          pipelineId: 1,
+          status: 'success',
+          config: {},
+        },
+      ]),
     },
   ],
   setTrials: (...args: unknown[]) => mockSetTrials(...args),
@@ -175,17 +158,12 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
 }));
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => ({
-  benchmarkState: {
-    activePipelines: [],
-    executionResults: [],
-  },
+  benchmarkState: { activePipelines: [], executionResults: [] },
 }));
 
 jest.mock('database/measurementHistoryDB', () => ({
   __esModule: true,
-  default: {
-    purge: jest.fn().mockResolvedValue(undefined),
-  },
+  default: { purge: jest.fn().mockResolvedValue(undefined) },
 }));
 
 type SnackbarState = {
@@ -193,39 +171,42 @@ type SnackbarState = {
   message: string;
   severity: 'info' | 'success' | 'warning' | 'error';
 };
-
-type SnackbarAction =
-  | {
-      type: 'snackbar/showSnackbar';
-      payload: { message: string; severity: SnackbarState['severity'] };
-    }
-  | { type: 'snackbar/hideSnackbar' }
-  | { type: string };
-
-const initialSnackbarState: SnackbarState = {
-  open: false,
-  message: '',
-  severity: 'info',
+type SnackbarAction = {
+  type: string;
+  payload?: { message: string; severity: SnackbarState['severity'] };
 };
 
 const createMockStore = () =>
   configureStore({
     reducer: {
-      snackbar: (
-        state: SnackbarState | undefined,
-        action: SnackbarAction,
-      ): SnackbarState => {
-        const currentState = state ?? initialSnackbarState;
-        if (action.type === 'snackbar/showSnackbar' && 'payload' in action) {
+      snackbar: (state: SnackbarState | undefined, action: SnackbarAction) => {
+        const currentState = state ?? {
+          open: false,
+          message: '',
+          severity: 'info' as const,
+        };
+        if (action.type === 'snackbar/showSnackbar' && action.payload) {
           return { ...currentState, open: true, ...action.payload };
         }
-        if (action.type === 'snackbar/hideSnackbar') {
-          return { ...currentState, open: false };
-        }
-        return currentState;
+        return action.type === 'snackbar/hideSnackbar'
+          ? { ...currentState, open: false }
+          : currentState;
       },
     },
   });
+
+const createResultTask = (name: string, status: string, avgTime?: number) => ({
+  'Task Name': name,
+  Description: `${name} description`,
+  Trials: [],
+  'Time Start':
+    status !== 'NOT_STARTED' && status !== 'STOPPED' ? new Date() : undefined,
+  'Time End':
+    status !== 'NOT_STARTED' && status !== 'STOPPED' ? new Date() : undefined,
+  'Average Time (s)': avgTime,
+  Status: status,
+  Function: jest.fn(),
+});
 
 describe('Benchmark', () => {
   let store: ReturnType<typeof createMockStore>;
@@ -245,15 +226,9 @@ describe('Benchmark', () => {
       </Provider>,
     );
 
-  it('renders the Benchmark page with layout', () => {
+  it('renders the Benchmark page with layout and initial state', () => {
     renderBenchmark();
-
     expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
-  });
-
-  it('renders the benchmark header with initial props', () => {
-    renderBenchmark();
-
     expect(screen.getByTestId('benchmark-header')).toBeInTheDocument();
     expect(screen.getByTestId('is-running')).toHaveTextContent('stopped');
     expect(screen.getByTestId('has-started')).toHaveTextContent('not-started');
@@ -261,30 +236,22 @@ describe('Benchmark', () => {
     expect(screen.getByTestId('runner-tag')).toHaveTextContent('windows');
   });
 
-  it('renders the benchmark table with tasks', () => {
+  it('renders the benchmark table with tasks and headers', () => {
     renderBenchmark();
-
     expect(screen.getByText('Task 1')).toBeInTheDocument();
     expect(screen.getByText('Task 2')).toBeInTheDocument();
-  });
-
-  it('renders table headers', () => {
-    renderBenchmark();
-
-    expect(screen.getByText('Data')).toBeInTheDocument();
     expect(screen.getByText('Task')).toBeInTheDocument();
     expect(screen.getByText('Status')).toBeInTheDocument();
     expect(screen.getByText('Average Duration')).toBeInTheDocument();
-    expect(screen.getByText('Executions')).toBeInTheDocument();
+    expect(screen.getByText('Trials')).toBeInTheDocument();
+    expect(screen.getByText('Data')).toBeInTheDocument();
   });
 
   it('calls startMeasurement when Start is clicked', async () => {
     renderBenchmark();
-
     await act(async () => {
       fireEvent.click(screen.getByTestId('start-btn'));
     });
-
     expect(mockSetTrials).toHaveBeenCalledWith(3);
     expect(mockSetAlternateRunnerTag).toHaveBeenCalledWith('windows');
     expect(mockStartMeasurement).toHaveBeenCalled();
@@ -292,11 +259,9 @@ describe('Benchmark', () => {
 
   it('calls continueMeasurement when Continue is clicked', async () => {
     renderBenchmark();
-
     await act(async () => {
       fireEvent.click(screen.getByTestId('continue-btn'));
     });
-
     expect(mockSetTrials).toHaveBeenCalledWith(3);
     expect(mockSetAlternateRunnerTag).toHaveBeenCalledWith('windows');
     expect(mockContinueMeasurement).toHaveBeenCalled();
@@ -304,11 +269,9 @@ describe('Benchmark', () => {
 
   it('calls restartMeasurement when Restart is clicked', async () => {
     renderBenchmark();
-
     await act(async () => {
       fireEvent.click(screen.getByTestId('restart-btn'));
     });
-
     expect(mockSetTrials).toHaveBeenCalledWith(3);
     expect(mockSetAlternateRunnerTag).toHaveBeenCalledWith('windows');
     expect(mockRestartMeasurement).toHaveBeenCalled();
@@ -316,11 +279,9 @@ describe('Benchmark', () => {
 
   it('calls stopAllPipelines when Stop is clicked', async () => {
     renderBenchmark();
-
     await act(async () => {
       fireEvent.click(screen.getByTestId('stop-btn'));
     });
-
     expect(mockStopAllPipelines).toHaveBeenCalled();
   });
 
@@ -328,96 +289,120 @@ describe('Benchmark', () => {
     const measurementDBService = jest.requireMock(
       'database/measurementHistoryDB',
     ).default;
-
     renderBenchmark();
-
     await act(async () => {
       fireEvent.click(screen.getByTestId('purge-btn'));
     });
-
     expect(measurementDBService.purge).toHaveBeenCalled();
   });
 
-  it('updates iterations when changed', () => {
+  it('updates iterations and runner tag when changed', () => {
     renderBenchmark();
-
-    const iterationsInput = screen.getByTestId('iterations-input');
-    fireEvent.change(iterationsInput, { target: { value: '5' } });
-
+    fireEvent.change(screen.getByTestId('iterations-input'), {
+      target: { value: '5' },
+    });
     expect(screen.getByTestId('iterations')).toHaveTextContent('5');
-  });
-
-  it('updates alternate runner tag when changed', () => {
-    renderBenchmark();
-
-    const runnerTagInput = screen.getByTestId('runner-tag-input');
-    fireEvent.change(runnerTagInput, { target: { value: 'linux' } });
-
+    fireEvent.change(screen.getByTestId('runner-tag-input'), {
+      target: { value: 'linux' },
+    });
     expect(screen.getByTestId('runner-tag')).toHaveTextContent('linux');
   });
 
-  it('renders task status correctly', () => {
+  it('renders task status and completion summary correctly', () => {
     renderBenchmark();
-
-    // Both tasks should show PENDING status
-    const pendingStatuses = screen.getAllByText('PENDING');
-    expect(pendingStatuses.length).toBe(2);
-  });
-
-  it('renders dash for average time when undefined', () => {
-    renderBenchmark();
-
-    // Tasks without average time should show dashes
-    const dashes = screen.getAllByText('—');
-    expect(dashes.length).toBeGreaterThan(0);
-  });
-
-  it('renders completion summary', () => {
-    renderBenchmark();
-
+    const statusCells = screen.getAllByText('—');
+    expect(statusCells.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByTestId('completion-summary')).toBeInTheDocument();
     expect(screen.getByText('Tasks: 2')).toBeInTheDocument();
+    expect(screen.getByTestId('completed-tasks')).toHaveTextContent('0');
+    expect(screen.getByTestId('total-tasks')).toHaveTextContent('2');
   });
 
-  it('adds beforeunload event listener on mount', () => {
-    const addEventListenerSpy = jest.spyOn(globalThis, 'addEventListener');
-
-    renderBenchmark();
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith(
-      'beforeunload',
-      expect.any(Function),
-    );
-
-    addEventListenerSpy.mockRestore();
-  });
-
-  it('removes beforeunload event listener on unmount', () => {
-    const removeEventListenerSpy = jest.spyOn(
-      globalThis,
-      'removeEventListener',
-    );
-
+  it('adds and removes beforeunload event listener', () => {
+    const addSpy = jest.spyOn(globalThis, 'addEventListener');
+    const removeSpy = jest.spyOn(globalThis, 'removeEventListener');
     const { unmount } = renderBenchmark();
+    expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
     unmount();
-
-    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+    expect(removeSpy).toHaveBeenCalledWith(
       'beforeunload',
       expect.any(Function),
     );
-
-    removeEventListenerSpy.mockRestore();
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
   });
 
   it('calls downloadTaskResultJson when download is triggered', async () => {
     renderBenchmark();
-
-    // Find and click the download button in task controls
-    const downloadButtons = screen.getAllByText('Download');
     await act(async () => {
-      fireEvent.click(downloadButtons[0]);
+      fireEvent.click(screen.getAllByText('Download')[0]);
     });
-
     expect(mockDownloadTaskResultJson).toHaveBeenCalled();
+  });
+
+  it.each([
+    ['start-btn', 'Benchmark started', 'info'],
+    ['continue-btn', 'Benchmark resumed', 'info'],
+    ['restart-btn', 'Benchmark restarted', 'info'],
+    ['stop-btn', 'Stopping benchmark...', 'warning'],
+  ])('shows snackbar when %s is clicked', async (btnId, message, severity) => {
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId(btnId));
+    });
+    const state = store.getState();
+    expect(state.snackbar.message).toBe(message);
+    expect(state.snackbar.severity).toBe(severity);
+  });
+
+  it.each([
+    [['SUCCESS', 'SUCCESS'], true, 'All benchmarks completed'],
+    [['FAILURE', 'FAILURE'], true, 'All benchmarks completed'],
+    [['SUCCESS', 'FAILURE'], true, 'All benchmarks completed'],
+    [['SUCCESS', 'STOPPED'], false, 'Benchmark started'],
+    [['SUCCESS', 'NOT_STARTED'], false, 'Benchmark started'],
+  ])(
+    'completion snackbar for statuses %s shows completion: %s',
+    async (statuses, _, expectedMessage) => {
+      mockStartMeasurement.mockImplementationOnce((setters) => {
+        setters.setResults([
+          createResultTask(
+            'Task 1',
+            statuses[0],
+            statuses[0] === 'SUCCESS' ? 10 : undefined,
+          ),
+          createResultTask(
+            'Task 2',
+            statuses[1],
+            statuses[1] === 'SUCCESS' ? 15 : undefined,
+          ),
+        ]);
+        return Promise.resolve();
+      });
+      renderBenchmark();
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('start-btn'));
+      });
+      expect(store.getState().snackbar.message).toBe(expectedMessage);
+    },
+  );
+
+  it('resets completion snackbar flag on restart', async () => {
+    mockStartMeasurement.mockImplementationOnce((setters) => {
+      setters.setResults([
+        createResultTask('Task 1', 'SUCCESS', 10),
+        createResultTask('Task 2', 'SUCCESS', 15),
+      ]);
+      return Promise.resolve();
+    });
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(store.getState().snackbar.message).toBe('All benchmarks completed');
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(store.getState().snackbar.message).toBe('Benchmark restarted');
   });
 });

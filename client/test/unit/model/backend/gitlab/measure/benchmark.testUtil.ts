@@ -41,7 +41,7 @@ export function createMockTaskPending(
     'Time Start': undefined,
     'Time End': undefined,
     'Average Time (s)': undefined,
-    Status: 'PENDING',
+    Status: 'NOT_STARTED',
     Function: async () => [],
     ...overrides,
   };
@@ -248,7 +248,7 @@ export function createMockTaskForRunner(
     'Time Start': undefined,
     'Time End': undefined,
     'Average Time (s)': undefined,
-    Status: 'PENDING' as const,
+    Status: 'NOT_STARTED' as const,
     Function: jest.fn().mockResolvedValue([
       {
         dtName: 'hello-world',
@@ -261,6 +261,7 @@ export function createMockTaskForRunner(
 }
 
 export const STATUS_COLOR_MAP = {
+  NOT_STARTED: '#9e9e9e',
   PENDING: '#9e9e9e',
   RUNNING: '#1976d2',
   FAILURE: '#d32f2f',
@@ -372,7 +373,7 @@ export function createBenchmarkTasksMock() {
     'Time Start': undefined,
     'Time End': undefined,
     'Average Time (s)': undefined,
-    Status: 'PENDING' as const,
+    Status: 'NOT_STARTED' as const,
     Function: jest.fn().mockResolvedValue([
       {
         dtName: 'hello-world',
@@ -404,7 +405,7 @@ export function createBenchmarkTasksMock() {
         'Time Start': undefined,
         'Time End': undefined,
         'Average Time (s)': undefined,
-        Status: 'PENDING' as const,
+        Status: 'NOT_STARTED' as const,
       })),
     ),
     DEFAULT_TASK: createTask('', ''),
