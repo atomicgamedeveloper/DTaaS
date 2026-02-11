@@ -3,6 +3,8 @@
 from pathlib import Path
 import shutil
 
+GIKEEP = ".gitkeep"
+
 
 def build(setup_kwargs):
     """
@@ -27,6 +29,7 @@ def copy_external_files():
     # 1. Copy compose files
     compose_files = [
         "compose.services.secure.yml",
+        "compose.thingsboard.secure.yml",
     ]
 
     for filename in compose_files:
@@ -44,6 +47,12 @@ def copy_external_files():
 
     # 3. Create data directory structure (empty directories only)
     create_data_structure(pkg_dir)
+
+    # 4. Create log directory structure (empty directory only)
+    create_log_structure(pkg_dir)
+
+    # 5. Create certs directory structure (empty directory only)
+    create_certs_directory(pkg_dir)
 
 
 def _copy_config_file(src_file: Path, dst_file: Path, filename: str) -> None:
@@ -126,8 +135,51 @@ def create_data_structure(pkg_dir: Path):
         subdir_path = dst_data / subdir
         subdir_path.mkdir(exist_ok=True)
         # Create .gitkeep to ensure directory is included in package
-        (subdir_path / ".gitkeep").touch()
+        (subdir_path / GIKEEP).touch()
         print(f"Created: data/{subdir}/")
+
+
+def _create_empty_directory_structure(pkg_dir: Path, subdir_name: str) -> None:
+    """
+    Create empty directory structure with .gitkeep file.
+
+    Args:
+        pkg_dir: Parent directory
+        subdir_name: Name of subdirectory to create (e.g., 'log', 'certs')
+    """
+    dst_dir = pkg_dir / subdir_name
+
+    # Remove existing directory
+    if dst_dir.exists():
+        shutil.rmtree(dst_dir)
+
+    # Create fresh directory
+    dst_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create .gitkeep to ensure directory is included in package
+    (dst_dir / GIKEEP).touch()
+
+    print(f"Created: {subdir_name}/")
+
+
+def create_log_structure(pkg_dir: Path):
+    """
+    Create empty log directory structure only.
+
+    NO actual log files are copied, only directory structure.
+    Users will populate these during runtime.
+    """
+    _create_empty_directory_structure(pkg_dir, "log")
+
+
+def create_certs_directory(pkg_dir: Path):
+    """
+    Create empty certs directory structure only.
+
+    NO actual cert files are copied, only directory structure.
+    Users will populate these during runtime.
+    """
+    _create_empty_directory_structure(pkg_dir, "certs")
 
 
 if __name__ == "__main__":

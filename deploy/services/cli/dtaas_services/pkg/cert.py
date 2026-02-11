@@ -1,10 +1,23 @@
 """TLS certificate management for DTaaS services"""
 
 import shutil
+import platform
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 from .config import Config
 from .utils import is_ci
+
+
+@dataclass
+class CertPermissionContext:
+    """Context for certificate permission operations."""
+
+    service_name: str
+    cert_path: Path
+    uid: int
+    gid: int | None = None
+    mode: int = 0o600
 
 
 def _create_dummy_cert_file(cert_path: Path) -> bool:
@@ -31,17 +44,35 @@ VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDI
 
 
 def _find_latest_cert(certs_dir: Path, prefix: str) -> Path | None:
-    """Find the latest certificate file for a given prefix."""
-    candidates = list(certs_dir.glob(f"{prefix}*.pem"))
+    """Find the latest certificate file for a given prefix.
+
+    Only matches files named exactly '{prefix}.pem'',
+    not files like '{prefix}-service.pem'.
+    """
+    candidates = [
+        p
+        for p in certs_dir.glob(f"{prefix}*.pem")
+        if p.name == f"{prefix}.pem"
+        or (p.name.startswith(f"{prefix}") and p.name[len(prefix) : -4].isdigit())
+    ]
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
 def _remove_remaining_certs(certs_dir: Path, prefix: str, target: Path) -> None:
-    """Remove all cert files with the given prefix except the target."""
+    """Remove all cert files with the given prefix except the target.
+
+    Only matches files named exactly '{prefix}.pem' or '{prefix}[0-9].pem',
+    not files like '{prefix}-service.pem'.
+    """
     for p in certs_dir.glob(f"{prefix}*.pem"):
-        if p.resolve() != target.resolve():
+        if p.resolve() == target.resolve():
+            continue
+        # Only remove if it matches the pattern (not service-specific certs)
+        if p.name == f"{prefix}.pem" or (
+            p.name.startswith(f"{prefix}") and p.name[len(prefix) : -4].isdigit()
+        ):
             p.unlink(missing_ok=True)
 
 
@@ -83,9 +114,20 @@ def _create_dummy_certs(certs_dir: Path) -> Tuple[bool, str]:
             _create_dummy_cert_file(privkey_path)
         if not fullchain_path.exists():
             _create_dummy_cert_file(fullchain_path)
-        return True, f"Created dummy certificates in {certs_dir} for CI testing"
+        return True, f"\nCreated dummy certificates in {certs_dir} for CI testing"
     except OSError as e:
         return False, f"Source directory error creating dummy certificates: {e}"
+
+
+def _should_copy_file(source_path: Path, dest_path: Path) -> bool:
+    """Check if a file should be copied."""
+    return source_path.is_file() and source_path.resolve() != dest_path.resolve()
+
+
+def _copy_single_file(source_path: Path, dest_path: Path) -> None:
+    """Copy a single file to destination."""
+    if _should_copy_file(source_path, dest_path):
+        shutil.copy2(source_path, dest_path)
 
 
 def _copy_files(source_dir: Path, certs_dir: Path) -> None:
@@ -93,13 +135,10 @@ def _copy_files(source_dir: Path, certs_dir: Path) -> None:
     Args:
         source_dir: Source directory
         certs_dir: Destination directory
-        """
+    """
     certs_dir.mkdir(parents=True, exist_ok=True)
     for path in source_dir.glob("*"):
-        if path.is_file():
-            dest = certs_dir / path.name
-            if path.resolve() != dest.resolve():
-                shutil.copy2(path, dest)
+        _copy_single_file(path, certs_dir / path.name)
 
 
 def _copy_cert_files(source_dir: Path, certs_dir: Path) -> Tuple[bool, str]:
@@ -112,11 +151,101 @@ def _copy_cert_files(source_dir: Path, certs_dir: Path) -> Tuple[bool, str]:
     """
     try:
         _copy_files(source_dir, certs_dir)
+        # Normalize all Let's Encrypt/Certbot certificate types
         normalize_cert_candidates(certs_dir, "privkey")
         normalize_cert_candidates(certs_dir, "fullchain")
+        normalize_cert_candidates(certs_dir, "cert")
+        normalize_cert_candidates(certs_dir, "chain")
         return True, f"Certificates copied and normalized in {certs_dir}"
     except OSError as e:
         return False, f"Error copying certificates: {e}"
+
+
+def create_combined_cert(
+    privkey_path: Path, fullchain_path: Path, combined_path: Path
+) -> Tuple[bool, str]:
+    """Create combined.pem from privkey.pem and fullchain.pem.
+    Args:
+        privkey_path: Path to privkey.pem
+        fullchain_path: Path to fullchain.pem
+        combined_path: Path where combined.pem should be created
+    Returns:
+        Tuple of (success, message)
+    """
+    try:
+        if not privkey_path.exists():
+            raise FileNotFoundError(f"Missing privkey.pem at {privkey_path}.")
+        if not fullchain_path.exists():
+            raise FileNotFoundError(f"Missing fullchain.pem at {fullchain_path}.")
+        with open(combined_path, "wb") as out_f:
+            with open(privkey_path, "rb") as pk:
+                out_f.write(pk.read())
+            with open(fullchain_path, "rb") as fc:
+                out_f.write(fc.read())
+        return True, f"Combined certificate created at {combined_path}"
+    except OSError as e:
+        return False, f"Error creating combined certificate: {e}"
+
+
+def _is_posix_not_ci() -> bool:
+    """Check if running on POSIX system outside of CI environment."""
+    os_type = platform.system().lower()
+    return os_type in ("linux", "darwin") and not is_ci()
+
+
+def _apply_cert_permissions(ctx: CertPermissionContext) -> None:
+    """Apply file permissions to certificate (internal use)."""
+    ctx.cert_path.chmod(ctx.mode)
+    if ctx.gid is not None:
+        shutil.chown(ctx.cert_path, user=ctx.uid, group=ctx.gid)
+    else:
+        shutil.chown(ctx.cert_path, user=ctx.uid)
+
+
+def _get_permission_message(ctx: CertPermissionContext) -> str:
+    """Generate message describing permission changes (internal use)."""
+    if ctx.gid is not None:
+        return (
+            f"{ctx.cert_path.name} created with mode {oct(ctx.mode)} "
+            f"and ownership set to {ctx.uid}:{ctx.gid}."
+        )
+    return (
+        f"{ctx.cert_path.name} created with mode {oct(ctx.mode)} "
+        f"and ownership set to user {ctx.uid}."
+    )
+
+
+def set_service_cert_permissions(
+    ctx: CertPermissionContext,
+) -> Tuple[bool, str]:
+    """Set certificate file ownership and permissions for a service.
+
+    Automatically skips permission changes in CI environments and Windows.
+
+    Args:
+        ctx: Context containing service name, cert path, uid, gid, and mode
+
+    Returns:
+        Tuple of (success, message)
+    """
+    try:
+        if _is_posix_not_ci():
+            _apply_cert_permissions(ctx)
+            msg = _get_permission_message(ctx)
+        else:
+            # Determine why permissions were skipped
+            if is_ci():
+                msg = f"\n{ctx.cert_path.name} created (permission changes skipped in CI)."
+            elif platform.system().lower() == "windows":
+                msg = (
+                    f"\n{ctx.cert_path.name} created"
+                    "\n(POSIX permissions not applicable on Windows)."
+                )
+            else:
+                msg = f"\n{ctx.cert_path.name} created (permission changes skipped)."
+        return True, msg
+    except OSError as e:
+        return False, f"Error setting permissions for {ctx.service_name}: {e}"
 
 
 def copy_certs() -> Tuple[bool, str]:

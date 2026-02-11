@@ -1,10 +1,13 @@
 # pylint: disable=redefined-outer-name
 """Tests for Service class and Docker operations"""
+
 import subprocess
 from pathlib import Path
 from unittest.mock import patch, Mock, MagicMock
 import pytest
 from dtaas_services.pkg.service import Service
+from python_on_whales.exceptions import DockerException
+
 
 # Patch Config and DockerClient for all tests in this module
 @pytest.fixture(autouse=True)
@@ -12,8 +15,9 @@ def patch_service_deps(monkeypatch):
     """Patch dependencies for Service tests"""
     # Set HOSTNAME environment variable for Service class
     monkeypatch.setenv("HOSTNAME", "test-hostname")
-    with patch("dtaas_services.pkg.service.Config") as mock_config, \
-         patch("dtaas_services.pkg.service.DockerClient") as mock_docker_client:
+    with patch("dtaas_services.pkg.service.Config") as mock_config, patch(
+        "dtaas_services.pkg.service.DockerClient"
+    ) as mock_docker_client:
         # Mock Config instance and its env attribute
         mock_config_instance = Mock()
         mock_config_instance.env = {}
@@ -132,7 +136,11 @@ def test_start_services_success(patch_service_deps):
     mock_docker = MagicMock()
     mock_docker_client.return_value = mock_docker
     service = Service()
-    with patch.object(Path, "exists", return_value=True):
+    with patch.object(Path, "exists", return_value=True), patch.object(
+        service, "get_running_services", return_value=set()
+    ), patch.object(
+        service, "_get_all_service_names", return_value=(None, {"grafana", "influxdb"})
+    ):
         err, message = service.manage_services("start")
 
     assert err is None
@@ -161,7 +169,11 @@ def test_start_services_docker_error(patch_service_deps):
     mock_docker.compose.up.side_effect = OSError("Docker error")
     mock_docker_client.return_value = mock_docker
     service = Service()
-    with patch.object(Path, "exists", return_value=True):
+    with patch.object(Path, "exists", return_value=True), patch.object(
+        service, "get_running_services", return_value=set()
+    ), patch.object(
+        service, "_get_all_service_names", return_value=(None, {"grafana"})
+    ):
         err, message = service.manage_services("start")
 
     assert err is not None
@@ -190,9 +202,9 @@ def test_stop_services_with_service_list(patch_service_deps):
     mock_docker_client.return_value = mock_docker
     service = Service()
     with patch.object(Path, "exists", return_value=True):
-        err, _ = service.manage_services("stop", ['grafana', 'influxdb'])
+        err, _ = service.manage_services("stop", ["grafana", "influxdb"])
     assert err is None
-    mock_docker.compose.stop.assert_called_once_with(['grafana', 'influxdb'])
+    mock_docker.compose.stop.assert_called_once_with(["grafana", "influxdb"])
 
 
 def test_stop_services_compose_file_not_found(patch_service_deps):
@@ -244,9 +256,9 @@ def test_restart_services_with_service_list(patch_service_deps):
     mock_docker_client.return_value = mock_docker
     service = Service()
     with patch.object(Path, "exists", return_value=True):
-        err, _ = service.manage_services("restart", ['grafana'])
+        err, _ = service.manage_services("restart", ["grafana"])
     assert err is None
-    mock_docker.compose.restart.assert_called_once_with(['grafana'])
+    mock_docker.compose.restart.assert_called_once_with(["grafana"])
 
 
 def test_restart_services_compose_file_not_found(patch_service_deps):
@@ -315,7 +327,7 @@ def test_get_status_with_service_list(patch_service_deps):
     mock_docker_client.return_value = mock_docker
     service = Service()
     with patch.object(Path, "exists", return_value=True):
-        err, containers = service.get_status(['grafana'])
+        err, containers = service.get_status(["grafana"])
     assert err is None
     # Should contain the grafana container
     assert any(c.name == "grafana" for c in containers)
@@ -396,11 +408,11 @@ def test_remove_services_with_service_list(patch_service_deps):
     mock_docker_client.return_value = mock_docker
     service = Service()
     with patch.object(Path, "exists", return_value=True):
-        err, _ = service.remove_services(['grafana', 'influxdb'])
+        err, _ = service.remove_services(["grafana", "influxdb"])
 
     assert err is None
     mock_docker.compose.rm.assert_called_once_with(
-        ['grafana', 'influxdb'], stop=True, volumes=False
+        ["grafana", "influxdb"], stop=True, volumes=False
     )
 
 
@@ -429,3 +441,91 @@ def test_remove_services_docker_error(patch_service_deps):
         err, message = service.remove_services()
     assert err is not None
     assert "remove error" in message.lower()
+
+
+def test_docker_not_running_decorator(patch_service_deps):
+    """Test _handle_docker_not_running decorator catches DockerException"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = MagicMock()
+    mock_docker.compose.up.side_effect = DockerException(["docker"], 1, None, None)
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    with patch.object(Path, "exists", return_value=True), patch.object(
+        service, "get_running_services", return_value=set()
+    ), patch.object(
+        service, "_get_all_service_names", return_value=(None, {"grafana"})
+    ):
+        err, _ = service.manage_services("start")
+    assert err is not None
+    assert isinstance(err, RuntimeError)
+    assert "Docker is not running" in str(err)
+
+
+def test_execute_compose_action_invalid_action(patch_service_deps):
+    """Test _execute_compose_action with invalid action raises ValueError"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = MagicMock()
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    with patch.object(Path, "exists", return_value=True):
+        err, _ = service.manage_services("invalid_action")
+    assert err is not None
+    assert isinstance(err, ValueError)
+    assert "Invalid action" in str(err)
+
+
+def test_container_compose_service_label_no_label(patch_service_deps):
+    """Test _container_compose_service_label when container has no label"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = Mock()
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    mock_container = Mock()
+    mock_container.config.labels = {}
+    label = service._container_compose_service_label(mock_container)
+    assert label is None
+
+
+def test_match_container_by_label(patch_service_deps):
+    """Test _match_container_by_label matches by service label"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = Mock()
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    mock_container = Mock()
+    mock_container.name = "container-123"
+    mock_container.config.labels = {"com.docker.compose.service": "grafana"}
+    container_map = {}
+    all_services = {"grafana", "influxdb"}
+    service._match_container_by_label(mock_container, container_map, all_services)
+    assert "grafana" in container_map
+    assert container_map["grafana"] == mock_container
+
+
+def test_get_data_subdirectories_with_custom_list(patch_service_deps):
+    """Test _get_data_subdirectories with custom service list"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = Mock()
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    custom_list = ["grafana", "influxdb"]
+    result = service._get_data_subdirectories(custom_list)
+    assert result == custom_list
+
+
+def test_fetch_status_data_get_service_names_error(patch_service_deps):
+    """Test _fetch_status_data when _get_all_service_names returns error"""
+    mock_docker_client, mock_config = patch_service_deps
+    mock_config.get_base_dir.return_value = Path("/path/to/base")
+    mock_docker = MagicMock()
+    mock_docker.compose.config.side_effect = OSError("Config error")
+    mock_docker_client.return_value = mock_docker
+    service = Service()
+    err, result = service._fetch_status_data()
+    assert err is not None
+    assert result == []
