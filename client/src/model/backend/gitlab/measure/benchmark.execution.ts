@@ -7,17 +7,15 @@ import {
   COMMON_LIBRARY_PROJECT_NAME,
   RUNNER_TAG,
   BRANCH_NAME,
-  MAX_EXECUTION_TIME,
-  PIPELINE_POLL_INTERVAL,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import createGitlabInstance from 'model/backend/gitlab/gitlabFactory';
 import {
-  isPipelineCompleted,
   delay,
-  hasTimedOut,
+  getChildPipelineId,
 } from 'model/backend/gitlab/execution/pipelineCore';
+import { pollPipelineStatus } from 'model/backend/gitlab/execution/pipelinePolling';
 import {
   Configuration,
   ExecutionResult,
@@ -38,11 +36,8 @@ export const benchmarkState = {
   executionResults: [] as ExecutionResult[],
   currentMeasurementPromise: null as Promise<void> | null,
   currentTrialMinPipelineId: null as number | null,
+  currentTrialExecutionIndex: 0,
 };
-
-function getChildPipelineId(parentPipelineId: number): number {
-  return parentPipelineId + 1;
-}
 
 let originalSettings: {
   RUNNER_TAG: string;
@@ -73,37 +68,14 @@ export function restoreOriginalSettings(): void {
   }
 }
 
-async function* pollPipelineUntilComplete(
-  backend: BackendInterface,
-  pipelineId: number,
-  startTime: number,
-): AsyncGenerator<string, string, unknown> {
-  let status = 'pending';
-  yield status;
-
-  while (!isPipelineCompleted(status)) {
-    if (benchmarkState.shouldStopPipelines) {
-      throw new Error(`Pipeline ${pipelineId} stopped by user.`);
-    }
-    if (hasTimedOut(startTime, MAX_EXECUTION_TIME)) {
-      throw new Error(`Pipeline ${pipelineId} timed out.`);
-    }
-    await delay(PIPELINE_POLL_INTERVAL);
-    try {
-      const newStatus = await backend.getPipelineStatus(
-        backend.getProjectId(),
-        pipelineId,
-      );
-      if (newStatus && newStatus !== status) {
-        status = newStatus;
-        yield status;
-      }
-    } catch {
-      // continue polling
-    }
-  }
-  return status;
-}
+/**
+ * Benchmark execution is intentionally separate from DT DevOps execution.
+ * Benchmark adds batch orchestration, timing, temporary settings overrides,
+ * and fresh backend initialization per execution — requirements that differ
+ * fundamentally from the single-pipeline DT DevOps flow.
+ * Pipeline polling itself is shared via pipelinePolling.ts.
+ */
+const abortOptions = { shouldAbort: () => benchmarkState.shouldStopPipelines };
 
 function updatePipelineStatus(
   pipelineId: number,
@@ -126,7 +98,7 @@ export async function cancelActivePipelines(): Promise<void> {
       await backend.api.cancelPipeline(projectId, pipelineId);
       await backend.api
         .cancelPipeline(projectId, getChildPipelineId(pipelineId))
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       // continue with others
     }
@@ -185,6 +157,9 @@ async function executeDigitalTwinPipeline(
   backend: BackendInterface,
   config: Configuration,
 ): Promise<ExecutionResult> {
+  const executionIndex = benchmarkState.currentTrialExecutionIndex;
+  benchmarkState.currentTrialExecutionIndex += 1;
+
   const digitalTwin = new DigitalTwin(dtName, backend);
   const pipelineId = await digitalTwin.execute(true);
 
@@ -202,21 +177,24 @@ async function executeDigitalTwinPipeline(
     config,
     status: 'pending',
     phase: 'parent',
+    executionIndex,
   });
 
-  const parentGenerator = pollPipelineUntilComplete(
+  const parentGenerator = pollPipelineStatus(
     backend,
     pipelineId,
     startTime,
+    abortOptions,
   );
   await consumeStatusGenerator(parentGenerator, pipelineId, 'parent');
-  await delay(1000);
+  await delay(250);
 
   const childPipelineId = getChildPipelineId(pipelineId);
-  const childGenerator = pollPipelineUntilComplete(
+  const childGenerator = pollPipelineStatus(
     backend,
     childPipelineId,
     startTime,
+    abortOptions,
   );
   const childStatus = await consumeStatusGenerator(
     childGenerator,
@@ -229,6 +207,7 @@ async function executeDigitalTwinPipeline(
     pipelineId,
     status: childStatus,
     config,
+    executionIndex,
   };
 
   benchmarkState.executionResults.push(result);

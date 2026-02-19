@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
-  TextField,
+  IconButton,
   Typography,
   Dialog,
   DialogTitle,
@@ -10,36 +10,108 @@ import {
   DialogContentText,
   DialogActions,
   Tooltip,
+  Link,
 } from '@mui/material';
 import {
   TimedTask,
+  Trial,
   BenchmarkPageHeaderProps,
   CompletionSummaryProps,
   ExecutionCardProps,
   TrialCardProps,
+  Execution,
 } from 'model/backend/gitlab/measure/benchmark.types';
 import {
-  statusColorMap,
   secondsDifference,
-  getExecutionStatusColor,
   getTotalTime,
   downloadResultsJson,
 } from 'model/backend/gitlab/measure/benchmark.runner';
+import { DEFAULT_CONFIG } from 'model/backend/gitlab/measure/benchmark.execution';
+import {
+  statusColorMap,
+  getExecutionStatusColor,
+  runnerTagColors,
+  runnerTagBadge,
+  executionCard,
+  bold,
+  trialCard,
+  trialHeaderRow,
+  trialHeaderLeft,
+  paginationNav,
+  paginationButton,
+  errorBox,
+  downloadLink,
+  pageHeaderBox,
+  pageHeaderRow,
+  controlsBar,
+  controlsButtonGroup,
+  trialsProgress,
+  completionSummary,
+  clickableLink,
+} from 'route/benchmark/benchmark.styles';
+
+export { statusColorMap, getExecutionStatusColor } from 'route/benchmark/benchmark.styles';
+
+export function RunnerTagBadge({
+  runnerTag,
+  variant,
+}: Readonly<{
+  runnerTag: string;
+  variant: 'primary' | 'secondary';
+}>) {
+  const color = runnerTagColors[variant];
+  const tooltipText =
+    variant === 'primary' ? 'Primary runner tag' : 'Secondary runner tag';
+
+  return (
+    <Tooltip title={tooltipText} arrow>
+      <Box
+        component="span"
+        sx={runnerTagBadge(color)}
+      >
+        {runnerTag}
+      </Box>
+    </Tooltip>
+  );
+}
+
+export function getRunnerTags(
+  task: TimedTask,
+  primaryRunnerTag: string,
+  secondaryRunnerTag: string,
+): {
+  primaryTag: string | null;
+  secondaryTag: string | null;
+} {
+  const executions = task.Executions?.() ?? [];
+
+  if (executions.length === 0) {
+    return { primaryTag: primaryRunnerTag, secondaryTag: null };
+  }
+
+  const runnerTags = executions
+    .map((exec) => exec.config['Runner tag'])
+    .filter((tag): tag is string => tag !== undefined);
+
+  if (runnerTags.length === 0) {
+    return { primaryTag: primaryRunnerTag, secondaryTag: null };
+  }
+
+  const uniqueTags = new Set(runnerTags);
+  const usesMultipleRunners = uniqueTags.size > 1;
+
+  return {
+    primaryTag: primaryRunnerTag,
+    secondaryTag: usesMultipleRunners ? secondaryRunnerTag : null,
+  };
+}
 
 export function ExecutionCard({ execution }: Readonly<ExecutionCardProps>) {
   const statusColor = getExecutionStatusColor(execution.status);
 
   return (
-    <Box
-      sx={{
-        mb: 0.5,
-        p: 1,
-        bgcolor: 'grey.100',
-        borderRadius: 1,
-        textAlign: 'center',
-      }}
-    >
-      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+    <Box sx={executionCard}>
+      <Typography variant="body2" sx={bold}>
         {execution.dtName}
         {execution.pipelineId && ` (Pipeline: ${execution.pipelineId})`}
       </Typography>
@@ -53,31 +125,19 @@ export function ExecutionCard({ execution }: Readonly<ExecutionCardProps>) {
   );
 }
 
-export function TrialCard({ trial, trialIndex }: Readonly<TrialCardProps>) {
+export function TrialCard({
+  trial,
+  trialIndex,
+  executions,
+}: Readonly<TrialCardProps & { executions?: Execution[] }>) {
   return (
-    <Box
-      sx={{
-        mb: 1.5,
-        p: 1,
-        border: 1,
-        borderColor: 'grey.300',
-        borderRadius: 1,
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 0.5,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box sx={trialCard}>
+      <Box sx={trialHeaderRow}>
+        <Box sx={trialHeaderLeft}>
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontWeight: 'bold' }}
+            sx={bold}
           >
             Trial {trialIndex + 1}
           </Typography>
@@ -103,24 +163,173 @@ export function TrialCard({ trial, trialIndex }: Readonly<TrialCardProps>) {
             : '—'}
         </Typography>
       </Box>
-      {trial.Execution.length === 0 && trial.Status === 'RUNNING' && (
-        <Typography variant="caption" color="text.secondary">
-          Starting...
-        </Typography>
-      )}
-      {trial.Execution.map((execution) => (
-        <ExecutionCard
-          key={`execution-${execution.dtName}-${execution.pipelineId ?? 'pending'}`}
-          execution={execution}
-        />
-      ))}
+      {trial.Execution.length > 0
+        ? trial.Execution.map((execution) => (
+          <ExecutionCard
+            key={`execution-${execution.dtName}-${execution.pipelineId ?? execution.executionIndex ?? 'pending'}`}
+            execution={execution}
+          />
+        ))
+        : (executions ?? []).map((exp, i) => (
+          <ExecutionCard
+            key={`expected-${exp.dtName}-${i}`}
+            execution={{
+              dtName: exp.dtName,
+              pipelineId: null,
+              status: '—',
+              config: { ...DEFAULT_CONFIG, ...exp.config },
+              executionIndex: i,
+            }}
+          />
+        ))}
       {trial.Error && !trial.Error.message.includes('stopped by user') && (
-        <Box sx={{ mt: 0.5, p: 1, bgcolor: 'error.light', borderRadius: 1 }}>
+        <Box sx={errorBox}>
           <Typography variant="caption" color="error.dark">
             <Typography
               component="span"
               variant="caption"
-              sx={{ fontWeight: 'bold' }}
+              sx={bold}
+            >
+              Error:
+            </Typography>{' '}
+            {trial.Error.message}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+export function PaginatedTrialCard({
+  trials,
+  currentTrial,
+  executions,
+}: Readonly<{
+  trials: Trial[];
+  currentTrial?: Trial;
+  executions?: Execution[];
+}>) {
+  const allTrials = currentTrial ? [...trials, currentTrial] : trials;
+  const [viewIndex, setViewIndex] = useState(allTrials.length - 1);
+  const isFollowing = useRef(true);
+  const prevLength = useRef(allTrials.length);
+
+  useEffect(() => {
+    if (allTrials.length !== prevLength.current) {
+      prevLength.current = allTrials.length;
+      if (isFollowing.current) {
+        setViewIndex(allTrials.length - 1);
+      }
+    }
+  }, [allTrials.length]);
+
+  useEffect(() => {
+    if (allTrials.length === 0) return;
+    const clamped = Math.min(viewIndex, allTrials.length - 1);
+    if (clamped !== viewIndex) {
+      setViewIndex(clamped);
+    }
+  }, [allTrials.length, viewIndex]);
+
+  if (allTrials.length === 0) {
+    return null;
+  }
+
+  const safeIndex = Math.max(0, Math.min(viewIndex, allTrials.length - 1));
+  const trial = allTrials[safeIndex];
+  const canGoBack = safeIndex > 0;
+  const canGoForward = safeIndex < allTrials.length - 1;
+
+  const handleBack = () => {
+    setViewIndex((i) => i - 1);
+    isFollowing.current = false;
+  };
+
+  const handleForward = () => {
+    const nextIndex = safeIndex + 1;
+    setViewIndex(nextIndex);
+    if (nextIndex === allTrials.length - 1) {
+      isFollowing.current = true;
+    }
+  };
+
+  return (
+    <Box sx={trialCard}>
+      <Box sx={trialHeaderRow}>
+        <Box sx={paginationNav}>
+          <IconButton
+            size="small"
+            disabled={!canGoBack}
+            onClick={handleBack}
+            sx={paginationButton}
+            aria-label="Previous trial"
+          >
+            ◀
+          </IconButton>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ ...bold, mx: 0.5 } as const}
+          >
+            Trial {safeIndex + 1}
+          </Typography>
+          <IconButton
+            size="small"
+            disabled={!canGoForward}
+            onClick={handleForward}
+            sx={paginationButton}
+            aria-label="Next trial"
+          >
+            ▶
+          </IconButton>
+          {trial.Status === 'STOPPED' && (
+            <Typography
+              variant="caption"
+              sx={{ color: statusColorMap.STOPPED, ml: 0.5 }}
+            >
+              (stopped)
+            </Typography>
+          )}
+        </Box>
+        <Typography
+          variant="caption"
+          color={
+            trial['Time Start'] && trial['Time End']
+              ? 'text.secondary'
+              : 'text.disabled'
+          }
+        >
+          {trial['Time Start'] && trial['Time End']
+            ? `${secondsDifference(trial['Time Start'], trial['Time End'])?.toFixed(1)}s`
+            : '—'}
+        </Typography>
+      </Box>
+      {trial.Execution.length > 0
+        ? trial.Execution.map((execution) => (
+          <ExecutionCard
+            key={`execution-${execution.dtName}-${execution.pipelineId ?? execution.executionIndex ?? 'pending'}`}
+            execution={execution}
+          />
+        ))
+        : (executions ?? []).map((exp, i) => (
+          <ExecutionCard
+            key={`expected-${exp.dtName}-${i}`}
+            execution={{
+              dtName: exp.dtName,
+              pipelineId: null,
+              status: '—',
+              config: { ...DEFAULT_CONFIG, ...exp.config },
+              executionIndex: i,
+            }}
+          />
+        ))}
+      {trial.Error && !trial.Error.message.includes('stopped by user') && (
+        <Box sx={errorBox}>
+          <Typography variant="caption" color="error.dark">
+            <Typography
+              component="span"
+              variant="caption"
+              sx={bold}
             >
               Error:
             </Typography>{' '}
@@ -139,12 +348,10 @@ export function TaskControls({
   task: TimedTask;
   onDownloadTask: (task: TimedTask) => void;
 }>) {
-  const expectedTrials = task.ExpectedTrials ?? 0;
   const completedTrials = task.Trials.filter(
     (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
   );
-  const canDownload =
-    completedTrials.length >= expectedTrials && expectedTrials > 0;
+  const canDownload = completedTrials.length > 0;
 
   if (!canDownload) {
     return (
@@ -155,40 +362,40 @@ export function TaskControls({
   }
 
   return (
-    <Typography
-      variant="caption"
-      sx={{
-        color: 'primary.main',
-        cursor: 'pointer',
-        textDecoration: 'underline',
-        fontSize: '0.7rem',
-      }}
-      onClick={() => onDownloadTask(task)}
-    >
-      Download Task Results
-    </Typography>
+    <Tooltip title="Download task results as JSON" arrow>
+      <Typography
+        variant="caption"
+        sx={downloadLink}
+        onClick={() => onDownloadTask(task)}
+      >
+        Download Task Results
+      </Typography>
+    </Tooltip>
   );
 }
 
 export function BenchmarkPageHeader() {
   return (
-    <Box sx={{ mb: 3 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 1,
-        }}
-      >
+    <Box sx={pageHeaderBox}>
+      <Box sx={pageHeaderRow}>
         <Typography variant="h5">Digital Twin Benchmark</Typography>
       </Box>
       <Typography variant="body2" color="text.secondary">
-        Run performance benchmarks for Digital Twin executions. Each task runs
-        multiple a number of trials to calculate average time per task. Click
-        Start to begin the benchmark suite, or Stop to cancel running
-        executions. After all tasks are through, you will be able to download a
-        summary.
+        Run performance benchmarks for Digital Twin executions. Each task runs a
+        number of trials to calculate average time per task. Click{' '}
+        <strong>Start</strong> to begin the benchmark suite,{' '}
+        <strong>Stop</strong> to cancel running executions, or{' '}
+        <strong>Purge</strong> to permanently delete all benchmark data from
+        storage. After all tasks are through as well as after each trial completes,
+        you will be able to download a summary.
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        You can change the number of trials and secondary benchmark runner tag
+        in the{' '}
+        <Link href="/account" underline="hover" color="primary">
+          settings
+        </Link>
+        .
       </Typography>
     </Box>
   );
@@ -199,11 +406,9 @@ export function BenchmarkControls({
   hasStarted,
   hasStopped,
   iterations,
-  alternateRunnerTag,
   completedTasks,
+  completedTrials,
   totalTasks,
-  onIterationsChange,
-  onAlternateRunnerTagChange,
   onStart,
   onContinue,
   onRestart,
@@ -215,12 +420,6 @@ export function BenchmarkControls({
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
-
-  const handleIterationsChange = (newValue: number) => {
-    if (newValue >= 1) {
-      onIterationsChange(newValue);
-    }
-  };
 
   const handleStopClick = () => {
     setStopDialogOpen(true);
@@ -294,45 +493,14 @@ export function BenchmarkControls({
         display="flex"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ mb: 3 }}
+        sx={controlsBar}
       >
-        <Typography variant="body1" sx={{ color: 'primary.main' }}>
-          Trials Completed: {completedTasks * iterations}/
+        <Typography variant="body1" sx={trialsProgress}>
+          Trials Completed: {completedTrials}/
           {totalTasks * iterations}
         </Typography>
 
-        <Box display="flex" alignItems="center" gap={1}>
-          <Tooltip title="Number of times each task is repeated to calculate average execution time">
-            <TextField
-              label="Trials"
-              type="number"
-              size="small"
-              value={iterations}
-              onChange={(e) => {
-                const val = Number.parseInt(e.target.value, 10);
-                handleIterationsChange(val);
-              }}
-              disabled={isRunning}
-              slotProps={{
-                htmlInput: { min: 1 },
-                inputLabel: { shrink: true },
-              }}
-              sx={{ width: 80 }}
-            />
-          </Tooltip>
-
-          <Tooltip title="Runner tag used for multi-runner tests. The primary runner tag is configured in Account Settings.">
-            <TextField
-              label="Secondary Runner Tag"
-              size="small"
-              value={alternateRunnerTag}
-              onChange={(e) => onAlternateRunnerTagChange(e.target.value)}
-              disabled={isRunning}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ width: 170 }}
-            />
-          </Tooltip>
-
+        <Box sx={controlsButtonGroup}>
           {getPrimaryButton()}
 
           <Button
@@ -433,17 +601,13 @@ export function CompletionSummary({
 
   if (allComplete && totalTime !== null) {
     return (
-      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+      <Box sx={completionSummary}>
         <Typography variant="body2">
           Completed in {totalTime.toFixed(1)}s |{' '}
           <Typography
             component="span"
             variant="body2"
-            sx={{
-              color: 'primary.main',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
+            sx={clickableLink}
             onClick={() => downloadResultsJson(results)}
           >
             Download JSON
@@ -455,7 +619,7 @@ export function CompletionSummary({
 
   if (isRunning || hasStarted) {
     return (
-      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+      <Box sx={completionSummary}>
         <Typography variant="body2">
           Benchmark data generation in progress
         </Typography>

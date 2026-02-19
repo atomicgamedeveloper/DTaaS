@@ -13,7 +13,7 @@ test.describe('Benchmark Page', () => {
     ).toBeVisible();
 
     // Navigate to benchmark page
-    await page.goto('./admin/measure');
+    await page.goto('./insight/measure');
   });
 
   test('Should navigate to benchmark page successfully', async ({ page }) => {
@@ -21,33 +21,12 @@ test.describe('Benchmark Page', () => {
     await expect(page.locator('text=404 Not Found')).not.toBeVisible();
 
     // Verify correct URL
-    await expect(page).toHaveURL(/admin\/measure/);
+    await expect(page).toHaveURL(/insight\/measure/);
 
     // Verify page title renders (basic smoke test)
     await expect(
       page.getByRole('heading', { name: 'Digital Twin Benchmark' }),
     ).toBeVisible();
-  });
-
-  test('Should update form input values', async ({ page }) => {
-    // Test iterations input
-    const iterationsInput = page.getByLabel('Trials');
-    await iterationsInput.fill('5');
-    await expect(iterationsInput).toHaveValue('5');
-
-    // Change to another value
-    await iterationsInput.fill('10');
-    await expect(iterationsInput).toHaveValue('10');
-
-    // Test secondary runner tag input
-    const runnerTagInput = page.getByLabel('Secondary Runner Tag');
-    await runnerTagInput.fill('custom-runner-tag');
-    await expect(runnerTagInput).toHaveValue('custom-runner-tag');
-
-    // Clear and enter new value
-    await runnerTagInput.fill('');
-    await runnerTagInput.fill('another-tag');
-    await expect(runnerTagInput).toHaveValue('another-tag');
   });
 
   test('Should manage button states correctly', async ({ page }) => {
@@ -68,15 +47,5 @@ test.describe('Benchmark Page', () => {
     await expect(startButton).toBeEnabled();
     await expect(restartButton).toBeDisabled();
     await expect(purgeButton).toBeEnabled();
-  });
-
-  test('Should display tooltip on secondary runner tag hover', async ({
-    page,
-  }) => {
-    const runnerTagInput = page.getByLabel('Secondary Runner Tag');
-    await runnerTagInput.hover();
-
-    // Wait for tooltip to appear
-    await expect(page.getByRole('tooltip')).toBeVisible({ timeout: 3000 });
   });
 });

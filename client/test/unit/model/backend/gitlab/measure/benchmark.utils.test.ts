@@ -1,6 +1,4 @@
 import {
-  statusColorMap,
-  getExecutionStatusColor,
   secondsDifference,
   getTotalTime,
   computeAverageTime,
@@ -9,10 +7,30 @@ import {
   downloadTaskResultJson,
 } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
+  statusColorMap,
+  getExecutionStatusColor,
+} from 'route/benchmark/BenchmarkComponents';
+import {
   createMockTask,
   createMockTrial,
+  createMockExecution,
+  DEFAULT_CONFIG,
   setupMockDownload,
 } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+
+function captureJsonDownload<T>(action: () => void): T {
+  let capturedJson = '';
+  const OriginalBlob = global.Blob;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).Blob = class {
+    constructor(parts: BlobPart[]) {
+      capturedJson = parts[0] as string;
+    }
+  };
+  action();
+  global.Blob = OriginalBlob;
+  return JSON.parse(capturedJson) as T;
+}
 
 describe('benchmark.utils', () => {
   describe('statusColorMap', () => {
@@ -318,6 +336,103 @@ describe('benchmark.utils', () => {
       expect(downloadMocks.mockLink.download).toMatch(
         /^benchmark-task-with-multiple-spaces-/,
       );
+    });
+  });
+
+  describe('JSON structure (splitConfigs)', () => {
+    let downloadMocks: ReturnType<typeof setupMockDownload>;
+
+    beforeEach(() => {
+      downloadMocks = setupMockDownload();
+    });
+
+    afterEach(() => {
+      downloadMocks.restore();
+    });
+
+    it('puts all config fields in sharedConfig when one execution has a uniform config', () => {
+      const trial = createMockTrial({
+        Execution: [createMockExecution({ executionIndex: 0 })],
+      });
+      const task = createMockTask({ Trials: [trial] });
+
+      const result = captureJsonDownload<{
+        task: { sharedConfig: object; Executions: object[] };
+      }>(() => downloadTaskResultJson(task));
+
+      expect(result.task.sharedConfig).toEqual(DEFAULT_CONFIG);
+      expect(result.task.Executions[0]).not.toHaveProperty('config');
+    });
+
+    it('keeps differing runner tags in per-execution config and shares the rest', () => {
+      const config1 = { ...DEFAULT_CONFIG, 'Runner tag': 'linux' };
+      const config2 = { ...DEFAULT_CONFIG, 'Runner tag': 'windows' };
+      const trial = createMockTrial({
+        Execution: [
+          createMockExecution({ executionIndex: 0, config: config1 }),
+          createMockExecution({
+            executionIndex: 1,
+            dtName: 'mass-spring-damper',
+            config: config2,
+          }),
+        ],
+      });
+      const task = createMockTask({ Trials: [trial] });
+
+      const result = captureJsonDownload<{
+        task: {
+          sharedConfig: object;
+          Executions: Array<{ config?: Record<string, string> }>;
+        };
+      }>(() => downloadTaskResultJson(task));
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { 'Runner tag': _tag, ...sharedFields } = DEFAULT_CONFIG;
+      expect(result.task.sharedConfig).toEqual(sharedFields);
+      expect(result.task.Executions[0].config).toEqual({ 'Runner tag': 'linux' });
+      expect(result.task.Executions[1].config).toEqual({ 'Runner tag': 'windows' });
+    });
+
+    it('strips dtName and config from per-trial execution entries', () => {
+      const trial = createMockTrial({
+        Execution: [createMockExecution({ executionIndex: 0, pipelineId: 999 })],
+      });
+      const task = createMockTask({ Trials: [trial] });
+
+      const result = captureJsonDownload<{
+        task: { Trials: Array<{ Execution: object[] }> };
+      }>(() => downloadTaskResultJson(task));
+
+      expect(result.task.Trials[0].Execution[0]).toEqual({
+        executionIndex: 0,
+        pipelineId: 999,
+        status: 'success',
+      });
+    });
+
+    it('produces empty sharedConfig and no Executions when task has no trials', () => {
+      const task = createMockTask({ Trials: [] });
+
+      const result = captureJsonDownload<{
+        task: { sharedConfig: object; Executions?: object[] };
+      }>(() => downloadTaskResultJson(task));
+
+      expect(result.task.sharedConfig).toEqual({});
+      expect(result.task.Executions).toBeUndefined();
+    });
+
+    it('applies the same structure to every task in downloadResultsJson', () => {
+      const trial = createMockTrial({
+        Execution: [createMockExecution({ executionIndex: 0 })],
+      });
+      const task = createMockTask({ Trials: [trial] });
+
+      const result = captureJsonDownload<{
+        tasks: Array<{ sharedConfig: object; Executions: object[] }>;
+      }>(() => downloadResultsJson([task]));
+
+      expect(result.tasks[0].sharedConfig).toEqual(DEFAULT_CONFIG);
+      expect(result.tasks[0].Executions[0]).not.toHaveProperty('config');
     });
   });
 });

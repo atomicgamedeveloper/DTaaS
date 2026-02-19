@@ -1,3 +1,8 @@
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
+
+export type { Configuration } from 'model/backend/gitlab/execution/executionTypes';
+import type { Configuration } from 'model/backend/gitlab/execution/executionTypes';
+
 export type Status =
   | 'NOT_STARTED'
   | 'PENDING'
@@ -6,28 +11,22 @@ export type Status =
   | 'SUCCESS'
   | 'STOPPED';
 
-export type Configuration = {
-  'Branch name': string;
-  'Group name': string;
-  'Common Library project name': string;
-  'DT directory': string;
-  'Runner tag': string;
-};
-
 export type ExecutionResult = {
   dtName: string;
   pipelineId: number | null;
   status: string;
   config: Configuration;
+  executionIndex?: number;
 };
 
 export type ActivePipeline = {
-  backend: import('model/backend/interfaces/backendInterfaces').BackendInterface;
+  backend: BackendInterface;
   pipelineId: number;
   dtName: string;
   config: Configuration;
   status: string;
   phase: 'parent' | 'child';
+  executionIndex?: number;
 };
 
 export type TrialError = { message: string; error: Error } | undefined;
@@ -49,6 +48,11 @@ export type TaskFunction = (
   ) => Promise<ExecutionResult>,
 ) => Promise<ExecutionResult[]>;
 
+export type Execution = {
+  dtName: string;
+  config: Partial<Configuration>;
+};
+
 export type TimedTask = {
   'Task Name': string;
   Description: string;
@@ -57,8 +61,8 @@ export type TimedTask = {
   'Time End': TimeStamp;
   'Average Time (s)': number | undefined;
   Status: Status;
-  Function: TaskFunction;
   ExpectedTrials?: number;
+  Executions?: () => Execution[];
 };
 
 export type BenchmarkSetters = {
@@ -73,11 +77,9 @@ export interface BenchmarkPageHeaderProps {
   hasStarted: boolean;
   hasStopped: boolean;
   iterations: number;
-  alternateRunnerTag: string;
   completedTasks: number;
+  completedTrials: number;
   totalTasks: number;
-  onIterationsChange: (value: number) => void;
-  onAlternateRunnerTagChange: (value: string) => void;
   onStart: () => void;
   onContinue: () => void;
   onRestart: () => void;

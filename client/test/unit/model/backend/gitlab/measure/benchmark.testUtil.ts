@@ -26,7 +26,6 @@ export function createMockTask(overrides: Partial<TimedTask> = {}): TimedTask {
     'Time End': new Date('2026-01-01T10:00:30.000Z'),
     'Average Time (s)': 30,
     Status: 'SUCCESS',
-    Function: async () => [],
     ...overrides,
   };
 }
@@ -42,7 +41,6 @@ export function createMockTaskPending(
     'Time End': undefined,
     'Average Time (s)': undefined,
     Status: 'NOT_STARTED',
-    Function: async () => [],
     ...overrides,
   };
 }
@@ -127,6 +125,7 @@ export function createMockRootState(settings: {
       COMMON_LIBRARY_PROJECT_NAME:
         settings.COMMON_LIBRARY_PROJECT_NAME ?? 'common',
     },
+    benchmark: { trials: 3, secondaryRunnerTag: 'windows' },
     menu: { isOpen: false },
     auth: { userName: '' },
     assets: { items: [] },
@@ -249,31 +248,8 @@ export function createMockTaskForRunner(
     'Time End': undefined,
     'Average Time (s)': undefined,
     Status: 'NOT_STARTED' as const,
-    Function: jest.fn().mockResolvedValue([
-      {
-        dtName: 'hello-world',
-        pipelineId: 1,
-        status: 'success',
-        config: DEFAULT_CONFIG,
-      },
-    ]),
   };
 }
-
-export const STATUS_COLOR_MAP = {
-  NOT_STARTED: '#9e9e9e',
-  PENDING: '#9e9e9e',
-  RUNNING: '#1976d2',
-  FAILURE: '#d32f2f',
-  SUCCESS: '#1976d2',
-  STOPPED: '#616161',
-};
-
-export const EXECUTION_STATUS_COLORS: Record<string, string> = {
-  success: '#1976d2',
-  failed: '#d32f2f',
-  cancelled: '#616161',
-};
 
 export function mockSecondsDifference(
   start: Date | undefined,
@@ -283,17 +259,12 @@ export function mockSecondsDifference(
   return (end.getTime() - start.getTime()) / 1000;
 }
 
-export function mockGetExecutionStatusColor(status: string): string {
-  return EXECUTION_STATUS_COLORS[status] ?? '#9e9e9e';
-}
 
 export function createBenchmarkRunnerMock(
   overrides: Record<string, unknown> = {},
 ) {
   return {
-    statusColorMap: STATUS_COLOR_MAP,
     secondsDifference: jest.fn(mockSecondsDifference),
-    getExecutionStatusColor: jest.fn(mockGetExecutionStatusColor),
     getTotalTime: jest.fn(),
     downloadResultsJson: jest.fn(),
     downloadTaskResultJson: jest.fn(),
@@ -303,8 +274,6 @@ export function createBenchmarkRunnerMock(
     stopAllPipelines: jest.fn().mockResolvedValue(undefined),
     handleBeforeUnload: jest.fn(),
     tasks: [],
-    setTrials: jest.fn(),
-    setAlternateRunnerTag: jest.fn(),
     ...overrides,
   };
 }
@@ -319,6 +288,7 @@ export function createBenchmarkExecutionMock(
       executionResults: [],
       currentMeasurementPromise: null,
       currentTrialMinPipelineId: null,
+      currentTrialExecutionIndex: 0,
     },
     runDigitalTwin: jest.fn(),
     cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
@@ -374,14 +344,6 @@ export function createBenchmarkTasksMock() {
     'Time End': undefined,
     'Average Time (s)': undefined,
     Status: 'NOT_STARTED' as const,
-    Function: jest.fn().mockResolvedValue([
-      {
-        dtName: 'hello-world',
-        pipelineId: 1,
-        status: 'success',
-        config: DEFAULT_CONFIG,
-      },
-    ]),
   });
 
   const tasksArray: TimedTask[] = [
@@ -391,13 +353,11 @@ export function createBenchmarkTasksMock() {
 
   return {
     tasks: tasksArray,
-    benchmarkConfig: {
+    BenchmarkConfig: {
       trials: 3,
       runnerTag1: 'linux',
       runnerTag2: 'windows',
     },
-    setTrials: jest.fn(),
-    setAlternateRunnerTag: jest.fn(),
     resetTasks: jest.fn(() =>
       tasksArray.map((task) => ({
         ...task,
@@ -409,6 +369,5 @@ export function createBenchmarkTasksMock() {
       })),
     ),
     DEFAULT_TASK: createTask('', ''),
-    addTask: jest.fn(),
   };
 }

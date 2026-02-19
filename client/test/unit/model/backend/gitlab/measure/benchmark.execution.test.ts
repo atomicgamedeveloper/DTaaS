@@ -14,6 +14,7 @@ import {
   isPipelineCompleted,
   delay,
   hasTimedOut,
+  getChildPipelineId,
 } from 'model/backend/gitlab/execution/pipelineCore';
 import {
   BRANCH_NAME,
@@ -49,6 +50,7 @@ jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
   isPipelineCompleted: jest.fn(),
   delay: jest.fn().mockResolvedValue(undefined),
   hasTimedOut: jest.fn(),
+  getChildPipelineId: jest.fn((id: number) => id + 1),
 }));
 
 describe('benchmark.execution', () => {
@@ -67,11 +69,15 @@ describe('benchmark.execution', () => {
   const mockHasTimedOut = hasTimedOut as jest.MockedFunction<
     typeof hasTimedOut
   >;
+  const mockGetChildPipelineId = getChildPipelineId as jest.MockedFunction<
+    typeof getChildPipelineId
+  >;
 
   let originalBenchmarkState: typeof benchmarkState;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetChildPipelineId.mockImplementation((id: number) => id + 1);
     originalBenchmarkState = { ...benchmarkState };
     benchmarkState.shouldStopPipelines = false;
     benchmarkState.activePipelines = [];

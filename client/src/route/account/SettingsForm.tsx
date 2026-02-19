@@ -11,6 +11,12 @@ import {
   setBranchName,
 } from 'store/settings.slice';
 import {
+  setTrials,
+  setSecondaryRunnerTag,
+  resetBenchmarkDefaults,
+  DEFAULT_BENCHMARK,
+} from 'store/benchmark.slice';
+import {
   Button,
   TextField,
   Paper,
@@ -33,6 +39,8 @@ const SettingsForm: React.FC = () => {
     RUNNER_TAG,
     BRANCH_NAME,
   } = useSelector((state: RootState) => state.settings);
+  const { trials: BENCHMARK_TRIALS, secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG } =
+    useSelector((state: RootState) => state.benchmark);
 
   // Local state for form values - prevents saving on each keystroke
   const [formValues, setFormValues] = useState({
@@ -41,7 +49,12 @@ const SettingsForm: React.FC = () => {
     commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
     runnerTag: RUNNER_TAG,
     branchName: BRANCH_NAME,
+    benchmarkTrials: String(BENCHMARK_TRIALS),
+    benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
   });
+
+  // Validation state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   // Notification state
   const [showNotification, setShowNotification] = useState(false);
@@ -57,34 +70,28 @@ const SettingsForm: React.FC = () => {
       commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: RUNNER_TAG,
       branchName: BRANCH_NAME,
+      benchmarkTrials: String(BENCHMARK_TRIALS),
+      benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
     });
+    setFieldErrors({});
   }, [
     GROUP_NAME,
     DT_DIRECTORY,
     COMMON_LIBRARY_PROJECT_NAME,
     RUNNER_TAG,
     BRANCH_NAME,
+    BENCHMARK_TRIALS,
+    BENCHMARK_SECONDARY_RUNNER_TAG,
   ]);
 
   // Handle local form changes without dispatching to Redux
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
 
-    setFormValues((prev) => {
-      if (id === 'groupName') {
-        return { ...prev, groupName: value };
-      }
-      if (id === 'dtDirectory') {
-        return { ...prev, dtDirectory: value };
-      }
-      if (id === 'commonLibraryProjectName') {
-        return { ...prev, commonLibraryProjectName: value };
-      }
-      if (id === 'runnerTag') {
-        return { ...prev, runnerTag: value };
-      }
-      return { ...prev, branchName: value };
-    });
+    setFormValues((prev) => ({ ...prev, [id]: value }));
+    if (fieldErrors[id]) {
+      setFieldErrors((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   // Reset form to default values
@@ -95,9 +102,13 @@ const SettingsForm: React.FC = () => {
       commonLibraryProjectName: DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: DEFAULT_SETTINGS.RUNNER_TAG,
       branchName: DEFAULT_SETTINGS.BRANCH_NAME,
+      benchmarkTrials: String(DEFAULT_BENCHMARK.trials),
+      benchmarkSecondaryRunnerTag: DEFAULT_BENCHMARK.secondaryRunnerTag,
     });
+    setFieldErrors({});
 
     dispatch(resetToDefaults());
+    dispatch(resetBenchmarkDefaults());
 
     setNotificationMessage('Settings reset to defaults');
     setShowNotification(true);
@@ -105,6 +116,36 @@ const SettingsForm: React.FC = () => {
 
   // Save all settings at once
   const handleSaveSettings = () => {
+    const requiredStringFields = [
+      'groupName',
+      'dtDirectory',
+      'commonLibraryProjectName',
+      'runnerTag',
+      'branchName',
+      'benchmarkSecondaryRunnerTag',
+    ] as const;
+
+    const errors: Record<string, boolean> = {};
+    for (const field of requiredStringFields) {
+      if (!formValues[field].trim()) {
+        errors[field] = true;
+      }
+    }
+
+    const trialsValue = Number.parseInt(formValues.benchmarkTrials, 10);
+    if (
+      !formValues.benchmarkTrials.trim() ||
+      Number.isNaN(trialsValue) ||
+      trialsValue < 1
+    ) {
+      errors.benchmarkTrials = true;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     if (formValues.groupName !== GROUP_NAME) {
       dispatch(setGroupName(formValues.groupName));
     }
@@ -127,14 +168,26 @@ const SettingsForm: React.FC = () => {
       dispatch(setBranchName(formValues.branchName));
     }
 
+    if (trialsValue !== BENCHMARK_TRIALS) {
+      dispatch(setTrials(trialsValue));
+    }
+
+    if (
+      formValues.benchmarkSecondaryRunnerTag !== BENCHMARK_SECONDARY_RUNNER_TAG
+    ) {
+      dispatch(
+        setSecondaryRunnerTag(formValues.benchmarkSecondaryRunnerTag),
+      );
+    }
+
     setNotificationMessage('Settings saved successfully!');
     setShowNotification(true);
   };
 
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
-      {/* Application Settings Section */}
       <Paper elevation={2} sx={{ p: 3 }}>
+        {/* Application Settings Section */}
         <Typography variant="h6" gutterBottom>
           Application Settings
         </Typography>
@@ -149,7 +202,12 @@ const SettingsForm: React.FC = () => {
               variant="outlined"
               value={formValues.groupName}
               onChange={handleInputChange}
-              helperText="The group name used for GitLab operations"
+              error={fieldErrors.groupName}
+              helperText={
+                fieldErrors.groupName
+                  ? 'Group name is required'
+                  : 'The group name used for GitLab operations'
+              }
             />
           </Grid>
 
@@ -161,7 +219,12 @@ const SettingsForm: React.FC = () => {
               variant="outlined"
               value={formValues.dtDirectory}
               onChange={handleInputChange}
-              helperText="Directory for Digital Twin files"
+              error={fieldErrors.dtDirectory}
+              helperText={
+                fieldErrors.dtDirectory
+                  ? 'DT directory is required'
+                  : 'Directory for Digital Twin files'
+              }
             />
           </Grid>
 
@@ -173,7 +236,12 @@ const SettingsForm: React.FC = () => {
               variant="outlined"
               value={formValues.commonLibraryProjectName}
               onChange={handleInputChange}
-              helperText="Project name for the common library"
+              error={fieldErrors.commonLibraryProjectName}
+              helperText={
+                fieldErrors.commonLibraryProjectName
+                  ? 'Common library project name is required'
+                  : 'Project name for the common library'
+              }
             />
           </Grid>
 
@@ -185,7 +253,12 @@ const SettingsForm: React.FC = () => {
               variant="outlined"
               value={formValues.runnerTag}
               onChange={handleInputChange}
-              helperText="Tag used for GitLab CI runners (e.g., linux, windows)"
+              error={fieldErrors.runnerTag}
+              helperText={
+                fieldErrors.runnerTag
+                  ? 'Runner tag is required'
+                  : 'Tag used for GitLab CI runners (e.g., linux, windows)'
+              }
             />
           </Grid>
 
@@ -197,13 +270,66 @@ const SettingsForm: React.FC = () => {
               variant="outlined"
               value={formValues.branchName}
               onChange={handleInputChange}
-              helperText="Default branch name for GitLab projects"
+              error={fieldErrors.branchName}
+              helperText={
+                fieldErrors.branchName
+                  ? 'Branch name is required'
+                  : 'Default branch name for GitLab projects'
+              }
+            />
+          </Grid>
+        </Grid>
+
+        {/* Benchmark Settings Section */}
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Benchmark Settings
+        </Typography>
+        <Divider sx={{ mb: 3 }} />
+
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              id="benchmarkTrials"
+              label="Trial Number"
+              type="number"
+              variant="outlined"
+              value={formValues.benchmarkTrials}
+              onChange={handleInputChange}
+              error={fieldErrors.benchmarkTrials}
+              helperText={
+                fieldErrors.benchmarkTrials
+                  ? 'Trial number is required and must be at least 1'
+                  : 'Number of times each task is repeated to calculate average execution time'
+              }
+              slotProps={{
+                htmlInput: { min: 1 },
+              }}
             />
           </Grid>
 
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              id="benchmarkSecondaryRunnerTag"
+              label="Benchmark Secondary Runner Tag"
+              variant="outlined"
+              value={formValues.benchmarkSecondaryRunnerTag}
+              onChange={handleInputChange}
+              error={fieldErrors.benchmarkSecondaryRunnerTag}
+              helperText={
+                fieldErrors.benchmarkSecondaryRunnerTag
+                  ? 'Benchmark secondary runner tag is required'
+                  : 'Runner tag used for multi-runner benchmark tests'
+              }
+            />
+          </Grid>
+        </Grid>
+
+        <Grid container>
           <Grid
             size={{ xs: 12 }}
-            sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}
+            sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}
           >
             <Stack direction="row" spacing={2}>
               <Button

@@ -11,7 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from 'store/store';
 import { showSnackbar } from 'store/snackbar.slice';
 import {
   TimedTask,
@@ -19,7 +20,6 @@ import {
   BenchmarkSetters,
 } from 'model/backend/gitlab/measure/benchmark.types';
 import {
-  statusColorMap,
   startMeasurement,
   continueMeasurement,
   restartMeasurement,
@@ -27,19 +27,39 @@ import {
   handleBeforeUnload,
   downloadTaskResultJson,
   tasks,
-  setTrials as setBenchmarkTrials,
-  setAlternateRunnerTag as setBenchmarkRunnerTag,
 } from 'model/backend/gitlab/measure/benchmark.runner';
 import { getBenchmarkStatus } from 'model/backend/gitlab/measure/benchmark.utils';
-import { benchmarkState } from 'model/backend/gitlab/measure/benchmark.execution';
+import {
+  benchmarkState,
+  DEFAULT_CONFIG,
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import measurementDBService from 'database/measurementHistoryDB';
 import {
-  TrialCard,
+  PaginatedTrialCard,
   TaskControls,
   BenchmarkPageHeader,
   BenchmarkControls,
   CompletionSummary,
+  RunnerTagBadge,
+  getRunnerTags,
 } from 'route/benchmark/BenchmarkComponents';
+import {
+  statusColorMap,
+  tableContainer,
+  tableLayout,
+  taskNameColumn,
+  statusColumn,
+  avgDurationColumn,
+  trialsColumn,
+  dataColumn,
+  taskRowNameBox,
+  taskIndex as taskIndexStyle,
+  bold,
+  inlineDisplay,
+  verticalMiddle,
+  contentBox,
+  contentPaper,
+} from 'route/benchmark/benchmark.styles';
 
 function BenchmarkTableRow({
   task,
@@ -47,30 +67,62 @@ function BenchmarkTableRow({
   currentTaskIndex,
   currentExecutions,
   onDownloadTask,
+  primaryRunnerTag,
+  secondaryRunnerTag,
 }: Readonly<{
   task: TimedTask;
   index: number;
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
   onDownloadTask: (task: TimedTask) => void;
+  primaryRunnerTag: string;
+  secondaryRunnerTag: string;
 }>) {
   return (
     <TableRow>
       <TableCell>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+        <Box sx={taskRowNameBox}>
           <Typography
             variant="body2"
             color="grey.500"
-            sx={{ minWidth: '20px', mt: 0.2 }}
+            sx={taskIndexStyle}
           >
             {index + 1}
           </Typography>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="body2" sx={bold}>
               {task['Task Name']}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="div"
+              sx={inlineDisplay}
+            >
               {task.Description}
+              {(() => {
+                const { primaryTag, secondaryTag } = getRunnerTags(
+                  task,
+                  primaryRunnerTag,
+                  secondaryRunnerTag,
+                );
+                return (
+                  <>
+                    {primaryTag && (
+                      <RunnerTagBadge
+                        runnerTag={primaryTag}
+                        variant="primary"
+                      />
+                    )}
+                    {secondaryTag && (
+                      <RunnerTagBadge
+                        runnerTag={secondaryTag}
+                        variant="secondary"
+                      />
+                    )}
+                  </>
+                );
+              })()}
             </Typography>
           </Box>
         </Box>
@@ -88,32 +140,30 @@ function BenchmarkTableRow({
         )}
       </TableCell>
       <TableCell align="center">
-        {(task.Status === 'NOT_STARTED' || task.Status === 'PENDING') && (
+        {task.Status === 'NOT_STARTED' || task.Status === 'PENDING' ? (
           <Typography variant="body1" color="text.disabled">
             —
           </Typography>
-        )}
-        {task.Trials.map((trial, trialIndex) => (
-          <TrialCard
-            key={`trial-${task['Task Name']}-${trial['Time Start']?.toISOString() ?? trialIndex}`}
-            trial={trial}
-            trialIndex={trialIndex}
-          />
-        ))}
-        {index === currentTaskIndex && (
-          <TrialCard
-            trial={{
-              'Time Start': undefined,
-              'Time End': undefined,
-              Execution: currentExecutions,
-              Status: 'RUNNING',
-              Error: undefined,
-            }}
-            trialIndex={task.Trials.length}
+        ) : (
+          <PaginatedTrialCard
+            trials={task.Trials}
+            currentTrial={
+              index === currentTaskIndex &&
+              task.Trials.length < (task.ExpectedTrials ?? Infinity)
+                ? {
+                    'Time Start': undefined,
+                    'Time End': undefined,
+                    Execution: currentExecutions,
+                    Status: 'RUNNING',
+                    Error: undefined,
+                  }
+                : undefined
+            }
+            executions={task.Executions?.()}
           />
         )}
       </TableCell>
-      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+      <TableCell align="center" sx={verticalMiddle}>
         <TaskControls task={task} onDownloadTask={onDownloadTask} />
       </TableCell>
     </TableRow>
@@ -125,36 +175,37 @@ function BenchmarkTable({
   currentTaskIndex,
   currentExecutions,
   onDownloadTask,
+  primaryRunnerTag,
+  secondaryRunnerTag,
 }: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
   onDownloadTask: (task: TimedTask) => void;
+  primaryRunnerTag: string;
+  secondaryRunnerTag: string;
 }>) {
   return (
     <TableContainer
       component={Paper}
-      sx={{
-        maxHeight: '50vh',
-        overflow: 'auto',
-      }}
+      sx={tableContainer}
     >
-      <Table size="small" sx={{ tableLayout: 'fixed' }}>
+      <Table size="small" sx={tableLayout}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '37%', fontWeight: 'bold' }}>
+            <TableCell sx={taskNameColumn}>
               Task
             </TableCell>
-            <TableCell align="center" sx={{ width: '10%', fontWeight: 'bold' }}>
+            <TableCell align="center" sx={statusColumn}>
               Status
             </TableCell>
-            <TableCell align="center" sx={{ width: '15%', fontWeight: 'bold' }}>
+            <TableCell align="center" sx={avgDurationColumn}>
               Average Duration
             </TableCell>
-            <TableCell align="center" sx={{ width: '26%', fontWeight: 'bold' }}>
+            <TableCell align="center" sx={trialsColumn}>
               Trials
             </TableCell>
-            <TableCell align="center" sx={{ width: '12%', fontWeight: 'bold' }}>
+            <TableCell align="center" sx={dataColumn}>
               Data
             </TableCell>
           </TableRow>
@@ -168,6 +219,8 @@ function BenchmarkTable({
               currentTaskIndex={currentTaskIndex}
               currentExecutions={currentExecutions}
               onDownloadTask={onDownloadTask}
+              primaryRunnerTag={primaryRunnerTag}
+              secondaryRunnerTag={secondaryRunnerTag}
             />
           ))}
         </TableBody>
@@ -183,15 +236,14 @@ function BenchmarkContent({
   isRunning,
   hasStopped,
   iterations,
-  alternateRunnerTag,
-  onIterationsChange,
-  onAlternateRunnerTagChange,
   onStart,
   onContinue,
   onRestart,
   onStop,
   onPurge,
   onDownloadTask,
+  primaryRunnerTag,
+  secondaryRunnerTag,
 }: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
@@ -199,34 +251,31 @@ function BenchmarkContent({
   isRunning: boolean;
   hasStopped: boolean;
   iterations: number;
-  alternateRunnerTag: string;
-  onIterationsChange: (value: number) => void;
-  onAlternateRunnerTagChange: (value: string) => void;
   onStart: () => void;
   onContinue: () => void;
   onRestart: () => void;
   onStop: () => void;
   onPurge: () => void;
   onDownloadTask: (task: TimedTask) => void;
+  primaryRunnerTag: string;
+  secondaryRunnerTag: string;
 }>) {
-  const { hasStarted, completedTasks, totalTasks } =
+  const { hasStarted, completedTasks, completedTrials, totalTasks } =
     getBenchmarkStatus(results);
 
   return (
     <Layout sx={{ display: 'flex', justifyContent: 'center' }}>
-      <Box sx={{ width: '100%', p: 3, alignSelf: 'center' }}>
+      <Box sx={contentBox}>
         <BenchmarkPageHeader />
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={contentPaper}>
           <BenchmarkControls
             isRunning={isRunning}
             hasStarted={hasStarted}
             hasStopped={hasStopped}
             iterations={iterations}
-            alternateRunnerTag={alternateRunnerTag}
             completedTasks={completedTasks}
+            completedTrials={completedTrials}
             totalTasks={totalTasks}
-            onIterationsChange={onIterationsChange}
-            onAlternateRunnerTagChange={onAlternateRunnerTagChange}
             onStart={onStart}
             onContinue={onContinue}
             onRestart={onRestart}
@@ -238,6 +287,8 @@ function BenchmarkContent({
             currentTaskIndex={currentTaskIndex}
             currentExecutions={currentExecutions}
             onDownloadTask={onDownloadTask}
+            primaryRunnerTag={primaryRunnerTag}
+            secondaryRunnerTag={secondaryRunnerTag}
           />
           <CompletionSummary
             results={results}
@@ -263,16 +314,20 @@ function areAllBenchmarksComplete(taskResults: TimedTask[]): boolean {
 
 function Benchmark() {
   const dispatch = useDispatch();
+  const { trials: iterations, secondaryRunnerTag: alternateRunnerTag } =
+    useSelector((state: RootState) => state.benchmark);
+  const primaryRunnerTag = useSelector(
+    (state: RootState) => state.settings.RUNNER_TAG,
+  );
   const [results, setResults] = useState<TimedTask[]>(() => [...tasks]);
   const [currentExecutions, setCurrentExecutions] = useState<ExecutionResult[]>(
     [],
   );
   const [currentTaskIndex, setCurrentTaskIndex] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [iterations, setIterations] = useState(3);
-  const [alternateRunnerTag, setAlternateRunnerTag] = useState('windows');
   const isRunningRef = useRef(false);
   const hasShownCompletionSnackbar = useRef(false);
+  const originalPrimaryRunnerTag = useRef(primaryRunnerTag);
 
   const setters: BenchmarkSetters = {
     setIsRunning,
@@ -287,34 +342,74 @@ function Benchmark() {
     if (!isRunning) {
       return undefined;
     }
+    const statusMap: Record<string, string> = {
+      pending: 'starting',
+      created: 'starting',
+      preparing: 'preparing',
+      running: 'running',
+      success: 'successful',
+      failed: 'failed',
+      canceled: 'cancelled',
+      skipped: 'skipped',
+    };
     const interval = setInterval(() => {
-      const statusMap: Record<string, string> = {
-        pending: 'starting',
-        created: 'starting',
-        preparing: 'preparing',
-        running: 'running',
-        success: 'successful',
-        failed: 'failed',
-        canceled: 'cancelled',
-        skipped: 'skipped',
-      };
-      const running: ExecutionResult[] = benchmarkState.activePipelines.map(
-        (execution) => {
-          const phaseName = execution.phase === 'parent' ? 'Parent' : 'Child';
-          const statusText = statusMap[execution.status] ?? execution.status;
+      if (currentTaskIndex === null) return;
+      const task = tasks[currentTaskIndex];
+      const executions = task?.Executions?.() ?? [];
+
+      if (executions.length > 0) {
+        const merged: ExecutionResult[] = executions.map((expected, i) => {
+          const completed = benchmarkState.executionResults.find(
+            (r) => r.executionIndex === i,
+          );
+          if (completed) return completed;
+
+          const active = benchmarkState.activePipelines.find(
+            (p) => p.executionIndex === i,
+          );
+          if (active) {
+            const phaseName = active.phase === 'parent' ? 'Parent' : 'Child';
+            const statusText = statusMap[active.status] ?? active.status;
+            return {
+              dtName: active.dtName,
+              pipelineId: active.pipelineId,
+              status: `${phaseName} pipeline ${statusText}`,
+              config: active.config,
+              executionIndex: i,
+            };
+          }
+
           return {
-            dtName: execution.dtName,
-            pipelineId: execution.pipelineId,
-            status: `${phaseName} pipeline ${statusText}`,
-            config: execution.config,
+            dtName: expected.dtName,
+            pipelineId: null,
+            status: '—',
+            config: { ...DEFAULT_CONFIG, ...expected.config },
+            executionIndex: i,
           };
-        },
-      );
-      setCurrentExecutions([...benchmarkState.executionResults, ...running]);
+        });
+        setCurrentExecutions(merged);
+      } else {
+        const completedIds = new Set(
+          benchmarkState.executionResults.map((r) => r.pipelineId),
+        );
+        const running: ExecutionResult[] = benchmarkState.activePipelines
+          .filter((p) => !completedIds.has(p.pipelineId))
+          .map((execution) => {
+            const phaseName = execution.phase === 'parent' ? 'Parent' : 'Child';
+            const statusText = statusMap[execution.status] ?? execution.status;
+            return {
+              dtName: execution.dtName,
+              pipelineId: execution.pipelineId,
+              status: `${phaseName} pipeline ${statusText}`,
+              config: execution.config,
+            };
+          });
+        setCurrentExecutions([...benchmarkState.executionResults, ...running]);
+      }
     }, 500);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, currentTaskIndex]);
 
   useEffect(() => {
     const onBeforeUnload = () => handleBeforeUnload(isRunningRef);
@@ -339,22 +434,19 @@ function Benchmark() {
   }, [results, dispatch]);
 
   const handleStart = () => {
-    setBenchmarkTrials(iterations);
-    setBenchmarkRunnerTag(alternateRunnerTag);
+    originalPrimaryRunnerTag.current = primaryRunnerTag;
     dispatch(showSnackbar({ message: 'Benchmark started', severity: 'info' }));
     return startMeasurement(setters, isRunningRef);
   };
 
   const handleContinue = () => {
-    setBenchmarkTrials(iterations);
-    setBenchmarkRunnerTag(alternateRunnerTag);
+    originalPrimaryRunnerTag.current = primaryRunnerTag;
     dispatch(showSnackbar({ message: 'Benchmark resumed', severity: 'info' }));
     return continueMeasurement(setters, isRunningRef, results);
   };
 
   const handleRestart = () => {
-    setBenchmarkTrials(iterations);
-    setBenchmarkRunnerTag(alternateRunnerTag);
+    originalPrimaryRunnerTag.current = primaryRunnerTag;
     hasShownCompletionSnackbar.current = false;
     dispatch(
       showSnackbar({ message: 'Benchmark restarted', severity: 'info' }),
@@ -386,15 +478,14 @@ function Benchmark() {
       isRunning={isRunning}
       hasStopped={hasStopped}
       iterations={iterations}
-      alternateRunnerTag={alternateRunnerTag}
-      onIterationsChange={setIterations}
-      onAlternateRunnerTagChange={setAlternateRunnerTag}
       onStart={handleStart}
       onContinue={handleContinue}
       onRestart={handleRestart}
       onStop={handleStop}
       onPurge={handlePurge}
       onDownloadTask={downloadTaskResultJson}
+      primaryRunnerTag={isRunning ? originalPrimaryRunnerTag.current : primaryRunnerTag}
+      secondaryRunnerTag={alternateRunnerTag}
     />
   );
 }

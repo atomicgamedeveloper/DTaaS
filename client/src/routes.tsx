@@ -84,7 +84,7 @@ export const routes = [
     ),
   },
   {
-    path: 'admin/measure',
+    path: 'insight/measure',
     element: (
       <PrivateRoute>
         <Benchmark />

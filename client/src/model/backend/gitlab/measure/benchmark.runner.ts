@@ -1,8 +1,7 @@
 /* eslint-disable no-await-in-loop */
-import { delay } from 'model/backend/gitlab/execution/pipelineCore';
+import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import measurementDBService from 'database/measurementHistoryDB';
 import {
-  ExecutionResult,
   TimedTask,
   BenchmarkSetters,
   Status,
@@ -10,7 +9,6 @@ import {
 } from 'model/backend/gitlab/measure/benchmark.types';
 import {
   benchmarkState,
-  runDigitalTwin,
   cancelActivePipelines,
   saveOriginalSettings,
   restoreOriginalSettings,
@@ -20,14 +18,13 @@ import {
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
-  benchmarkConfig,
+  BenchmarkConfig,
   resetTasks,
   tasks,
 } from 'model/backend/gitlab/measure/benchmark.tasks';
+import { runTrials } from 'model/backend/gitlab/measure/benchmark.trials';
 
 export {
-  statusColorMap,
-  getExecutionStatusColor,
   secondsDifference,
   getTotalTime,
   downloadResultsJson,
@@ -35,10 +32,7 @@ export {
 } from 'model/backend/gitlab/measure/benchmark.utils';
 export {
   tasks,
-  setTrials,
-  setAlternateRunnerTag,
   DEFAULT_TASK as DEFAULT_MEASUREMENT,
-  addTask as addNewTimedTask,
 } from 'model/backend/gitlab/measure/benchmark.tasks';
 
 let isRestarting = false;
@@ -55,105 +49,6 @@ function createTaskUpdater(
       ),
     );
   };
-}
-
-function createTrialFromExecution(
-  trialStart: Date,
-  executions: ExecutionResult[],
-): Trial {
-  const hasFailure = executions.some((exec) => exec.status === 'failed');
-  return {
-    'Time Start': trialStart,
-    'Time End': new Date(),
-    Execution: executions,
-    Status: hasFailure ? 'FAILURE' : 'SUCCESS',
-    Error: undefined,
-  };
-}
-
-function createTrialFromError(
-  trialStart: Date,
-  caughtError: unknown,
-  wasStopped: boolean,
-): Trial {
-  const errorMessage =
-    caughtError instanceof Error ? caughtError.message : String(caughtError);
-  const error =
-    caughtError instanceof Error ? caughtError : new Error(String(caughtError));
-
-  const minPipelineId = benchmarkState.currentTrialMinPipelineId ?? 0;
-
-  const capturedExecutions: ExecutionResult[] = [
-    ...benchmarkState.executionResults.filter(
-      (result) =>
-        result.pipelineId !== null && result.pipelineId >= minPipelineId,
-    ),
-    ...benchmarkState.activePipelines
-      .filter((pipeline) => pipeline.pipelineId >= minPipelineId)
-      .map((pipeline) => ({
-        dtName: pipeline.dtName,
-        pipelineId: pipeline.pipelineId,
-        status: 'cancelled',
-        config: pipeline.config,
-      })),
-  ];
-
-  return {
-    'Time Start': trialStart,
-    'Time End': wasStopped ? undefined : new Date(),
-    Execution: capturedExecutions,
-    Status: wasStopped ? 'STOPPED' : 'FAILURE',
-    Error: wasStopped ? undefined : { message: errorMessage, error },
-  };
-}
-
-async function runTrials(
-  currentTask: TimedTask,
-  existingTrials: Trial[],
-  updateTrials: (trials: Trial[]) => void,
-): Promise<Trial[]> {
-  const trials: Trial[] = [...existingTrials];
-  const startTrialNumber = existingTrials.length;
-  const targetTrials = benchmarkConfig.trials;
-
-  for (
-    let trialNumber = startTrialNumber;
-    trialNumber < targetTrials;
-    trialNumber += 1
-  ) {
-    if (benchmarkState.shouldStopPipelines) {
-      break;
-    }
-
-    if (trialNumber > 0) {
-      await delay(1000);
-    }
-
-    benchmarkState.executionResults = [];
-    benchmarkState.activePipelines = [];
-    benchmarkState.currentTrialMinPipelineId = null;
-    const trialStart = new Date();
-
-    try {
-      const executions = await currentTask.Function(runDigitalTwin);
-      trials.push(createTrialFromExecution(trialStart, executions));
-    } catch (caughtError) {
-      const errorMessage =
-        caughtError instanceof Error
-          ? caughtError.message
-          : String(caughtError);
-      const wasStopped =
-        benchmarkState.shouldStopPipelines ||
-        errorMessage.includes('stopped by user');
-
-      trials.push(createTrialFromError(trialStart, caughtError, wasStopped));
-    }
-
-    benchmarkState.executionResults = [];
-    updateTrials([...trials]);
-  }
-
-  return trials;
 }
 
 async function executeTask(
@@ -177,11 +72,13 @@ async function executeTask(
   updateTask(taskIndex, {
     ...timeStartUpdate,
     Status: 'RUNNING',
-    ExpectedTrials: benchmarkConfig.trials,
+    ExpectedTrials: BenchmarkConfig.trials,
   });
 
+  const taskExecutions = currentTask.Executions?.() ?? [];
   const trials = await runTrials(
-    currentTask,
+    taskExecutions,
+    BenchmarkConfig.trials,
     existingTrials,
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
@@ -191,7 +88,7 @@ async function executeTask(
 
   const finalStatus = computeFinalStatus(
     trials,
-    benchmarkConfig.trials,
+    BenchmarkConfig.trials,
     benchmarkState.shouldStopPipelines,
   );
   const averageTime = computeAverageTime(trials);
@@ -216,7 +113,6 @@ async function executeTask(
 
   if (finalStatus === 'SUCCESS' && measurementDBService) {
     try {
-      // Create a copy without the Function property for IndexedDB storage
       const taskToSave = {
         'Task Name': completedTask['Task Name'],
         Description: completedTask.Description,
@@ -306,6 +202,7 @@ export async function continueMeasurement(
 
   benchmarkState.executionResults = [];
   benchmarkState.activePipelines = [];
+  benchmarkState.currentTrialExecutionIndex = 0;
   setters.setCurrentExecutions([]);
   setters.setCurrentTaskIndex(null);
 
@@ -385,10 +282,6 @@ export async function restartMeasurement(
   }
 }
 
-function getChildPipelineId(parentPipelineId: number): number {
-  return parentPipelineId + 1;
-}
-
 export function handleBeforeUnload(
   isRunningRef: React.MutableRefObject<boolean>,
 ): void {
@@ -397,10 +290,10 @@ export function handleBeforeUnload(
     for (const { backend, pipelineId } of benchmarkState.activePipelines) {
       try {
         const projectId = backend.getProjectId();
-        backend.api.cancelPipeline(projectId, pipelineId).catch(() => {});
+        backend.api.cancelPipeline(projectId, pipelineId).catch(() => { });
         backend.api
           .cancelPipeline(projectId, getChildPipelineId(pipelineId))
-          .catch(() => {});
+          .catch(() => { });
       } catch {
         // ignore
       }

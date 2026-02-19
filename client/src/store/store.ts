@@ -12,6 +12,7 @@ import cartSlice from 'preview/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
+import benchmarkSlice from 'store/benchmark.slice';
 import indexedDBService from 'database/executionHistoryDB';
 
 setStorageService(indexedDBService);
@@ -19,6 +20,11 @@ setStorageService(indexedDBService);
 const loadSettings = () => {
   const serializedSettings = localStorage.getItem('settings');
   return serializedSettings ? JSON.parse(serializedSettings) : undefined;
+};
+
+const loadBenchmark = () => {
+  const serializedBenchmark = localStorage.getItem('benchmark');
+  return serializedBenchmark ? JSON.parse(serializedBenchmark) : undefined;
 };
 
 const rootReducer = combineReducers({
@@ -31,6 +37,7 @@ const rootReducer = combineReducers({
   cart: cartSlice,
   libraryConfigFiles: libraryConfigFilesSlice,
   settings: settingsSlice,
+  benchmark: benchmarkSlice,
   executionHistory: executionHistorySlice,
 });
 
@@ -42,10 +49,16 @@ const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
     typeof action === 'object' &&
     'type' in action &&
     typeof action.type === 'string' &&
-    action.type.startsWith('settings/')
+    (action.type.startsWith('settings/') ||
+      action.type.startsWith('benchmark/'))
   ) {
     const state = store.getState();
-    localStorage.setItem('settings', JSON.stringify(state.settings));
+    if (action.type.startsWith('settings/')) {
+      localStorage.setItem('settings', JSON.stringify(state.settings));
+    }
+    if (action.type.startsWith('benchmark/')) {
+      localStorage.setItem('benchmark', JSON.stringify(state.benchmark));
+    }
   }
 
   return result;
@@ -53,7 +66,7 @@ const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
 
 const store = configureStore({
   reducer: rootReducer,
-  preloadedState: { settings: loadSettings() },
+  preloadedState: { settings: loadSettings(), benchmark: loadBenchmark() },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

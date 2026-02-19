@@ -15,6 +15,7 @@ import {
   setRunnerTag,
   setBranchName,
 } from 'store/settings.slice';
+import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 
@@ -34,7 +35,7 @@ describe('SettingsForm', () => {
 
   beforeEach(() => {
     mockedUseSelector.mockImplementation((selector) =>
-      selector({ settings: DEFAULT_SETTINGS }),
+      selector({ settings: DEFAULT_SETTINGS, benchmark: DEFAULT_BENCHMARK }),
     );
     mockedUseDispatch.mockReturnValue(mockDispatch);
     renderWithRouter(<SettingsForm />, { route: '/private' });
@@ -44,7 +45,7 @@ describe('SettingsForm', () => {
     expect(screen.getByLabelText(/group name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/dt directory/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/common library/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/runner tag/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^runner tag$/i)).toBeInTheDocument();
   });
 
   it('updates local state on input change', () => {
@@ -61,7 +62,7 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: 'new-common-library' } });
     input = screen.getByLabelText(/dt directory/i);
     fireEvent.change(input, { target: { value: 'new-dt-directory' } });
-    input = screen.getByLabelText(/runner tag/i);
+    input = screen.getByLabelText(/^runner tag$/i);
     fireEvent.change(input, { target: { value: 'new-runner-tag' } });
     input = screen.getByLabelText(/branch name/i);
     fireEvent.change(input, { target: { value: 'new-branch-name' } });

@@ -1,9 +1,8 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { setupIntegrationTest } from 'test/integration/integration.testUtil';
 import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
-const setup = () => setupIntegrationTest('/admin/measure');
+const setup = () => setupIntegrationTest('/insight/measure');
 
 describe('Benchmark Page', () => {
   beforeEach(async () => {
@@ -60,35 +59,6 @@ describe('Benchmark Page', () => {
     expect(screen.getByRole('button', { name: 'Purge' })).toBeInTheDocument();
   });
 
-  it('displays iterations input field', async () => {
-    const iterationsInput = screen.getByLabelText('Trials');
-    expect(iterationsInput).toBeInTheDocument();
-    expect(iterationsInput).toHaveValue(3);
-  });
-
-  it('displays secondary runner tag input field', async () => {
-    const runnerTagInput = screen.getByLabelText('Secondary Runner Tag');
-    expect(runnerTagInput).toBeInTheDocument();
-  });
-
-  it('allows changing the iterations value', async () => {
-    const iterationsInput = screen.getByLabelText('Trials');
-
-    await userEvent.tripleClick(iterationsInput);
-    await userEvent.keyboard('5');
-
-    expect(iterationsInput).toHaveValue(5);
-  });
-
-  it('allows changing the secondary runner tag value', async () => {
-    const runnerTagInput = screen.getByLabelText('Secondary Runner Tag');
-
-    await userEvent.clear(runnerTagInput);
-    await userEvent.type(runnerTagInput, 'custom-runner');
-
-    expect(runnerTagInput).toHaveValue('custom-runner');
-  });
-
   it('disables Restart button when benchmark has not started', async () => {
     const restartButton = screen.getByRole('button', { name: 'Restart' });
     expect(restartButton).toBeDisabled();
@@ -120,33 +90,5 @@ describe('Benchmark Page', () => {
         /Run performance benchmarks for Digital Twin executions/,
       ),
     ).toBeInTheDocument();
-  });
-
-  it('shows tooltip when hovering over iterations input', async () => {
-    const iterationsInput = screen.getByLabelText('Trials');
-
-    await userEvent.hover(iterationsInput);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('tooltip', {
-          name: /Number of times each task is repeated/,
-        }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('shows tooltip when hovering over secondary runner tag input', async () => {
-    const runnerTagInput = screen.getByLabelText('Secondary Runner Tag');
-
-    await userEvent.hover(runnerTagInput);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('tooltip', {
-          name: /Runner tag used for multi-runner tests/,
-        }),
-      ).toBeInTheDocument();
-    });
   });
 });
