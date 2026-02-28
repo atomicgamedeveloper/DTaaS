@@ -6,10 +6,8 @@ import {
   Trial,
   Execution,
 } from 'model/backend/gitlab/measure/benchmark.types';
-import {
-  benchmarkState,
-  runDigitalTwin,
-} from 'model/backend/gitlab/measure/benchmark.execution';
+import { benchmarkState } from 'model/backend/gitlab/measure/benchmark.execution';
+import { runDigitalTwin } from 'model/backend/gitlab/measure/benchmark.pipeline';
 
 export function createTrialFromExecution(
   trialStart: Date,

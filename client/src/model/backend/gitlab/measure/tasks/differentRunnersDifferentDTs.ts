@@ -1,5 +1,5 @@
-import { TaskDefinition } from './taskDefinition';
 import BenchmarkConfig from 'model/backend/gitlab/measure/benchmarkConfig';
+import { TaskDefinition } from './taskDefinition';
 
 const differentRunnersDifferentDTs: TaskDefinition = {
   name: 'Different Runners different Digital Twins',

@@ -1,23 +1,27 @@
 import {
-  startMeasurement,
-  stopAllPipelines,
-} from 'model/backend/gitlab/measure/benchmark.runner';
+  continueMeasurement,
+  restartMeasurement,
+  handleBeforeUnload,
+} from 'model/backend/gitlab/measure/benchmark.lifecycle';
 import {
   benchmarkState,
-  saveOriginalSettings,
   restoreOriginalSettings,
+  DEFAULT_CONFIG,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
-import { delay } from 'model/backend/gitlab/execution/pipelineCore';
 import {
   BenchmarkConfig as BenchmarkConfigOriginal,
   tasks,
+  resetTasks,
 } from 'model/backend/gitlab/measure/benchmark.tasks';
 import {
   BenchmarkSetters,
   TimedTask,
+  Trial,
   ExecutionResult,
+  Configuration,
 } from 'model/backend/gitlab/measure/benchmark.types';
+import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import { createMockSetters } from './benchmark.testUtil';
 
 const BenchmarkConfig = BenchmarkConfigOriginal as {
@@ -41,7 +45,6 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   };
   return {
     benchmarkState: bs,
-    runDigitalTwin: jest.fn(),
     saveOriginalSettings: jest.fn(),
     restoreOriginalSettings: jest.fn(),
     attachSetters: jest.fn((s: BenchmarkSetters) => {
@@ -74,6 +77,9 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   };
 });
 
+jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
+  cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
   delay: jest.fn().mockResolvedValue(undefined),
   getChildPipelineId: jest.fn((id: number) => id + 1),
@@ -83,10 +89,6 @@ jest.mock('model/backend/gitlab/execution/statusChecking', () => ({
     (s: string) =>
       s.toLowerCase() === 'failed' || s.toLowerCase() === 'skipped',
   ),
-}));
-jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
-  runDigitalTwin: jest.fn(),
-  cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('database/measurementHistoryDB', () => ({
   __esModule: true,
@@ -127,7 +129,14 @@ jest.mock('model/backend/gitlab/measure/benchmark.tasks', () => {
 
 interface TestBenchmarkState {
   shouldStopPipelines: boolean;
-  activePipelines: unknown[];
+  activePipelines: Array<{
+    backend: BackendInterface;
+    pipelineId: number;
+    dtName: string;
+    config: Configuration;
+    status: string;
+    phase: 'parent' | 'child';
+  }>;
   executionResults: unknown[];
   currentMeasurementPromise: Promise<void> | null;
   currentTrialMinPipelineId: number | null;
@@ -137,7 +146,7 @@ interface TestBenchmarkState {
   _componentSetters: BenchmarkSetters | null;
 }
 
-describe('benchmark.runner', () => {
+describe('benchmark.lifecycle', () => {
   const state = benchmarkState as unknown as TestBenchmarkState;
 
   let setters: BenchmarkSetters;
@@ -181,90 +190,113 @@ describe('benchmark.runner', () => {
     initResults();
   });
 
-  it('should not start if already running', async () => {
+  it('should not continue if running or no tasks need continuation', async () => {
     BenchmarkConfig.trials = 1;
+    initResults();
     isRunningRef.current = true;
-    await startMeasurement(setters, isRunningRef);
+    await continueMeasurement(setters, isRunningRef, resultsRef.current);
+    expect(setters.setIsRunning).not.toHaveBeenCalled();
+
+    isRunningRef.current = false;
+    resultsRef.current = resultsRef.current.map((t) => ({
+      ...t,
+      Status: 'SUCCESS' as const,
+    }));
+    await continueMeasurement(setters, isRunningRef, resultsRef.current);
     expect(setters.setIsRunning).not.toHaveBeenCalled();
   });
 
-  it('should manage lifecycle and iterate through tasks', async () => {
+  it('should continue from STOPPED task preserving completed trials', async () => {
     BenchmarkConfig.trials = 1;
-    await startMeasurement(setters, isRunningRef);
-    expect(setters.setIsRunning).toHaveBeenCalledWith(true);
-    expect(saveOriginalSettings).toHaveBeenCalled();
-    expect(restoreOriginalSettings).toHaveBeenCalled();
-    expect(isRunningRef.current).toBe(false);
-  });
-
-  it('should start from specified index and handle stop flag', async () => {
-    BenchmarkConfig.trials = 1;
-    await startMeasurement(setters, isRunningRef, 1);
-
-    state.shouldStopPipelines = true;
-    await startMeasurement(setters, isRunningRef);
-  });
-
-  it('should transition NOT_STARTED to PENDING and run multiple trials', async () => {
-    BenchmarkConfig.trials = 2;
-    resultsRef.current = resultsRef.current.map((t) => ({
-      ...t,
-      Status: 'NOT_STARTED' as const,
-    }));
-    await startMeasurement(setters, isRunningRef);
-    expect(setters.setResults).toHaveBeenCalled();
-    expect(delay).toHaveBeenCalled();
-  });
-
-  it('should stop pipelines and update statuses', async () => {
+    initResults();
+    const trial: Trial = {
+      'Time Start': new Date(),
+      'Time End': new Date(),
+      Execution: [],
+      Status: 'SUCCESS',
+      Error: undefined,
+    };
     resultsRef.current = [
-      { ...resultsRef.current[0], Status: 'RUNNING' },
-      { ...resultsRef.current[1], Status: 'PENDING' },
-    ];
-    await stopAllPipelines();
-    expect(state.shouldStopPipelines).toBe(true);
-    expect(cancelActivePipelines).toHaveBeenCalled();
-    expect(setters.setResults).toHaveBeenCalled();
-  });
-
-  it('should create trials with SUCCESS/FAILURE status based on results', async () => {
-    BenchmarkConfig.trials = 1;
-    await startMeasurement(setters, isRunningRef);
-    expect(setters.setResults).toHaveBeenCalled();
-  });
-
-  it('should create STOPPED trial and capture pipelines on user stop', async () => {
-    BenchmarkConfig.trials = 1;
-    state.currentTrialMinPipelineId = 100;
-    state.executionResults = [
       {
-        dtName: 'dt',
-        pipelineId: 100,
-        status: 'success',
-        config: {
-          'Branch name': 'main',
-          'Group name': 'dtaas',
-          'Common Library project name': 'common',
-          'DT directory': 'digital_twins',
-          'Runner tag': 'linux',
-        },
+        ...resultsRef.current[0],
+        Status: 'STOPPED',
+        Trials: [trial, { ...trial, Status: 'STOPPED', 'Time End': undefined }],
       },
     ];
-    state.shouldStopPipelines = true;
-    await startMeasurement(setters, isRunningRef);
+    await continueMeasurement(setters, isRunningRef, resultsRef.current);
+    expect(state.currentMeasurementPromise).not.toBeNull();
     expect(setters.setResults).toHaveBeenCalled();
   });
 
-  it('should handle errors and continue to next task', async () => {
+  it('should cancel, restore settings, wait for promise and reset state', async () => {
     BenchmarkConfig.trials = 1;
-    await startMeasurement(setters, isRunningRef);
-    expect(setters.setResults).toHaveBeenCalled();
+    let resolve: () => void = () => {};
+    state.currentMeasurementPromise = new Promise((r) => {
+      resolve = r;
+    });
+    const promise = restartMeasurement(setters, isRunningRef);
+    resolve();
+    await promise;
+    expect(cancelActivePipelines).toHaveBeenCalled();
+    expect(restoreOriginalSettings).toHaveBeenCalled();
+    expect(resetTasks).toHaveBeenCalled();
   });
 
-  it('should break trial loop when shouldStopPipelines becomes true', async () => {
-    BenchmarkConfig.trials = 3;
-    state.shouldStopPipelines = false;
-    await startMeasurement(setters, isRunningRef);
-    expect(setters.setResults).toHaveBeenCalled();
+  it('should not restart if already restarting', async () => {
+    BenchmarkConfig.trials = 1;
+    await Promise.all([
+      restartMeasurement(setters, isRunningRef),
+      restartMeasurement(setters, isRunningRef),
+    ]);
+    expect(cancelActivePipelines).toHaveBeenCalledTimes(1);
+  });
+
+  it('should do nothing if not running or no active pipelines', () => {
+    handleBeforeUnload(isRunningRef);
+    expect(state.shouldStopPipelines).toBe(false);
+    isRunningRef.current = true;
+    handleBeforeUnload(isRunningRef);
+    expect(state.shouldStopPipelines).toBe(false);
+  });
+
+  it('should cancel pipelines and handle errors gracefully', () => {
+    isRunningRef.current = true;
+    const cancelFn = jest.fn().mockReturnValue({ catch: jest.fn() });
+    state.activePipelines = [
+      {
+        backend: {
+          getProjectId: () => 1,
+          api: { cancelPipeline: cancelFn },
+        } as unknown as BackendInterface,
+        pipelineId: 100,
+        dtName: 'test',
+        config: DEFAULT_CONFIG,
+        status: 'running',
+        phase: 'parent',
+      },
+    ];
+    handleBeforeUnload(isRunningRef);
+    expect(state.shouldStopPipelines).toBe(true);
+    expect(cancelFn).toHaveBeenCalledWith(1, 100);
+
+    resetState();
+    isRunningRef.current = true;
+    state.activePipelines = [
+      {
+        backend: {
+          getProjectId: () => {
+            throw new Error('Mock getProjectId error');
+          },
+          api: { cancelPipeline: jest.fn() },
+        } as unknown as BackendInterface,
+        pipelineId: 100,
+        dtName: 'test',
+        config: DEFAULT_CONFIG,
+        status: 'running',
+        phase: 'parent',
+      },
+    ];
+    expect(() => handleBeforeUnload(isRunningRef)).not.toThrow();
+    expect(restoreOriginalSettings).toHaveBeenCalled();
   });
 });

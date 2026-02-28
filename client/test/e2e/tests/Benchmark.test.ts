@@ -48,4 +48,45 @@ test.describe('Benchmark Page', () => {
     await expect(restartButton).toBeDisabled();
     await expect(purgeButton).toBeEnabled();
   });
+
+  test('Should remain running after navigating to settings and back, then stop', async ({
+    page,
+  }) => {
+    // Start the benchmark
+    await page.getByRole('button', { name: 'Start', exact: true }).click();
+
+    // Verify benchmark is running (Stop button replaces Start)
+    await expect(
+      page.getByRole('button', { name: 'Stop', exact: true }),
+    ).toBeVisible();
+
+    // Navigate to Settings
+    await page.getByLabel('Open settings').click();
+    await page.getByRole('menuitem', { name: 'Account' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Save Settings' }),
+    ).toBeVisible();
+
+    // Return to benchmark page using browser back (avoids full reload that resets module state)
+    await page.goBack();
+    await expect(page).toHaveURL(/insight\/measure/);
+
+    // Verify benchmark is still running
+    await expect(
+      page.getByRole('button', { name: 'Stop', exact: true }),
+    ).toBeVisible();
+
+    // Stop the benchmark
+    await page.getByRole('button', { name: 'Stop', exact: true }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Stop' })
+      .click();
+
+    // Verify benchmark has stopped (Stop button replaced by Start or Continue)
+    await expect(
+      page.getByRole('button', { name: 'Stop', exact: true }),
+    ).not.toBeVisible();
+  });
 });

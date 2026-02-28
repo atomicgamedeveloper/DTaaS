@@ -1,9 +1,15 @@
 import {
   TimedTask,
   Status,
-  Configuration,
   ExecutionResult,
+  ActivePipeline,
+  Execution,
+  Configuration,
 } from 'model/backend/gitlab/measure/benchmark.types';
+
+function round3(value: number | undefined | null): number | undefined | null {
+  return value != null ? parseFloat(value.toFixed(3)) : value;
+}
 
 export function secondsDifference(
   startTime: Date | undefined,
@@ -30,7 +36,7 @@ export function getTotalTime(results: TimedTask[]): number | null {
   );
   const lastEnd = Math.max(...endTimes.map((duration) => duration.getTime()));
 
-  return (lastEnd - firstStart) / 1000;
+  return round3((lastEnd - firstStart) / 1000) as number;
 }
 
 function timestampSlug(): string {
@@ -49,60 +55,29 @@ function triggerJsonDownload(data: unknown, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-function splitConfigs(executions: ExecutionResult[]): {
-  sharedConfig: Partial<Configuration>;
-  perExecution: { executionIndex: number | undefined; dtName: string; config?: Partial<Configuration> }[];
-} {
-  if (executions.length === 0) {
-    return { sharedConfig: {}, perExecution: [] };
-  }
-
-  const allKeys = Object.keys(executions[0].config) as (keyof Configuration)[];
-
-  const sharedConfig: Partial<Configuration> = {};
-  const varyingKeys: (keyof Configuration)[] = [];
-
-  for (const key of allKeys) {
-    const firstValue = executions[0].config[key];
-    if (executions.every((e) => e.config[key] === firstValue)) {
-      sharedConfig[key] = firstValue;
-    } else {
-      varyingKeys.push(key);
-    }
-  }
-
-  const perExecution = executions.map(({ executionIndex, dtName, config }) => {
-    if (varyingKeys.length === 0) {
-      return { executionIndex, dtName };
-    }
-    const specificConfig = Object.fromEntries(
-      varyingKeys.map((key) => [key, config[key]]),
-    ) as Partial<Configuration>;
-    return { executionIndex, dtName, config: specificConfig };
-  });
-
-  return { sharedConfig, perExecution };
-}
-
 function serializeTask(task: TimedTask) {
-  const { sharedConfig, perExecution } = splitConfigs(
-    task.Trials[0]?.Execution ?? [],
-  );
+  const firstExecution = task.Trials[0]?.Execution[0];
+  const { 'Runner tag': _runnerTag, ...config } = firstExecution
+    ? { ...firstExecution.config }
+    : ({} as Record<string, string>);
+
   return {
     'Task Name': task['Task Name'],
     Description: task.Description,
-    sharedConfig,
-    Executions: perExecution.length > 0 ? perExecution : undefined,
-    Trials: task.Trials.map((trial) => ({
+    config,
+    trials: task.Trials.map((trial) => ({
       'Time Start': trial['Time Start'],
       'Time End': trial['Time End'],
       Status: trial.Status,
-      Error: trial.Error,
-      Execution: trial.Execution.map(({ executionIndex, pipelineId, status }) => ({
-        executionIndex,
-        pipelineId,
-        status,
-      })),
+      ...(trial.Error ? { Error: trial.Error } : {}),
+      executions: trial.Execution.map(
+        ({ dtName, pipelineId, status, config: execConfig }) => ({
+          dtName,
+          pipelineId,
+          status,
+          'Runner tag': execConfig['Runner tag'],
+        }),
+      ),
     })),
     'Time Start': task['Time Start'],
     'Time End': task['Time End'],
@@ -121,11 +96,16 @@ export function downloadResultsJson(results: TimedTask[]): void {
 
 export function downloadTaskResultJson(task: TimedTask): void {
   const data = {
-    totalTimeSeconds: secondsDifference(task['Time Start'], task['Time End']),
+    totalTimeSeconds: round3(
+      secondsDifference(task['Time Start'], task['Time End']),
+    ),
     task: serializeTask(task),
   };
   const taskNameSlug = task['Task Name'].toLowerCase().split(/\s+/).join('-');
-  triggerJsonDownload(data, `benchmark-${taskNameSlug}-${timestampSlug()}.json`);
+  triggerJsonDownload(
+    data,
+    `benchmark-${taskNameSlug}-${timestampSlug()}.json`,
+  );
 }
 
 export function computeAverageTime(
@@ -136,7 +116,10 @@ export function computeAverageTime(
     .filter((duration): duration is number => duration != null);
 
   return durations.length > 0
-    ? durations.reduce((sum, duration) => sum + duration, 0) / durations.length
+    ? (round3(
+      durations.reduce((sum, duration) => sum + duration, 0) /
+      durations.length,
+    ) as number)
     : undefined;
 }
 
@@ -181,4 +164,59 @@ export function getBenchmarkStatus(results: TimedTask[]): {
   const totalTasks = results.length;
 
   return { hasStarted, completedTasks, completedTrials, totalTasks };
+}
+
+const pipelineStatusMap: Record<string, string> = {
+  pending: 'starting',
+  created: 'starting',
+  preparing: 'preparing',
+  running: 'running',
+  success: 'successful',
+  failed: 'failed',
+  canceled: 'cancelled',
+  skipped: 'skipped',
+};
+
+function formatPipelineExecution(
+  pipeline: ActivePipeline,
+  executionIndex?: number,
+): ExecutionResult {
+  const phaseName = pipeline.phase === 'parent' ? 'Parent' : 'Child';
+  const statusText = pipelineStatusMap[pipeline.status] ?? pipeline.status;
+  return {
+    dtName: pipeline.dtName,
+    pipelineId: pipeline.pipelineId,
+    status: `${phaseName} pipeline ${statusText}`,
+    config: pipeline.config,
+    executionIndex,
+  };
+}
+
+export function mergeExecutionStatus(
+  executions: Execution[],
+  activePipelines: ActivePipeline[],
+  completedResults: ExecutionResult[],
+  defaultConfig: Configuration,
+): ExecutionResult[] {
+  if (executions.length > 0) {
+    return executions.map((expected, i) => {
+      const completed = completedResults.find((r) => r.executionIndex === i);
+      if (completed) return completed;
+      const active = activePipelines.find((p) => p.executionIndex === i);
+      if (active) return formatPipelineExecution(active, i);
+      return {
+        dtName: expected.dtName,
+        pipelineId: null,
+        status: '—',
+        config: { ...defaultConfig, ...expected.config },
+        executionIndex: i,
+      };
+    });
+  }
+
+  const completedIds = new Set(completedResults.map((r) => r.pipelineId));
+  const running = activePipelines
+    .filter((p) => !completedIds.has(p.pipelineId))
+    .map((p) => formatPipelineExecution(p));
+  return [...completedResults, ...running];
 }

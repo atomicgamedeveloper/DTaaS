@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import measurementDBService from 'database/measurementHistoryDB';
 import {
   TimedTask,
@@ -9,17 +8,18 @@ import {
 } from 'model/backend/gitlab/measure/benchmark.types';
 import {
   benchmarkState,
-  cancelActivePipelines,
   saveOriginalSettings,
   restoreOriginalSettings,
+  attachSetters,
+  wrapSetters,
 } from 'model/backend/gitlab/measure/benchmark.execution';
+import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
 import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   BenchmarkConfig,
-  resetTasks,
   tasks,
 } from 'model/backend/gitlab/measure/benchmark.tasks';
 import { runTrials } from 'model/backend/gitlab/measure/benchmark.trials';
@@ -34,8 +34,11 @@ export {
   tasks,
   DEFAULT_TASK as DEFAULT_MEASUREMENT,
 } from 'model/backend/gitlab/measure/benchmark.tasks';
-
-let isRestarting = false;
+export {
+  continueMeasurement,
+  restartMeasurement,
+  handleBeforeUnload,
+} from 'model/backend/gitlab/measure/benchmark.lifecycle';
 
 type TaskUpdater = (taskIndex: number, updates: Partial<TimedTask>) => void;
 
@@ -141,11 +144,14 @@ export async function startMeasurement(
   }
 
   isRunningRef.current = true;
+  attachSetters(setters);
+  const proxy = wrapSetters();
+
   benchmarkState.shouldStopPipelines = false;
-  setters.setIsRunning(true);
+  proxy.setIsRunning(true);
   saveOriginalSettings();
 
-  setters.setResults((previous) =>
+  proxy.setResults((previous) =>
     previous.map((task) =>
       task.Status === 'NOT_STARTED'
         ? { ...task, Status: 'PENDING' as Status }
@@ -153,152 +159,35 @@ export async function startMeasurement(
     ),
   );
 
-  const updateTask = createTaskUpdater(setters.setResults);
+  const updateTask = createTaskUpdater(proxy.setResults);
 
-  for (let i = startFromIndex; i < tasks.length; i += 1) {
-    if (benchmarkState.shouldStopPipelines) {
-      break;
+  try {
+    for (let i = startFromIndex; i < tasks.length; i += 1) {
+      if (benchmarkState.shouldStopPipelines) {
+        break;
+      }
+      const trialsToKeep =
+        i === startFromIndex ? existingTrialsForFirstTask : [];
+      await executeTask(i, tasks[i], proxy, updateTask, trialsToKeep);
     }
-    const trialsToKeep = i === startFromIndex ? existingTrialsForFirstTask : [];
-    await executeTask(i, tasks[i], setters, updateTask, trialsToKeep);
+  } finally {
+    isRunningRef.current = false;
+    proxy.setIsRunning(false);
+    benchmarkState.currentMeasurementPromise = null;
+    restoreOriginalSettings();
   }
-
-  isRunningRef.current = false;
-  setters.setIsRunning(false);
-  benchmarkState.currentMeasurementPromise = null;
-  restoreOriginalSettings();
 }
 
-export async function stopAllPipelines(
-  setters: Pick<BenchmarkSetters, 'setResults'>,
-): Promise<void> {
+export async function stopAllPipelines(): Promise<void> {
   benchmarkState.shouldStopPipelines = true;
+  const proxy = wrapSetters();
+  proxy.setIsRunning(false);
   await cancelActivePipelines();
-  setters.setResults((previous) =>
+  proxy.setResults((previous) =>
     previous.map((task) =>
-      task.Status === 'PENDING'
+      task.Status === 'PENDING' || task.Status === 'RUNNING'
         ? { ...task, Status: 'STOPPED' as Status }
         : task,
     ),
   );
-}
-
-export async function continueMeasurement(
-  setters: BenchmarkSetters,
-  isRunningRef: React.MutableRefObject<boolean>,
-  currentResults: TimedTask[],
-): Promise<void> {
-  if (isRunningRef.current) {
-    return;
-  }
-
-  const continueFromIndex = currentResults.findIndex(
-    (task) => task.Status === 'STOPPED' || task.Status === 'PENDING',
-  );
-
-  if (continueFromIndex === -1) {
-    return;
-  }
-
-  benchmarkState.executionResults = [];
-  benchmarkState.activePipelines = [];
-  benchmarkState.currentTrialExecutionIndex = 0;
-  setters.setCurrentExecutions([]);
-  setters.setCurrentTaskIndex(null);
-
-  const stoppedTask = currentResults[continueFromIndex];
-  const completedTrials = stoppedTask.Trials.filter(
-    (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
-  );
-
-  setters.setResults((previous) =>
-    previous.map((task, index) => {
-      if (index === continueFromIndex) {
-        return {
-          ...task,
-          Status: 'PENDING' as Status,
-          Trials: completedTrials,
-          'Time Start':
-            completedTrials.length > 0 ? task['Time Start'] : undefined,
-          'Time End': undefined,
-          'Average Time (s)': undefined,
-        };
-      }
-      if (index > continueFromIndex) {
-        return {
-          ...task,
-          Status: 'PENDING' as Status,
-          Trials: [],
-          'Time Start': undefined,
-          'Time End': undefined,
-          'Average Time (s)': undefined,
-        };
-      }
-      return task;
-    }),
-  );
-
-  benchmarkState.currentMeasurementPromise = startMeasurement(
-    setters,
-    isRunningRef,
-    continueFromIndex,
-    completedTrials,
-  );
-}
-
-export async function restartMeasurement(
-  setters: BenchmarkSetters,
-  isRunningRef: React.MutableRefObject<boolean>,
-): Promise<void> {
-  if (isRestarting) {
-    return;
-  }
-  isRestarting = true;
-
-  try {
-    benchmarkState.shouldStopPipelines = true;
-    await cancelActivePipelines();
-
-    if (benchmarkState.currentMeasurementPromise) {
-      await benchmarkState.currentMeasurementPromise;
-    }
-
-    restoreOriginalSettings();
-
-    benchmarkState.shouldStopPipelines = false;
-    benchmarkState.activePipelines = [];
-    benchmarkState.executionResults = [];
-    setters.setCurrentExecutions([]);
-    setters.setCurrentTaskIndex(null);
-    setters.setResults(resetTasks());
-    isRunningRef.current = false;
-
-    benchmarkState.currentMeasurementPromise = startMeasurement(
-      setters,
-      isRunningRef,
-    );
-  } finally {
-    isRestarting = false;
-  }
-}
-
-export function handleBeforeUnload(
-  isRunningRef: React.MutableRefObject<boolean>,
-): void {
-  if (isRunningRef.current && benchmarkState.activePipelines.length > 0) {
-    benchmarkState.shouldStopPipelines = true;
-    for (const { backend, pipelineId } of benchmarkState.activePipelines) {
-      try {
-        const projectId = backend.getProjectId();
-        backend.api.cancelPipeline(projectId, pipelineId).catch(() => { });
-        backend.api
-          .cancelPipeline(projectId, getChildPipelineId(pipelineId))
-          .catch(() => { });
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  restoreOriginalSettings();
 }

@@ -35,6 +35,10 @@ import {
   selectExecutionHistoryError,
 } from 'model/backend/state/executionHistory.selectors';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import DigitalTwin from 'model/backend/digitalTwin';
+import * as digitalTwinAdapter from 'model/backend/util/digitalTwinAdapter';
+import * as pipelineHandler from 'route/digitaltwins/execution/executionButtonHandlers';
+import type { PipelineHandlerDispatch } from 'route/digitaltwins/execution/executionButtonHandlers';
 
 // Mock the pipelineHandler module
 jest.mock('route/digitaltwins/execution/executionButtonHandlers');
@@ -361,30 +365,33 @@ describe('ExecutionHistoryList', () => {
     mockDispatch.mockClear();
 
     // Ensure the adapter mock has the correct implementation
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const adapter = require('model/backend/util/digitalTwinAdapter');
-
-    adapter.createDigitalTwinFromData.mockImplementation(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (digitalTwinData: any, name: any) => ({
-        DTName: name || digitalTwinData.DTName || 'test-dt',
-        delete: jest.fn().mockResolvedValue('Deleted successfully'),
-        execute: jest.fn().mockResolvedValue(123),
-        stop: jest.fn().mockResolvedValue(undefined),
-        getFullDescription: jest
-          .fn()
-          .mockResolvedValue('Test Digital Twin Description'),
-        reconfigure: jest.fn().mockResolvedValue(undefined),
-      }),
+    const mockCreateDT = jest.mocked(
+      digitalTwinAdapter.createDigitalTwinFromData,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pipelineHandler = require('route/digitaltwins/execution/executionButtonHandlers');
+    mockCreateDT.mockImplementation(
+      async (digitalTwinData: DigitalTwinData, name: string) =>
+        ({
+          DTName: name || digitalTwinData.DTName || 'test-dt',
+          delete: jest.fn().mockResolvedValue('Deleted successfully'),
+          execute: jest.fn().mockResolvedValue(123),
+          stop: jest.fn().mockResolvedValue(undefined),
+          getFullDescription: jest
+            .fn()
+            .mockResolvedValue('Test Digital Twin Description'),
+          reconfigure: jest.fn().mockResolvedValue(undefined),
+        }) as unknown as DigitalTwin,
+    );
+
     const handleStopSpy = jest
       .spyOn(pipelineHandler, 'handleStop')
       .mockImplementation(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (_digitalTwin, _setButtonText, dispatch: any, executionId) => {
+        (
+          _digitalTwin,
+          _setButtonText,
+          dispatch: PipelineHandlerDispatch,
+          executionId,
+        ) => {
           // Mock implementation that calls dispatch
           dispatch({ type: 'mock/stopExecution', payload: executionId });
           return Promise.resolve();

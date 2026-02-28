@@ -43,7 +43,8 @@ test.describe('Concurrent Execution', () => {
       .first();
     await expect(startButton).toBeVisible();
 
-    // Start the first execution
+    // Start the first execution (with delay to simulate debounce)
+    await page.waitForTimeout(250);
     await startButton.click();
 
     // Wait for debounce period (250ms) plus a bit for execution to start
@@ -196,7 +197,8 @@ test.describe('Concurrent Execution', () => {
       .getByRole('button', { name: 'Start' })
       .first();
 
-    // Start an execution
+    // Start an execution (with delay to simulate debounce)
+    await page.waitForTimeout(250);
     await startButton.click();
 
     // Wait for debounce period plus a bit for execution to start

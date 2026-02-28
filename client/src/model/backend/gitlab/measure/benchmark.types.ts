@@ -1,7 +1,7 @@
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
+import type { Configuration } from 'model/backend/gitlab/execution/executionTypes';
 
 export type { Configuration } from 'model/backend/gitlab/execution/executionTypes';
-import type { Configuration } from 'model/backend/gitlab/execution/executionTypes';
 
 export type Status =
   | 'NOT_STARTED'

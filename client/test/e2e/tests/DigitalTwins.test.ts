@@ -43,7 +43,8 @@ test.describe('Digital Twin Log Cleaning', () => {
       .first();
     await expect(startButton).toBeVisible({ timeout: 10000 });
 
-    // Start the execution
+    // Start the execution (with delay to simulate debounce)
+    await page.waitForTimeout(250);
     await startButton.click();
 
     // Wait for debounce period plus a bit for execution to start

@@ -70,18 +70,6 @@ export function createMockExecution(
 
 interface MockBackendApi {
   cancelPipeline: jest.Mock;
-  startPipeline?: jest.Mock;
-  createRepositoryFile?: jest.Mock;
-  editRepositoryFile?: jest.Mock;
-  removeRepositoryFile?: jest.Mock;
-  getRepositoryFileContent?: jest.Mock;
-  listRepositoryFiles?: jest.Mock;
-  getGroupByName?: jest.Mock;
-  listGroupProjects?: jest.Mock;
-  listPipelineJobs?: jest.Mock;
-  getJobLog?: jest.Mock;
-  getPipelineStatus?: jest.Mock;
-  getTriggerToken?: jest.Mock;
 }
 
 interface MockBackend {
@@ -89,13 +77,6 @@ interface MockBackend {
   api: MockBackendApi;
   init?: jest.Mock;
   getPipelineStatus?: jest.Mock;
-  projectName?: string;
-  logs?: unknown[];
-  getCommonProjectId?: jest.Mock;
-  getExecutionLogs?: jest.Mock;
-  getPipelineJobs?: jest.Mock;
-  startPipeline?: jest.Mock;
-  getJobTrace?: jest.Mock;
 }
 
 export function createMockBackend(projectId: number = 1): MockBackend {
@@ -236,81 +217,6 @@ export function setupMockDownload() {
   };
 }
 
-export function createMockTaskForRunner(
-  name: string,
-  description: string,
-): TimedTask {
-  return {
-    'Task Name': name,
-    Description: description,
-    Trials: [],
-    'Time Start': undefined,
-    'Time End': undefined,
-    'Average Time (s)': undefined,
-    Status: 'NOT_STARTED' as const,
-  };
-}
-
-export function mockSecondsDifference(
-  start: Date | undefined,
-  end: Date | undefined,
-): number | undefined {
-  if (!start || !end) return undefined;
-  return (end.getTime() - start.getTime()) / 1000;
-}
-
-
-export function createBenchmarkRunnerMock(
-  overrides: Record<string, unknown> = {},
-) {
-  return {
-    secondsDifference: jest.fn(mockSecondsDifference),
-    getTotalTime: jest.fn(),
-    downloadResultsJson: jest.fn(),
-    downloadTaskResultJson: jest.fn(),
-    startMeasurement: jest.fn().mockResolvedValue(undefined),
-    continueMeasurement: jest.fn().mockResolvedValue(undefined),
-    restartMeasurement: jest.fn().mockResolvedValue(undefined),
-    stopAllPipelines: jest.fn().mockResolvedValue(undefined),
-    handleBeforeUnload: jest.fn(),
-    tasks: [],
-    ...overrides,
-  };
-}
-
-export function createBenchmarkExecutionMock(
-  overrides: Record<string, unknown> = {},
-) {
-  return {
-    benchmarkState: {
-      shouldStopPipelines: false,
-      activePipelines: [],
-      executionResults: [],
-      currentMeasurementPromise: null,
-      currentTrialMinPipelineId: null,
-      currentTrialExecutionIndex: 0,
-    },
-    runDigitalTwin: jest.fn(),
-    cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
-    saveOriginalSettings: jest.fn(),
-    restoreOriginalSettings: jest.fn(),
-    DEFAULT_CONFIG,
-    ...overrides,
-  };
-}
-
-export function createMeasurementDBMock() {
-  return {
-    __esModule: true,
-    default: {
-      purge: jest.fn().mockResolvedValue(undefined),
-      add: jest.fn().mockResolvedValue(undefined),
-      getAll: jest.fn().mockResolvedValue([]),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-  };
-}
-
 export interface MockBenchmarkSetters {
   setIsRunning: jest.Mock;
   setCurrentExecutions: jest.Mock;
@@ -332,42 +238,5 @@ export function createMockSetters(resultsStateRef: {
         resultsStateRef.current = updater;
       }
     }),
-  };
-}
-
-export function createBenchmarkTasksMock() {
-  const createTask = (name: string, description: string): TimedTask => ({
-    'Task Name': name,
-    Description: description,
-    Trials: [],
-    'Time Start': undefined,
-    'Time End': undefined,
-    'Average Time (s)': undefined,
-    Status: 'NOT_STARTED' as const,
-  });
-
-  const tasksArray: TimedTask[] = [
-    createTask('Test Task 1', 'First test task'),
-    createTask('Test Task 2', 'Second test task'),
-  ];
-
-  return {
-    tasks: tasksArray,
-    BenchmarkConfig: {
-      trials: 3,
-      runnerTag1: 'linux',
-      runnerTag2: 'windows',
-    },
-    resetTasks: jest.fn(() =>
-      tasksArray.map((task) => ({
-        ...task,
-        Trials: [],
-        'Time Start': undefined,
-        'Time End': undefined,
-        'Average Time (s)': undefined,
-        Status: 'NOT_STARTED' as const,
-      })),
-    ),
-    DEFAULT_TASK: createTask('', ''),
   };
 }

@@ -32,35 +32,14 @@ describe('benchmark.tasks', () => {
     expect(BenchmarkConfig.runnerTag2).toBe('windows');
   });
 
-  it('should have empty Task Name in DEFAULT_TASK', () => {
+  it('should have correct DEFAULT_TASK values', () => {
     expect(DEFAULT_TASK['Task Name']).toBe('');
-  });
-
-  it('should have empty Description in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK.Description).toBe('');
-  });
-
-  it('should have empty Trials array in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK.Trials).toEqual([]);
-  });
-
-  it('should have undefined Time Start in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK['Time Start']).toBeUndefined();
-  });
-
-  it('should have undefined Time End in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK['Time End']).toBeUndefined();
-  });
-
-  it('should have undefined Average Time in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK['Average Time (s)']).toBeUndefined();
-  });
-
-  it('should have NOT_STARTED status in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK.Status).toBe('NOT_STARTED');
-  });
-
-  it('should have undefined Executions in DEFAULT_TASK', () => {
     expect(DEFAULT_TASK.Executions).toBeUndefined();
   });
 
@@ -123,59 +102,19 @@ describe('benchmark.tasks', () => {
     expect(tasks.length).toBe(5);
   });
 
-  it('should return tasks with cleared Trials', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task) => {
-      expect(task.Trials).toEqual([]);
-    });
-  });
-
-  it('should return tasks with undefined Time Start', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task) => {
-      expect(task['Time Start']).toBeUndefined();
-    });
-  });
-
-  it('should return tasks with undefined Time End', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task) => {
-      expect(task['Time End']).toBeUndefined();
-    });
-  });
-
-  it('should return tasks with undefined Average Time', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task) => {
-      expect(task['Average Time (s)']).toBeUndefined();
-    });
-  });
-
-  it('should return tasks with NOT_STARTED status', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task) => {
-      expect(task.Status).toBe('NOT_STARTED');
-    });
-  });
-
-  it('should preserve Task Name and Description', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task, index) => {
-      expect(task['Task Name']).toBe(tasks[index]['Task Name']);
-      expect(task.Description).toBe(tasks[index].Description);
-    });
-  });
-
-  it('should preserve Executions references', () => {
-    const resetResults = resetTasks();
-    resetResults.forEach((task, index) => {
-      expect(task.Executions).toBe(tasks[index].Executions);
-    });
-  });
-
-  it('should return same number of tasks', () => {
+  it('should reset all task fields while preserving identity', () => {
     const resetResults = resetTasks();
     expect(resetResults.length).toBe(tasks.length);
+    resetResults.forEach((task, index) => {
+      expect(task.Trials).toEqual([]);
+      expect(task['Time Start']).toBeUndefined();
+      expect(task['Time End']).toBeUndefined();
+      expect(task['Average Time (s)']).toBeUndefined();
+      expect(task.Status).toBe('NOT_STARTED');
+      expect(task['Task Name']).toBe(tasks[index]['Task Name']);
+      expect(task.Description).toBe(tasks[index].Description);
+      expect(task.Executions).toBe(tasks[index].Executions);
+    });
   });
 
   it('should not modify original tasks array', () => {

@@ -39,8 +39,10 @@ const SettingsForm: React.FC = () => {
     RUNNER_TAG,
     BRANCH_NAME,
   } = useSelector((state: RootState) => state.settings);
-  const { trials: BENCHMARK_TRIALS, secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG } =
-    useSelector((state: RootState) => state.benchmark);
+  const {
+    trials: BENCHMARK_TRIALS,
+    secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
+  } = useSelector((state: RootState) => state.benchmark);
 
   // Local state for form values - prevents saving on each keystroke
   const [formValues, setFormValues] = useState({
@@ -175,9 +177,7 @@ const SettingsForm: React.FC = () => {
     if (
       formValues.benchmarkSecondaryRunnerTag !== BENCHMARK_SECONDARY_RUNNER_TAG
     ) {
-      dispatch(
-        setSecondaryRunnerTag(formValues.benchmarkSecondaryRunnerTag),
-      );
+      dispatch(setSecondaryRunnerTag(formValues.benchmarkSecondaryRunnerTag));
     }
 
     setNotificationMessage('Settings saved successfully!');
