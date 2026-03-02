@@ -1,5 +1,5 @@
 import { DB_CONFIG } from 'database/types';
-import { TimedTask } from 'model/backend/gitlab/measure/benchmark.types';
+import { TimedTask } from 'model/backend/gitlab/measure/benchmark.execution';
 
 export type MeasurementRecord = {
   id: string;

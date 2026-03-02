@@ -5,7 +5,9 @@ import {
   TaskControls,
   BenchmarkPageHeader,
   CompletionSummary,
+  RunnerTagBadge,
 } from 'route/benchmark/BenchmarkComponents';
+import { getRunnerTags } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   createMockTrial,
   createMockTaskPending as createMockTask,
@@ -33,35 +35,23 @@ describe('BenchmarkComponents', () => {
     jest.clearAllMocks();
   });
 
-  it('renders primary badge with correct text', async () => {
-    const { RunnerTagBadge } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('renders primary badge with correct text', () => {
     render(<RunnerTagBadge runnerTag="linux" variant="primary" />);
     expect(screen.getByText('linux')).toBeInTheDocument();
   });
 
-  it('renders secondary badge with correct text', async () => {
-    const { RunnerTagBadge } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('renders secondary badge with correct text', () => {
     render(<RunnerTagBadge runnerTag="windows" variant="secondary" />);
     expect(screen.getByText('windows')).toBeInTheDocument();
   });
 
-  it('returns only primary tag when task has no explicit runner configs', async () => {
-    const { getRunnerTags } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('returns only primary tag when task has no explicit runner configs', () => {
     const task = createMockTask({ Executions: undefined });
     const result = getRunnerTags(task, 'linux', 'windows');
     expect(result).toEqual({ primaryTag: 'linux', secondaryTag: null });
   });
 
-  it('returns both tags when task executions have explicit Runner tag configs', async () => {
-    const { getRunnerTags } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('returns both tags when task executions have explicit Runner tag configs', () => {
     const task = createMockTask({
       Executions: () => [
         { dtName: 'hello-world', config: { 'Runner tag': 'linux' } },
@@ -72,10 +62,7 @@ describe('BenchmarkComponents', () => {
     expect(result).toEqual({ primaryTag: 'linux', secondaryTag: 'windows' });
   });
 
-  it('returns both tags even when they have the same value', async () => {
-    const { getRunnerTags } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('returns both tags even when they have the same value', () => {
     const task = createMockTask({
       Executions: () => [{ dtName: 'test', config: { 'Runner tag': 'linux' } }],
     });
@@ -83,10 +70,7 @@ describe('BenchmarkComponents', () => {
     expect(result).toEqual({ primaryTag: 'linux', secondaryTag: 'linux' });
   });
 
-  it('returns null secondary tag when secondary tag is empty', async () => {
-    const { getRunnerTags } = await import(
-      'route/benchmark/BenchmarkComponents'
-    );
+  it('returns null secondary tag when secondary tag is empty', () => {
     const task = createMockTask({ Executions: () => [] });
     const result = getRunnerTags(task, 'linux', '');
     expect(result).toEqual({ primaryTag: 'linux', secondaryTag: null });

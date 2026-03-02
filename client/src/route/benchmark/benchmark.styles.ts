@@ -1,5 +1,5 @@
 import { SxProps, Theme } from '@mui/material';
-import { Status } from 'model/backend/gitlab/measure/benchmark.types';
+import { Status } from 'model/backend/gitlab/measure/benchmark.execution';
 
 // Color constants
 export const statusColorMap: Record<Status, string> = {
@@ -138,17 +138,6 @@ export const trialHeaderLeft: SxProps<Theme> = {
   display: 'flex',
   alignItems: 'center',
   gap: 1,
-};
-
-export const paginationNav: SxProps<Theme> = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 0,
-};
-
-export const paginationButton: SxProps<Theme> = {
-  fontSize: '0.75rem',
-  p: 0.25,
 };
 
 export const errorBox: SxProps<Theme> = {

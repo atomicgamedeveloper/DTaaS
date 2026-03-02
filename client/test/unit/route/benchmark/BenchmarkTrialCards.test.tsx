@@ -1,9 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {
   ExecutionCard,
   TrialCard,
-  PaginatedTrialCard,
 } from 'route/benchmark/BenchmarkTrialCards';
 import {
   createMockExecution,
@@ -125,113 +124,4 @@ describe('BenchmarkTrialCards', () => {
     });
   });
 
-  describe('PaginatedTrialCard', () => {
-    it('renders nothing when there are no trials', () => {
-      const { container } = render(<PaginatedTrialCard trials={[]} />);
-      expect(container.firstChild).toBeNull();
-    });
-
-    it('shows the last trial by default', () => {
-      const trials = [
-        createMockTrial({ Status: 'SUCCESS' }),
-        createMockTrial({ Status: 'SUCCESS' }),
-      ];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.getByText('Trial 2')).toBeInTheDocument();
-    });
-
-    it('navigates back and forward between trials', () => {
-      const trials = [
-        createMockTrial({ Status: 'SUCCESS' }),
-        createMockTrial({ Status: 'SUCCESS' }),
-      ];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.getByText('Trial 2')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByLabelText('Previous trial'));
-      expect(screen.getByText('Trial 1')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByLabelText('Next trial'));
-      expect(screen.getByText('Trial 2')).toBeInTheDocument();
-    });
-
-    it('disables navigation buttons at boundaries', () => {
-      const trials = [createMockTrial({ Status: 'SUCCESS' })];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.getByLabelText('Previous trial')).toBeDisabled();
-      expect(screen.getByLabelText('Next trial')).toBeDisabled();
-    });
-
-    it('includes currentTrial as the last trial', () => {
-      const trials = [createMockTrial({ Status: 'SUCCESS' })];
-      const currentTrial = createMockTrial({
-        Status: 'RUNNING',
-        Execution: [],
-        'Time Start': undefined,
-        'Time End': undefined,
-      });
-      render(
-        <PaginatedTrialCard trials={trials} currentTrial={currentTrial} />,
-      );
-      expect(screen.getByText('Trial 2')).toBeInTheDocument();
-      expect(screen.getByText('—')).toBeInTheDocument();
-    });
-
-    it('shows stopped indicator for stopped trial', () => {
-      const trials = [createMockTrial({ Status: 'STOPPED' })];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.getByText('(stopped)')).toBeInTheDocument();
-    });
-
-    it('shows error message when trial has error', () => {
-      const trials = [
-        createMockTrial({
-          Error: {
-            message: 'Pipeline failed',
-            error: new Error('Pipeline failed'),
-          },
-        }),
-      ];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.getByText('Error:')).toBeInTheDocument();
-      expect(screen.getByText('Pipeline failed')).toBeInTheDocument();
-    });
-
-    it('does not show error for "stopped by user" messages', () => {
-      const trials = [
-        createMockTrial({
-          Error: {
-            message: 'Pipeline 123 stopped by user.',
-            error: new Error('Pipeline 123 stopped by user.'),
-          },
-        }),
-      ];
-      render(<PaginatedTrialCard trials={trials} />);
-      expect(screen.queryByText('Error:')).not.toBeInTheDocument();
-    });
-
-    it('renders template placeholder cards with em-dash status', () => {
-      const templateExecutions = [
-        createMockExecution({
-          dtName: 'hello-world',
-          pipelineId: null,
-          status: '—',
-          executionIndex: 0,
-        }),
-        createMockExecution({
-          dtName: 'hello-world',
-          pipelineId: null,
-          status: '—',
-          executionIndex: 1,
-        }),
-      ];
-      const currentTrial = createMockTrial({
-        Status: 'RUNNING',
-        Execution: templateExecutions,
-      });
-      render(<PaginatedTrialCard trials={[]} currentTrial={currentTrial} />);
-      const statusElements = screen.getAllByText('—');
-      expect(statusElements.length).toBeGreaterThanOrEqual(2);
-    });
-  });
 });

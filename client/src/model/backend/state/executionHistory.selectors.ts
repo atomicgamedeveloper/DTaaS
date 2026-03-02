@@ -10,9 +10,6 @@ export const selectExecutionHistoryByDTName = (dtName: string) =>
     (entries) => entries.filter((entry) => entry.dtName === dtName),
   );
 
-export const _selectExecutionHistoryByDTName =
-  (dtName: string) => (state: RootState) =>
-    state.executionHistory.entries.filter((entry) => entry.dtName === dtName);
 
 export const selectExecutionHistoryById = (id: string) =>
   createSelector(

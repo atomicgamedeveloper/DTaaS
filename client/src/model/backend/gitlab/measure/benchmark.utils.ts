@@ -5,7 +5,35 @@ import {
   ActivePipeline,
   Execution,
   Configuration,
-} from 'model/backend/gitlab/measure/benchmark.types';
+} from 'model/backend/gitlab/measure/benchmark.execution';
+
+export function isTaskComplete(item: { Status: Status }): boolean {
+  return item.Status === 'SUCCESS' || item.Status === 'FAILURE';
+}
+
+export function areAllBenchmarksComplete(taskResults: TimedTask[]): boolean {
+  if (taskResults.length === 0) return false;
+  const hasNoStopped = !taskResults.some((task) => task.Status === 'STOPPED');
+  const allTasksComplete = taskResults.every(isTaskComplete);
+  return hasNoStopped && allTasksComplete;
+}
+
+export function getRunnerTags(
+  task: TimedTask,
+  primaryRunnerTag: string,
+  secondaryRunnerTag: string,
+): {
+  primaryTag: string | null;
+  secondaryTag: string | null;
+} {
+  const executions = task.Executions?.() ?? [];
+  const usesMultipleRunners = executions.some((e) => 'Runner tag' in e.config);
+
+  return {
+    primaryTag: primaryRunnerTag,
+    secondaryTag: usesMultipleRunners ? secondaryRunnerTag || null : null,
+  };
+}
 
 function round3(value: number | undefined | null): number | undefined | null {
   return value != null ? parseFloat(value.toFixed(3)) : value;

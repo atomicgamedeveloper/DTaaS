@@ -19,24 +19,17 @@ jest.mock('page/Layout', () => ({
 }));
 
 jest.mock('route/benchmark/BenchmarkComponents', () => ({
-  PaginatedTrialCard: ({
-    trials,
-    currentTrial,
+  TrialCard: ({
+    trial,
+    trialIndex,
   }: {
-    trials: { Status: string }[];
-    currentTrial?: { Status: string };
-  }) => {
-    const all = currentTrial ? [...trials, currentTrial] : trials;
-    return (
-      <div data-testid="paginated-trial-card">
-        {all.map((t, i) => (
-          <div key={i} data-testid={`trial-card-${i}`}>
-            Trial {i + 1} - {t.Status}
-          </div>
-        ))}
-      </div>
-    );
-  },
+    trial: { Status: string };
+    trialIndex: number;
+  }) => (
+    <div data-testid="trial-card">
+      Trial {trialIndex + 1} - {trial.Status}
+    </div>
+  ),
   TaskControls: ({
     task,
     onDownloadTask,
@@ -51,47 +44,39 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
   BenchmarkPageHeader: () => (
     <div data-testid="benchmark-header">Digital Twin Benchmark</div>
   ),
-  BenchmarkControls: (p: {
+  BenchmarkControls: (props: {
     isRunning: boolean;
     hasStarted: boolean;
-    hasStopped: boolean;
     iterations: number;
     completedTasks: number;
     completedTrials: number;
     totalTasks: number;
     onStart: () => void;
-    onContinue: () => void;
     onRestart: () => void;
     onStop: () => void;
     onPurge: () => void;
   }) => (
     <div data-testid="benchmark-controls">
       <span data-testid="is-running">
-        {p.isRunning ? 'running' : 'stopped'}
+        {props.isRunning ? 'running' : 'stopped'}
       </span>
       <span data-testid="has-started">
-        {p.hasStarted ? 'started' : 'not-started'}
+        {props.hasStarted ? 'started' : 'not-started'}
       </span>
-      <span data-testid="has-stopped">
-        {p.hasStopped ? 'has-stopped' : 'not-stopped'}
-      </span>
-      <span data-testid="iterations">{p.iterations}</span>
-      <span data-testid="completed-tasks">{p.completedTasks}</span>
-      <span data-testid="completed-trials">{p.completedTrials}</span>
-      <span data-testid="total-tasks">{p.totalTasks}</span>
-      <button data-testid="start-btn" onClick={p.onStart}>
+      <span data-testid="iterations">{props.iterations}</span>
+      <span data-testid="completed-tasks">{props.completedTasks}</span>
+      <span data-testid="completed-trials">{props.completedTrials}</span>
+      <span data-testid="total-tasks">{props.totalTasks}</span>
+      <button data-testid="start-btn" onClick={props.onStart}>
         Start
       </button>
-      <button data-testid="continue-btn" onClick={p.onContinue}>
-        Continue
-      </button>
-      <button data-testid="restart-btn" onClick={p.onRestart}>
+      <button data-testid="restart-btn" onClick={props.onRestart}>
         Restart
       </button>
-      <button data-testid="stop-btn" onClick={p.onStop}>
+      <button data-testid="stop-btn" onClick={props.onStop}>
         Stop
       </button>
-      <button data-testid="purge-btn" onClick={p.onPurge}>
+      <button data-testid="purge-btn" onClick={props.onPurge}>
         Purge
       </button>
     </div>
@@ -102,21 +87,20 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
   RunnerTagBadge: ({ runnerTag }: { runnerTag: string }) => (
     <span data-testid="runner-tag-badge">{runnerTag}</span>
   ),
-  getRunnerTags: () => ({ primaryTag: null, secondaryTag: null }),
   statusColorMap: {},
   getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
 }));
 
 const mockStartMeasurement = jest.fn().mockResolvedValue(undefined);
-const mockContinueMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockRestartMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockStopAllPipelines = jest.fn().mockResolvedValue(undefined);
 const mockDownloadTaskResultJson = jest.fn();
+const mockPurgeBenchmarkData = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('model/backend/gitlab/measure/benchmark.lifecycle', () => ({
-  continueMeasurement: (...args: unknown[]) => mockContinueMeasurement(...args),
   restartMeasurement: (...args: unknown[]) => mockRestartMeasurement(...args),
   handleBeforeUnload: jest.fn(),
+  purgeBenchmarkData: (...args: unknown[]) => mockPurgeBenchmarkData(...args),
 }));
 
 jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
@@ -124,6 +108,20 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   downloadTaskResultJson: (...args: unknown[]) =>
     mockDownloadTaskResultJson(...args),
+}));
+
+jest.mock('model/backend/gitlab/measure/benchmark.execution', () => ({
+  benchmarkState: {
+    activePipelines: [],
+    executionResults: [],
+    isRunning: false,
+    results: null,
+    currentTaskIndexUI: null,
+    componentSetters: null,
+  },
+  DEFAULT_CONFIG: {},
+  attachSetters: jest.fn(),
+  detachSetters: jest.fn(),
   tasks: [
     {
       'Task Name': 'Task 1',
@@ -140,25 +138,6 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
       Executions: () => [{ dtName: 'hello-world', config: {} }],
     },
   ],
-}));
-
-jest.mock('model/backend/gitlab/measure/benchmark.execution', () => ({
-  benchmarkState: {
-    activePipelines: [],
-    executionResults: [],
-    isRunning: false,
-    results: null,
-    currentTaskIndexUI: null,
-    _componentSetters: null,
-  },
-  DEFAULT_CONFIG: {},
-  attachSetters: jest.fn(),
-  detachSetters: jest.fn(),
-}));
-
-jest.mock('database/measurementHistoryDB', () => ({
-  __esModule: true,
-  default: { purge: jest.fn().mockResolvedValue(undefined) },
 }));
 
 describe('Benchmark', () => {
@@ -215,14 +194,6 @@ describe('Benchmark', () => {
     expect(mockStartMeasurement).toHaveBeenCalled();
   });
 
-  it('calls continueMeasurement when Continue is clicked', async () => {
-    renderBenchmark();
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('continue-btn'));
-    });
-    expect(mockContinueMeasurement).toHaveBeenCalled();
-  });
-
   it('calls restartMeasurement when Restart is clicked', async () => {
     renderBenchmark();
     await act(async () => {
@@ -240,14 +211,11 @@ describe('Benchmark', () => {
   });
 
   it('purges data when Purge is clicked', async () => {
-    const measurementDBService = jest.requireMock(
-      'database/measurementHistoryDB',
-    ).default;
     renderBenchmark();
     await act(async () => {
       fireEvent.click(screen.getByTestId('purge-btn'));
     });
-    expect(measurementDBService.purge).toHaveBeenCalled();
+    expect(mockPurgeBenchmarkData).toHaveBeenCalled();
   });
 
   it('renders task status and completion summary correctly', () => {

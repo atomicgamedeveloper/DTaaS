@@ -1,27 +1,23 @@
 /* eslint-disable no-await-in-loop */
 import measurementDBService from 'database/measurementHistoryDB';
 import {
+  benchmarkConfig as BenchmarkConfig,
   TimedTask,
   BenchmarkSetters,
   Status,
-  Trial,
-} from 'model/backend/gitlab/measure/benchmark.types';
-import {
   benchmarkState,
   saveOriginalSettings,
   restoreOriginalSettings,
   attachSetters,
   wrapSetters,
+  tasks,
+  DEFAULT_TASK as DEFAULT_MEASUREMENT,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
 import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/benchmark.utils';
-import {
-  BenchmarkConfig,
-  tasks,
-} from 'model/backend/gitlab/measure/benchmark.tasks';
 import { runTrials } from 'model/backend/gitlab/measure/benchmark.trials';
 
 export {
@@ -30,12 +26,8 @@ export {
   downloadResultsJson,
   downloadTaskResultJson,
 } from 'model/backend/gitlab/measure/benchmark.utils';
+export { tasks, DEFAULT_MEASUREMENT };
 export {
-  tasks,
-  DEFAULT_TASK as DEFAULT_MEASUREMENT,
-} from 'model/backend/gitlab/measure/benchmark.tasks';
-export {
-  continueMeasurement,
   restartMeasurement,
   handleBeforeUnload,
 } from 'model/backend/gitlab/measure/benchmark.lifecycle';
@@ -59,7 +51,6 @@ async function executeTask(
   currentTask: TimedTask,
   setters: BenchmarkSetters,
   updateTask: TaskUpdater,
-  existingTrials: Trial[] = [],
 ): Promise<void> {
   if (benchmarkState.shouldStopPipelines) {
     return;
@@ -69,11 +60,8 @@ async function executeTask(
   setters.setCurrentExecutions([]);
   setters.setCurrentTaskIndex(taskIndex);
 
-  const timeStartUpdate =
-    existingTrials.length > 0 ? {} : { 'Time Start': new Date() };
-
   updateTask(taskIndex, {
-    ...timeStartUpdate,
+    'Time Start': new Date(),
     Status: 'RUNNING',
     ExpectedTrials: BenchmarkConfig.trials,
   });
@@ -82,7 +70,7 @@ async function executeTask(
   const trials = await runTrials(
     taskExecutions,
     BenchmarkConfig.trials,
-    existingTrials,
+    [],
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
       updateTask(taskIndex, { Trials: updatedTrials });
@@ -136,14 +124,15 @@ async function executeTask(
 export async function startMeasurement(
   setters: BenchmarkSetters,
   isRunningRef: React.MutableRefObject<boolean>,
-  startFromIndex: number = 0,
-  existingTrialsForFirstTask: Trial[] = [],
 ): Promise<void> {
   if (isRunningRef.current) {
     return;
   }
 
   isRunningRef.current = true;
+
+  // Hook up the page's update functions and wrap them so every change
+  // is kept in memory even if the user navigates away mid-measurement
   attachSetters(setters);
   const proxy = wrapSetters();
 
@@ -162,13 +151,11 @@ export async function startMeasurement(
   const updateTask = createTaskUpdater(proxy.setResults);
 
   try {
-    for (let i = startFromIndex; i < tasks.length; i += 1) {
+    for (let i = 0; i < tasks.length; i += 1) {
       if (benchmarkState.shouldStopPipelines) {
         break;
       }
-      const trialsToKeep =
-        i === startFromIndex ? existingTrialsForFirstTask : [];
-      await executeTask(i, tasks[i], proxy, updateTask, trialsToKeep);
+      await executeTask(i, tasks[i], proxy, updateTask);
     }
   } finally {
     isRunningRef.current = false;
@@ -180,6 +167,7 @@ export async function startMeasurement(
 
 export async function stopAllPipelines(): Promise<void> {
   benchmarkState.shouldStopPipelines = true;
+  // Save the stop to memory and update the screen if the page is open
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
   await cancelActivePipelines();

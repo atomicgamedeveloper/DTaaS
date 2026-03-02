@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import {
   TimedTask,
   CompletionSummaryProps,
-} from 'model/backend/gitlab/measure/benchmark.types';
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   getTotalTime,
   downloadResultsJson,
+  isTaskComplete,
 } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   runnerTagColors,
@@ -25,7 +26,6 @@ export {
 export {
   ExecutionCard,
   TrialCard,
-  PaginatedTrialCard,
 } from 'route/benchmark/BenchmarkTrialCards';
 export { default as BenchmarkControls } from 'route/benchmark/BenchmarkControls';
 
@@ -49,23 +49,6 @@ export function RunnerTagBadge({
   );
 }
 
-export function getRunnerTags(
-  task: TimedTask,
-  primaryRunnerTag: string,
-  secondaryRunnerTag: string,
-): {
-  primaryTag: string | null;
-  secondaryTag: string | null;
-} {
-  const executions = task.Executions?.() ?? [];
-  const usesMultipleRunners = executions.some((e) => 'Runner tag' in e.config);
-
-  return {
-    primaryTag: primaryRunnerTag,
-    secondaryTag: usesMultipleRunners ? secondaryRunnerTag || null : null,
-  };
-}
-
 export function TaskControls({
   task,
   onDownloadTask,
@@ -73,10 +56,7 @@ export function TaskControls({
   task: TimedTask;
   onDownloadTask: (task: TimedTask) => void;
 }>) {
-  const completedTrials = task.Trials.filter(
-    (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
-  );
-  const canDownload = completedTrials.length > 0;
+  const canDownload = task.Trials.some(isTaskComplete);
 
   if (!canDownload) {
     return (
@@ -132,9 +112,7 @@ export function CompletionSummary({
   hasStarted,
 }: Readonly<CompletionSummaryProps>) {
   const totalTime = getTotalTime(results);
-  const allComplete = results.every(
-    (task) => task.Status === 'SUCCESS' || task.Status === 'FAILURE',
-  );
+  const allComplete = results.every(isTaskComplete);
 
   if (allComplete && totalTime !== null) {
     return (

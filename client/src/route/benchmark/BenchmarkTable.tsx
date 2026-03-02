@@ -12,13 +12,14 @@ import {
 import {
   TimedTask,
   ExecutionResult,
-} from 'model/backend/gitlab/measure/benchmark.types';
+  Trial,
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import {
-  PaginatedTrialCard,
+  TrialCard,
   TaskControls,
   RunnerTagBadge,
-  getRunnerTags,
 } from 'route/benchmark/BenchmarkComponents';
+import { getRunnerTags } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   statusColorMap,
   tableContainer,
@@ -115,22 +116,28 @@ function BenchmarkTableRow({
             —
           </Typography>
         ) : (
-          <PaginatedTrialCard
-            trials={task.Trials}
-            currentTrial={
+          (() => {
+            const isActiveTask =
               index === currentTaskIndex &&
-              task.Trials.length < (task.ExpectedTrials ?? Infinity)
-                ? {
-                    'Time Start': undefined,
-                    'Time End': undefined,
-                    Execution: currentExecutions,
-                    Status: 'RUNNING',
-                    Error: undefined,
-                  }
-                : undefined
-            }
-            executions={task.Executions?.()}
-          />
+              task.Trials.length < (task.ExpectedTrials ?? Infinity);
+            const latestTrial: Trial | undefined = isActiveTask
+              ? {
+                  'Time Start': undefined,
+                  'Time End': undefined,
+                  Execution: currentExecutions,
+                  Status: 'RUNNING',
+                  Error: undefined,
+                }
+              : task.Trials[task.Trials.length - 1];
+
+            return latestTrial ? (
+              <TrialCard
+                trial={latestTrial}
+                trialIndex={isActiveTask ? task.Trials.length : task.Trials.length - 1}
+                executions={task.Executions?.()}
+              />
+            ) : null;
+          })()
         )}
       </TableCell>
       <TableCell align="center" sx={verticalMiddle}>

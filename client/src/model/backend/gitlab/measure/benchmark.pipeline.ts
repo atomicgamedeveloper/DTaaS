@@ -12,8 +12,6 @@ import { pollPipelineStatus } from 'model/backend/gitlab/execution/pipelinePolli
 import {
   Configuration,
   ExecutionResult,
-} from 'model/backend/gitlab/measure/benchmark.types';
-import {
   benchmarkState,
   DEFAULT_CONFIG,
 } from 'model/backend/gitlab/measure/benchmark.execution';

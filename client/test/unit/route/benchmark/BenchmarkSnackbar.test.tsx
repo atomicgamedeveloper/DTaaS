@@ -19,21 +19,20 @@ jest.mock('page/Layout', () => ({
 }));
 
 jest.mock('model/backend/gitlab/measure/benchmark.lifecycle', () => ({
-  continueMeasurement: jest.fn().mockResolvedValue(undefined),
   restartMeasurement: jest.fn().mockResolvedValue(undefined),
   handleBeforeUnload: jest.fn(),
+  purgeBenchmarkData: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('route/benchmark/BenchmarkComponents', () => ({
-  PaginatedTrialCard: ({ trials }: { trials: unknown[] }) => (
-    <div data-testid="paginated-trial-card">{trials.length}</div>
+  TrialCard: ({ trial, trialIndex }: { trial: { Status: string }; trialIndex: number }) => (
+    <div data-testid="trial-card">Trial {trialIndex + 1} - {trial.Status}</div>
   ),
   TaskControls: () => <div data-testid="task-controls" />,
   BenchmarkPageHeader: () => <div data-testid="benchmark-header" />,
   BenchmarkControls: (p: {
     isRunning: boolean;
     onStart: () => void;
-    onContinue: () => void;
     onRestart: () => void;
     onStop: () => void;
     onPurge: () => void;
@@ -44,9 +43,6 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
       </span>
       <button data-testid="start-btn" onClick={p.onStart}>
         Start
-      </button>
-      <button data-testid="continue-btn" onClick={p.onContinue}>
-        Continue
       </button>
       <button data-testid="restart-btn" onClick={p.onRestart}>
         Restart
@@ -61,7 +57,6 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
   ),
   CompletionSummary: () => <div data-testid="completion-summary" />,
   RunnerTagBadge: () => <span />,
-  getRunnerTags: () => ({ primaryTag: null, secondaryTag: null }),
   statusColorMap: {},
   getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
 }));
@@ -73,6 +68,20 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
   startMeasurement: (...args: unknown[]) => mockStartMeasurement(...args),
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   downloadTaskResultJson: jest.fn(),
+}));
+
+jest.mock('model/backend/gitlab/measure/benchmark.execution', () => ({
+  benchmarkState: {
+    activePipelines: [],
+    executionResults: [],
+    isRunning: false,
+    results: null,
+    currentTaskIndexUI: null,
+    componentSetters: null,
+  },
+  DEFAULT_CONFIG: {},
+  attachSetters: jest.fn(),
+  detachSetters: jest.fn(),
   tasks: [
     {
       'Task Name': 'Task 1',
@@ -89,25 +98,6 @@ jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
       Executions: () => [{ dtName: 'hello-world', config: {} }],
     },
   ],
-}));
-
-jest.mock('model/backend/gitlab/measure/benchmark.execution', () => ({
-  benchmarkState: {
-    activePipelines: [],
-    executionResults: [],
-    isRunning: false,
-    results: null,
-    currentTaskIndexUI: null,
-    _componentSetters: null,
-  },
-  DEFAULT_CONFIG: {},
-  attachSetters: jest.fn(),
-  detachSetters: jest.fn(),
-}));
-
-jest.mock('database/measurementHistoryDB', () => ({
-  __esModule: true,
-  default: { purge: jest.fn().mockResolvedValue(undefined) },
 }));
 
 const createResultTask = (name: string, status: string, avgTime?: number) => ({
@@ -146,12 +136,17 @@ describe('Benchmark snackbar and polling', () => {
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
   });
 
-  it.each([
+  type SnackbarClickCase = [btnId: string, message: string, severity: string];
+
+  const snackbarClickCases: SnackbarClickCase[] = [
     ['start-btn', 'Benchmark started', 'info'],
-    ['continue-btn', 'Benchmark resumed', 'info'],
     ['restart-btn', 'Benchmark restarted', 'info'],
     ['stop-btn', 'Stopping benchmark...', 'warning'],
-  ])('shows snackbar when %s is clicked', async (btnId, message, severity) => {
+  ];
+
+  it.each(snackbarClickCases)(
+    'shows snackbar when %s is clicked',
+    async (btnId, message, severity) => {
     render(<Benchmark />);
     await act(async () => {
       fireEvent.click(screen.getByTestId(btnId));
@@ -164,13 +159,17 @@ describe('Benchmark snackbar and polling', () => {
     );
   });
 
-  it.each([
+  type CompletionSnackbarCase = [statuses: string[], expectedMessage: string];
+
+  const completionSnackbarCases: CompletionSnackbarCase[] = [
     [['SUCCESS', 'SUCCESS'], 'All benchmarks completed'],
     [['FAILURE', 'FAILURE'], 'All benchmarks completed'],
     [['SUCCESS', 'FAILURE'], 'All benchmarks completed'],
     [['SUCCESS', 'STOPPED'], 'Benchmark started'],
     [['SUCCESS', 'NOT_STARTED'], 'Benchmark started'],
-  ])(
+  ];
+
+  it.each(completionSnackbarCases)(
     'completion snackbar for statuses %s shows: %s',
     async (statuses, expectedMessage) => {
       mockStartMeasurement.mockImplementationOnce((setters) => {

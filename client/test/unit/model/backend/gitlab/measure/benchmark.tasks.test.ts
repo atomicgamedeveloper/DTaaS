@@ -1,9 +1,9 @@
 import {
-  BenchmarkConfig,
+  benchmarkConfig as BenchmarkConfig,
   DEFAULT_TASK,
   tasks,
   resetTasks,
-} from 'model/backend/gitlab/measure/benchmark.tasks';
+} from 'model/backend/gitlab/measure/benchmark.execution';
 
 const mockStoreState = {
   benchmark: { trials: 3, secondaryRunnerTag: 'windows' },

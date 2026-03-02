@@ -3,21 +3,17 @@ import {
   stopAllPipelines,
 } from 'model/backend/gitlab/measure/benchmark.runner';
 import {
+  benchmarkConfig as BenchmarkConfigOriginal,
   benchmarkState,
   saveOriginalSettings,
   restoreOriginalSettings,
-} from 'model/backend/gitlab/measure/benchmark.execution';
-import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
-import { delay } from 'model/backend/gitlab/execution/pipelineCore';
-import {
-  BenchmarkConfig as BenchmarkConfigOriginal,
-  tasks,
-} from 'model/backend/gitlab/measure/benchmark.tasks';
-import {
+
   BenchmarkSetters,
   TimedTask,
   ExecutionResult,
-} from 'model/backend/gitlab/measure/benchmark.types';
+  tasks} from 'model/backend/gitlab/measure/benchmark.execution';
+import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
+import { delay } from 'model/backend/gitlab/execution/pipelineCore';
 import { createMockSetters } from './benchmark.testUtil';
 
 const BenchmarkConfig = BenchmarkConfigOriginal as {
@@ -37,7 +33,7 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
     isRunning: false,
     results: null as TimedTask[] | null,
     currentTaskIndexUI: null as number | null,
-    _componentSetters: null as BenchmarkSetters | null,
+    componentSetters: null as BenchmarkSetters | null,
   };
   return {
     benchmarkState: bs,
@@ -45,23 +41,23 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
     saveOriginalSettings: jest.fn(),
     restoreOriginalSettings: jest.fn(),
     attachSetters: jest.fn((s: BenchmarkSetters) => {
-      bs._componentSetters = s;
+      bs.componentSetters = s;
     }),
     wrapSetters: (): BenchmarkSetters => ({
       setIsRunning: (v: boolean) => {
         bs.isRunning = v;
-        bs._componentSetters?.setIsRunning(v);
+        bs.componentSetters?.setIsRunning(v);
       },
       setCurrentExecutions: (v: ExecutionResult[]) => {
-        bs._componentSetters?.setCurrentExecutions(v);
+        bs.componentSetters?.setCurrentExecutions(v);
       },
       setCurrentTaskIndex: (v: number | null) => {
         bs.currentTaskIndexUI = v;
-        bs._componentSetters?.setCurrentTaskIndex(v);
+        bs.componentSetters?.setCurrentTaskIndex(v);
       },
       setResults: (v: React.SetStateAction<TimedTask[]>) => {
         bs.results = typeof v === 'function' ? v(bs.results ?? []) : v;
-        bs._componentSetters?.setResults(v);
+        bs.componentSetters?.setResults(v);
       },
     }),
     DEFAULT_CONFIG: {
@@ -71,6 +67,37 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
       'DT directory': 'digital_twins',
       'Runner tag': 'linux',
     },
+    ...(() => {
+      const createTask = (name: string, desc: string): TimedTask => ({
+        'Task Name': name,
+        Description: desc,
+        Trials: [],
+        'Time Start': undefined,
+        'Time End': undefined,
+        'Average Time (s)': undefined,
+        Status: 'PENDING' as const,
+        Executions: () => [{ dtName: 'hello-world', config: {} }],
+      });
+      const tasksArray = [
+        createTask('Task 1', 'First'),
+        createTask('Task 2', 'Second'),
+      ];
+      return {
+        tasks: tasksArray,
+        benchmarkConfig: { trials: 3, runnerTag1: 'linux', runnerTag2: 'windows' },
+        resetTasks: jest.fn(() =>
+          tasksArray.map((t) => ({
+            ...t,
+            Trials: [],
+            'Time Start': undefined,
+            'Time End': undefined,
+            'Average Time (s)': undefined,
+            Status: 'PENDING' as const,
+          })),
+        ),
+        DEFAULT_TASK: createTask('', ''),
+      };
+    })(),
   };
 });
 
@@ -93,38 +120,6 @@ jest.mock('database/measurementHistoryDB', () => ({
   default: { add: jest.fn(() => Promise.resolve()) },
 }));
 
-jest.mock('model/backend/gitlab/measure/benchmark.tasks', () => {
-  const createTask = (name: string, desc: string): TimedTask => ({
-    'Task Name': name,
-    Description: desc,
-    Trials: [],
-    'Time Start': undefined,
-    'Time End': undefined,
-    'Average Time (s)': undefined,
-    Status: 'PENDING' as const,
-    Executions: () => [{ dtName: 'hello-world', config: {} }],
-  });
-  const tasksArray = [
-    createTask('Task 1', 'First'),
-    createTask('Task 2', 'Second'),
-  ];
-  return {
-    tasks: tasksArray,
-    BenchmarkConfig: { trials: 3, runnerTag1: 'linux', runnerTag2: 'windows' },
-    resetTasks: jest.fn(() =>
-      tasksArray.map((t) => ({
-        ...t,
-        Trials: [],
-        'Time Start': undefined,
-        'Time End': undefined,
-        'Average Time (s)': undefined,
-        Status: 'PENDING' as const,
-      })),
-    ),
-    DEFAULT_TASK: createTask('', ''),
-  };
-});
-
 interface TestBenchmarkState {
   shouldStopPipelines: boolean;
   activePipelines: unknown[];
@@ -134,7 +129,7 @@ interface TestBenchmarkState {
   isRunning: boolean;
   results: TimedTask[] | null;
   currentTaskIndexUI: number | null;
-  _componentSetters: BenchmarkSetters | null;
+  componentSetters: BenchmarkSetters | null;
 }
 
 describe('benchmark.runner', () => {
@@ -154,7 +149,7 @@ describe('benchmark.runner', () => {
       isRunning: false,
       results: null,
       currentTaskIndexUI: null,
-      _componentSetters: null,
+      componentSetters: null,
     });
   };
 
@@ -176,7 +171,7 @@ describe('benchmark.runner', () => {
     resultsRef = { current: [] };
     setters = createMockSetters(resultsRef);
     isRunningRef = { current: false };
-    state._componentSetters = setters;
+    state.componentSetters = setters;
     state.results = null;
     initResults();
   });
@@ -197,12 +192,11 @@ describe('benchmark.runner', () => {
     expect(isRunningRef.current).toBe(false);
   });
 
-  it('should start from specified index and handle stop flag', async () => {
+  it('should handle stop flag during measurement', async () => {
     BenchmarkConfig.trials = 1;
-    await startMeasurement(setters, isRunningRef, 1);
-
     state.shouldStopPipelines = true;
     await startMeasurement(setters, isRunningRef);
+    expect(setters.setResults).toHaveBeenCalled();
   });
 
   it('should transition NOT_STARTED to PENDING and run multiple trials', async () => {

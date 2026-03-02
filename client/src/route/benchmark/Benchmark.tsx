@@ -8,29 +8,27 @@ import {
   TimedTask,
   ExecutionResult,
   BenchmarkSetters,
-} from 'model/backend/gitlab/measure/benchmark.types';
-import {
-  startMeasurement,
-  stopAllPipelines,
-  downloadTaskResultJson,
-  tasks,
-} from 'model/backend/gitlab/measure/benchmark.runner';
-import {
-  continueMeasurement,
-  restartMeasurement,
-  handleBeforeUnload,
-} from 'model/backend/gitlab/measure/benchmark.lifecycle';
-import {
-  getBenchmarkStatus,
-  mergeExecutionStatus,
-} from 'model/backend/gitlab/measure/benchmark.utils';
-import {
   benchmarkState,
   DEFAULT_CONFIG,
   attachSetters,
   detachSetters,
+  tasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import measurementDBService from 'database/measurementHistoryDB';
+import {
+  startMeasurement,
+  stopAllPipelines,
+  downloadTaskResultJson,
+} from 'model/backend/gitlab/measure/benchmark.runner';
+import {
+  restartMeasurement,
+  handleBeforeUnload,
+  purgeBenchmarkData,
+} from 'model/backend/gitlab/measure/benchmark.lifecycle';
+import {
+  getBenchmarkStatus,
+  mergeExecutionStatus,
+  areAllBenchmarksComplete,
+} from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   BenchmarkPageHeader,
   BenchmarkControls,
@@ -44,10 +42,8 @@ interface BenchmarkContentProps {
   currentTaskIndex: number | null;
   currentExecutions: ExecutionResult[];
   isRunning: boolean;
-  hasStopped: boolean;
   iterations: number;
   onStart: () => void;
-  onContinue: () => void;
   onRestart: () => void;
   onStop: () => void;
   onPurge: () => void;
@@ -61,10 +57,8 @@ function BenchmarkContent({
   currentTaskIndex,
   currentExecutions,
   isRunning,
-  hasStopped,
   iterations,
   onStart,
-  onContinue,
   onRestart,
   onStop,
   onPurge,
@@ -83,13 +77,11 @@ function BenchmarkContent({
           <BenchmarkControls
             isRunning={isRunning}
             hasStarted={hasStarted}
-            hasStopped={hasStopped}
             iterations={iterations}
             completedTasks={completedTasks}
             completedTrials={completedTrials}
             totalTasks={totalTasks}
             onStart={onStart}
-            onContinue={onContinue}
             onRestart={onRestart}
             onStop={onStop}
             onPurge={onPurge}
@@ -111,17 +103,6 @@ function BenchmarkContent({
       </Box>
     </Layout>
   );
-}
-
-function isTaskComplete(task: TimedTask): boolean {
-  return task.Status === 'SUCCESS' || task.Status === 'FAILURE';
-}
-
-function areAllBenchmarksComplete(taskResults: TimedTask[]): boolean {
-  if (taskResults.length === 0) return false;
-  const hasNoStopped = !taskResults.some((task) => task.Status === 'STOPPED');
-  const allTasksComplete = taskResults.every(isTaskComplete);
-  return hasNoStopped && allTasksComplete;
 }
 
 function Benchmark() {
@@ -159,8 +140,6 @@ function Benchmark() {
     return () => detachSetters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const hasStopped = results.some((task) => task.Status === 'STOPPED');
 
   useEffect(() => {
     if (!isRunning) return undefined;
@@ -208,12 +187,6 @@ function Benchmark() {
     return startMeasurement(setters, benchmarkState.isRunningRef);
   };
 
-  const handleContinue = () => {
-    originalPrimaryRunnerTag.current = primaryRunnerTag;
-    dispatch(showSnackbar({ message: 'Benchmark resumed', severity: 'info' }));
-    return continueMeasurement(setters, benchmarkState.isRunningRef, results);
-  };
-
   const handleRestart = () => {
     originalPrimaryRunnerTag.current = primaryRunnerTag;
     hasShownCompletionSnackbar.current = false;
@@ -231,9 +204,7 @@ function Benchmark() {
   };
 
   const handlePurge = async () => {
-    await measurementDBService.purge();
-    benchmarkState.results = [...tasks];
-    setResults([...tasks]);
+    await purgeBenchmarkData();
     hasShownCompletionSnackbar.current = false;
     dispatch(
       showSnackbar({ message: 'Benchmark data purged', severity: 'success' }),
@@ -246,10 +217,8 @@ function Benchmark() {
       currentTaskIndex={currentTaskIndex}
       currentExecutions={currentExecutions}
       isRunning={isRunning}
-      hasStopped={hasStopped}
       iterations={iterations}
       onStart={handleStart}
-      onContinue={handleContinue}
       onRestart={handleRestart}
       onStop={handleStop}
       onPurge={handlePurge}

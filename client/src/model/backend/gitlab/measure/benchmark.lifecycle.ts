@@ -1,85 +1,23 @@
 import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import {
-  TimedTask,
   BenchmarkSetters,
-  Status,
-} from 'model/backend/gitlab/measure/benchmark.types';
-import {
   benchmarkState,
   restoreOriginalSettings,
   attachSetters,
   wrapSetters,
+  resetTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
-import { resetTasks } from 'model/backend/gitlab/measure/benchmark.tasks';
 import { startMeasurement } from 'model/backend/gitlab/measure/benchmark.runner';
+import measurementDBService from 'database/measurementHistoryDB';
 
 let isRestarting = false;
 
-export async function continueMeasurement(
-  setters: BenchmarkSetters,
-  isRunningRef: React.MutableRefObject<boolean>,
-  currentResults: TimedTask[],
-): Promise<void> {
-  if (isRunningRef.current) {
-    return;
-  }
-
-  attachSetters(setters);
-  const proxy = wrapSetters();
-
-  const continueFromIndex = currentResults.findIndex(
-    (task) => task.Status === 'STOPPED' || task.Status === 'PENDING',
-  );
-
-  if (continueFromIndex === -1) {
-    return;
-  }
-
-  benchmarkState.executionResults = [];
-  benchmarkState.activePipelines = [];
-  benchmarkState.currentTrialExecutionIndex = 0;
-  proxy.setCurrentExecutions([]);
-  proxy.setCurrentTaskIndex(null);
-
-  const stoppedTask = currentResults[continueFromIndex];
-  const completedTrials = stoppedTask.Trials.filter(
-    (trial) => trial.Status === 'SUCCESS' || trial.Status === 'FAILURE',
-  );
-
-  proxy.setResults((previous) =>
-    previous.map((task, index) => {
-      if (index === continueFromIndex) {
-        return {
-          ...task,
-          Status: 'PENDING' as Status,
-          Trials: completedTrials,
-          'Time Start':
-            completedTrials.length > 0 ? task['Time Start'] : undefined,
-          'Time End': undefined,
-          'Average Time (s)': undefined,
-        };
-      }
-      if (index > continueFromIndex) {
-        return {
-          ...task,
-          Status: 'PENDING' as Status,
-          Trials: [],
-          'Time Start': undefined,
-          'Time End': undefined,
-          'Average Time (s)': undefined,
-        };
-      }
-      return task;
-    }),
-  );
-
-  benchmarkState.currentMeasurementPromise = startMeasurement(
-    setters,
-    isRunningRef,
-    continueFromIndex,
-    completedTrials,
-  );
+export async function purgeBenchmarkData(): Promise<void> {
+  await measurementDBService.purge();
+  const fresh = resetTasks();
+  benchmarkState.results = fresh;
+  benchmarkState.componentSetters?.setResults(fresh);
 }
 
 export async function restartMeasurement(

@@ -6,7 +6,7 @@ import {
   ExecutionResult,
   Configuration,
   ActivePipeline,
-} from 'model/backend/gitlab/measure/benchmark.types';
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import { RootState } from 'store/store';
 
 export const DEFAULT_CONFIG: Configuration = {

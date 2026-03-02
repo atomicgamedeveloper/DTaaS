@@ -16,6 +16,17 @@ test.describe('Benchmark Page', () => {
     await page.goto('./insight/measure');
   });
 
+  test.afterEach(async ({ page }) => {
+    const stopButton = page.getByRole('button', { name: 'Stop', exact: true });
+    if (await stopButton.isVisible()) {
+      await stopButton.click();
+      const dialog = page.getByRole('dialog');
+      if (await dialog.isVisible()) {
+        await dialog.getByRole('button', { name: 'Stop' }).click();
+      }
+    }
+  });
+
   test('Should navigate to benchmark page successfully', async ({ page }) => {
     // Verify page loaded correctly (not 404)
     await expect(page.locator('text=404 Not Found')).not.toBeVisible();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from 'store/store';
 import {
@@ -64,8 +64,11 @@ const SettingsForm: React.FC = () => {
     'Settings saved successfully!',
   );
 
-  // Update local state when Redux state changes
-  useEffect(() => {
+  // Sync local form state when Redux state changes (e.g. external reset)
+  const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${BENCHMARK_TRIALS}|${BENCHMARK_SECONDARY_RUNNER_TAG}`;
+  const [prevReduxKey, setPrevReduxKey] = useState(reduxKey);
+  if (prevReduxKey !== reduxKey) {
+    setPrevReduxKey(reduxKey);
     setFormValues({
       groupName: GROUP_NAME,
       dtDirectory: DT_DIRECTORY,
@@ -76,15 +79,7 @@ const SettingsForm: React.FC = () => {
       benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
     });
     setFieldErrors({});
-  }, [
-    GROUP_NAME,
-    DT_DIRECTORY,
-    COMMON_LIBRARY_PROJECT_NAME,
-    RUNNER_TAG,
-    BRANCH_NAME,
-    BENCHMARK_TRIALS,
-    BENCHMARK_SECONDARY_RUNNER_TAG,
-  ]);
+  }
 
   // Handle local form changes without dispatching to Redux
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

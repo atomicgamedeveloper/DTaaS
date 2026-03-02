@@ -9,7 +9,7 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import { BenchmarkPageHeaderProps } from 'model/backend/gitlab/measure/benchmark.types';
+import { BenchmarkPageHeaderProps } from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   controlsBar,
   controlsButtonGroup,
@@ -19,13 +19,11 @@ import {
 export default function BenchmarkControls({
   isRunning,
   hasStarted,
-  hasStopped,
   iterations,
   completedTasks,
   completedTrials,
   totalTasks,
   onStart,
-  onContinue,
   onRestart,
   onStop,
   onPurge,
@@ -76,18 +74,6 @@ export default function BenchmarkControls({
         </Button>
       );
     }
-    if (hasStopped) {
-      return (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onContinue}
-          size="small"
-        >
-          Continue
-        </Button>
-      );
-    }
     const isComplete = completedTasks === totalTasks && totalTasks > 0;
     return (
       <Button
@@ -95,7 +81,7 @@ export default function BenchmarkControls({
         color="primary"
         onClick={onStart}
         size="small"
-        disabled={isComplete}
+        disabled={isComplete || hasStarted}
       >
         Start
       </Button>

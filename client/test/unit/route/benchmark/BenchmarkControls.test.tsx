@@ -6,13 +6,11 @@ describe('BenchmarkControls', () => {
   const defaultControlProps = {
     isRunning: false,
     hasStarted: false,
-    hasStopped: false,
     iterations: 3,
     completedTasks: 0,
     completedTrials: 0,
     totalTasks: 5,
     onStart: jest.fn(),
-    onContinue: jest.fn(),
     onRestart: jest.fn(),
     onStop: jest.fn(),
     onPurge: jest.fn(),
@@ -22,13 +20,25 @@ describe('BenchmarkControls', () => {
     jest.clearAllMocks();
   });
 
-  it.each([
-    [false, 0, 0, 5, 3, '0/15'],
-    [true, 2, 6, 5, 3, '6/15'],
-    [true, 5, 15, 5, 3, '15/15'],
-    [true, 0, 0, 3, 3, '0/9'],
-    [true, 0, 1, 5, 3, '1/15'],
-  ])(
+  type TrialCounterCase = [
+    hasStarted: boolean,
+    completedTasks: number,
+    completedTrials: number,
+    totalTasks: number,
+    iterations: number,
+    expected: string,
+  ];
+
+  const trialCounterCases: TrialCounterCase[] =
+    [
+      [false, 0, 0, 5, 3, '0/15'],
+      [true, 2, 6, 5, 3, '6/15'],
+      [true, 5, 15, 5, 3, '15/15'],
+      [true, 0, 0, 3, 3, '0/9'],
+      [true, 0, 1, 5, 3, '1/15'],
+    ];
+
+  it.each(trialCounterCases)(
     'shows trial counter (hasStarted=%s, completedTasks=%s, completedTrials=%s, total=%s, iter=%s) as %s',
     (
       hasStarted,
@@ -64,11 +74,9 @@ describe('BenchmarkControls', () => {
     expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
   });
 
-  it('shows Continue button when stopped', () => {
-    render(<BenchmarkControls {...defaultControlProps} hasStopped={true} />);
-    expect(
-      screen.getByRole('button', { name: 'Continue' }),
-    ).toBeInTheDocument();
+  it('disables Start button when benchmark has started', () => {
+    render(<BenchmarkControls {...defaultControlProps} hasStarted={true} />);
+    expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled();
   });
 
   it('calls onStart when Start button is clicked', () => {
@@ -78,20 +86,15 @@ describe('BenchmarkControls', () => {
     expect(onStart).toHaveBeenCalled();
   });
 
-  it('calls onContinue when Continue button is clicked', () => {
-    const onContinue = jest.fn();
-    render(
-      <BenchmarkControls
-        {...defaultControlProps}
-        hasStopped={true}
-        onContinue={onContinue}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(onContinue).toHaveBeenCalled();
-  });
+  type ConfirmDialogCase = [
+    buttonName: string,
+    propKey: string,
+    dialogTitle: string,
+    dialogText: RegExp,
+    handlerKey: string,
+  ];
 
-  it.each([
+  const confirmDialogCases: ConfirmDialogCase[] = [
     [
       'Stop',
       'isRunning',
@@ -107,9 +110,11 @@ describe('BenchmarkControls', () => {
       /Are you sure you want to purge all benchmark data/,
       'onPurge',
     ],
-  ])(
+  ];
+
+  it.each(confirmDialogCases)(
     'shows %s confirmation dialog and calls handler on confirm',
-    (btnName, propKey, dialogTitle, dialogText, handlerKey) => {
+    (buttonName, propKey, dialogTitle, dialogText, handlerKey) => {
       const handler = jest.fn();
       const props = {
         ...defaultControlProps,
@@ -118,23 +123,27 @@ describe('BenchmarkControls', () => {
       };
       render(<BenchmarkControls {...props} />);
 
-      fireEvent.click(screen.getByRole('button', { name: btnName }));
+      fireEvent.click(screen.getByRole('button', { name: buttonName }));
       expect(screen.getByText(dialogTitle)).toBeInTheDocument();
       expect(screen.getByText(dialogText)).toBeInTheDocument();
 
       const dialog = screen.getByRole('dialog');
-      fireEvent.click(within(dialog).getByRole('button', { name: btnName }));
+      fireEvent.click(within(dialog).getByRole('button', { name: buttonName }));
       expect(handler).toHaveBeenCalled();
     },
   );
 
-  it.each([
+  type CancelDialogCase = [buttonName: string, propKey: string, handlerKey: string];
+
+  const cancelDialogCases: CancelDialogCase[] = [
     ['Stop', 'isRunning', 'onStop'],
     ['Restart', 'hasStarted', 'onRestart'],
     ['Purge', 'none', 'onPurge'],
-  ])(
+  ];
+
+  it.each(cancelDialogCases)(
     'does not call %s handler when dialog is cancelled',
-    (btnName, propKey, handlerKey) => {
+    (buttonName, propKey, handlerKey) => {
       const handler = jest.fn();
       const props = {
         ...defaultControlProps,
@@ -143,7 +152,7 @@ describe('BenchmarkControls', () => {
       };
       render(<BenchmarkControls {...props} />);
 
-      fireEvent.click(screen.getByRole('button', { name: btnName }));
+      fireEvent.click(screen.getByRole('button', { name: buttonName }));
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
       expect(handler).not.toHaveBeenCalled();
     },
