@@ -133,6 +133,17 @@ dtaas-services clean
 dtaas-services install
 ```
 
+```bash
+dtaas-services start -s thingsboard
+```
+
+```bash
+
+#  After installation, wait some time before adding users
+#  This creates the tenant, tenant admin and users.
+dtaas-services user add -s thingsboard
+```
+
 ### Service Management
 
 Start all services:
@@ -216,7 +227,7 @@ dtaas-services clean -s "postgres,thingsboard"
 
 ### User Account Management
 
-1. Edit `config/credentials.csv` with user accounts (format: `username,email,password`)
+1. Edit `config/credentials.csv` with user accounts (format: `username,password,email`)
 
 2. Add users to services:
 
@@ -225,12 +236,29 @@ dtaas-services clean -s "postgres,thingsboard"
    ```
 
    This creates user accounts in InfluxDB, RabbitMQ, and ThingsBoard (if installed).
+   For ThingsBoard, each user is created as a CUSTOMER_USER under a customer
+   named after their username, within the tenant created during installation.
 
 3. Add user to a specific service
 
    ```bash
    dtaas-services user add -s rabbitmq
    ```
+
+### Reset Service Passwords
+
+Reset the ThingsBoard sysadmin and tenant admin passwords using values
+configured in `config/services.env`:
+
+```bash
+dtaas-services user reset-password -s thingsboard
+```
+
+This command:
+
+* Changes the sysadmin password from the default to `TB_SYSADMIN_NEW_PASSWORD`
+* Changes the tenant admin password from the default (`"tenant"`) to
+  `TB_TENANT_ADMIN_PASSWORD`
 
 ## ThingsBoard
 
@@ -263,10 +291,15 @@ ensure you run the setup command with appropriate privileges:
 sudo -E env PATH="$PATH" dtaas-services setup
 ```
 
-### Docker Connection Issues
+### Postgres Restarting
 
-Ensure Docker daemon is running:
+Make sure to run the clean command before starting postgres or installing thingsboard.
 
 ```bash
-docker ps
+dtaas-services clean
 ```
+
+### Thingsboard connection error
+
+After starting thingsboard and before adding users or changing passwords,
+it needs some time to initialize then you can add users.
