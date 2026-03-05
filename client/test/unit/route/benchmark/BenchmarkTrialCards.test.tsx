@@ -3,11 +3,17 @@ import '@testing-library/jest-dom';
 import {
   ExecutionCard,
   TrialCard,
-} from 'route/benchmark/BenchmarkTrialCards';
+} from 'route/benchmark/BenchmarkComponents';
 import {
   createMockExecution,
   createMockTrial,
 } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
+    <a {...props}>{children}</a>
+  ),
+}));
 
 jest.mock('model/backend/gitlab/measure/benchmark.utils', () => {
   const actual = jest.requireActual(

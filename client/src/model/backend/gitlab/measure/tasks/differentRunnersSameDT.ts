@@ -1,4 +1,4 @@
-import BenchmarkConfig from 'model/backend/gitlab/measure/benchmarkConfig';
+import { benchmarkConfig as BenchmarkConfig } from 'model/backend/gitlab/measure/benchmark.execution';
 import { TaskDefinition } from './taskDefinition';
 
 const differentRunnersSameDT: TaskDefinition = {

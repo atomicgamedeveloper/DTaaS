@@ -108,7 +108,17 @@ export interface TrialCardProps {
   trialIndex: number;
 }
 
-export { default as benchmarkConfig } from 'model/backend/gitlab/measure/benchmarkConfig';
+export const benchmarkConfig = {
+  get trials(): number {
+    return store.getState().benchmark.trials;
+  },
+  get runnerTag1(): string {
+    return store.getState().settings.RUNNER_TAG;
+  },
+  get runnerTag2(): string {
+    return store.getState().benchmark.secondaryRunnerTag;
+  },
+};
 
 export const DEFAULT_CONFIG: Configuration = {
   'Branch name': BRANCH_NAME,

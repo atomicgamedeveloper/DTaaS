@@ -12,10 +12,8 @@ import {
   DT_DIRECTORY,
   RUNNER_TAG,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import {
-  createMockRootState,
-  setupSessionStorage,
-} from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+import { createMockRootState } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+import { setupSessionStorage } from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
 jest.mock('store/store', () => ({
   __esModule: true,

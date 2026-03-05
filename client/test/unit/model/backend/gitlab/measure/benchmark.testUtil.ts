@@ -6,6 +6,10 @@ import {
   ExecutionResult,
   Configuration,
   ActivePipeline,
+  BenchmarkSetters,
+  benchmarkConfig as BenchmarkConfigOriginal,
+  benchmarkState,
+  tasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { RootState } from 'store/store';
 
@@ -139,84 +143,6 @@ export function createMockActivePipeline(
   };
 }
 
-export function setupStructuredClone() {
-  if (typeof globalThis.structuredClone !== 'function') {
-    globalThis.structuredClone = <T>(obj: T): T =>
-      JSON.parse(JSON.stringify(obj)) as T;
-  }
-}
-
-export function setupSessionStorage() {
-  Object.defineProperty(globalThis, 'sessionStorage', {
-    value: {
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-      removeItem: jest.fn(),
-      clear: jest.fn(),
-    },
-    writable: true,
-  });
-}
-
-export function setupSessionStorageAuth(
-  token = 'test-token',
-  username = 'test-user',
-) {
-  (sessionStorage.getItem as jest.Mock).mockImplementation((key: string) => {
-    if (key === 'access_token') return token;
-    if (key === 'username') return username;
-    return null;
-  });
-}
-
-export async function clearDatabase(measurementDBService: {
-  getAll: () => Promise<Array<{ id: string }>>;
-  delete: (id: string) => Promise<void>;
-}) {
-  try {
-    const entries = await measurementDBService.getAll();
-    await Promise.all(
-      entries.map((entry) => measurementDBService.delete(entry.id)),
-    );
-  } catch (error) {
-    throw new Error(`Failed to clear database: ${error}`);
-  }
-}
-
-export function setupMockDownload() {
-  const mockClick = jest.fn();
-  const mockLink = { href: '', download: '', click: mockClick };
-  const originalCreateObjectURL = URL.createObjectURL;
-  const originalRevokeObjectURL = URL.revokeObjectURL;
-  const originalCreateElement = document.createElement.bind(document);
-
-  (URL as { createObjectURL: typeof URL.createObjectURL }).createObjectURL =
-    jest.fn().mockReturnValue('blob:test-url');
-  (URL as { revokeObjectURL: typeof URL.revokeObjectURL }).revokeObjectURL =
-    jest.fn();
-
-  jest
-    .spyOn(document, 'createElement')
-    .mockImplementation((tagName: string) => {
-      if (tagName === 'a') {
-        return mockLink as unknown as HTMLAnchorElement;
-      }
-      return originalCreateElement(tagName);
-    });
-
-  return {
-    mockClick,
-    mockLink,
-    restore: () => {
-      (URL as { createObjectURL: typeof URL.createObjectURL }).createObjectURL =
-        originalCreateObjectURL;
-      (URL as { revokeObjectURL: typeof URL.revokeObjectURL }).revokeObjectURL =
-        originalRevokeObjectURL;
-      jest.restoreAllMocks();
-    },
-  };
-}
-
 export interface MockBenchmarkSetters {
   setIsRunning: jest.Mock;
   setCurrentExecutions: jest.Mock;
@@ -239,4 +165,73 @@ export function createMockSetters(resultsStateRef: {
       }
     }),
   };
+}
+
+// --- Shared test harness for benchmark.runner and benchmark.lifecycle tests ---
+
+export interface TestBenchmarkState {
+  shouldStopPipelines: boolean;
+  activePipelines: unknown[];
+  executionResults: unknown[];
+  currentMeasurementPromise: Promise<void> | null;
+  currentTrialMinPipelineId: number | null;
+  isRunning: boolean;
+  results: TimedTask[] | null;
+  currentTaskIndexUI: number | null;
+  componentSetters: BenchmarkSetters | null;
+}
+
+const CLEAN_STATE: Omit<TestBenchmarkState, 'componentSetters'> = {
+  shouldStopPipelines: false,
+  activePipelines: [],
+  executionResults: [],
+  currentMeasurementPromise: null,
+  currentTrialMinPipelineId: null,
+  isRunning: false,
+  results: null,
+  currentTaskIndexUI: null,
+};
+
+export function resetBenchmarkState(state: TestBenchmarkState) {
+  Object.assign(state, { ...CLEAN_STATE, componentSetters: null });
+}
+
+export function initBenchmarkResults(resultsRef: { current: TimedTask[] }) {
+  resultsRef.current = tasks.map((t) => ({
+    ...t,
+    Trials: [],
+    'Time Start': undefined,
+    'Time End': undefined,
+    'Average Time (s)': undefined,
+    Status: 'PENDING' as const,
+  }));
+}
+
+/**
+ * Common beforeEach setup for benchmark runner/lifecycle tests.
+ * Returns { state, setters, isRunningRef, resultsRef }.
+ */
+export function setupBenchmarkTestHarness() {
+  const state = benchmarkState as unknown as TestBenchmarkState;
+  const resultsRef: { current: TimedTask[] } = { current: [] };
+  const setters = createMockSetters(resultsRef);
+  const isRunningRef: React.MutableRefObject<boolean> = { current: false };
+  const BenchmarkConfig = BenchmarkConfigOriginal as {
+    trials: number;
+    runnerTag1: string;
+    runnerTag2: string;
+  };
+
+  const reset = () => {
+    jest.clearAllMocks();
+    resetBenchmarkState(state);
+    BenchmarkConfig.trials = 3;
+    resultsRef.current = [];
+    isRunningRef.current = false;
+    state.componentSetters = setters;
+    state.results = null;
+    initBenchmarkResults(resultsRef);
+  };
+
+  return { state, setters, isRunningRef, resultsRef, BenchmarkConfig, reset };
 }

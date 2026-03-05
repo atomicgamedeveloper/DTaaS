@@ -16,9 +16,11 @@ import {
 import {
   createMockRootState,
   createMockBackend,
+} from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+import {
   setupSessionStorage,
   setupSessionStorageAuth,
-} from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+} from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
 jest.mock('store/store', () => ({
   __esModule: true,

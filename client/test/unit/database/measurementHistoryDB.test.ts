@@ -1,10 +1,10 @@
 import 'fake-indexeddb/auto';
 import measurementDBService from 'database/measurementHistoryDB';
+import { createMockTask } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
 import {
-  createMockTask,
   clearDatabase,
   setupStructuredClone,
-} from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+} from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
 setupStructuredClone();
 

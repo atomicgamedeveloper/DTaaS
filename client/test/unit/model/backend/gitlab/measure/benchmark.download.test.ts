@@ -7,8 +7,8 @@ import {
   createMockTrial,
   createMockExecution,
   DEFAULT_CONFIG,
-  setupMockDownload,
 } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+import { setupMockDownload } from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
 function captureJsonDownload<T>(action: () => void): T {
   let capturedJson = '';
