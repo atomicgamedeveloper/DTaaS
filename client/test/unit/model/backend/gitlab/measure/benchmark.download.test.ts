@@ -151,7 +151,8 @@ describe('benchmark download', () => {
         task: { config: object };
       }>(() => downloadTaskResultJson(task));
 
-      const { 'Runner tag': _runnerTag, ...configWithoutRunner } = DEFAULT_CONFIG;
+      const { 'Runner tag': _runnerTag, ...configWithoutRunner } =
+        DEFAULT_CONFIG;
       expect(result.task.config).toEqual(configWithoutRunner);
     });
 
@@ -228,7 +229,8 @@ describe('benchmark download', () => {
         tasks: Array<{ config: object; trials: object[] }>;
       }>(() => downloadResultsJson([task]));
 
-      const { 'Runner tag': _runnerTag, ...configWithoutRunner } = DEFAULT_CONFIG;
+      const { 'Runner tag': _runnerTag, ...configWithoutRunner } =
+        DEFAULT_CONFIG;
       expect(result.tasks[0].config).toEqual(configWithoutRunner);
       expect(result.tasks[0].trials).toHaveLength(1);
     });

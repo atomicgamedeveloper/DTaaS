@@ -1,7 +1,7 @@
 import {
   benchmarkConfig as BenchmarkConfig,
   DEFAULT_TASK,
-  tasks,
+  getTasks,
   resetTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 
@@ -20,6 +20,8 @@ jest.mock('store/store', () => ({
 }));
 
 describe('benchmark.tasks', () => {
+  const tasks = getTasks();
+
   it('should read trials from store', () => {
     expect(BenchmarkConfig.trials).toBe(3);
   });

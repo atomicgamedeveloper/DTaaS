@@ -1,3 +1,4 @@
+// Persisted benchmark settings (trial count, secondary runner tag)
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export const DEFAULT_BENCHMARK = {
@@ -5,12 +6,12 @@ export const DEFAULT_BENCHMARK = {
   secondaryRunnerTag: 'windows',
 };
 
-interface BenchmarkState {
+interface BenchmarkSliceState {
   trials: number;
   secondaryRunnerTag: string;
 }
 
-export const loadInitialBenchmark = (): BenchmarkState => {
+export const loadInitialBenchmark = (): BenchmarkSliceState => {
   const saved = localStorage.getItem('benchmark');
   if (saved) {
     const parsed = JSON.parse(saved);
@@ -40,4 +41,4 @@ export const benchmarkSlice = createSlice({
 export const { setTrials, setSecondaryRunnerTag, resetBenchmarkDefaults } =
   benchmarkSlice.actions;
 
-export default benchmarkSlice.reducer;
+export const benchmarkReducer = benchmarkSlice.reducer;

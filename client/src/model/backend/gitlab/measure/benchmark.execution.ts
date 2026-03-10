@@ -1,4 +1,11 @@
-import store from 'store/store';
+/**
+ * Central benchmark types, configuration, and shared mutable state.
+ *
+ * - Pipeline operations are in ./benchmark.pipeline.ts
+ * - Task orchestration is in ./benchmark.runner.ts
+ * - Utility helpers are in ./benchmark.utils.ts
+ * - Persisted settings (trials, runner tag) are in store/benchmark.slice.ts
+ */
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import type { Configuration as ExternalConfiguration } from 'model/backend/gitlab/execution/executionTypes';
 import {
@@ -9,6 +16,17 @@ import {
   BRANCH_NAME,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
+import store from 'store/store';
+
+export {
+  DEFAULT_BENCHMARK,
+  loadInitialBenchmark,
+  benchmarkSlice,
+  benchmarkReducer,
+  setTrials,
+  setSecondaryRunnerTag,
+  resetBenchmarkDefaults,
+} from 'store/benchmark.slice';
 
 export type Configuration = ExternalConfiguration;
 
@@ -81,33 +99,6 @@ export type BenchmarkSetters = {
   setResults: React.Dispatch<React.SetStateAction<TimedTask[]>>;
 };
 
-export interface BenchmarkPageHeaderProps {
-  isRunning: boolean;
-  hasStarted: boolean;
-  iterations: number;
-  completedTasks: number;
-  completedTrials: number;
-  totalTasks: number;
-  onStart: () => void;
-  onRestart: () => void;
-  onStop: () => void;
-}
-
-export interface CompletionSummaryProps {
-  results: TimedTask[];
-  isRunning: boolean;
-  hasStarted: boolean;
-}
-
-export interface ExecutionCardProps {
-  execution: ExecutionResult;
-}
-
-export interface TrialCardProps {
-  trial: Trial;
-  trialIndex: number;
-}
-
 export const benchmarkConfig = {
   get trials(): number {
     return store.getState().benchmark.trials;
@@ -141,6 +132,7 @@ export const benchmarkState = {
   results: null as TimedTask[] | null,
   currentTaskIndexUI: null as number | null,
   componentSetters: null as BenchmarkSetters | null,
+  originalPrimaryRunnerTag: null as string | null,
 };
 
 // Save the page's update functions so the runner can refresh what the user sees
@@ -191,6 +183,7 @@ export function saveOriginalSettings(): void {
       RUNNER_TAG: state.settings.RUNNER_TAG,
       BRANCH_NAME: state.settings.BRANCH_NAME,
     };
+    benchmarkState.originalPrimaryRunnerTag = state.settings.RUNNER_TAG;
   }
 }
 
@@ -205,6 +198,7 @@ export function restoreOriginalSettings(): void {
       payload: originalSettings.BRANCH_NAME,
     });
     originalSettings = null;
+    benchmarkState.originalPrimaryRunnerTag = null;
   }
 }
 
@@ -218,15 +212,21 @@ export const DEFAULT_TASK: TimedTask = {
   Status: 'NOT_STARTED',
 };
 
-export const tasks: readonly TimedTask[] = taskDefinitions.map((def) => ({
-  ...DEFAULT_TASK,
-  'Task Name': def.name,
-  Description: def.description,
-  Executions: def.executions,
-}));
+let tasks: readonly TimedTask[] | undefined;
+export function getTasks(): readonly TimedTask[] {
+  if (!tasks) {
+    tasks = taskDefinitions.map((def) => ({
+      ...DEFAULT_TASK,
+      'Task Name': def.name,
+      Description: def.description,
+      Executions: def.executions,
+    }));
+  }
+  return tasks;
+}
 
 export function resetTasks(): TimedTask[] {
-  return tasks.map((task) => ({
+  return getTasks().map((task) => ({
     ...task,
     Trials: [],
     'Time Start': undefined,

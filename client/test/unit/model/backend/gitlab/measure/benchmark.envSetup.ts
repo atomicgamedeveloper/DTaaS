@@ -1,8 +1,4 @@
-/**
- * Factory for creating the jest.mock return value for benchmark.execution.
- * This file must NOT import from benchmark.execution to avoid circular deps
- * when used inside jest.mock factories via jest.requireActual.
- */
+// Factory for creating the jest.mock return value for benchmark.execution./
 export function createBenchmarkExecutionMock(
   extras: Record<string, unknown> = {},
 ) {
@@ -16,7 +12,10 @@ export function createBenchmarkExecutionMock(
     isRunning: false,
     results: null as unknown[] | null,
     currentTaskIndexUI: null as number | null,
-    componentSetters: null as Record<string, Function> | null,
+    componentSetters: null as Record<
+      string,
+      (...args: unknown[]) => unknown
+    > | null,
   };
 
   const createTask = (name: string, desc: string) => ({
@@ -30,15 +29,20 @@ export function createBenchmarkExecutionMock(
     Executions: () => [{ dtName: 'hello-world', config: {} }],
   });
 
-  const tasksArray = [createTask('Task 1', 'First'), createTask('Task 2', 'Second')];
+  const tasksArray = [
+    createTask('Task 1', 'First'),
+    createTask('Task 2', 'Second'),
+  ];
 
   return {
     benchmarkState: bs,
     saveOriginalSettings: jest.fn(),
     restoreOriginalSettings: jest.fn(),
-    attachSetters: jest.fn((s: Record<string, Function>) => {
-      bs.componentSetters = s;
-    }),
+    attachSetters: jest.fn(
+      (s: Record<string, (...args: unknown[]) => unknown>) => {
+        bs.componentSetters = s;
+      },
+    ),
     wrapSetters: () => ({
       setIsRunning: (v: boolean) => {
         bs.isRunning = v;
@@ -63,7 +67,7 @@ export function createBenchmarkExecutionMock(
       'DT directory': 'digital_twins',
       'Runner tag': 'linux',
     },
-    tasks: tasksArray,
+    getTasks: () => tasksArray,
     benchmarkConfig: { trials: 3, runnerTag1: 'linux', runnerTag2: 'windows' },
     resetTasks: jest.fn(() =>
       tasksArray.map((t) => ({

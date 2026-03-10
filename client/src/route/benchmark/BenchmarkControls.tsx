@@ -1,3 +1,4 @@
+// Benchmark action buttons (start, stop, download, clear) and confirmation dialogs
 import { useState } from 'react';
 import {
   Box,
@@ -9,12 +10,61 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import { BenchmarkPageHeaderProps } from 'model/backend/gitlab/measure/benchmark.execution';
+import { TimedTask } from 'model/backend/gitlab/measure/benchmark.execution';
 import {
-  controlsBar,
-  controlsButtonGroup,
-  trialsProgress,
-} from 'route/benchmark/benchmark.styles';
+  getTotalTime,
+  downloadResultsJson,
+  isTaskComplete,
+} from 'model/backend/gitlab/measure/benchmark.utils';
+
+interface BenchmarkPageHeaderProps {
+  isRunning: boolean;
+  hasStarted: boolean;
+  iterations: number;
+  completedTasks: number;
+  completedTrials: number;
+  totalTasks: number;
+  onStart: () => void;
+  onRestart: () => void;
+  onStop: () => void;
+}
+
+interface CompletionSummaryProps {
+  results: TimedTask[];
+  isRunning: boolean;
+  hasStarted: boolean;
+}
+
+function ConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  description,
+  confirmLabel,
+}: Readonly<{
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+}>) {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <DialogContentText>{description}</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onConfirm} color="primary" variant="contained">
+          {confirmLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 export default function BenchmarkControls({
   isRunning,
@@ -34,40 +84,13 @@ export default function BenchmarkControls({
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
 
-  const handleStopClick = () => {
-    setStopDialogOpen(true);
-  };
-
-  const handleStopConfirm = () => {
-    setStopDialogOpen(false);
-    onStop();
-  };
-
-  const handleRestartClick = () => {
-    setRestartDialogOpen(true);
-  };
-
-  const handleRestartConfirm = () => {
-    setRestartDialogOpen(false);
-    onRestart();
-  };
-
-  const handlePurgeClick = () => {
-    setPurgeDialogOpen(true);
-  };
-
-  const handlePurgeConfirm = () => {
-    setPurgeDialogOpen(false);
-    onPurge();
-  };
-
   const getPrimaryButton = () => {
     if (isRunning) {
       return (
         <Button
           variant="contained"
           color="primary"
-          onClick={handleStopClick}
+          onClick={() => setStopDialogOpen(true)}
           size="small"
         >
           Stop
@@ -94,19 +117,19 @@ export default function BenchmarkControls({
         display="flex"
         alignItems="center"
         justifyContent="space-between"
-        sx={controlsBar}
+        sx={{ mb: 3 }}
       >
-        <Typography variant="body1" sx={trialsProgress}>
+        <Typography variant="body1" sx={{ color: 'primary.main' }}>
           Trials Completed: {completedTrials}/{totalTasks * iterations}
         </Typography>
 
-        <Box sx={controlsButtonGroup}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {getPrimaryButton()}
 
           <Button
             variant="outlined"
             color="primary"
-            onClick={handleRestartClick}
+            onClick={() => setRestartDialogOpen(true)}
             disabled={!hasStarted || isRunning}
             size="small"
           >
@@ -116,7 +139,7 @@ export default function BenchmarkControls({
           <Button
             variant="outlined"
             color="primary"
-            onClick={handlePurgeClick}
+            onClick={() => setPurgeDialogOpen(true)}
             disabled={isRunning}
             size="small"
           >
@@ -124,67 +147,88 @@ export default function BenchmarkControls({
           </Button>
         </Box>
       </Box>
-      <Dialog open={stopDialogOpen} onClose={() => setStopDialogOpen(false)}>
-        <DialogTitle>Stop Benchmark?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to stop the benchmark? This will cancel all
-            running executions and mark the current task as stopped.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setStopDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleStopConfirm}
-            color="primary"
-            variant="contained"
-          >
-            Stop
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog
+      <ConfirmDialog
+        open={stopDialogOpen}
+        onClose={() => setStopDialogOpen(false)}
+        onConfirm={() => {
+          setStopDialogOpen(false);
+          onStop();
+        }}
+        title="Stop Benchmark?"
+        description="Are you sure you want to stop the benchmark? This will cancel all running executions and mark the current task as stopped."
+        confirmLabel="Stop"
+      />
+      <ConfirmDialog
         open={restartDialogOpen}
         onClose={() => setRestartDialogOpen(false)}
-      >
-        <DialogTitle>Restart Benchmark?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to restart the benchmark? This will discard
-            all current results and start from the beginning.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRestartDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleRestartConfirm}
-            color="primary"
-            variant="contained"
-          >
-            Restart
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={() => {
+          setRestartDialogOpen(false);
+          onRestart();
+        }}
+        title="Restart Benchmark?"
+        description="Are you sure you want to restart the benchmark? This will discard all current results and start from the beginning."
+        confirmLabel="Restart"
+      />
+      <ConfirmDialog
+        open={purgeDialogOpen}
+        onClose={() => setPurgeDialogOpen(false)}
+        onConfirm={() => {
+          setPurgeDialogOpen(false);
+          onPurge();
+        }}
+        title="Purge Benchmark Data?"
+        description="Are you sure you want to purge all benchmark data? This will permanently delete all results and cannot be undone."
+        confirmLabel="Purge"
+      />
+    </Box>
+  );
+}
 
-      <Dialog open={purgeDialogOpen} onClose={() => setPurgeDialogOpen(false)}>
-        <DialogTitle>Purge Benchmark Data?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to purge all benchmark data? This will
-            permanently delete all results and cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPurgeDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handlePurgeConfirm}
-            color="primary"
-            variant="contained"
+export function CompletionSummary({
+  results,
+  isRunning,
+  hasStarted,
+}: Readonly<CompletionSummaryProps>) {
+  const totalTime = getTotalTime(results);
+  const allComplete = results.every(isTaskComplete);
+
+  if (allComplete && totalTime !== null) {
+    return (
+      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+        <Typography variant="body2">
+          Completed in {totalTime.toFixed(1)}s |{' '}
+          <Typography
+            component="span"
+            variant="body2"
+            sx={{
+              color: 'primary.main',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+            onClick={() => downloadResultsJson(results)}
           >
-            Purge
-          </Button>
-        </DialogActions>
-      </Dialog>
+            Download JSON
+          </Typography>
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (isRunning || hasStarted) {
+    return (
+      <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+        <Typography variant="body2">
+          Benchmark data generation in progress
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
+      <Typography variant="body2">
+        Click Start to generate benchmark data
+      </Typography>
     </Box>
   );
 }

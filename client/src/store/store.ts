@@ -12,7 +12,7 @@ import cartSlice from 'preview/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
-import benchmarkSlice from 'store/benchmark.slice';
+import { benchmarkReducer as benchmarkSlice } from 'store/benchmark.slice';
 import indexedDBService from 'database/executionHistoryDB';
 
 setStorageService(indexedDBService);

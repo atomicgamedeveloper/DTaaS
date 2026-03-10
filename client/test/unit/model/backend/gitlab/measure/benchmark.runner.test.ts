@@ -6,14 +6,16 @@ import {
   saveOriginalSettings,
   restoreOriginalSettings,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
-import { delay } from 'model/backend/gitlab/execution/pipelineCore';
+import {
+  cancelActivePipelines,
+  runTrials,
+} from 'model/backend/gitlab/measure/benchmark.pipeline';
 import { setupBenchmarkTestHarness } from './benchmark.testUtil';
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
-  const {
-    createBenchmarkExecutionMock,
-  } = jest.requireActual('./benchmark.envSetup');
+  const { createBenchmarkExecutionMock } = jest.requireActual(
+    './benchmark.envSetup',
+  );
   return createBenchmarkExecutionMock({ runDigitalTwin: jest.fn() });
 });
 
@@ -30,6 +32,7 @@ jest.mock('model/backend/gitlab/execution/statusChecking', () => ({
 jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
   runDigitalTwin: jest.fn(),
   cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
+  runTrials: jest.fn().mockResolvedValue([]),
 }));
 jest.mock('database/measurementHistoryDB', () => ({
   __esModule: true,
@@ -74,7 +77,7 @@ describe('benchmark.runner', () => {
     }));
     await startMeasurement(harness.setters, harness.isRunningRef);
     expect(harness.setters.setResults).toHaveBeenCalled();
-    expect(delay).toHaveBeenCalled();
+    expect(runTrials).toHaveBeenCalled();
   });
 
   it('should stop pipelines and update statuses', async () => {

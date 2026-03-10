@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import { fetchExecutionHistory } from 'model/backend/state/executionHistory.slice';
-import { RootState } from 'store/store';
+import type { RootState } from 'store/store';
 import {
   startPipeline,
   updatePipelineState,

@@ -1,39 +1,100 @@
-import { Box, Typography, Tooltip } from '@mui/material';
-import { Link } from 'react-router-dom';
+// Presentational components (trial cards, status indicators, timing displays)
+import { Box, Typography, Tooltip, SxProps, Theme } from '@mui/material';
 import {
-  TimedTask,
-  CompletionSummaryProps,
-  ExecutionCardProps,
-  TrialCardProps,
+  ExecutionResult,
+  Trial,
   Execution,
+  Status,
   DEFAULT_CONFIG,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import {
-  secondsDifference,
-  getTotalTime,
-  downloadResultsJson,
-  isTaskComplete,
-} from 'model/backend/gitlab/measure/benchmark.utils';
-import {
-  statusColorMap,
-  getExecutionStatusColor,
-  executionCard,
-  bold,
-  trialCard,
-  trialHeaderRow,
-  trialHeaderLeft,
-  errorBox,
-  runnerTagColors,
-  runnerTagBadge,
-  downloadLink,
-  pageHeaderBox,
-  pageHeaderRow,
-  completionSummary,
-  clickableLink,
-} from 'route/benchmark/benchmark.styles';
+import { secondsDifference } from 'model/backend/gitlab/measure/benchmark.utils';
 
-export { statusColorMap, getExecutionStatusColor };
-export { default as BenchmarkControls } from 'route/benchmark/BenchmarkControls';
+export const statusColorMap: Record<Status, string> = {
+  NOT_STARTED: '#9e9e9e',
+  PENDING: '#9e9e9e',
+  RUNNING: '#1976d2',
+  FAILURE: '#d32f2f',
+  SUCCESS: '#1976d2',
+  STOPPED: '#616161',
+};
+
+const executionStatusColors: Record<string, string> = {
+  success: '#1976d2',
+  failed: '#d32f2f',
+  cancelled: '#616161',
+};
+
+export function getExecutionStatusColor(status: string): string {
+  return executionStatusColors[status] ?? '#9e9e9e';
+}
+
+const runnerTagColors = {
+  primary: { background: '#e8f5e9', border: '#4caf50', text: '#2e7d32' },
+  secondary: { background: '#e3f2fd', border: '#42a5f5', text: '#1565c0' },
+};
+
+const runnerTagBadge = (color: {
+  background: string;
+  border: string;
+  text: string;
+}): SxProps<Theme> => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  px: 0.6,
+  py: 0.15,
+  ml: 0.4,
+  borderRadius: '10px',
+  border: `1.5px solid ${color.border}`,
+  backgroundColor: color.background,
+  fontSize: '0.65rem',
+  fontWeight: 500,
+  color: color.text,
+  whiteSpace: 'nowrap',
+  verticalAlign: 'middle',
+});
+
+const executionCard: SxProps<Theme> = {
+  mb: 0.5,
+  p: 1,
+  bgcolor: 'grey.100',
+  borderRadius: 1,
+  textAlign: 'center',
+};
+const trialCardStyle: SxProps<Theme> = {
+  mb: 1.5,
+  p: 1,
+  border: 1,
+  borderColor: 'grey.300',
+  borderRadius: 1,
+  bgcolor: 'background.paper',
+};
+const trialHeaderRowStyle: SxProps<Theme> = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  mb: 0.5,
+};
+const trialHeaderLeftStyle: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1,
+};
+const errorBoxStyle: SxProps<Theme> = {
+  mt: 0.5,
+  p: 1,
+  bgcolor: 'error.light',
+  borderRadius: 1,
+};
+const bold: SxProps<Theme> = { fontWeight: 'bold' };
+
+interface ExecutionCardProps {
+  execution: ExecutionResult;
+}
+
+interface TrialCardProps {
+  trial: Trial;
+  trialIndex: number;
+}
 
 export function ExecutionCard({ execution }: Readonly<ExecutionCardProps>) {
   const statusColor = getExecutionStatusColor(execution.status);
@@ -60,9 +121,9 @@ export function TrialCard({
   executions,
 }: Readonly<TrialCardProps & { executions?: Execution[] }>) {
   return (
-    <Box sx={trialCard}>
-      <Box sx={trialHeaderRow}>
-        <Box sx={trialHeaderLeft}>
+    <Box sx={trialCardStyle}>
+      <Box sx={trialHeaderRowStyle}>
+        <Box sx={trialHeaderLeftStyle}>
           <Typography variant="caption" color="text.secondary" sx={bold}>
             Trial {trialIndex + 1}
           </Typography>
@@ -108,7 +169,7 @@ export function TrialCard({
             />
           ))}
       {trial.Error && !trial.Error.message.includes('stopped by user') && (
-        <Box sx={errorBox}>
+        <Box sx={errorBoxStyle}>
           <Typography variant="caption" color="error.dark">
             <Typography component="span" variant="caption" sx={bold}>
               Error:
@@ -138,107 +199,5 @@ export function RunnerTagBadge({
         {runnerTag}
       </Box>
     </Tooltip>
-  );
-}
-
-export function TaskControls({
-  task,
-  onDownloadTask,
-}: Readonly<{
-  task: TimedTask;
-  onDownloadTask: (task: TimedTask) => void;
-}>) {
-  const canDownload = task.Trials.some(isTaskComplete);
-
-  if (!canDownload) {
-    return (
-      <Typography variant="body1" color="text.disabled">
-        —
-      </Typography>
-    );
-  }
-
-  return (
-    <Tooltip title="Download task results as JSON" arrow>
-      <Typography
-        variant="caption"
-        sx={downloadLink}
-        onClick={() => onDownloadTask(task)}
-      >
-        Download Task Results
-      </Typography>
-    </Tooltip>
-  );
-}
-
-export function BenchmarkPageHeader() {
-  return (
-    <Box sx={pageHeaderBox}>
-      <Box sx={pageHeaderRow}>
-        <Typography variant="h5">Digital Twin Benchmark</Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary">
-        Run performance benchmarks for Digital Twin executions. Each task runs a
-        number of trials to calculate average time per task. Click{' '}
-        <strong>Start</strong> to begin the benchmark suite,{' '}
-        <strong>Stop</strong> to cancel running executions, or{' '}
-        <strong>Purge</strong> to permanently delete all benchmark data from
-        storage. After all tasks are through as well as after each trial
-        completes, you will be able to download a summary.
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        You can change the number of trials and secondary benchmark runner tag
-        in the{' '}
-        <Link to="/account" style={{ color: 'inherit' }}>
-          settings
-        </Link>
-        .
-      </Typography>
-    </Box>
-  );
-}
-
-export function CompletionSummary({
-  results,
-  isRunning,
-  hasStarted,
-}: Readonly<CompletionSummaryProps>) {
-  const totalTime = getTotalTime(results);
-  const allComplete = results.every(isTaskComplete);
-
-  if (allComplete && totalTime !== null) {
-    return (
-      <Box sx={completionSummary}>
-        <Typography variant="body2">
-          Completed in {totalTime.toFixed(1)}s |{' '}
-          <Typography
-            component="span"
-            variant="body2"
-            sx={clickableLink}
-            onClick={() => downloadResultsJson(results)}
-          >
-            Download JSON
-          </Typography>
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (isRunning || hasStarted) {
-    return (
-      <Box sx={completionSummary}>
-        <Typography variant="body2">
-          Benchmark data generation in progress
-        </Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
-      <Typography variant="body2">
-        Click Start to generate benchmark data
-      </Typography>
-    </Box>
   );
 }

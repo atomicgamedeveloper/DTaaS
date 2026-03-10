@@ -1,5 +1,13 @@
+/**
+ * Main benchmark page.
+ *
+ * - Controls (start, stop, download) are in ./BenchmarkControls.tsx
+ * - Results table is in ./BenchmarkTable.tsx
+ * - Trial cards and status indicators are in ./BenchmarkComponents.tsx
+ */
 import Layout from 'page/Layout';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
@@ -12,96 +20,57 @@ import {
   DEFAULT_CONFIG,
   attachSetters,
   detachSetters,
-  tasks,
+  getTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   startMeasurement,
   stopAllPipelines,
-  downloadTaskResultJson,
-} from 'model/backend/gitlab/measure/benchmark.runner';
-import {
   restartMeasurement,
   handleBeforeUnload,
   purgeBenchmarkData,
-} from 'model/backend/gitlab/measure/benchmark.lifecycle';
+} from 'model/backend/gitlab/measure/benchmark.runner';
 import {
   getBenchmarkStatus,
   mergeExecutionStatus,
   areAllBenchmarksComplete,
+  downloadTaskResultJson,
 } from 'model/backend/gitlab/measure/benchmark.utils';
-import {
-  BenchmarkPageHeader,
-  BenchmarkControls,
+import BenchmarkControls, {
   CompletionSummary,
-} from 'route/benchmark/BenchmarkComponents';
+} from 'route/benchmark/BenchmarkControls';
 import BenchmarkTable from 'route/benchmark/BenchmarkTable';
-import { contentBox, contentPaper } from 'route/benchmark/benchmark.styles';
 
-interface BenchmarkContentProps {
-  results: TimedTask[];
-  currentTaskIndex: number | null;
-  currentExecutions: ExecutionResult[];
-  isRunning: boolean;
-  iterations: number;
-  onStart: () => void;
-  onRestart: () => void;
-  onStop: () => void;
-  onPurge: () => void;
-  onDownloadTask: (task: TimedTask) => void;
-  primaryRunnerTag: string;
-  secondaryRunnerTag: string;
-}
-
-function BenchmarkContent({
-  results,
-  currentTaskIndex,
-  currentExecutions,
-  isRunning,
-  iterations,
-  onStart,
-  onRestart,
-  onStop,
-  onPurge,
-  onDownloadTask,
-  primaryRunnerTag,
-  secondaryRunnerTag,
-}: Readonly<BenchmarkContentProps>) {
-  const { hasStarted, completedTasks, completedTrials, totalTasks } =
-    getBenchmarkStatus(results);
-
+function BenchmarkPageHeader() {
   return (
-    <Layout sx={{ display: 'flex', justifyContent: 'center' }}>
-      <Box sx={contentBox}>
-        <BenchmarkPageHeader />
-        <Paper sx={contentPaper}>
-          <BenchmarkControls
-            isRunning={isRunning}
-            hasStarted={hasStarted}
-            iterations={iterations}
-            completedTasks={completedTasks}
-            completedTrials={completedTrials}
-            totalTasks={totalTasks}
-            onStart={onStart}
-            onRestart={onRestart}
-            onStop={onStop}
-            onPurge={onPurge}
-          />
-          <BenchmarkTable
-            results={results}
-            currentTaskIndex={currentTaskIndex}
-            currentExecutions={currentExecutions}
-            onDownloadTask={onDownloadTask}
-            primaryRunnerTag={primaryRunnerTag}
-            secondaryRunnerTag={secondaryRunnerTag}
-          />
-          <CompletionSummary
-            results={results}
-            isRunning={isRunning}
-            hasStarted={hasStarted}
-          />
-        </Paper>
+    <Box sx={{ mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 1,
+        }}
+      >
+        <Typography variant="h5">Digital Twin Benchmark</Typography>
       </Box>
-    </Layout>
+      <Typography variant="body2" color="text.secondary">
+        Run performance benchmarks for Digital Twin executions. Each task runs a
+        number of trials to calculate average time per task. Click{' '}
+        <strong>Start</strong> to begin the benchmark suite,{' '}
+        <strong>Stop</strong> to cancel running executions, or{' '}
+        <strong>Purge</strong> to permanently delete all benchmark data from
+        storage. After all tasks are through as well as after each trial
+        completes, you will be able to download a summary.
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        You can change the number of trials and secondary benchmark runner tag
+        in the{' '}
+        <Link to="/account" style={{ color: 'inherit' }}>
+          settings
+        </Link>
+        .
+      </Typography>
+    </Box>
   );
 }
 
@@ -113,17 +82,33 @@ function Benchmark() {
     (state: RootState) => state.settings.RUNNER_TAG,
   );
   const [results, setResults] = useState<TimedTask[]>(
-    () => benchmarkState.results ?? [...tasks],
+    () => benchmarkState.results ?? [...getTasks()],
   );
   const [currentExecutions, setCurrentExecutions] = useState<ExecutionResult[]>(
-    [],
+    () => {
+      if (
+        !benchmarkState.isRunning ||
+        benchmarkState.currentTaskIndexUI === null
+      )
+        return [];
+      const task = getTasks()[benchmarkState.currentTaskIndexUI];
+      const executions = task?.Executions?.() ?? [];
+      return mergeExecutionStatus(
+        executions,
+        benchmarkState.activePipelines,
+        benchmarkState.executionResults,
+        DEFAULT_CONFIG,
+      );
+    },
   );
   const [currentTaskIndex, setCurrentTaskIndex] = useState<number | null>(
     benchmarkState.isRunning ? benchmarkState.currentTaskIndexUI : null,
   );
   const [isRunning, setIsRunning] = useState(benchmarkState.isRunning);
   const hasShownCompletionSnackbar = useRef(false);
-  const originalPrimaryRunnerTag = useRef(primaryRunnerTag);
+  const originalPrimaryRunnerTag = useRef(
+    benchmarkState.originalPrimaryRunnerTag ?? primaryRunnerTag,
+  );
 
   const setters: BenchmarkSetters = {
     setIsRunning,
@@ -134,7 +119,7 @@ function Benchmark() {
 
   useEffect(() => {
     if (!benchmarkState.results) {
-      benchmarkState.results = [...tasks];
+      benchmarkState.results = [...getTasks()];
     }
     attachSetters(setters);
     return () => detachSetters();
@@ -145,7 +130,7 @@ function Benchmark() {
     if (!isRunning) return undefined;
     const interval = setInterval(() => {
       if (currentTaskIndex === null) return;
-      const task = tasks[currentTaskIndex];
+      const task = getTasks()[currentTaskIndex];
       const executions = task?.Executions?.() ?? [];
       const merged = mergeExecutionStatus(
         executions,
@@ -211,23 +196,45 @@ function Benchmark() {
     );
   };
 
+  const { hasStarted, completedTasks, completedTrials, totalTasks } =
+    getBenchmarkStatus(results);
+  const effectivePrimaryTag = isRunning
+    ? originalPrimaryRunnerTag.current
+    : primaryRunnerTag;
+
   return (
-    <BenchmarkContent
-      results={results}
-      currentTaskIndex={currentTaskIndex}
-      currentExecutions={currentExecutions}
-      isRunning={isRunning}
-      iterations={iterations}
-      onStart={handleStart}
-      onRestart={handleRestart}
-      onStop={handleStop}
-      onPurge={handlePurge}
-      onDownloadTask={downloadTaskResultJson}
-      primaryRunnerTag={
-        isRunning ? originalPrimaryRunnerTag.current : primaryRunnerTag
-      }
-      secondaryRunnerTag={alternateRunnerTag}
-    />
+    <Layout sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ width: '100%', p: 3, alignSelf: 'center' }}>
+        <BenchmarkPageHeader />
+        <Paper sx={{ p: 3 }}>
+          <BenchmarkControls
+            isRunning={isRunning}
+            hasStarted={hasStarted}
+            iterations={iterations}
+            completedTasks={completedTasks}
+            completedTrials={completedTrials}
+            totalTasks={totalTasks}
+            onStart={handleStart}
+            onRestart={handleRestart}
+            onStop={handleStop}
+            onPurge={handlePurge}
+          />
+          <BenchmarkTable
+            results={results}
+            currentTaskIndex={currentTaskIndex}
+            currentExecutions={currentExecutions}
+            onDownloadTask={downloadTaskResultJson}
+            primaryRunnerTag={effectivePrimaryTag}
+            secondaryRunnerTag={alternateRunnerTag}
+          />
+          <CompletionSummary
+            results={results}
+            isRunning={isRunning}
+            hasStarted={hasStarted}
+          />
+        </Paper>
+      </Box>
+    </Layout>
   );
 }
 

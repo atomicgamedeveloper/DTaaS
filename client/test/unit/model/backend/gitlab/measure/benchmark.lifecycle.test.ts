@@ -1,7 +1,7 @@
 import {
   restartMeasurement,
   handleBeforeUnload,
-} from 'model/backend/gitlab/measure/benchmark.lifecycle';
+} from 'model/backend/gitlab/measure/benchmark.runner';
 import {
   restoreOriginalSettings,
   DEFAULT_CONFIG,
@@ -12,14 +12,15 @@ import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import { setupBenchmarkTestHarness } from './benchmark.testUtil';
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
-  const {
-    createBenchmarkExecutionMock,
-  } = jest.requireActual('./benchmark.envSetup');
+  const { createBenchmarkExecutionMock } = jest.requireActual(
+    './benchmark.envSetup',
+  );
   return createBenchmarkExecutionMock();
 });
 
 jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
   cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
+  runTrials: jest.fn().mockResolvedValue([]),
 }));
 jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
   delay: jest.fn().mockResolvedValue(undefined),

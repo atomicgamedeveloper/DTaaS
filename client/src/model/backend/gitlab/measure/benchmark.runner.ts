@@ -1,5 +1,7 @@
+// Top-level benchmark orchestrator (runs tasks across trials, updates UI, persists results)
 /* eslint-disable no-await-in-loop */
 import measurementDBService from 'database/measurementHistoryDB';
+import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import {
   benchmarkConfig as BenchmarkConfig,
   TimedTask,
@@ -10,27 +12,17 @@ import {
   restoreOriginalSettings,
   attachSetters,
   wrapSetters,
-  tasks,
-  DEFAULT_TASK as DEFAULT_MEASUREMENT,
+  resetTasks,
+  getTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import { cancelActivePipelines } from 'model/backend/gitlab/measure/benchmark.pipeline';
+import {
+  cancelActivePipelines,
+  runTrials,
+} from 'model/backend/gitlab/measure/benchmark.pipeline';
 import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/benchmark.utils';
-import { runTrials } from 'model/backend/gitlab/measure/benchmark.trials';
-
-export {
-  secondsDifference,
-  getTotalTime,
-  downloadResultsJson,
-  downloadTaskResultJson,
-} from 'model/backend/gitlab/measure/benchmark.utils';
-export { tasks, DEFAULT_MEASUREMENT };
-export {
-  restartMeasurement,
-  handleBeforeUnload,
-} from 'model/backend/gitlab/measure/benchmark.lifecycle';
 
 type TaskUpdater = (taskIndex: number, updates: Partial<TimedTask>) => void;
 
@@ -151,11 +143,12 @@ export async function startMeasurement(
   const updateTask = createTaskUpdater(proxy.setResults);
 
   try {
-    for (let i = 0; i < tasks.length; i += 1) {
+    const allTasks = getTasks();
+    for (let i = 0; i < allTasks.length; i += 1) {
       if (benchmarkState.shouldStopPipelines) {
         break;
       }
-      await executeTask(i, tasks[i], proxy, updateTask);
+      await executeTask(i, allTasks[i], proxy, updateTask);
     }
   } finally {
     isRunningRef.current = false;
@@ -178,4 +171,73 @@ export async function stopAllPipelines(): Promise<void> {
         : task,
     ),
   );
+}
+
+let isRestarting = false;
+
+export async function purgeBenchmarkData(): Promise<void> {
+  await measurementDBService.purge();
+  const fresh = resetTasks();
+  benchmarkState.results = fresh;
+  benchmarkState.componentSetters?.setResults(fresh);
+}
+
+export async function restartMeasurement(
+  setters: BenchmarkSetters,
+  isRunningRef: React.MutableRefObject<boolean>,
+): Promise<void> {
+  if (isRestarting) {
+    return;
+  }
+  isRestarting = true;
+
+  try {
+    benchmarkState.shouldStopPipelines = true;
+    await cancelActivePipelines();
+
+    if (benchmarkState.currentMeasurementPromise) {
+      await benchmarkState.currentMeasurementPromise;
+    }
+
+    restoreOriginalSettings();
+
+    attachSetters(setters);
+    const proxy = wrapSetters();
+
+    benchmarkState.shouldStopPipelines = false;
+    benchmarkState.activePipelines = [];
+    benchmarkState.executionResults = [];
+    proxy.setCurrentExecutions([]);
+    proxy.setCurrentTaskIndex(null);
+    proxy.setResults(resetTasks());
+    isRunningRef.current = false;
+
+    benchmarkState.currentMeasurementPromise = startMeasurement(
+      setters,
+      isRunningRef,
+    );
+  } finally {
+    isRestarting = false;
+  }
+}
+
+export function handleBeforeUnload(
+  isRunningRef: React.MutableRefObject<boolean>,
+): void {
+  if (isRunningRef.current && benchmarkState.activePipelines.length > 0) {
+    benchmarkState.shouldStopPipelines = true;
+    for (const { backend, pipelineId } of benchmarkState.activePipelines) {
+      try {
+        const projectId = backend.getProjectId();
+        backend.api.cancelPipeline(projectId, pipelineId).catch(() => {});
+        backend.api
+          .cancelPipeline(projectId, getChildPipelineId(pipelineId))
+          .catch(() => {});
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  restoreOriginalSettings();
 }

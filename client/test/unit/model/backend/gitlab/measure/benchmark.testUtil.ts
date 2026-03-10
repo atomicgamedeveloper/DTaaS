@@ -9,7 +9,7 @@ import {
   BenchmarkSetters,
   benchmarkConfig as BenchmarkConfigOriginal,
   benchmarkState,
-  tasks,
+  getTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { RootState } from 'store/store';
 
@@ -197,7 +197,7 @@ export function resetBenchmarkState(state: TestBenchmarkState) {
 }
 
 export function initBenchmarkResults(resultsRef: { current: TimedTask[] }) {
-  resultsRef.current = tasks.map((t) => ({
+  resultsRef.current = getTasks().map((t) => ({
     ...t,
     Trials: [],
     'Time Start': undefined,

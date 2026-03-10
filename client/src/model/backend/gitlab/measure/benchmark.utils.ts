@@ -1,3 +1,4 @@
+// Pure utility helpers (status checks, time calculations, result formatting)
 import {
   TimedTask,
   Status,
@@ -145,9 +146,9 @@ export function computeAverageTime(
 
   return durations.length > 0
     ? (round3(
-      durations.reduce((sum, duration) => sum + duration, 0) /
-      durations.length,
-    ) as number)
+        durations.reduce((sum, duration) => sum + duration, 0) /
+          durations.length,
+      ) as number)
     : undefined;
 }
 

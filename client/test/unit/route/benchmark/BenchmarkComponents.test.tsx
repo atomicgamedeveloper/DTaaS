@@ -1,12 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import {
-  TaskControls,
-  BenchmarkPageHeader,
-  CompletionSummary,
-  RunnerTagBadge,
-} from 'route/benchmark/BenchmarkComponents';
+import { RunnerTagBadge } from 'route/benchmark/BenchmarkComponents';
+import { CompletionSummary } from 'route/benchmark/BenchmarkControls';
+import { TaskControls } from 'route/benchmark/BenchmarkTable';
 import { getRunnerTags } from 'model/backend/gitlab/measure/benchmark.utils';
 import {
   createMockTrial,
@@ -96,14 +92,6 @@ describe('BenchmarkComponents', () => {
     expect(link).toBeInTheDocument();
     fireEvent.click(link);
     expect(mockDownload).toHaveBeenCalledWith(task);
-  });
-
-  it('renders the page title and description', () => {
-    render(<MemoryRouter><BenchmarkPageHeader /></MemoryRouter>);
-    expect(screen.getByText('Digital Twin Benchmark')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Run performance benchmarks for Digital Twin/),
-    ).toBeInTheDocument();
   });
 
   it('shows "Click Start" when benchmark has not started', () => {

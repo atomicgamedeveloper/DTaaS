@@ -1,12 +1,21 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Benchmark from 'route/benchmark/Benchmark';
-import { setupBenchmarkComponentTest, createResultTask } from './benchmark.testSetup';
+import {
+  setupBenchmarkComponentTest,
+  createResultTask,
+} from './benchmark.testSetup';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
   useDispatch: jest.fn(),
+}));
+
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
+    <a {...props}>{children}</a>
+  ),
 }));
 
 jest.mock('page/Layout', () => ({
@@ -16,19 +25,26 @@ jest.mock('page/Layout', () => ({
   ),
 }));
 
-jest.mock('model/backend/gitlab/measure/benchmark.lifecycle', () => ({
-  restartMeasurement: jest.fn().mockResolvedValue(undefined),
-  handleBeforeUnload: jest.fn(),
-  purgeBenchmarkData: jest.fn().mockResolvedValue(undefined),
+jest.mock('route/benchmark/BenchmarkComponents', () => ({
+  TrialCard: ({
+    trial,
+    trialIndex,
+  }: {
+    trial: { Status: string };
+    trialIndex: number;
+  }) => (
+    <div data-testid="trial-card">
+      Trial {trialIndex + 1} - {trial.Status}
+    </div>
+  ),
+  RunnerTagBadge: () => <span />,
+  statusColorMap: {},
+  getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
 }));
 
-jest.mock('route/benchmark/BenchmarkComponents', () => ({
-  TrialCard: ({ trial, trialIndex }: { trial: { Status: string }; trialIndex: number }) => (
-    <div data-testid="trial-card">Trial {trialIndex + 1} - {trial.Status}</div>
-  ),
-  TaskControls: () => <div data-testid="task-controls" />,
-  BenchmarkPageHeader: () => <div data-testid="benchmark-header" />,
-  BenchmarkControls: (p: {
+jest.mock('route/benchmark/BenchmarkControls', () => ({
+  __esModule: true,
+  default: (p: {
     isRunning: boolean;
     onStart: () => void;
     onRestart: () => void;
@@ -54,9 +70,12 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
     </div>
   ),
   CompletionSummary: () => <div data-testid="completion-summary" />,
-  RunnerTagBadge: () => <span />,
-  statusColorMap: {},
-  getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
+}));
+
+jest.mock('route/benchmark/BenchmarkTable', () => ({
+  __esModule: true,
+  default: () => <div data-testid="benchmark-table" />,
+  TaskControls: () => <div data-testid="task-controls" />,
 }));
 
 const mockStartMeasurement = jest.fn().mockResolvedValue(undefined);
@@ -65,17 +84,40 @@ const mockStopAllPipelines = jest.fn().mockResolvedValue(undefined);
 jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
   startMeasurement: (...args: unknown[]) => mockStartMeasurement(...args),
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
-  downloadTaskResultJson: jest.fn(),
+  restartMeasurement: jest.fn().mockResolvedValue(undefined),
+  handleBeforeUnload: jest.fn(),
+  purgeBenchmarkData: jest.fn().mockResolvedValue(undefined),
 }));
+
+jest.mock('model/backend/gitlab/measure/benchmark.utils', () => {
+  const actual = jest.requireActual(
+    'model/backend/gitlab/measure/benchmark.utils',
+  );
+  return {
+    getBenchmarkStatus: jest.fn(() => ({
+      hasStarted: false,
+      completedTasks: 0,
+      completedTrials: 0,
+      totalTasks: 2,
+    })),
+    mergeExecutionStatus: jest.fn(() => []),
+    areAllBenchmarksComplete: actual.areAllBenchmarksComplete,
+    downloadTaskResultJson: jest.fn(),
+  };
+});
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   const setup = jest.requireActual('./benchmark.testSetup');
+  const actual = jest.requireActual(
+    'model/backend/gitlab/measure/benchmark.execution',
+  );
   return {
     benchmarkState: { ...setup.MOCK_BENCHMARK_STATE },
     DEFAULT_CONFIG: {},
+    DEFAULT_BENCHMARK: actual.DEFAULT_BENCHMARK,
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),
-    tasks: setup.MOCK_TASKS,
+    getTasks: () => setup.MOCK_TASKS,
   };
 });
 
@@ -97,17 +139,18 @@ describe('Benchmark snackbar and polling', () => {
   it.each(snackbarClickCases)(
     'shows snackbar when %s is clicked',
     async (btnId, message, severity) => {
-    render(<Benchmark />);
-    await act(async () => {
-      fireEvent.click(screen.getByTestId(btnId));
-    });
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'snackbar/showSnackbar',
-        payload: { message, severity },
-      }),
-    );
-  });
+      render(<Benchmark />);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId(btnId));
+      });
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'snackbar/showSnackbar',
+          payload: { message, severity },
+        }),
+      );
+    },
+  );
 
   type CompletionSnackbarCase = [statuses: string[], expectedMessage: string];
 

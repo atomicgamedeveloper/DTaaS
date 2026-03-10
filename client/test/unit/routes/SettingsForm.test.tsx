@@ -15,7 +15,7 @@ import {
   setRunnerTag,
   setBranchName,
 } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
+import { DEFAULT_BENCHMARK } from 'model/backend/gitlab/measure/benchmark.execution';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 

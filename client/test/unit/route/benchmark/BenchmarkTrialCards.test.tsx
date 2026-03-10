@@ -1,9 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import {
-  ExecutionCard,
-  TrialCard,
-} from 'route/benchmark/BenchmarkComponents';
+import { ExecutionCard, TrialCard } from 'route/benchmark/BenchmarkComponents';
 import {
   createMockExecution,
   createMockTrial,
@@ -129,5 +126,4 @@ describe('BenchmarkTrialCards', () => {
       expect(screen.queryByText('Error:')).not.toBeInTheDocument();
     });
   });
-
 });

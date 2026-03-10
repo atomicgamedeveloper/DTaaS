@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
+import { DEFAULT_BENCHMARK } from 'model/backend/gitlab/measure/benchmark.execution';
 import { useSelector, useDispatch } from 'react-redux';
 
 export const MOCK_TASKS = [
@@ -28,7 +28,11 @@ export const MOCK_BENCHMARK_STATE = {
   componentSetters: null,
 };
 
-export const createResultTask = (name: string, status: string, avgTime?: number) => ({
+export const createResultTask = (
+  name: string,
+  status: string,
+  avgTime?: number,
+) => ({
   'Task Name': name,
   Description: `${name} description`,
   Trials: [],

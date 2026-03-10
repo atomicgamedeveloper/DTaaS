@@ -9,6 +9,12 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
+jest.mock('react-router-dom', () => ({
+  Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
+    <a {...props}>{children}</a>
+  ),
+}));
+
 jest.mock('page/Layout', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
@@ -28,6 +34,32 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
       Trial {trialIndex + 1} - {trial.Status}
     </div>
   ),
+  RunnerTagBadge: ({ runnerTag }: { runnerTag: string }) => (
+    <span data-testid="runner-tag-badge">{runnerTag}</span>
+  ),
+  statusColorMap: {},
+  getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
+}));
+
+jest.mock('route/benchmark/BenchmarkTable', () => ({
+  __esModule: true,
+  default: (props: {
+    results: unknown[];
+    currentTaskIndex: number | null;
+    currentExecutions: unknown[];
+    onDownloadTask: (t: unknown) => void;
+    primaryRunnerTag: string;
+    secondaryRunnerTag: string;
+  }) => (
+    <div data-testid="benchmark-table">
+      {(props.results as { 'Task Name': string }[]).map((task) => (
+        <div key={task['Task Name']}>
+          <span>{task['Task Name']}</span>
+          <button onClick={() => props.onDownloadTask(task)}>Download</button>
+        </div>
+      ))}
+    </div>
+  ),
   TaskControls: ({
     task,
     onDownloadTask,
@@ -39,10 +71,11 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
       <button onClick={() => onDownloadTask(task)}>Download</button>
     </div>
   ),
-  BenchmarkPageHeader: () => (
-    <div data-testid="benchmark-header">Digital Twin Benchmark</div>
-  ),
-  BenchmarkControls: (props: {
+}));
+
+jest.mock('route/benchmark/BenchmarkControls', () => ({
+  __esModule: true,
+  default: (props: {
     isRunning: boolean;
     hasStarted: boolean;
     iterations: number;
@@ -82,11 +115,6 @@ jest.mock('route/benchmark/BenchmarkComponents', () => ({
   CompletionSummary: ({ results }: { results: unknown[] }) => (
     <div data-testid="completion-summary">Tasks: {results.length}</div>
   ),
-  RunnerTagBadge: ({ runnerTag }: { runnerTag: string }) => (
-    <span data-testid="runner-tag-badge">{runnerTag}</span>
-  ),
-  statusColorMap: {},
-  getExecutionStatusColor: jest.fn(() => '#9e9e9e'),
 }));
 
 const mockStartMeasurement = jest.fn().mockResolvedValue(undefined);
@@ -95,27 +123,39 @@ const mockStopAllPipelines = jest.fn().mockResolvedValue(undefined);
 const mockDownloadTaskResultJson = jest.fn();
 const mockPurgeBenchmarkData = jest.fn().mockResolvedValue(undefined);
 
-jest.mock('model/backend/gitlab/measure/benchmark.lifecycle', () => ({
+jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
+  startMeasurement: (...args: unknown[]) => mockStartMeasurement(...args),
+  stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   restartMeasurement: (...args: unknown[]) => mockRestartMeasurement(...args),
   handleBeforeUnload: jest.fn(),
   purgeBenchmarkData: (...args: unknown[]) => mockPurgeBenchmarkData(...args),
 }));
 
-jest.mock('model/backend/gitlab/measure/benchmark.runner', () => ({
-  startMeasurement: (...args: unknown[]) => mockStartMeasurement(...args),
-  stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
+jest.mock('model/backend/gitlab/measure/benchmark.utils', () => ({
+  getBenchmarkStatus: jest.fn(() => ({
+    hasStarted: false,
+    completedTasks: 0,
+    completedTrials: 0,
+    totalTasks: 2,
+  })),
+  mergeExecutionStatus: jest.fn(() => []),
+  areAllBenchmarksComplete: jest.fn(() => false),
   downloadTaskResultJson: (...args: unknown[]) =>
     mockDownloadTaskResultJson(...args),
 }));
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   const setup = jest.requireActual('./benchmark.testSetup');
+  const actual = jest.requireActual(
+    'model/backend/gitlab/measure/benchmark.execution',
+  );
   return {
     benchmarkState: { ...setup.MOCK_BENCHMARK_STATE },
     DEFAULT_CONFIG: {},
+    DEFAULT_BENCHMARK: actual.DEFAULT_BENCHMARK,
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),
-    tasks: setup.MOCK_TASKS,
+    getTasks: () => setup.MOCK_TASKS,
   };
 });
 
@@ -129,21 +169,17 @@ describe('Benchmark', () => {
   it('renders the Benchmark page with layout and initial state', () => {
     renderBenchmark();
     expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
-    expect(screen.getByTestId('benchmark-header')).toBeInTheDocument();
+    expect(screen.getByText('Digital Twin Benchmark')).toBeInTheDocument();
     expect(screen.getByTestId('is-running')).toHaveTextContent('stopped');
     expect(screen.getByTestId('has-started')).toHaveTextContent('not-started');
     expect(screen.getByTestId('iterations')).toHaveTextContent('3');
   });
 
-  it('renders the benchmark table with tasks and headers', () => {
+  it('renders the benchmark table with tasks', () => {
     renderBenchmark();
     expect(screen.getByText('Task 1')).toBeInTheDocument();
     expect(screen.getByText('Task 2')).toBeInTheDocument();
-    expect(screen.getByText('Task')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getByText('Average Duration')).toBeInTheDocument();
-    expect(screen.getByText('Trials')).toBeInTheDocument();
-    expect(screen.getByText('Data')).toBeInTheDocument();
+    expect(screen.getByTestId('benchmark-table')).toBeInTheDocument();
   });
 
   it('calls startMeasurement when Start is clicked', async () => {
@@ -180,8 +216,6 @@ describe('Benchmark', () => {
 
   it('renders task status and completion summary correctly', () => {
     renderBenchmark();
-    const statusCells = screen.getAllByText('—');
-    expect(statusCells.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByTestId('completion-summary')).toBeInTheDocument();
     expect(screen.getByText('Tasks: 2')).toBeInTheDocument();
     expect(screen.getByTestId('completed-tasks')).toHaveTextContent('0');

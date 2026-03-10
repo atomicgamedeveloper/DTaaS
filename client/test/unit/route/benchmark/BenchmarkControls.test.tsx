@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BenchmarkControls } from 'route/benchmark/BenchmarkComponents';
+import BenchmarkControls from 'route/benchmark/BenchmarkControls';
 
 describe('BenchmarkControls', () => {
   const defaultControlProps = {
@@ -29,14 +29,13 @@ describe('BenchmarkControls', () => {
     expected: string,
   ];
 
-  const trialCounterCases: TrialCounterCase[] =
-    [
-      [false, 0, 0, 5, 3, '0/15'],
-      [true, 2, 6, 5, 3, '6/15'],
-      [true, 5, 15, 5, 3, '15/15'],
-      [true, 0, 0, 3, 3, '0/9'],
-      [true, 0, 1, 5, 3, '1/15'],
-    ];
+  const trialCounterCases: TrialCounterCase[] = [
+    [false, 0, 0, 5, 3, '0/15'],
+    [true, 2, 6, 5, 3, '6/15'],
+    [true, 5, 15, 5, 3, '15/15'],
+    [true, 0, 0, 3, 3, '0/9'],
+    [true, 0, 1, 5, 3, '1/15'],
+  ];
 
   it.each(trialCounterCases)(
     'shows trial counter (hasStarted=%s, completedTasks=%s, completedTrials=%s, total=%s, iter=%s) as %s',
@@ -133,7 +132,11 @@ describe('BenchmarkControls', () => {
     },
   );
 
-  type CancelDialogCase = [buttonName: string, propKey: string, handlerKey: string];
+  type CancelDialogCase = [
+    buttonName: string,
+    propKey: string,
+    handlerKey: string,
+  ];
 
   const cancelDialogCases: CancelDialogCase[] = [
     ['Stop', 'isRunning', 'onStop'],

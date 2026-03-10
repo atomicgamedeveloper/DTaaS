@@ -15,7 +15,7 @@ import {
   setSecondaryRunnerTag,
   resetBenchmarkDefaults,
   DEFAULT_BENCHMARK,
-} from 'store/benchmark.slice';
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   Button,
   TextField,
