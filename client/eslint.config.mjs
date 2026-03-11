@@ -91,6 +91,7 @@ export default [{
             {
                 "caughtErrorsIgnorePattern": "^_",
                 "varsIgnorePattern": "^_",
+                "argsIgnorePattern": "^_",
             }
         ],
         "class-methods-use-this": "off",

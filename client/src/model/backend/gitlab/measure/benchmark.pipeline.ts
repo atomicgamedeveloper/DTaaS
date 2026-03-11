@@ -104,7 +104,7 @@ async function executeDigitalTwinPipeline(
   benchmarkState.currentTrialExecutionIndex += 1;
 
   const digitalTwin = new DigitalTwin(dtName, backend);
-  const pipelineId = await digitalTwin.execute(true);
+  const pipelineId = await digitalTwin.execute();
 
   if (!pipelineId) {
     throw new Error(`Failed to start pipeline for ${dtName}.`);

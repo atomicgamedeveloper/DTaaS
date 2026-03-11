@@ -37,7 +37,7 @@ export function getRunnerTags(
 }
 
 function round3(value: number | undefined | null): number | undefined | null {
-  return value != null ? parseFloat(value.toFixed(3)) : value;
+  return value == null ? value : Number.parseFloat(value.toFixed(3));
 }
 
 export function secondsDifference(

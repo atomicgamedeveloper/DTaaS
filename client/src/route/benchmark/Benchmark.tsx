@@ -118,9 +118,7 @@ function Benchmark() {
   };
 
   useEffect(() => {
-    if (!benchmarkState.results) {
-      benchmarkState.results = [...getTasks()];
-    }
+    benchmarkState.results ??= [...getTasks()];
     attachSetters(setters);
     return () => detachSetters();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -14,7 +14,10 @@ import {
   logSuccess,
 } from 'model/backend/util/digitalTwinUtils';
 
-export async function executeDT(self: DigitalTwin): Promise<number | null> {
+export async function executeDT(
+  self: DigitalTwin,
+  skipHistorySave: boolean = false,
+): Promise<number | null> {
   const runnerTag = getRunnerTag();
   if (!isValidInstance(self)) {
     logError(self, runnerTag, 'Missing projectId or triggerToken');
@@ -35,16 +38,18 @@ export async function executeDT(self: DigitalTwin): Promise<number | null> {
     const executionId = uuidv4();
     self.currentExecutionId = executionId;
 
-    const executionEntry: DTExecutionResult = {
-      id: executionId,
-      dtName: self.DTName,
-      pipelineId: response.id,
-      timestamp: Date.now(),
-      status: ExecutionStatus.RUNNING,
-      jobLogs: [],
-    };
+    if (!skipHistorySave) {
+      const executionEntry: DTExecutionResult = {
+        id: executionId,
+        dtName: self.DTName,
+        pipelineId: response.id,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      };
 
-    await indexedDBService.add(executionEntry);
+      await indexedDBService.add(executionEntry);
+    }
 
     return response.id;
   } catch (error) {

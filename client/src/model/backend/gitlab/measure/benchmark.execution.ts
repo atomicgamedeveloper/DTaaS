@@ -214,14 +214,12 @@ export const DEFAULT_TASK: TimedTask = {
 
 let tasks: readonly TimedTask[] | undefined;
 export function getTasks(): readonly TimedTask[] {
-  if (!tasks) {
-    tasks = taskDefinitions.map((def) => ({
-      ...DEFAULT_TASK,
-      'Task Name': def.name,
-      Description: def.description,
-      Executions: def.executions,
-    }));
-  }
+  tasks ??= taskDefinitions.map((def) => ({
+    ...DEFAULT_TASK,
+    'Task Name': def.name,
+    Description: def.description,
+    Executions: def.executions,
+  }));
   return tasks;
 }
 

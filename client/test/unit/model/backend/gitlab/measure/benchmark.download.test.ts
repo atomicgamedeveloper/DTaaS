@@ -13,10 +13,8 @@ import { setupMockDownload } from 'test/unit/model/backend/gitlab/measure/benchm
 function captureJsonDownload<T>(action: () => void): T {
   let capturedJson = '';
   const OriginalBlob = globalThis.Blob;
-  globalThis.Blob = class {
-    constructor(parts: BlobPart[]) {
-      capturedJson = parts[0] as string;
-    }
+  globalThis.Blob = function MockBlob(parts: BlobPart[]) {
+    capturedJson = parts[0] as string;
   } as unknown as typeof Blob;
   action();
   globalThis.Blob = OriginalBlob;
