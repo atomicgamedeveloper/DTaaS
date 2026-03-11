@@ -1,4 +1,34 @@
-# DTaaS Services CLI
+# Platform Services
+
+It is recommended to install certain third-party software for use
+by digital twins running inside the DTaaS software.
+_These services can only be installed in secure (TLS) mode._
+
+The following services can be installed:
+
+* **Influx** time-series database and dashboard service
+* **Grafana** visualization and dashboard service
+* **RabbitMQ** AMQP broker and its' management interface
+  The **MQTT plugin** of this broker has been enabled.
+  So, it can also be used as **MQTT** broker.
+* **MongoDB** database server
+* **ThingsBoard** IoT device management and data visualization platform
+(with PostgreSQL backend)
+
+## Directory Structure
+
+* **config** is used for storing the service configuration
+* **data** is used by the services for storing data
+* **certs** is used for storing the TLS certificates needed by the services.
+* **cli** contains a CLI package for automated service management
+
+## Installation Methods
+
+You can install and manage the services using:
+
+**CLI Package :** Automated CLI tool for easy service management.
+
+## DTaaS Services CLI
 
 A command-line tool for managing DTaaS platform services including MongoDB,
 InfluxDB, RabbitMQ, and Grafana.
@@ -8,7 +38,8 @@ InfluxDB, RabbitMQ, and Grafana.
 * **Project Initialization:** Generate project structure with config and data directories
 * **Automated Setup:** One command setup of TLS certificates and permissions
 * **Service Management:** Start, stop, and check status of all services
-* **User Management:** Easy creation of user accounts in InfluxDB and RabbitMQ
+* **User Management:** Easy creation of user accounts in InfluxDB,
+RabbitMQ, and ThingsBoard
 * **Cross platform:** Works on Linux, macOS, and Windows
 * **Configuration-driven:** Reads settings from `config/services.env`
 
@@ -48,15 +79,26 @@ structure and run:
    This creates:
    * `config/` directory with configuration templates
    * `data/` directory for service data
-   * `compose.services.secure.yml` for Docker Compose
+   * `compose.services.secure.yml` for main services
+   * `compose.thingsboard.secure.yml` for ThingsBoard and PostgreSQL
 
 2. Update `config/services.env` with your environment values:
-   * `SERVICES_UID` - User ID for service file ownership
-   * `SERVICES_GID` - Group ID for service file ownership
-   * `SERVER_DNS` - Your server hostname
+   * `SERVICES_UID`: User ID for service file ownership
+   * `SERVICES_GID`: Group ID for service file ownership
+   * `SERVER_DNS`: Your server hostname
    * Port numbers for each service
 
 3. Update `config/credentials.csv` with user accounts (format: `username,password`)
+
+**Options:**
+
+* `--path` Directory to generate project structure (default: current directory)
+
+**Example:**
+
+```bash
+dtaas-services generate-project --path /path/to/project
+```
 
 ## Usage
 
@@ -74,29 +116,33 @@ This command will:
 * Set up MongoDB certificates and permissions
 * Set up InfluxDB certificates and permissions
 * Set up RabbitMQ certificates and permissions
+* Set up PostgreSQL and ThingsBoard certificates and permissions
 
-**Permission Requirements:**
+Make sure you run the clean command
 
-This command requires access to the Docker daemon. You have two options:
+### ThingsBoard Installation
 
-1. **Recommended:** Add your user to the docker group (run once):
+To install ThingsBoard, run this command:
 
-   ```bash
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
+```bash
+dtaas-services clean
+```
 
-   Then run the command without sudo:
+```bash
+#  (It starts PostgreSQL if it's not running, and it checks its health)
+dtaas-services install
+```
 
-   ```bash
-   dtaas-services setup
-   ```
+```bash
+dtaas-services start -s thingsboard
+```
 
-2. **Alternative:** Run with sudo:
+```bash
 
-   ```bash
-   sudo dtaas-services setup
-   ```
+#  After installation, wait some time before adding users
+#  This creates the tenant, tenant admin and users.
+dtaas-services user add -s thingsboard
+```
 
 ### Service Management
 
@@ -133,158 +179,106 @@ dtaas-services remove
 Remove services and their volumes:
 
 ```bash
-dtaas-services remove --volumes
+dtaas-services remove -v
+```
+
+Clean all data and log files for services (with confirmation prompt):
+
+```bash
+dtaas-services clean
+```
+
+This command removes all files from data and log directories,
+including `.gitkeep` files.
+Useful for preparing to reinstall services or troubleshooting installation issues.
+
+**Options:**
+
+The start command is just an example, the options are for all commands listed above
+
+* `-s, --services` Comma-separated list of specific services to manage
+* `--volumes, -v` (remove command only) Remove volumes as well
+* `--yes` (clean command only) Skip confirmation prompt
+
+**Service Names:**
+
+* Main platform services: `mongodb`, `grafana`, `influxdb`, `rabbitmq`
+* PostgreSQL database: `postgres` or `postgresql`
+* ThingsBoard IoT platform: `thingsboard` or `thingsboard-ce`
+
+**Examples:**
+
+```bash
+# Start specific services
+dtaas-services start -s influxdb,rabbitmq,thingsboard
+
+# Start PostgreSQL
+dtaas-services start -s postgresql
+
+# Clean all services (removes all data and log files)
+dtaas-services clean
+
+# Clean specific service without confirmation
+dtaas-services clean -s postgres --yes
+
+# Clean multiple services
+dtaas-services clean -s "postgres,thingsboard"
 ```
 
 ### User Account Management
 
-1. Edit `config/credentials.csv` with user accounts (format: `username,password`)
+1. Edit `config/credentials.csv` with user accounts (format: `username,password,email`)
 
-2. Add users to InfluxDB and RabbitMQ:
+2. Add users to services:
 
    ```bash
    dtaas-services user add
    ```
 
-   This will create user accounts with appropriate permissions in both services.
+   This creates user accounts in InfluxDB, RabbitMQ, and ThingsBoard (if installed).
+   For ThingsBoard, each user is created as a CUSTOMER_USER under a customer
+   named after their username, within the tenant created during installation.
 
-## Commands Reference
+3. Add user to a specific service
 
-### `dtaas-services generate-project`
+   ```bash
+   dtaas-services user add -s rabbitmq
+   ```
 
-Generates the project structure with config, data directories, and compose file.
+### Reset Service Passwords
 
-**Options:**
-
-* `--path` - Directory to generate project structure (default: current directory)
-
-**Example:**
-
-```bash
-dtaas-services generate-project --path /path/to/project
-```
-
-### `dtaas-services setup`
-
-Performs complete service setup including certificates and permissions.
-
-**Example:**
+Reset the ThingsBoard sysadmin and tenant admin passwords using values
+configured in `config/services.env`:
 
 ```bash
-dtaas-services setup
+dtaas-services user reset-password -s thingsboard
 ```
 
-### `dtaas-services start`
+This command:
 
-Starts all platform services using Docker Compose.
+* Changes the sysadmin password from the default to `TB_SYSADMIN_NEW_PASSWORD`
+* Changes the tenant admin password from the default (`"tenant"`) to
+  `TB_TENANT_ADMIN_PASSWORD`
 
-**Options:**
+## ThingsBoard
 
-* `-s, --services` - Comma-separated list of specific services to start
+It is recommended to install the third-party software ThingsBoard
+for use by digital twins
+running inside the DTaaS software.
+This service can only be installed in secure (TLS) mode.
 
-**Examples:**
+The steps given above install two services:
 
-```bash
-# Start all services
-dtaas-services start
+* **ThingsBoard** is an IoT device management and data visualization platform
+* **PostgreSQL** is a database server for ThingsBoard
 
-# Start specific services
-dtaas-services start --services influxdb,rabbitmq
-```
+## ThingsBoard Directory Structure
 
-### `dtaas-services stop`
-
-Stops all running platform services.
-
-**Options:**
-
-* `-s, --services` - Comma-separated list of specific services to stop
-
-**Examples:**
-
-```bash
-# Stop all services
-dtaas-services stop
-
-# Stop specific services
-dtaas-services stop -s mongodb,grafana
-```
-
-### `dtaas-services restart`
-
-Restarts platform services.
-
-**Options:**
-
-* `-s, --services` - Comma-separated list of specific services to restart
-
-**Examples:**
-
-```bash
-# Restart all services
-dtaas-services restart
-
-# Restart specific services
-dtaas-services restart --services influxdb
-```
-
-### `dtaas-services remove`
-
-Removes platform services and optionally their volumes.
-Prompts for confirmation before removal.
-
-**Note:** When volumes are removed with `--volumes`, the data directories are
-automatically recreated empty to ensure successful reinstallation of services.
-
-**Options:**
-
-* `-s, --services` - Comma-separated list of specific services to remove
-* `-v, --volumes` - Remove volumes as well (data will be deleted
-but directories preserved)
-
-**Examples:**
-
-```bash
-# Remove all services (with confirmation)
-dtaas-services remove
-
-# Remove specific services
-dtaas-services remove --services influxdb,rabbitmq
-
-# Remove all services and their volumes
-dtaas-services remove --volumes
-
-# Remove specific services with volumes
-dtaas-services remove -s mongodb -v
-```
-
-### `dtaas-services status`
-
-Shows the current status of all services.
-
-**Options:**
-
-* `-s, --services` - Comma-separated list of specific services to check
-
-**Examples:**
-
-```bash
-# Show status of all services
-dtaas-services status
-
-# Show status of specific services
-dtaas-services status --services influxdb
-```
-
-### `dtaas-services user add`
-
-Adds user accounts to InfluxDB and RabbitMQ from `config/credentials.csv`.
-
-**Example:**
-
-```bash
-dtaas-services user add
-```
+* **config** is used for storing the service configuration
+* **data** is used by the services for storing data
+* **log** is used by the services for logging
+* **certs** is used for storing the TLS certificates needed by the services
+* **script** contains scripts for creating user accounts and service management
 
 ## Troubleshooting
 
@@ -297,10 +291,15 @@ ensure you run the setup command with appropriate privileges:
 sudo -E env PATH="$PATH" dtaas-services setup
 ```
 
-### Docker Connection Issues
+### Postgres Restarting
 
-Ensure Docker daemon is running:
+Make sure to run the clean command before starting postgres or installing thingsboard.
 
 ```bash
-docker ps
+dtaas-services clean
 ```
+
+### Thingsboard connection error
+
+After starting thingsboard and before adding users or changing passwords,
+it needs some time to initialize then you can add users.

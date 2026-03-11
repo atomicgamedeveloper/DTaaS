@@ -1,8 +1,11 @@
 """Configuration management for DTaaS services"""
+
 import os
 import platform
 from pathlib import Path
 from dotenv import load_dotenv
+
+SERVICES_ENV_FILE = "services.env"
 
 
 class Config:
@@ -10,25 +13,28 @@ class Config:
 
     def __init__(self):
         base_dir = self.get_base_dir()
-        self.env_path = base_dir / "config" / "services.env"
+        if os.environ.get("DTAAS_TEST_MODE") == "true":
+            # Use test configuration from tests/config/
+            self.env_path = base_dir / "tests" / "config" / SERVICES_ENV_FILE
+        else:
+            self.env_path = base_dir / "config" / SERVICES_ENV_FILE
+
         self.base_dir = base_dir
 
         if not self.env_path.exists():
             raise FileNotFoundError(
                 f"Configuration file not found: {self.env_path}\n"
-                f"Please copy config/services.env.template to config/services.env \n"
+                f"Please copy config/{SERVICES_ENV_FILE}.template to config/{SERVICES_ENV_FILE} \n"
                 f"and update it with your configuration "
             )
         load_dotenv(dotenv_path=self.env_path, override=True)
         self.env = dict(os.environ)
 
-
     @staticmethod
     def _is_running_from_venv() -> bool:
         """Check if running from a virtual environment (venv or site-packages)."""
         file_path = Path(__file__).resolve()
-        return 'site-packages' in str(file_path) or 'venv' in str(file_path)
-
+        return "site-packages" in str(file_path) or "venv" in str(file_path)
 
     @staticmethod
     def _get_windows_base_dir() -> Path:
@@ -37,7 +43,6 @@ class Config:
             return Path.cwd().parent
         # Running from source: Go up from dtaas_services/pkg/config.py to deploy/services/
         return Path(__file__).parent.parent.parent.parent
-
 
     @staticmethod
     def get_base_dir() -> Path:
@@ -57,12 +62,11 @@ class Config:
             return Path.cwd()
 
         # Running from source in DTaaS repository (development workflow)
-        if platform.system().lower() in ['linux', 'darwin']:
+        if platform.system().lower() in ["linux", "darwin"]:
             return Path.cwd().parent
 
         # Windows: Use helper to determine correct path
         return Config._get_windows_base_dir()
-
 
     def get_value(self, key: str) -> str:
         """Gets a required configuration value from the environment file."""

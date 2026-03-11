@@ -3,7 +3,9 @@
 from pathlib import Path
 import sys
 import os
+import csv
 import platform
+from typing import Callable, Tuple
 from python_on_whales import DockerClient
 from python_on_whales.exceptions import DockerException
 from .config import Config
@@ -20,6 +22,42 @@ def get_credentials_path() -> Path:
     return base_dir / "config" / "credentials.csv"
 
 
+def _get_stderr_content(error_str: str) -> str:
+    """Extract stderr content from Docker error string.
+
+    Args:
+        error_str: Full error string from DockerException
+
+    Returns:
+        Stderr content or empty string if not found
+    """
+    if "stderr is '" not in error_str:
+        return ""
+    parts = error_str.split("stderr is '", 1)
+    if len(parts) <= 1:
+        return ""
+    return parts[1].split("'")[0]
+
+
+def _process_stderr_lines(stderr_content: str) -> str:
+    """Process stderr content to extract meaningful error message.
+
+    Args:
+        stderr_content: Raw stderr content
+
+    Returns:
+        Processed error message
+    """
+    lines = [
+        line.strip() for line in stderr_content.strip().split("\n") if line.strip()
+    ]
+    if not lines:
+        return "Unknown error"
+    if len(lines) > 1 and lines[0] == "Error:":
+        return ": ".join(lines[:2])
+    return lines[0]
+
+
 def _extract_stderr_line(error_str: str) -> str:
     """Extract just the stderr line from Docker error for cleaner display.
     Args:
@@ -27,16 +65,10 @@ def _extract_stderr_line(error_str: str) -> str:
     Returns:
         Clean error message (stderr line or first line if not found)
     """
-    # Look for stderr content between "stderr is '" and the closing quote
-    if "stderr is '" in error_str:
-        parts = error_str.split("stderr is '", 1)
-        if len(parts) > 1:
-            stderr_part = parts[1].split("'")[0]
-            # Get just the first meaningful line of stderr
-            first_line = stderr_part.strip().split('\n')[0]
-            return first_line
-    # Fallback to first line if no stderr found
-    return error_str.split('\n')[0]
+    stderr_content = _get_stderr_content(error_str)
+    if stderr_content:
+        return _process_stderr_lines(stderr_content)
+    return error_str.split("\n")[0]
 
 
 def _format_docker_error(container: str, error_str: str) -> str:
@@ -112,7 +144,7 @@ def check_root_unix() -> None:
     if not _is_current_user_root():
         print(
             "This script must be run as root (Linux/MacOS). "
-            'Try: sudo -E env PATH="$PATH" dtaas-services setup'
+            'Try: sudo -E env PATH="$PATH" dtaas-services <command>'
         )
         sys.exit(1)
 
@@ -123,3 +155,54 @@ def is_ci() -> bool:
         True if CI environment variables are set
     """
     return _should_skip_root_check()
+
+
+def process_credentials_file(
+    process_func: Callable, service_name: str, success_msg: str
+) -> Tuple[bool, str]:
+    """
+    Common pattern for processing credentials file for a service.
+
+    Args:
+        process_func: Function to call with opened credentials file
+        service_name: Name of the service (for error messages)
+        success_msg: Success message to return
+
+    Returns:
+        Tuple of (success, message)
+    """
+    credentials_file = get_credentials_path()
+    if not credentials_file.exists():
+        return False, f"Credentials file not found: {credentials_file}"
+
+    try:
+        with credentials_file.open(
+            mode="r", newline="", encoding="utf-8"
+        ) as creds_file:
+            success, error_msg = process_func(creds_file)
+            return (True, success_msg) if success else (False, error_msg)
+    except (OSError, ValueError, KeyError) as e:
+        return False, f"Error adding {service_name} users: {e}"
+
+
+def create_users_from_credentials(
+    credentials_file, user_creation_func: Callable[[str, str], Tuple[bool, str]]
+) -> Tuple[bool, str]:
+    """
+    Generic function to create users from a credentials CSV file.
+
+    Args:
+        credentials_file: Opened CSV file with username,password columns
+        user_creation_func: Function(username, password) -> (success, error_msg)
+
+    Returns:
+        Tuple of (success, error message if any)
+    """
+    credentials = csv.DictReader(credentials_file, delimiter=",")
+    for credential in credentials:
+        username = credential["username"]
+        password = credential["password"]
+        success, error_msg = user_creation_func(username, password)
+        if not success:
+            return False, error_msg
+    return True, ""
