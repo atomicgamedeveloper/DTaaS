@@ -1,7 +1,9 @@
 """
 Pytest configuration and fixtures for DTaaS Services CLI tests.
 """
+
 from pathlib import Path
+from unittest.mock import Mock
 import traceback
 import dtaas_services
 from dtaas_services.pkg.template import generate_project_structure
@@ -13,7 +15,8 @@ def pytest_configure(config):
     This hook runs before tests are collected.
     """
     config.addinivalue_line(
-        "markers", "system: mark test as a system/integration test that requires full environment setup"
+        "markers",
+        "system: mark test as a system/integration test that requires full environment setup",
     )
 
     # Set up the test environment by generating project structure
@@ -33,3 +36,18 @@ def pytest_configure(config):
         print(f"\nWarning: Failed to set up test environment: {e}")
         traceback.print_exc()
 
+
+def make_mock_container(name, status):
+    """Create a mock container with the specified name and status.
+
+    Args:
+        name: Container name
+        status: Container state status
+
+    Returns:
+        Mock object with name and state.status attributes
+    """
+    container = Mock()
+    container.name = name
+    container.state.status = status
+    return container
