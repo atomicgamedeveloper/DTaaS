@@ -7,7 +7,7 @@ future optimization.
 
 ## Accessing the Benchmark Page
 
-Navigate to `/admin/measure` to access the benchmark page. This page is
+Navigate to `/insight/measure` to access the benchmark page. This page is
 only accessible to authenticated users.
 
 ![Benchmark page](./images/benchmark-page.png)
@@ -29,16 +29,19 @@ aspects of Digital Twin execution:
 
 ### Configuration Options
 
-- **Iterations**: Number of times each task is repeated to calculate average time
-  (default: 3). Adjust this for more or fewer data points.
-- **Secondary Runner Tag**: The runner tag used for multi-runner tests. The
-  primary runner tag is configured in your account settings.
+Configuration is managed in the **Benchmark Settings** section of
+your account settings page.
+
+- **Trial Number**: Number of times each task is repeated to calculate average
+  execution time (default: 3). Adjust this for more or fewer data points.
+- **Benchmark Secondary Runner Tag**: The runner tag used for multi-runner
+  benchmark tests. The primary runner tag is configured separately in your
+  account settings.
 
 ### Controls
 
 - **Start**: Begin the benchmark suite from the first task
 - **Stop**: Cancel all running executions (shows confirmation dialog)
-- **Continue**: Resume a stopped benchmark from where it left off
 - **Restart**: Discard all current results and start fresh (shows confirmation dialog)
 - **Purge**: Clear all stored benchmark data from the database
 
@@ -95,9 +98,9 @@ of the page to export the complete benchmark results.
 ### JSON Format
 
 The exported JSON contains detailed information about each task and its
-trials. Note that "Trials" in the JSON represents individual iterations of
-a task, and each trial contains an "Execution" array with the pipeline
-execution details.
+trials. Each trial represents one iteration of a task, and contains an
+`executions` array with the pipeline execution details. The configuration
+is shared at the task level, while each execution includes its runner tag.
 
 ```JSON
 {
@@ -106,26 +109,25 @@ execution details.
     {
       "Task Name": "Run Simulation",
       "Description": "Executes a single Digital Twin",
-      "Trials": [
+      "config": {
+        "Branch name": "main",
+        "Group name": "dtaas",
+        "Common Library project name": "common",
+        "DT directory": "dt"
+      },
+      "trials": [
         {
           "Time Start": "2026-01-29T16:54:00.000Z",
           "Time End": "2026-01-29T16:54:30.000Z",
-          "Execution": [
+          "Status": "SUCCESS",
+          "executions": [
             {
               "dtName": "hello-world",
               "pipelineId": 4567,
               "status": "success",
-              "config": {
-                "Branch name": "main",
-                "Group name": "dtaas",
-                "Common Library project name": "common",
-                "DT directory": "dt",
-                "Runner tag": "linux"
-              }
+              "Runner tag": "linux"
             }
-          ],
-          "Status": "SUCCESS",
-          "Error": null
+          ]
         }
       ],
       "Time Start": "2026-01-29T16:54:00.000Z",
