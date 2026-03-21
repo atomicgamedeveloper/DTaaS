@@ -1,6 +1,5 @@
 // Top-level benchmark orchestrator (runs tasks across trials, updates UI, persists results)
 /* eslint-disable no-await-in-loop */
-import measurementDBService from 'database/measurementHistoryDB';
 import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import {
   benchmarkConfig as BenchmarkConfig,
@@ -24,6 +23,17 @@ import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/benchmark.utils';
+
+interface MeasurementDB {
+  add(task: TimedTask): Promise<string>;
+  purge(): Promise<void>;
+}
+
+let _measurementDB: MeasurementDB | null = null;
+
+export function setMeasurementDB(service: MeasurementDB): void {
+  _measurementDB = service;
+}
 
 type TaskUpdater = (taskIndex: number, updates: Partial<TimedTask>) => void;
 
@@ -95,7 +105,7 @@ async function executeTask(
     Status: finalStatus,
   });
 
-  if (finalStatus === 'SUCCESS' && measurementDBService) {
+  if (finalStatus === 'SUCCESS' && _measurementDB) {
     try {
       const taskToSave = {
         'Task Name': completedTask['Task Name'],
@@ -107,7 +117,7 @@ async function executeTask(
         Status: completedTask.Status,
         ExpectedTrials: completedTask.ExpectedTrials,
       };
-      await measurementDBService.add(taskToSave as TimedTask);
+      await _measurementDB.add(taskToSave as TimedTask);
     } catch {
       // ignore storage errors
     }
@@ -178,7 +188,7 @@ export async function stopAllPipelines(): Promise<void> {
 let isRestarting = false;
 
 export async function purgeBenchmarkData(): Promise<void> {
-  await measurementDBService.purge();
+  await _measurementDB?.purge();
   clearPersistedResults();
   const fresh = resetTasks();
   benchmarkState.results = fresh;

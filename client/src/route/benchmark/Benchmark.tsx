@@ -63,7 +63,7 @@ function BenchmarkPageHeader() {
         completes, you will be able to download a summary.
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        You can change the number of trials and secondary benchmark runner tag
+        You can change the number of trials, runner tags, and Digital Twin names
         in the{' '}
         <Link to="/account" style={{ color: 'inherit' }}>
           settings

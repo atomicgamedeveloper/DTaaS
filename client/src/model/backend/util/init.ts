@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { useDispatch } from 'react-redux';
+import type { Dispatch as ReduxDispatch } from '@reduxjs/toolkit';
 import { AssetTypes } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { getAuthority } from 'util/envUtil';
 import { extractDataFromDigitalTwin } from 'model/backend/util/digitalTwinAdapter';
@@ -18,7 +18,7 @@ const initialGitlabInstance = createGitlabInstance(
 );
 
 export const fetchLibraryAssets = async (
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: ReduxDispatch,
   setError: Dispatch<SetStateAction<string | null>>,
   type: string,
   isPrivate: boolean,
@@ -62,7 +62,7 @@ export const fetchLibraryAssets = async (
 };
 
 export const fetchDigitalTwins = async (
-  dispatch: ReturnType<typeof useDispatch>,
+  dispatch: ReduxDispatch,
   setError: Dispatch<SetStateAction<string | null>>,
 ) => {
   try {

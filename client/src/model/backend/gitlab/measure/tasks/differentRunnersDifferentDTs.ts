@@ -4,14 +4,14 @@ import { TaskDefinition } from './taskDefinition';
 const differentRunnersDifferentDTs: TaskDefinition = {
   name: 'Different Runners different Digital Twins',
   description:
-    'Running the Hello World and Mass spring damper Digital Twins with 2 runners.',
+    'Running the primary and secondary Digital Twins with 2 runners.',
   executions: () => [
     {
-      dtName: 'hello-world',
+      dtName: BenchmarkConfig.primaryDTName,
       config: { 'Runner tag': BenchmarkConfig.runnerTag1 },
     },
     {
-      dtName: 'mass-spring-damper',
+      dtName: BenchmarkConfig.secondaryDTName,
       config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
     },
   ],

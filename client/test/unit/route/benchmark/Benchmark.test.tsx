@@ -297,7 +297,7 @@ describe('Benchmark', () => {
   it('dispatches completion snackbar when all benchmarks complete', async () => {
     const { areAllBenchmarksComplete } = jest.requireMock(
       'model/backend/gitlab/measure/benchmark.utils',
-    ) as { areAllBenchmarksComplete: jest.Mock };
+    );
     areAllBenchmarksComplete.mockReturnValue(true);
 
     renderBenchmark();
@@ -306,7 +306,9 @@ describe('Benchmark', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
-        payload: expect.objectContaining({ message: 'All benchmarks completed' }),
+        payload: expect.objectContaining({
+          message: 'All benchmarks completed',
+        }),
       }),
     );
 

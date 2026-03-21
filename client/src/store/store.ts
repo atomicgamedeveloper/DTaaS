@@ -1,19 +1,15 @@
-import { combineReducers, Middleware } from 'redux';
+import { Middleware } from 'redux';
 import { configureStore } from '@reduxjs/toolkit';
-import executionHistorySlice, {
-  setStorageService,
-} from 'model/backend/state/executionHistory.slice';
-import digitalTwinSlice from 'model/backend/state/digitalTwin.slice';
-import libraryConfigFilesSlice from 'model/store/libraryConfigFiles.slice';
-import snackbarSlice from 'store/snackbar.slice';
-import assetsSlice from 'model/store/assets.slice';
-import fileSlice from 'model/store/file.slice';
-import cartSlice from 'model/store/cart.slice';
-import menuSlice from 'store/menu.slice';
-import authSlice from 'store/auth.slice';
-import settingsSlice from 'store/settings.slice';
-import { benchmarkReducer as benchmarkSlice } from 'store/benchmark.slice';
+import { setStorageService } from 'model/backend/state/executionHistory.slice';
 import indexedDBService from 'database/executionHistoryDB';
+import measurementDBService from 'database/measurementHistoryDB';
+import { rootReducer } from 'store/storeTypes';
+import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
+import { setPipelineStore } from 'model/backend/gitlab/measure/benchmark.pipeline';
+import { setExecutionHistoryDB } from 'model/backend/util/digitalTwinExecutionHistory';
+import { setPipelineExecutionDB } from 'model/backend/util/digitalTwinPipelineExecution';
+import { setMeasurementDB } from 'model/backend/gitlab/measure/benchmark.runner';
 
 setStorageService(indexedDBService);
 
@@ -26,20 +22,6 @@ const loadBenchmark = () => {
   const serializedBenchmark = localStorage.getItem('benchmark');
   return serializedBenchmark ? JSON.parse(serializedBenchmark) : undefined;
 };
-
-const rootReducer = combineReducers({
-  menu: menuSlice,
-  auth: authSlice,
-  assets: assetsSlice,
-  digitalTwin: digitalTwinSlice,
-  snackbar: snackbarSlice,
-  files: fileSlice,
-  cart: cartSlice,
-  libraryConfigFiles: libraryConfigFilesSlice,
-  settings: settingsSlice,
-  benchmark: benchmarkSlice,
-  executionHistory: executionHistorySlice,
-});
 
 const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
   const result = next(action);
@@ -80,6 +62,14 @@ const store = configureStore({
     }).concat(settingsPersistMiddleware),
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+// Dependency injection: wire store and services into model modules
+setSettingsStore(store);
+setBenchmarkStore(store);
+setPipelineStore(store);
+setExecutionHistoryDB(indexedDBService);
+setPipelineExecutionDB(indexedDBService);
+setMeasurementDB(measurementDBService);
+
+export type { RootState } from 'store/storeTypes';
 
 export default store;

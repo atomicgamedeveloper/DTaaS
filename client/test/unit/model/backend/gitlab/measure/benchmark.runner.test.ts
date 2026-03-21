@@ -180,14 +180,14 @@ describe('benchmark.runner', () => {
     });
 
     it('only restores settings when not running', () => {
-      const { restoreOriginalSettings } = jest.requireMock(
+      const { restoreOriginalSettings: mockRestore } = jest.requireMock(
         'model/backend/gitlab/measure/benchmark.execution',
       );
       harness.isRunningRef.current = false;
 
       handleBeforeUnload(harness.isRunningRef);
 
-      expect(restoreOriginalSettings).toHaveBeenCalled();
+      expect(mockRestore).toHaveBeenCalled();
     });
   });
 });

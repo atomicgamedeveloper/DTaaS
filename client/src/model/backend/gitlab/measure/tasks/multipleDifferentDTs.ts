@@ -1,12 +1,13 @@
+import { benchmarkConfig as BenchmarkConfig } from 'model/backend/gitlab/measure/benchmark.execution';
 import { TaskDefinition } from './taskDefinition';
 
 const multipleDifferentDTs: TaskDefinition = {
   name: 'Multiple different Digital Twins Simultaneously',
   description:
-    'Running the Hello World and Mass spring damper Digital Twins at once.',
+    'Running the primary and secondary Digital Twins at once.',
   executions: () => [
-    { dtName: 'hello-world', config: {} },
-    { dtName: 'mass-spring-damper', config: {} },
+    { dtName: BenchmarkConfig.primaryDTName, config: {} },
+    { dtName: BenchmarkConfig.secondaryDTName, config: {} },
   ],
 };
 

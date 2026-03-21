@@ -161,9 +161,7 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
-    expect(
-      screen.getByText('Group name is required'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Group name is required')).toBeInTheDocument();
   });
 
   it('shows error when required field is whitespace only', () => {
@@ -179,9 +177,7 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
-    expect(
-      screen.getByText(/trial number is required/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
   });
 
   it('shows error when trials value is not a number', () => {
@@ -189,9 +185,7 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: 'abc' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
-    expect(
-      screen.getByText(/trial number is required/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
   });
 
   it('shows error when trials value is less than 1', () => {
@@ -199,9 +193,7 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: '0' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
-    expect(
-      screen.getByText(/trial number is required/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
   });
 
   it('clears field error when user starts retyping', () => {

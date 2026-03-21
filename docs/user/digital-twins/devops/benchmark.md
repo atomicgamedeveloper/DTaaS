@@ -21,11 +21,14 @@ aspects of Digital Twin execution:
 
 | Task | Description |
 | ------ | ------------- |
-| Valid Setup Digital Twin Execution | Runs the Hello World Digital Twin with current setup |
-| Multiple Identical Digital Twins Simultaneously | Runs the Hello World Digital Twin twice at once |
-| Multiple different Digital Twins Simultaneously | Runs the Hello World and Mass Spring Damper Digital Twins at once |
-| Different Runners same Digital Twin | Runs the Hello World Digital Twin twice with 2 different runners |
-| Different Runners different Digital Twins | Runs Hello World and Mass Spring Damper Digital Twins with 2 different runners |
+| Valid Setup Digital Twin Execution | Runs the primary Digital Twin with current setup |
+| Multiple Identical Digital Twins Simultaneously | Runs the primary Digital Twin twice at once |
+| Multiple different Digital Twins Simultaneously | Runs the primary and secondary Digital Twins at once |
+| Different Runners same Digital Twin | Runs the primary Digital Twin twice with 2 different runners |
+| Different Runners different Digital Twins | Runs the primary and secondary Digital Twins with 2 different runners |
+
+By default, the primary Digital Twin is `hello-world` and the secondary
+is `mass-spring-damper`. Both can be changed in the benchmark settings.
 
 ![Benchmark running the tasks](./images/running-benchmark.png)
 
@@ -39,6 +42,10 @@ your account settings page.
 - **Benchmark Secondary Runner Tag**: The runner tag used for multi-runner
   benchmark tests. The primary runner tag is configured separately in your
   account settings.
+- **Primary Digital Twin Name**: The Digital Twin used in single-DT and
+  same-DT benchmark tasks (default: `hello-world`).
+- **Secondary Digital Twin Name**: The Digital Twin used as the second DT
+  in multi-DT benchmark tasks (default: `mass-spring-damper`).
 
   ![Showcase of the benchmark specific settings](./images/benchmark-settings.png)
 

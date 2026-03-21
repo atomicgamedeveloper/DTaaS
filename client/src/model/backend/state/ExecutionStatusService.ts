@@ -12,10 +12,12 @@ class ExecutionStatusService {
     if (runningExecutions.length === 0) {
       return [];
     }
-    const { fetchJobLogs } =
-      await import('model/backend/gitlab/execution/logFetching');
-    const { mapGitlabStatusToExecutionStatus, isFinishedStatus } =
-      await import('model/backend/gitlab/execution/statusChecking');
+    const { fetchJobLogs } = await import(
+      'model/backend/gitlab/execution/logFetching'
+    );
+    const { mapGitlabStatusToExecutionStatus, isFinishedStatus } = await import(
+      'model/backend/gitlab/execution/statusChecking'
+    );
     const updatedExecutions: DTExecutionResult[] = [];
     await Promise.all(
       runningExecutions.map(async (execution) => {
