@@ -1,4 +1,4 @@
-import { TextEncoder, TextDecoder } from 'util';
+import { TextEncoder, TextDecoder } from 'node:util';
 
 Object.defineProperty(globalThis, 'TextEncoder', {
   value: TextEncoder,

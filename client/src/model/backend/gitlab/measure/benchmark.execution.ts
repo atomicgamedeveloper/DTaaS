@@ -16,7 +16,26 @@ import {
   BRANCH_NAME,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
-import store from 'store/store';
+import type { RootState } from 'store/storeTypes';
+
+type BenchmarkStore = {
+  getState: () => RootState;
+  dispatch: (action: { type: string; payload?: unknown }) => void;
+};
+
+let _store: BenchmarkStore | null = null;
+
+export function setBenchmarkStore(store: BenchmarkStore): void {
+  _store = store;
+}
+
+function getStore(): BenchmarkStore {
+  if (!_store)
+    throw new Error(
+      'Benchmark store not initialized. Call setBenchmarkStore() first.',
+    );
+  return _store;
+}
 
 export {
   DEFAULT_BENCHMARK,
@@ -25,6 +44,8 @@ export {
   benchmarkReducer,
   setTrials,
   setSecondaryRunnerTag,
+  setPrimaryDTName,
+  setSecondaryDTName,
   resetBenchmarkDefaults,
 } from 'store/benchmark.slice';
 
@@ -101,15 +122,29 @@ export type BenchmarkSetters = {
 
 export const benchmarkConfig = {
   get trials(): number {
-    return frozenSettings?.TRIALS ?? store.getState().benchmark.trials;
+    return frozenSettings?.TRIALS ?? getStore().getState().benchmark.trials;
   },
   get runnerTag1(): string {
-    return frozenSettings?.RUNNER_TAG ?? store.getState().settings.RUNNER_TAG;
+    return (
+      frozenSettings?.RUNNER_TAG ?? getStore().getState().settings.RUNNER_TAG
+    );
   },
   get runnerTag2(): string {
     return (
       frozenSettings?.SECONDARY_RUNNER_TAG ??
-      store.getState().benchmark.secondaryRunnerTag
+      getStore().getState().benchmark.secondaryRunnerTag
+    );
+  },
+  get primaryDTName(): string {
+    return (
+      frozenSettings?.PRIMARY_DT_NAME ??
+      getStore().getState().benchmark.primaryDTName
+    );
+  },
+  get secondaryDTName(): string {
+    return (
+      frozenSettings?.SECONDARY_DT_NAME ??
+      getStore().getState().benchmark.secondaryDTName
     );
   },
 };
@@ -124,7 +159,7 @@ export function getDefaultConfig(): Configuration {
       'Runner tag': frozenSettings.RUNNER_TAG,
     };
   }
-  const state = store.getState().settings;
+  const state = getStore().getState().settings;
   return {
     'Branch name': state.BRANCH_NAME,
     'Group name': state.GROUP_NAME,
@@ -174,8 +209,7 @@ try {
       taskDefinitions.map((def) => [def.name, def.executions]),
     );
     const isActive = (s: Status) => s === 'RUNNING' || s === 'PENDING';
-    const markStopped = (s: Status): Status =>
-      isActive(s) ? 'STOPPED' : s;
+    const markStopped = (s: Status): Status => (isActive(s) ? 'STOPPED' : s);
     const hadRunningTasks = parsed.some((task) => isActive(task.Status));
     benchmarkState.results = parsed.map((task) => ({
       ...task,
@@ -211,7 +245,7 @@ function persistResults(): void {
   try {
     if (!benchmarkState.results) return;
     const serializable = benchmarkState.results.map(
-      ({ Executions, ...rest }) => rest,
+      ({ Executions: _Executions, ...rest }) => rest,
     );
     sessionStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(serializable));
   } catch {
@@ -261,11 +295,13 @@ let frozenSettings: {
   COMMON_LIBRARY_PROJECT_NAME: string;
   SECONDARY_RUNNER_TAG: string;
   TRIALS: number;
+  PRIMARY_DT_NAME: string;
+  SECONDARY_DT_NAME: string;
 } | null = null;
 
 export function saveOriginalSettings(): void {
   if (frozenSettings === null) {
-    const state = store.getState();
+    const state = getStore().getState();
     frozenSettings = {
       RUNNER_TAG: state.settings.RUNNER_TAG,
       BRANCH_NAME: state.settings.BRANCH_NAME,
@@ -274,6 +310,8 @@ export function saveOriginalSettings(): void {
       COMMON_LIBRARY_PROJECT_NAME: state.settings.COMMON_LIBRARY_PROJECT_NAME,
       SECONDARY_RUNNER_TAG: state.benchmark.secondaryRunnerTag,
       TRIALS: state.benchmark.trials,
+      PRIMARY_DT_NAME: state.benchmark.primaryDTName,
+      SECONDARY_DT_NAME: state.benchmark.secondaryDTName,
     };
     benchmarkState.originalPrimaryRunnerTag = state.settings.RUNNER_TAG;
     benchmarkState.originalSecondaryRunnerTag =
@@ -283,16 +321,16 @@ export function saveOriginalSettings(): void {
 
 export function restoreOriginalSettings(): void {
   if (frozenSettings !== null) {
-    const current = store.getState();
+    const current = getStore().getState();
     // Only restore fields the user hasn't changed since the benchmark started.
     if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
-      store.dispatch({
+      getStore().dispatch({
         type: 'settings/setRunnerTag',
         payload: frozenSettings.RUNNER_TAG,
       });
     }
     if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
-      store.dispatch({
+      getStore().dispatch({
         type: 'settings/setBranchName',
         payload: frozenSettings.BRANCH_NAME,
       });
@@ -301,7 +339,7 @@ export function restoreOriginalSettings(): void {
       current.benchmark.secondaryRunnerTag ===
       frozenSettings.SECONDARY_RUNNER_TAG
     ) {
-      store.dispatch({
+      getStore().dispatch({
         type: 'benchmark/setSecondaryRunnerTag',
         payload: frozenSettings.SECONDARY_RUNNER_TAG,
       });

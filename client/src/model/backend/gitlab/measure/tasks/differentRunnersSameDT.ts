@@ -3,14 +3,14 @@ import { TaskDefinition } from './taskDefinition';
 
 const differentRunnersSameDT: TaskDefinition = {
   name: 'Different Runners same Digital Twin',
-  description: 'Running the Hello World Digital Twin twice with 2 runners.',
+  description: 'Running the primary Digital Twin twice with 2 runners.',
   executions: () => [
     {
-      dtName: 'hello-world',
+      dtName: BenchmarkConfig.primaryDTName,
       config: { 'Runner tag': BenchmarkConfig.runnerTag1 },
     },
     {
-      dtName: 'hello-world',
+      dtName: BenchmarkConfig.primaryDTName,
       config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
     },
   ],

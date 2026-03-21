@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from 'store/store';
+import { RootState } from 'store/storeTypes';
 
 export const selectExecutionHistoryEntries = (state: RootState) =>
   state.executionHistory.entries;

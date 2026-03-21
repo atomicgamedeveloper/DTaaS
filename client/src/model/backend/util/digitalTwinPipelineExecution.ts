@@ -3,16 +3,32 @@ import {
   getRunnerTag,
   getBranchName,
 } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import {
+  ExecutionStatus,
+  type IExecutionHistory,
+} from 'model/backend/interfaces/execution';
 import { ProjectId } from 'model/backend/interfaces/backendInterfaces';
 import { v4 as uuidv4 } from 'uuid';
-import indexedDBService from 'database/executionHistoryDB';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import {
   isValidInstance,
   logError,
   logSuccess,
 } from 'model/backend/util/digitalTwinUtils';
+
+let _dbService: IExecutionHistory | null = null;
+
+export function setPipelineExecutionDB(service: IExecutionHistory): void {
+  _dbService = service;
+}
+
+function getDB(): IExecutionHistory {
+  if (!_dbService)
+    throw new Error(
+      'Pipeline execution DB not initialized. Call setPipelineExecutionDB() first.',
+    );
+  return _dbService;
+}
 
 export async function executeDT(
   self: DigitalTwin,
@@ -49,7 +65,7 @@ export async function executeDT(
         jobLogs: [],
       };
 
-      await indexedDBService.add(executionEntry);
+      await getDB().add(executionEntry);
     }
 
     return response.id;
@@ -68,7 +84,7 @@ export async function resolvePipelineIdFn(
   executionId?: string,
 ): Promise<number | null> {
   if (executionId) {
-    const execution = await indexedDBService.getById(executionId);
+    const execution = await getDB().getById(executionId);
     return execution ? calcPipelineId(pipeline, execution.pipelineId) : null;
   }
   return calcPipelineId(pipeline, self.pipelineId!);

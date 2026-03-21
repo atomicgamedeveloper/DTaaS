@@ -13,6 +13,8 @@ import {
 import {
   setTrials,
   setSecondaryRunnerTag,
+  setPrimaryDTName,
+  setSecondaryDTName,
   resetBenchmarkDefaults,
   DEFAULT_BENCHMARK,
 } from 'model/backend/gitlab/measure/benchmark.execution';
@@ -42,6 +44,8 @@ const SettingsForm: React.FC = () => {
   const {
     trials: BENCHMARK_TRIALS,
     secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
+    primaryDTName: BENCHMARK_PRIMARY_DT_NAME,
+    secondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
   } = useSelector((state: RootState) => state.benchmark);
 
   // Local state for form values - prevents saving on each keystroke
@@ -53,6 +57,8 @@ const SettingsForm: React.FC = () => {
     branchName: BRANCH_NAME,
     benchmarkTrials: String(BENCHMARK_TRIALS),
     benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
+    benchmarkPrimaryDTName: BENCHMARK_PRIMARY_DT_NAME,
+    benchmarkSecondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
   });
 
   // Validation state
@@ -65,7 +71,7 @@ const SettingsForm: React.FC = () => {
   );
 
   // Sync local form state when Redux state changes (e.g. external reset)
-  const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${BENCHMARK_TRIALS}|${BENCHMARK_SECONDARY_RUNNER_TAG}`;
+  const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${BENCHMARK_TRIALS}|${BENCHMARK_SECONDARY_RUNNER_TAG}|${BENCHMARK_PRIMARY_DT_NAME}|${BENCHMARK_SECONDARY_DT_NAME}`;
   const [prevReduxKey, setPrevReduxKey] = useState(reduxKey);
   if (prevReduxKey !== reduxKey) {
     setPrevReduxKey(reduxKey);
@@ -77,6 +83,8 @@ const SettingsForm: React.FC = () => {
       branchName: BRANCH_NAME,
       benchmarkTrials: String(BENCHMARK_TRIALS),
       benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
+      benchmarkPrimaryDTName: BENCHMARK_PRIMARY_DT_NAME,
+      benchmarkSecondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
     });
     setFieldErrors({});
   }
@@ -101,6 +109,8 @@ const SettingsForm: React.FC = () => {
       branchName: DEFAULT_SETTINGS.BRANCH_NAME,
       benchmarkTrials: String(DEFAULT_BENCHMARK.trials),
       benchmarkSecondaryRunnerTag: DEFAULT_BENCHMARK.secondaryRunnerTag,
+      benchmarkPrimaryDTName: DEFAULT_BENCHMARK.primaryDTName,
+      benchmarkSecondaryDTName: DEFAULT_BENCHMARK.secondaryDTName,
     });
     setFieldErrors({});
 
@@ -120,6 +130,8 @@ const SettingsForm: React.FC = () => {
       'runnerTag',
       'branchName',
       'benchmarkSecondaryRunnerTag',
+      'benchmarkPrimaryDTName',
+      'benchmarkSecondaryDTName',
     ] as const;
 
     const errors: Record<string, boolean> = {};
@@ -173,6 +185,14 @@ const SettingsForm: React.FC = () => {
       formValues.benchmarkSecondaryRunnerTag !== BENCHMARK_SECONDARY_RUNNER_TAG
     ) {
       dispatch(setSecondaryRunnerTag(formValues.benchmarkSecondaryRunnerTag));
+    }
+
+    if (formValues.benchmarkPrimaryDTName !== BENCHMARK_PRIMARY_DT_NAME) {
+      dispatch(setPrimaryDTName(formValues.benchmarkPrimaryDTName));
+    }
+
+    if (formValues.benchmarkSecondaryDTName !== BENCHMARK_SECONDARY_DT_NAME) {
+      dispatch(setSecondaryDTName(formValues.benchmarkSecondaryDTName));
     }
 
     setNotificationMessage('Settings saved successfully!');
@@ -316,6 +336,40 @@ const SettingsForm: React.FC = () => {
                 fieldErrors.benchmarkSecondaryRunnerTag
                   ? 'Benchmark secondary runner tag is required'
                   : 'Runner tag used for multi-runner benchmark tests'
+              }
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              id="benchmarkPrimaryDTName"
+              label="Primary Digital Twin Name"
+              variant="outlined"
+              value={formValues.benchmarkPrimaryDTName}
+              onChange={handleInputChange}
+              error={fieldErrors.benchmarkPrimaryDTName}
+              helperText={
+                fieldErrors.benchmarkPrimaryDTName
+                  ? 'Primary Digital Twin name is required'
+                  : 'Digital Twin used in single-DT and same-DT benchmark tasks'
+              }
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              id="benchmarkSecondaryDTName"
+              label="Secondary Digital Twin Name"
+              variant="outlined"
+              value={formValues.benchmarkSecondaryDTName}
+              onChange={handleInputChange}
+              error={fieldErrors.benchmarkSecondaryDTName}
+              helperText={
+                fieldErrors.benchmarkSecondaryDTName
+                  ? 'Secondary Digital Twin name is required'
+                  : 'Digital Twin used as the second DT in multi-DT benchmark tasks'
               }
             />
           </Grid>

@@ -160,29 +160,37 @@ describe('MeasurementDBService (Real Implementation)', () => {
   it.each([
     ['add', (svc: typeof measurementDBService) => svc.add(createMockTask())],
     ['getAll', (svc: typeof measurementDBService) => svc.getAll()],
-    ['getByTaskName', (svc: typeof measurementDBService) => svc.getByTaskName('test')],
+    [
+      'getByTaskName',
+      (svc: typeof measurementDBService) => svc.getByTaskName('test'),
+    ],
     ['purge', (svc: typeof measurementDBService) => svc.purge()],
     ['delete', (svc: typeof measurementDBService) => svc.delete('test-id')],
-  ])('should reject %s when database is not initialized', async (_name, operation) => {
-    const { default: MeasurementDBService } =
-      await import('database/measurementHistoryDB');
-    const uninitializedService = Object.create(
-      Object.getPrototypeOf(MeasurementDBService),
-    );
-    uninitializedService.db = undefined;
-    uninitializedService.dbName = 'test-db';
-    uninitializedService.dbVersion = 1;
-    uninitializedService.initPromise = undefined;
-    uninitializedService.init = jest.fn().mockResolvedValue(undefined);
+  ])(
+    'should reject %s when database is not initialized',
+    async (_name, operation) => {
+      const { default: MeasurementDBService } = await import(
+        'database/measurementHistoryDB'
+      );
+      const uninitializedService = Object.create(
+        Object.getPrototypeOf(MeasurementDBService),
+      );
+      uninitializedService.db = undefined;
+      uninitializedService.dbName = 'test-db';
+      uninitializedService.dbVersion = 1;
+      uninitializedService.initPromise = undefined;
+      uninitializedService.init = jest.fn().mockResolvedValue(undefined);
 
-    await expect(operation(uninitializedService)).rejects.toThrow(
-      'Database not initialized',
-    );
-  });
+      await expect(operation(uninitializedService)).rejects.toThrow(
+        'Database not initialized',
+      );
+    },
+  );
 
   it('should return existing init promise when called concurrently', async () => {
-    const { default: MeasurementDBService } =
-      await import('database/measurementHistoryDB');
+    const { default: MeasurementDBService } = await import(
+      'database/measurementHistoryDB'
+    );
     const service = Object.create(Object.getPrototypeOf(MeasurementDBService));
     service.db = undefined;
     service.dbName = 'concurrent-test-db';

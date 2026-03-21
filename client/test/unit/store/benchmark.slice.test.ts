@@ -2,6 +2,8 @@ import {
   benchmarkReducer,
   setTrials,
   setSecondaryRunnerTag,
+  setPrimaryDTName,
+  setSecondaryDTName,
   resetBenchmarkDefaults,
   DEFAULT_BENCHMARK,
   loadInitialBenchmark,
@@ -23,6 +25,7 @@ describe('benchmark.slice', () => {
         JSON.stringify({ trials: 5, secondaryRunnerTag: 'macos' }),
       );
       expect(loadInitialBenchmark()).toEqual({
+        ...DEFAULT_BENCHMARK,
         trials: 5,
         secondaryRunnerTag: 'macos',
       });
@@ -31,8 +34,8 @@ describe('benchmark.slice', () => {
     it('merges partial saved values with defaults', () => {
       localStorage.setItem('benchmark', JSON.stringify({ trials: 10 }));
       expect(loadInitialBenchmark()).toEqual({
+        ...DEFAULT_BENCHMARK,
         trials: 10,
-        secondaryRunnerTag: DEFAULT_BENCHMARK.secondaryRunnerTag,
       });
     });
 
@@ -58,8 +61,21 @@ describe('benchmark.slice', () => {
       expect(result.secondaryRunnerTag).toBe('macos');
     });
 
+    it('setPrimaryDTName updates the primary DT name', () => {
+      const result = benchmarkReducer(initialState, setPrimaryDTName('my-dt'));
+      expect(result.primaryDTName).toBe('my-dt');
+    });
+
+    it('setSecondaryDTName updates the secondary DT name', () => {
+      const result = benchmarkReducer(
+        initialState,
+        setSecondaryDTName('other-dt'),
+      );
+      expect(result.secondaryDTName).toBe('other-dt');
+    });
+
     it('resetBenchmarkDefaults restores default values', () => {
-      const modified = { trials: 10, secondaryRunnerTag: 'custom' };
+      const modified = { ...DEFAULT_BENCHMARK, trials: 10, secondaryRunnerTag: 'custom' };
       const result = benchmarkReducer(modified, resetBenchmarkDefaults());
       expect(result).toEqual(DEFAULT_BENCHMARK);
     });

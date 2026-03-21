@@ -1,6 +1,6 @@
 // GitLab pipeline lifecycle (trigger, poll, cancel, collect results)
 /* eslint-disable no-await-in-loop */
-import store from 'store/store';
+import type { RootState } from 'store/storeTypes';
 import { getAuthority } from 'util/envUtil';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
@@ -19,6 +19,25 @@ import {
   benchmarkState,
   getDefaultConfig,
 } from 'model/backend/gitlab/measure/benchmark.execution';
+
+type PipelineStore = {
+  getState: () => RootState;
+  dispatch: (action: { type: string; payload?: unknown }) => void;
+};
+
+let _store: PipelineStore | null = null;
+
+export function setPipelineStore(store: PipelineStore): void {
+  _store = store;
+}
+
+function getStore(): PipelineStore {
+  if (!_store)
+    throw new Error(
+      'Pipeline store not initialized. Call setPipelineStore() first.',
+    );
+  return _store;
+}
 
 const abortOptions = { shouldAbort: () => benchmarkState.shouldStopPipelines };
 
@@ -60,14 +79,14 @@ async function initializeBackend(
   }
 
   const backend = createGitlabInstance(username, oauthToken, getAuthority());
-  const savedBranchName = store.getState().settings.BRANCH_NAME;
+  const savedBranchName = getStore().getState().settings.BRANCH_NAME;
   if (config?.['Branch name'])
-    store.dispatch({
+    getStore().dispatch({
       type: 'settings/setBranchName',
       payload: config['Branch name'],
     });
   await backend.init();
-  store.dispatch({
+  getStore().dispatch({
     type: 'settings/setBranchName',
     payload: savedBranchName,
   });
