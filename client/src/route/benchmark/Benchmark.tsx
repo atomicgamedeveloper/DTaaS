@@ -17,7 +17,7 @@ import {
   ExecutionResult,
   BenchmarkSetters,
   benchmarkState,
-  DEFAULT_CONFIG,
+  getDefaultConfig,
   attachSetters,
   detachSetters,
   getTasks,
@@ -97,7 +97,7 @@ function Benchmark() {
         executions,
         benchmarkState.activePipelines,
         benchmarkState.executionResults,
-        DEFAULT_CONFIG,
+        getDefaultConfig(),
       );
     },
   );
@@ -108,6 +108,9 @@ function Benchmark() {
   const hasShownCompletionSnackbar = useRef(false);
   const originalPrimaryRunnerTag = useRef(
     benchmarkState.originalPrimaryRunnerTag ?? primaryRunnerTag,
+  );
+  const originalSecondaryRunnerTag = useRef(
+    benchmarkState.originalSecondaryRunnerTag ?? alternateRunnerTag,
   );
 
   const setters: BenchmarkSetters = {
@@ -120,6 +123,15 @@ function Benchmark() {
   useEffect(() => {
     benchmarkState.results ??= [...getTasks()];
     attachSetters(setters);
+    if (benchmarkState.restoredAfterRefresh) {
+      benchmarkState.restoredAfterRefresh = false;
+      dispatch(
+        showSnackbar({
+          message: 'Stopping benchmark...',
+          severity: 'warning',
+        }),
+      );
+    }
     return () => detachSetters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -134,7 +146,7 @@ function Benchmark() {
         executions,
         benchmarkState.activePipelines,
         benchmarkState.executionResults,
-        DEFAULT_CONFIG,
+        getDefaultConfig(),
       );
       setCurrentExecutions(merged);
     }, 500);
@@ -166,12 +178,14 @@ function Benchmark() {
 
   const handleStart = () => {
     originalPrimaryRunnerTag.current = primaryRunnerTag;
+    originalSecondaryRunnerTag.current = alternateRunnerTag;
     dispatch(showSnackbar({ message: 'Benchmark started', severity: 'info' }));
     return startMeasurement(setters, benchmarkState.isRunningRef);
   };
 
   const handleRestart = () => {
     originalPrimaryRunnerTag.current = primaryRunnerTag;
+    originalSecondaryRunnerTag.current = alternateRunnerTag;
     hasShownCompletionSnackbar.current = false;
     dispatch(
       showSnackbar({ message: 'Benchmark restarted', severity: 'info' }),
@@ -199,6 +213,9 @@ function Benchmark() {
   const effectivePrimaryTag = isRunning
     ? originalPrimaryRunnerTag.current
     : primaryRunnerTag;
+  const effectiveSecondaryTag = isRunning
+    ? originalSecondaryRunnerTag.current
+    : alternateRunnerTag;
 
   return (
     <Layout sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -223,7 +240,7 @@ function Benchmark() {
             currentExecutions={currentExecutions}
             onDownloadTask={downloadTaskResultJson}
             primaryRunnerTag={effectivePrimaryTag}
-            secondaryRunnerTag={alternateRunnerTag}
+            secondaryRunnerTag={effectiveSecondaryTag}
           />
           <CompletionSummary
             results={results}

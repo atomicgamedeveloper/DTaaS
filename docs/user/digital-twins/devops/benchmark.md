@@ -7,8 +7,8 @@ future optimization.
 
 ## Accessing the Benchmark Page
 
-Navigate to `/insight/measure` to access the benchmark page. This page is
-only accessible to authenticated users.
+Navigate to `http://localhost:4000/insight/measure` or `https://foo.com/insight/measure`
+to access the benchmark page. This page is only accessible to authenticated users.
 
 ![Benchmark page](./images/benchmark-page.png)
 
@@ -27,6 +27,8 @@ aspects of Digital Twin execution:
 | Different Runners same Digital Twin | Runs the Hello World Digital Twin twice with 2 different runners |
 | Different Runners different Digital Twins | Runs Hello World and Mass Spring Damper Digital Twins with 2 different runners |
 
+![Benchmark running the tasks](./images/running-benchmark.png)
+
 ### Configuration Options
 
 Configuration is managed in the **Benchmark Settings** section of
@@ -37,6 +39,8 @@ your account settings page.
 - **Benchmark Secondary Runner Tag**: The runner tag used for multi-runner
   benchmark tests. The primary runner tag is configured separately in your
   account settings.
+
+  ![Showcase of the benchmark specific settings](./images/benchmark-settings.png)
 
 ### Controls
 
@@ -95,6 +99,10 @@ Data column to export that specific task's measurements as JSON.
 After all tasks complete, a "Download JSON" link appears at the bottom
 of the page to export the complete benchmark results.
 
+Both links shown below, from a completed benchmark run.
+
+![Highlighted download links for benchmark data](./images/benchmark-download-options.png)
+
 ### JSON Format
 
 The exported JSON contains detailed information about each task and its
@@ -102,38 +110,38 @@ trials. Each trial represents one iteration of a task, and contains an
 `executions` array with the pipeline execution details. The configuration
 is shared at the task level, while each execution includes its runner tag.
 
-```JSON
+The exported JSON follows the structure below:
+
+```json
 {
-  "totalTimeSeconds": 30,
+  "totalTimeSeconds": number,
   "tasks": [
     {
-      "Task Name": "Run Simulation",
-      "Description": "Executes a single Digital Twin",
+      "Task Name": string,
+      "Description": string,
       "config": {
-        "Branch name": "main",
-        "Group name": "dtaas",
-        "Common Library project name": "common",
-        "DT directory": "dt"
+        "Branch name": string,
+        "Group name": string,
+        "Common Library project name": string,
+        "DT directory": string
       },
       "trials": [
         {
-          "Time Start": "2026-01-29T16:54:00.000Z",
-          "Time End": "2026-01-29T16:54:30.000Z",
-          "Status": "SUCCESS",
+          "Time Start": "ISO8601 timestamp",
+          "Time End": "ISO8601 timestamp",
+          "Status": "PENDING | RUNNING | SUCCESS | FAILURE | STOPPED",
           "executions": [
             {
-              "dtName": "hello-world",
-              "pipelineId": 4567,
-              "status": "success",
-              "Runner tag": "linux"
+              "dtName": string,
+              "pipelineId": number,
+              "status": string,
+              "Runner tag": string
             }
           ]
         }
       ],
-      "Time Start": "2026-01-29T16:54:00.000Z",
-      "Time End": "2026-01-29T16:54:30.000Z",
-      "Average Time (s)": 30,
-      "Status": "SUCCESS"
+      "Average Time (s)": number,
+      "Status": string
     }
   ]
 }

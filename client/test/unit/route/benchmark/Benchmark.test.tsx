@@ -159,9 +159,11 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   };
 });
 
+let mockDispatch: jest.Mock;
+
 describe('Benchmark', () => {
   beforeEach(() => {
-    setupBenchmarkComponentTest();
+    ({ mockDispatch } = setupBenchmarkComponentTest());
   });
 
   const renderBenchmark = () => render(<Benchmark />);
@@ -242,5 +244,72 @@ describe('Benchmark', () => {
       fireEvent.click(screen.getAllByText('Download')[0]);
     });
     expect(mockDownloadTaskResultJson).toHaveBeenCalled();
+  });
+
+  it('dispatches start snackbar when Start is clicked', async () => {
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Benchmark started' }),
+      }),
+    );
+  });
+
+  it('dispatches restart snackbar when Restart is clicked', async () => {
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Benchmark restarted' }),
+      }),
+    );
+  });
+
+  it('dispatches stop snackbar when Stop is clicked', async () => {
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('stop-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Stopping benchmark...' }),
+      }),
+    );
+  });
+
+  it('dispatches purge snackbar when Purge is clicked', async () => {
+    renderBenchmark();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('purge-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Benchmark data purged' }),
+      }),
+    );
+  });
+
+  it('dispatches completion snackbar when all benchmarks complete', async () => {
+    const { areAllBenchmarksComplete } = jest.requireMock(
+      'model/backend/gitlab/measure/benchmark.utils',
+    ) as { areAllBenchmarksComplete: jest.Mock };
+    areAllBenchmarksComplete.mockReturnValue(true);
+
+    renderBenchmark();
+
+    await act(async () => {});
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'All benchmarks completed' }),
+      }),
+    );
+
+    areAllBenchmarksComplete.mockReturnValue(false);
   });
 });

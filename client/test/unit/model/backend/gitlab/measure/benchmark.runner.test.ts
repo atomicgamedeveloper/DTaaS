@@ -1,6 +1,9 @@
 import {
   startMeasurement,
   stopAllPipelines,
+  purgeBenchmarkData,
+  restartMeasurement,
+  handleBeforeUnload,
 } from 'model/backend/gitlab/measure/benchmark.runner';
 import {
   saveOriginalSettings,
@@ -10,7 +13,11 @@ import {
   cancelActivePipelines,
   runTrials,
 } from 'model/backend/gitlab/measure/benchmark.pipeline';
-import { setupBenchmarkTestHarness } from './benchmark.testUtil';
+import {
+  setupBenchmarkTestHarness,
+  createMockActivePipeline,
+  createMockBackend,
+} from './benchmark.testUtil';
 
 jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
   const { createBenchmarkExecutionMock } = jest.requireActual(
@@ -36,8 +43,13 @@ jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
 }));
 jest.mock('database/measurementHistoryDB', () => ({
   __esModule: true,
-  default: { add: jest.fn(() => Promise.resolve()) },
+  default: {
+    add: jest.fn(() => Promise.resolve()),
+    purge: jest.fn(() => Promise.resolve()),
+  },
 }));
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mockMeasurementDB = require('database/measurementHistoryDB').default;
 
 describe('benchmark.runner', () => {
   const harness = setupBenchmarkTestHarness();
@@ -130,5 +142,52 @@ describe('benchmark.runner', () => {
     harness.state.shouldStopPipelines = false;
     await startMeasurement(harness.setters, harness.isRunningRef);
     expect(harness.setters.setResults).toHaveBeenCalled();
+  });
+
+  describe('purgeBenchmarkData', () => {
+    it('calls measurementDB.purge and resets state', async () => {
+      await purgeBenchmarkData();
+      expect(mockMeasurementDB.purge).toHaveBeenCalled();
+    });
+  });
+
+  describe('restartMeasurement', () => {
+    it('stops pipelines, resets state, and starts measurement', async () => {
+      await restartMeasurement(harness.setters, harness.isRunningRef);
+      expect(cancelActivePipelines).toHaveBeenCalled();
+      expect(harness.setters.setResults).toHaveBeenCalled();
+    });
+
+    it('guards against concurrent restarts', async () => {
+      const p1 = restartMeasurement(harness.setters, harness.isRunningRef);
+      const p2 = restartMeasurement(harness.setters, harness.isRunningRef);
+      await Promise.all([p1, p2]);
+      expect(cancelActivePipelines).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('handleBeforeUnload', () => {
+    it('cancels active pipelines when running', () => {
+      const mockBackend = createMockBackend(1);
+      harness.isRunningRef.current = true;
+      harness.state.activePipelines = [
+        createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
+      ] as unknown as typeof harness.state.activePipelines;
+
+      handleBeforeUnload(harness.isRunningRef);
+
+      expect(mockBackend.api.cancelPipeline).toHaveBeenCalledWith(1, 10);
+    });
+
+    it('only restores settings when not running', () => {
+      const { restoreOriginalSettings } = jest.requireMock(
+        'model/backend/gitlab/measure/benchmark.execution',
+      );
+      harness.isRunningRef.current = false;
+
+      handleBeforeUnload(harness.isRunningRef);
+
+      expect(restoreOriginalSettings).toHaveBeenCalled();
+    });
   });
 });

@@ -5,7 +5,7 @@ import {
   Trial,
   Execution,
   Status,
-  DEFAULT_CONFIG,
+  getDefaultConfig,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { secondsDifference } from 'model/backend/gitlab/measure/benchmark.utils';
 
@@ -163,7 +163,7 @@ export function TrialCard({
                 dtName: exp.dtName,
                 pipelineId: null,
                 status: '—',
-                config: { ...DEFAULT_CONFIG, ...exp.config },
+                config: { ...getDefaultConfig(), ...exp.config },
                 executionIndex: i,
               }}
             />

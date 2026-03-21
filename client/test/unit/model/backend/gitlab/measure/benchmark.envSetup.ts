@@ -80,6 +80,7 @@ export function createBenchmarkExecutionMock(
       })),
     ),
     DEFAULT_TASK: createTask('', ''),
+    clearPersistedResults: jest.fn(),
     ...extras,
   };
 }

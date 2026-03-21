@@ -101,16 +101,40 @@ export type BenchmarkSetters = {
 
 export const benchmarkConfig = {
   get trials(): number {
-    return store.getState().benchmark.trials;
+    return frozenSettings?.TRIALS ?? store.getState().benchmark.trials;
   },
   get runnerTag1(): string {
-    return store.getState().settings.RUNNER_TAG;
+    return frozenSettings?.RUNNER_TAG ?? store.getState().settings.RUNNER_TAG;
   },
   get runnerTag2(): string {
-    return store.getState().benchmark.secondaryRunnerTag;
+    return (
+      frozenSettings?.SECONDARY_RUNNER_TAG ??
+      store.getState().benchmark.secondaryRunnerTag
+    );
   },
 };
 
+export function getDefaultConfig(): Configuration {
+  if (frozenSettings) {
+    return {
+      'Branch name': frozenSettings.BRANCH_NAME,
+      'Group name': frozenSettings.GROUP_NAME,
+      'Common Library project name': frozenSettings.COMMON_LIBRARY_PROJECT_NAME,
+      'DT directory': frozenSettings.DT_DIRECTORY,
+      'Runner tag': frozenSettings.RUNNER_TAG,
+    };
+  }
+  const state = store.getState().settings;
+  return {
+    'Branch name': state.BRANCH_NAME,
+    'Group name': state.GROUP_NAME,
+    'Common Library project name': state.COMMON_LIBRARY_PROJECT_NAME,
+    'DT directory': state.DT_DIRECTORY,
+    'Runner tag': state.RUNNER_TAG,
+  };
+}
+
+/** @deprecated Use getDefaultConfig() for current Redux values */
 export const DEFAULT_CONFIG: Configuration = {
   'Branch name': BRANCH_NAME,
   'Group name': GROUP_NAME,
@@ -133,7 +157,43 @@ export const benchmarkState = {
   currentTaskIndexUI: null as number | null,
   componentSetters: null as BenchmarkSetters | null,
   originalPrimaryRunnerTag: null as string | null,
+  originalSecondaryRunnerTag: null as string | null,
+  restoredAfterRefresh: false,
 };
+
+// Restore results from sessionStorage so completed progress survives a page refresh.
+// Running tasks are marked STOPPED because the execution context (promises, pipelines) is lost.
+try {
+  const saved = sessionStorage.getItem('benchmarkResults');
+  if (saved) {
+    const DATE_KEYS = new Set(['Time Start', 'Time End']);
+    const parsed: TimedTask[] = JSON.parse(saved, (key, value) =>
+      DATE_KEYS.has(key) && typeof value === 'string' ? new Date(value) : value,
+    );
+    const tasksByName = new Map(
+      taskDefinitions.map((def) => [def.name, def.executions]),
+    );
+    const isActive = (s: Status) => s === 'RUNNING' || s === 'PENDING';
+    const markStopped = (s: Status): Status =>
+      isActive(s) ? 'STOPPED' : s;
+    const hadRunningTasks = parsed.some((task) => isActive(task.Status));
+    benchmarkState.results = parsed.map((task) => ({
+      ...task,
+      Status: markStopped(task.Status),
+      Trials: task.Trials.map((trial) => ({
+        ...trial,
+        Status: markStopped(trial.Status),
+      })),
+      Executions: tasksByName.has(task['Task Name'])
+        ? tasksByName.get(task['Task Name'])
+        : undefined,
+    }));
+    benchmarkState.isRunning = false;
+    benchmarkState.restoredAfterRefresh = hadRunningTasks;
+  }
+} catch {
+  // ignore parse errors — start fresh
+}
 
 // Save the page's update functions so the runner can refresh what the user sees
 export function attachSetters(setters: BenchmarkSetters): void {
@@ -143,6 +203,24 @@ export function attachSetters(setters: BenchmarkSetters): void {
 // Forget the page's update functions when the user leaves the page
 export function detachSetters(): void {
   benchmarkState.componentSetters = null;
+}
+
+const RESULTS_STORAGE_KEY = 'benchmarkResults';
+
+function persistResults(): void {
+  try {
+    if (!benchmarkState.results) return;
+    const serializable = benchmarkState.results.map(
+      ({ Executions, ...rest }) => rest,
+    );
+    sessionStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(serializable));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function clearPersistedResults(): void {
+  sessionStorage.removeItem(RESULTS_STORAGE_KEY);
 }
 
 // Wraps update functions so every change is saved in memory AND shown on screen.
@@ -167,38 +245,70 @@ export function wrapSetters(): BenchmarkSetters {
         benchmarkState.results = v;
       }
       benchmarkState.componentSetters?.setResults(v);
+      persistResults();
     },
   };
 }
 
-let originalSettings: {
+// Snapshot of settings captured when the benchmark starts.
+// While non-null, benchmarkConfig and getDefaultConfig() return these frozen values
+// so that mid-benchmark settings changes don't affect running executions.
+let frozenSettings: {
   RUNNER_TAG: string;
   BRANCH_NAME: string;
+  GROUP_NAME: string;
+  DT_DIRECTORY: string;
+  COMMON_LIBRARY_PROJECT_NAME: string;
+  SECONDARY_RUNNER_TAG: string;
+  TRIALS: number;
 } | null = null;
 
 export function saveOriginalSettings(): void {
-  if (originalSettings === null) {
+  if (frozenSettings === null) {
     const state = store.getState();
-    originalSettings = {
+    frozenSettings = {
       RUNNER_TAG: state.settings.RUNNER_TAG,
       BRANCH_NAME: state.settings.BRANCH_NAME,
+      GROUP_NAME: state.settings.GROUP_NAME,
+      DT_DIRECTORY: state.settings.DT_DIRECTORY,
+      COMMON_LIBRARY_PROJECT_NAME: state.settings.COMMON_LIBRARY_PROJECT_NAME,
+      SECONDARY_RUNNER_TAG: state.benchmark.secondaryRunnerTag,
+      TRIALS: state.benchmark.trials,
     };
     benchmarkState.originalPrimaryRunnerTag = state.settings.RUNNER_TAG;
+    benchmarkState.originalSecondaryRunnerTag =
+      state.benchmark.secondaryRunnerTag;
   }
 }
 
 export function restoreOriginalSettings(): void {
-  if (originalSettings !== null) {
-    store.dispatch({
-      type: 'settings/setRunnerTag',
-      payload: originalSettings.RUNNER_TAG,
-    });
-    store.dispatch({
-      type: 'settings/setBranchName',
-      payload: originalSettings.BRANCH_NAME,
-    });
-    originalSettings = null;
+  if (frozenSettings !== null) {
+    const current = store.getState();
+    // Only restore fields the user hasn't changed since the benchmark started.
+    if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
+      store.dispatch({
+        type: 'settings/setRunnerTag',
+        payload: frozenSettings.RUNNER_TAG,
+      });
+    }
+    if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
+      store.dispatch({
+        type: 'settings/setBranchName',
+        payload: frozenSettings.BRANCH_NAME,
+      });
+    }
+    if (
+      current.benchmark.secondaryRunnerTag ===
+      frozenSettings.SECONDARY_RUNNER_TAG
+    ) {
+      store.dispatch({
+        type: 'benchmark/setSecondaryRunnerTag',
+        payload: frozenSettings.SECONDARY_RUNNER_TAG,
+      });
+    }
+    frozenSettings = null;
     benchmarkState.originalPrimaryRunnerTag = null;
+    benchmarkState.originalSecondaryRunnerTag = null;
   }
 }
 

@@ -14,6 +14,7 @@ import {
   wrapSetters,
   resetTasks,
   getTasks,
+  clearPersistedResults,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   cancelActivePipelines,
@@ -160,6 +161,7 @@ export async function startMeasurement(
 
 export async function stopAllPipelines(): Promise<void> {
   benchmarkState.shouldStopPipelines = true;
+  restoreOriginalSettings();
   // Save the stop to memory and update the screen if the page is open
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
@@ -177,6 +179,7 @@ let isRestarting = false;
 
 export async function purgeBenchmarkData(): Promise<void> {
   await measurementDBService.purge();
+  clearPersistedResults();
   const fresh = resetTasks();
   benchmarkState.results = fresh;
   benchmarkState.componentSetters?.setResults(fresh);

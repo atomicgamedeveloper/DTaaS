@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import {
   screen,
   fireEvent,
@@ -15,9 +16,16 @@ import {
   setRunnerTag,
   setBranchName,
 } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'model/backend/gitlab/measure/benchmark.execution';
+import {
+  DEFAULT_BENCHMARK,
+  setTrials,
+  setSecondaryRunnerTag,
+  resetBenchmarkDefaults,
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
+
+jest.mock('routes', () => ({ __esModule: true, default: [] }));
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -132,5 +140,105 @@ describe('SettingsForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
 
     expect(mockDispatch).toHaveBeenCalledWith(resetToDefaults());
+  });
+
+  it('shows "Settings reset to defaults" message when reset is clicked', async () => {
+    fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
+
+    expect(
+      await screen.findByText(/settings reset to defaults/i),
+    ).toBeInTheDocument();
+  });
+
+  it('dispatches resetBenchmarkDefaults when reset is clicked', () => {
+    fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(resetBenchmarkDefaults());
+  });
+
+  it('shows error when required field is empty', () => {
+    const input = screen.getByLabelText(/group name/i);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(
+      screen.getByText('Group name is required'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows error when required field is whitespace only', () => {
+    const input = screen.getByLabelText(/group name/i);
+    fireEvent.change(input, { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(screen.getByText('Group name is required')).toBeInTheDocument();
+  });
+
+  it('shows error when trials field is empty', () => {
+    const input = screen.getByLabelText(/trial number/i);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(
+      screen.getByText(/trial number is required/i),
+    ).toBeInTheDocument();
+  });
+
+  it('shows error when trials value is not a number', () => {
+    const input = screen.getByLabelText(/trial number/i);
+    fireEvent.change(input, { target: { value: 'abc' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(
+      screen.getByText(/trial number is required/i),
+    ).toBeInTheDocument();
+  });
+
+  it('shows error when trials value is less than 1', () => {
+    const input = screen.getByLabelText(/trial number/i);
+    fireEvent.change(input, { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(
+      screen.getByText(/trial number is required/i),
+    ).toBeInTheDocument();
+  });
+
+  it('clears field error when user starts retyping', () => {
+    const input = screen.getByLabelText(/group name/i);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+    expect(screen.getByText('Group name is required')).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'x' } });
+    expect(
+      screen.queryByText('Group name is required'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('dispatches setTrials when trials value changes', () => {
+    const input = screen.getByLabelText(/trial number/i);
+    fireEvent.change(input, { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(setTrials(5));
+  });
+
+  it('dispatches setSecondaryRunnerTag when secondary runner tag changes', () => {
+    const input = screen.getByLabelText(/benchmark secondary runner tag/i);
+    fireEvent.change(input, { target: { value: 'macos' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(setSecondaryRunnerTag('macos'));
+  });
+
+  it('shows error when secondary runner tag is empty', () => {
+    const input = screen.getByLabelText(/benchmark secondary runner tag/i);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(
+      screen.getByText('Benchmark secondary runner tag is required'),
+    ).toBeInTheDocument();
   });
 });
