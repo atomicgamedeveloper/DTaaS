@@ -3,6 +3,13 @@ import {
   benchmarkState,
   saveOriginalSettings,
   restoreOriginalSettings,
+  wrapSetters,
+  attachSetters,
+  detachSetters,
+  getTasks,
+  resetTasks,
+  benchmarkConfig,
+  TimedTask,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import store from 'store/store';
 import {
@@ -12,7 +19,10 @@ import {
   DT_DIRECTORY,
   RUNNER_TAG,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import { createMockRootState } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
+import {
+  createMockRootState,
+  createMockSetters,
+} from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
 import { setupSessionStorage } from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
 jest.mock('store/store', () => ({
@@ -159,6 +169,161 @@ describe('benchmark.execution', () => {
       restoreOriginalSettings();
 
       expect(mockStore.dispatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('wrapSetters', () => {
+    let wrapped: ReturnType<typeof wrapSetters>;
+
+    beforeEach(() => {
+      benchmarkState.isRunning = false;
+      benchmarkState.currentTaskIndexUI = null;
+      benchmarkState.results = null;
+      benchmarkState.componentSetters = null;
+      wrapped = wrapSetters();
+    });
+
+    it('setIsRunning updates benchmarkState.isRunning and calls componentSetters', () => {
+      const resultsRef = { current: [] as TimedTask[] };
+      const mockSetters = createMockSetters(resultsRef);
+      benchmarkState.componentSetters = mockSetters;
+
+      wrapped.setIsRunning(true);
+
+      expect(benchmarkState.isRunning).toBe(true);
+      expect(mockSetters.setIsRunning).toHaveBeenCalledWith(true);
+    });
+
+    it('setCurrentTaskIndex updates benchmarkState.currentTaskIndexUI and calls componentSetters', () => {
+      const resultsRef = { current: [] as TimedTask[] };
+      const mockSetters = createMockSetters(resultsRef);
+      benchmarkState.componentSetters = mockSetters;
+
+      wrapped.setCurrentTaskIndex(2);
+
+      expect(benchmarkState.currentTaskIndexUI).toBe(2);
+      expect(mockSetters.setCurrentTaskIndex).toHaveBeenCalledWith(2);
+    });
+
+    it('setResults with direct value updates benchmarkState.results', () => {
+      const resultsRef = { current: [] as TimedTask[] };
+      const mockSetters = createMockSetters(resultsRef);
+      benchmarkState.componentSetters = mockSetters;
+
+      const tasks: TimedTask[] = [
+        {
+          'Task Name': 'T1',
+          Description: 'desc',
+          Trials: [],
+          'Time Start': undefined,
+          'Time End': undefined,
+          'Average Time (s)': undefined,
+          Status: 'NOT_STARTED',
+        },
+      ];
+
+      wrapped.setResults(tasks);
+
+      expect(benchmarkState.results).toEqual(tasks);
+      expect(mockSetters.setResults).toHaveBeenCalledWith(tasks);
+    });
+
+    it('setResults with function updater applies updater to current results', () => {
+      benchmarkState.results = [];
+
+      const updater = (prev: TimedTask[]) => [
+        ...prev,
+        {
+          'Task Name': 'New',
+          Description: 'new',
+          Trials: [],
+          'Time Start': undefined,
+          'Time End': undefined,
+          'Average Time (s)': undefined,
+          Status: 'NOT_STARTED' as const,
+        },
+      ];
+
+      wrapped.setResults(updater);
+
+      expect(benchmarkState.results).toHaveLength(1);
+      expect(benchmarkState.results[0]['Task Name']).toBe('New');
+    });
+
+    it('methods work without componentSetters (no error thrown)', () => {
+      benchmarkState.componentSetters = null;
+
+      expect(() => wrapped.setIsRunning(true)).not.toThrow();
+      expect(() => wrapped.setCurrentExecutions([])).not.toThrow();
+      expect(() => wrapped.setCurrentTaskIndex(0)).not.toThrow();
+      expect(() => wrapped.setResults([])).not.toThrow();
+    });
+  });
+
+  describe('attachSetters / detachSetters', () => {
+    it('attachSetters sets componentSetters on benchmarkState', () => {
+      const resultsRef = { current: [] as TimedTask[] };
+      const mockSetters = createMockSetters(resultsRef);
+
+      attachSetters(mockSetters);
+
+      expect(benchmarkState.componentSetters).toBe(mockSetters);
+    });
+
+    it('detachSetters clears componentSetters on benchmarkState', () => {
+      const resultsRef = { current: [] as TimedTask[] };
+      const mockSetters = createMockSetters(resultsRef);
+      benchmarkState.componentSetters = mockSetters;
+
+      detachSetters();
+
+      expect(benchmarkState.componentSetters).toBeNull();
+    });
+  });
+
+  describe('getTasks / resetTasks', () => {
+    it('getTasks returns an array of tasks', () => {
+      const tasks = getTasks();
+
+      expect(Array.isArray(tasks)).toBe(true);
+      expect(tasks.length).toBeGreaterThan(0);
+      expect(tasks[0]).toHaveProperty('Task Name');
+      expect(tasks[0]).toHaveProperty('Description');
+      expect(tasks[0]).toHaveProperty('Status');
+    });
+
+    it('resetTasks returns tasks with NOT_STARTED status', () => {
+      const reset = resetTasks();
+
+      expect(reset.length).toBeGreaterThan(0);
+      reset.forEach((task) => {
+        expect(task.Status).toBe('NOT_STARTED');
+      });
+    });
+
+    it('resetTasks clears time fields', () => {
+      const reset = resetTasks();
+
+      reset.forEach((task) => {
+        expect(task['Time Start']).toBeUndefined();
+        expect(task['Time End']).toBeUndefined();
+        expect(task['Average Time (s)']).toBeUndefined();
+        expect(task.Trials).toEqual([]);
+      });
+    });
+  });
+
+  describe('benchmarkConfig', () => {
+    it('trials getter returns store value', () => {
+      expect(benchmarkConfig.trials).toBe(3);
+    });
+
+    it('runnerTag1 getter returns store value', () => {
+      expect(benchmarkConfig.runnerTag1).toBe('linux');
+    });
+
+    it('runnerTag2 getter returns store value', () => {
+      expect(benchmarkConfig.runnerTag2).toBe('windows');
     });
   });
 });

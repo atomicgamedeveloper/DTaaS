@@ -17,8 +17,9 @@ import {
 export async function executeDT(
   self: DigitalTwin,
   skipHistorySave: boolean = false,
+  runnerTagOverride?: string,
 ): Promise<number | null> {
-  const runnerTag = getRunnerTag();
+  const runnerTag = runnerTagOverride ?? getRunnerTag();
   if (!isValidInstance(self)) {
     logError(self, runnerTag, 'Missing projectId or triggerToken');
     return null;

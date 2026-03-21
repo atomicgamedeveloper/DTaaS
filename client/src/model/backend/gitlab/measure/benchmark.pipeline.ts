@@ -17,7 +17,7 @@ import {
   Trial,
   Execution,
   benchmarkState,
-  DEFAULT_CONFIG,
+  getDefaultConfig,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 
 const abortOptions = { shouldAbort: () => benchmarkState.shouldStopPipelines };
@@ -60,21 +60,13 @@ async function initializeBackend(
   }
 
   const backend = createGitlabInstance(username, oauthToken, getAuthority());
-  const savedRunnerTag = store.getState().settings.RUNNER_TAG;
   const savedBranchName = store.getState().settings.BRANCH_NAME;
-  if (config?.['Runner tag'])
-    store.dispatch({
-      type: 'settings/setRunnerTag',
-      payload: config['Runner tag'],
-    });
   if (config?.['Branch name'])
     store.dispatch({
       type: 'settings/setBranchName',
       payload: config['Branch name'],
     });
   await backend.init();
-  // Restore original settings so BenchmarkConfig.runnerTag1 reads the correct value
-  store.dispatch({ type: 'settings/setRunnerTag', payload: savedRunnerTag });
   store.dispatch({
     type: 'settings/setBranchName',
     payload: savedBranchName,
@@ -104,7 +96,7 @@ async function executeDigitalTwinPipeline(
   benchmarkState.currentTrialExecutionIndex += 1;
 
   const digitalTwin = new DigitalTwin(dtName, backend);
-  const pipelineId = await digitalTwin.execute();
+  const pipelineId = await digitalTwin.execute(true, config['Runner tag']);
 
   if (!pipelineId) {
     throw new Error(`Failed to start pipeline for ${dtName}.`);
@@ -165,7 +157,7 @@ export async function runDigitalTwin(
   dtName: string,
   config?: Partial<Configuration>,
 ): Promise<ExecutionResult> {
-  const usedConfig: Configuration = { ...DEFAULT_CONFIG, ...config };
+  const usedConfig: Configuration = { ...getDefaultConfig(), ...config };
   const backend = await initializeBackend(usedConfig);
   return executeDigitalTwinPipeline(dtName, backend, usedConfig);
 }
