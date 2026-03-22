@@ -10,6 +10,7 @@ import {
   resetTasks,
   benchmarkConfig,
   TimedTask,
+  setBenchmarkStore,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import store from 'store/store';
 import {
@@ -58,6 +59,7 @@ describe('benchmark.execution', () => {
         BRANCH_NAME: 'main',
       }),
     );
+    setBenchmarkStore(mockStore);
   });
 
   afterEach(() => {

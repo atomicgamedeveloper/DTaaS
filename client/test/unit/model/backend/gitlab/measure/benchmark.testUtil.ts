@@ -7,11 +7,18 @@ import {
   Configuration,
   ActivePipeline,
   BenchmarkSetters,
-  benchmarkConfig as BenchmarkConfigOriginal,
+  benchmarkConfig,
   benchmarkState,
   getTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
 import { RootState } from 'store/store';
+
+// Writable version of benchmarkConfig for use in tests that mock the module.
+export type MockBenchmarkConfig = {
+  trials: number;
+  runnerTag1: string;
+  runnerTag2: string;
+};
 
 export const DEFAULT_CONFIG: Configuration = {
   'Branch name': 'main',
@@ -216,16 +223,12 @@ export function setupBenchmarkTestHarness() {
   const resultsRef: { current: TimedTask[] } = { current: [] };
   const setters = createMockSetters(resultsRef);
   const isRunningRef: React.MutableRefObject<boolean> = { current: false };
-  const BenchmarkConfig = BenchmarkConfigOriginal as {
-    trials: number;
-    runnerTag1: string;
-    runnerTag2: string;
-  };
+  const mockBenchmarkConfig = benchmarkConfig as unknown as MockBenchmarkConfig;
 
   const reset = () => {
     jest.clearAllMocks();
     resetBenchmarkState(state);
-    BenchmarkConfig.trials = 3;
+    mockBenchmarkConfig.trials = 3;
     resultsRef.current = [];
     isRunningRef.current = false;
     state.componentSetters = setters;
@@ -233,5 +236,12 @@ export function setupBenchmarkTestHarness() {
     initBenchmarkResults(resultsRef);
   };
 
-  return { state, setters, isRunningRef, resultsRef, BenchmarkConfig, reset };
+  return {
+    state,
+    setters,
+    isRunningRef,
+    resultsRef,
+    mockBenchmarkConfig,
+    reset,
+  };
 }

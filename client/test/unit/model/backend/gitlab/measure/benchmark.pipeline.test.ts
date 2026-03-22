@@ -1,4 +1,4 @@
-import { benchmarkState } from 'model/backend/gitlab/measure/benchmark.execution';
+import { benchmarkState, setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   runDigitalTwin,
   cancelActivePipelines,
@@ -94,6 +94,7 @@ describe('benchmark.pipeline', () => {
         BRANCH_NAME: 'main',
       }),
     );
+    setBenchmarkStore(mockStore);
     mockGetAuthority.mockReturnValue('https://gitlab.example.com');
 
     mockBackendInstance = createMockBackend(1);
@@ -173,16 +174,22 @@ describe('benchmark.pipeline', () => {
     await runDigitalTwin('test-dt', { 'Runner tag': 'custom-runner' });
 
     const dtInstance = mockDigitalTwin.mock.results[0].value;
-    expect(dtInstance.execute).toHaveBeenCalledWith(true, 'custom-runner');
+    expect(dtInstance.execute).toHaveBeenCalledWith(
+      true,
+      'custom-runner',
+      'main',
+    );
   });
 
-  it('should dispatch branch name when provided in config', async () => {
+  it('should pass branch name to digitalTwin.execute when provided in config', async () => {
     await runDigitalTwin('test-dt', { 'Branch name': 'feature-branch' });
 
-    expect(mockStore.dispatch).toHaveBeenCalledWith({
-      type: 'settings/setBranchName',
-      payload: 'feature-branch',
-    });
+    const dtInstance = mockDigitalTwin.mock.results[0].value;
+    expect(dtInstance.execute).toHaveBeenCalledWith(
+      true,
+      'linux',
+      'feature-branch',
+    );
   });
 
   it('should create DigitalTwin instance with correct name', async () => {

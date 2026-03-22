@@ -6,7 +6,6 @@ import measurementDBService from 'database/measurementHistoryDB';
 import { rootReducer } from 'store/storeTypes';
 import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
-import { setPipelineStore } from 'model/backend/gitlab/measure/benchmark.pipeline';
 import { setExecutionHistoryDB } from 'model/backend/util/digitalTwinExecutionHistory';
 import { setPipelineExecutionDB } from 'model/backend/util/digitalTwinPipelineExecution';
 import { setMeasurementDB } from 'model/backend/gitlab/measure/benchmark.runner';
@@ -65,7 +64,6 @@ const store = configureStore({
 // Dependency injection: wire store and services into model modules
 setSettingsStore(store);
 setBenchmarkStore(store);
-setPipelineStore(store);
 setExecutionHistoryDB(indexedDBService);
 setPipelineExecutionDB(indexedDBService);
 setMeasurementDB(measurementDBService);

@@ -154,12 +154,12 @@ function Benchmark() {
   }, [isRunning, currentTaskIndex]);
 
   useEffect(() => {
-    const onBeforeUnload = () =>
-      handleBeforeUnload(benchmarkState.isRunningRef);
+    const onBeforeUnload = (event: BeforeUnloadEvent) =>
+      handleBeforeUnload(event, benchmarkState.isRunningRef);
 
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  });
+  }, []);
 
   useEffect(() => {
     if (

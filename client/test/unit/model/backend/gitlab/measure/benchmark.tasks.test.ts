@@ -3,21 +3,30 @@ import {
   DEFAULT_TASK,
   getTasks,
   resetTasks,
+  setBenchmarkStore,
 } from 'model/backend/gitlab/measure/benchmark.execution';
+import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
 
 const mockStoreState = {
-  benchmark: { trials: 3, secondaryRunnerTag: 'windows' },
-  settings: { RUNNER_TAG: 'linux' },
+  benchmark: {
+    trials: 3,
+    secondaryRunnerTag: 'windows',
+    primaryDTName: 'hello-world',
+    secondaryDTName: 'mass-spring-damper',
+  },
+  settings: {
+    RUNNER_TAG: 'linux',
+    BRANCH_NAME: 'main',
+    GROUP_NAME: 'dtaas',
+    DT_DIRECTORY: 'digital_twins',
+    COMMON_LIBRARY_PROJECT_NAME: 'common',
+  },
 };
 
-jest.mock('store/store', () => ({
-  __esModule: true,
-  default: {
-    getState: () => mockStoreState,
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-  },
-}));
+setBenchmarkStore({
+  getState: () => mockStoreState as never,
+  dispatch: jest.fn(),
+});
 
 describe('benchmark.tasks', () => {
   const tasks = getTasks();
@@ -62,12 +71,32 @@ describe('benchmark.tasks', () => {
     });
   });
 
+  it('should have exactly 5 pre-defined tasks', () => {
+    expect(tasks.length).toBe(5);
+  });
+
+  it('should have unique task names', () => {
+    const names = tasks.map((t) => t['Task Name']);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('tasks are in expected order', () => {
+    const names = tasks.map((t) => t['Task Name']);
+    expect(names).toEqual([
+      'Valid Setup Digital Twin Execution',
+      'Multiple Identical Digital Twins Simultaneously',
+      'Multiple different Digital Twins Simultaneously',
+      'Different Runners same Digital Twin',
+      'Different Runners different Digital Twins',
+    ]);
+  });
+
   it('should include Valid Setup Digital Twin Execution task', () => {
     const setupTask = tasks.find(
       (t) => t['Task Name'] === 'Valid Setup Digital Twin Execution',
     );
     expect(setupTask).toBeDefined();
-    expect(setupTask?.Description).toContain('Hello World Digital Twin');
+    expect(setupTask?.Description).toContain('primary Digital Twin');
   });
 
   it('should include Multiple Identical Digital Twins task', () => {
@@ -98,10 +127,6 @@ describe('benchmark.tasks', () => {
       (t) => t['Task Name'] === 'Different Runners different Digital Twins',
     );
     expect(runnerDiffTask).toBeDefined();
-  });
-
-  it('should have exactly 5 pre-defined tasks', () => {
-    expect(tasks.length).toBe(5);
   });
 
   it('should reset all task fields while preserving identity', () => {
@@ -194,5 +219,18 @@ describe('benchmark.tasks', () => {
         config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
       },
     ]);
+  });
+
+  describe('taskDefinitions', () => {
+    it.each(taskDefinitions.map((t) => [t.name, t]))(
+      '%s has required fields',
+      (_, task) => {
+        expect(task.name).toBeTruthy();
+        expect(task.description).toBeTruthy();
+        expect(typeof task.executions).toBe('function');
+        expect(Array.isArray(task.executions())).toBe(true);
+        expect(task.executions().length).toBeGreaterThan(0);
+      },
+    );
   });
 });

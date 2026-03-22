@@ -17,7 +17,7 @@ import {
   setSecondaryDTName,
   resetBenchmarkDefaults,
   DEFAULT_BENCHMARK,
-} from 'model/backend/gitlab/measure/benchmark.execution';
+} from 'store/benchmark.slice';
 import {
   Button,
   TextField,

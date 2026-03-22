@@ -1,6 +1,5 @@
 // GitLab pipeline lifecycle (trigger, poll, cancel, collect results)
 /* eslint-disable no-await-in-loop */
-import type { RootState } from 'store/storeTypes';
 import { getAuthority } from 'util/envUtil';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
@@ -19,25 +18,6 @@ import {
   benchmarkState,
   getDefaultConfig,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-
-type PipelineStore = {
-  getState: () => RootState;
-  dispatch: (action: { type: string; payload?: unknown }) => void;
-};
-
-let _store: PipelineStore | null = null;
-
-export function setPipelineStore(store: PipelineStore): void {
-  _store = store;
-}
-
-function getStore(): PipelineStore {
-  if (!_store)
-    throw new Error(
-      'Pipeline store not initialized. Call setPipelineStore() first.',
-    );
-  return _store;
-}
 
 const abortOptions = { shouldAbort: () => benchmarkState.shouldStopPipelines };
 
@@ -69,9 +49,7 @@ export async function cancelActivePipelines(): Promise<void> {
   }
 }
 
-async function initializeBackend(
-  config?: Configuration,
-): Promise<BackendInterface> {
+async function initializeBackend(): Promise<BackendInterface> {
   const username = sessionStorage.getItem('username');
   const oauthToken = sessionStorage.getItem('access_token');
   if (!oauthToken || !username) {
@@ -79,17 +57,7 @@ async function initializeBackend(
   }
 
   const backend = createGitlabInstance(username, oauthToken, getAuthority());
-  const savedBranchName = getStore().getState().settings.BRANCH_NAME;
-  if (config?.['Branch name'])
-    getStore().dispatch({
-      type: 'settings/setBranchName',
-      payload: config['Branch name'],
-    });
   await backend.init();
-  getStore().dispatch({
-    type: 'settings/setBranchName',
-    payload: savedBranchName,
-  });
   return backend;
 }
 
@@ -115,7 +83,11 @@ async function executeDigitalTwinPipeline(
   benchmarkState.currentTrialExecutionIndex += 1;
 
   const digitalTwin = new DigitalTwin(dtName, backend);
-  const pipelineId = await digitalTwin.execute(true, config['Runner tag']);
+  const pipelineId = await digitalTwin.execute(
+    true,
+    config['Runner tag'],
+    config['Branch name'],
+  );
 
   if (!pipelineId) {
     throw new Error(`Failed to start pipeline for ${dtName}.`);
@@ -177,7 +149,7 @@ export async function runDigitalTwin(
   config?: Partial<Configuration>,
 ): Promise<ExecutionResult> {
   const usedConfig: Configuration = { ...getDefaultConfig(), ...config };
-  const backend = await initializeBackend(usedConfig);
+  const backend = await initializeBackend();
   return executeDigitalTwinPipeline(dtName, backend, usedConfig);
 }
 
