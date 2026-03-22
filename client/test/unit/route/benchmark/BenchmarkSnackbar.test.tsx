@@ -118,6 +118,7 @@ jest.mock('model/backend/gitlab/measure/benchmark.execution', () => {
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),
     getTasks: () => setup.MOCK_TASKS,
+    getDefaultConfig: jest.fn(() => ({})),
   };
 });
 
@@ -245,6 +246,7 @@ describe('Benchmark snackbar and polling', () => {
 
     mockStartMeasurement.mockImplementationOnce((setters) => {
       setters.setIsRunning(true);
+      setters.setCurrentTaskIndex(0);
       return new Promise(() => {});
     });
 
@@ -255,6 +257,11 @@ describe('Benchmark snackbar and polling', () => {
     await act(async () => {
       jest.advanceTimersByTime(600);
     });
+
+    const { mergeExecutionStatus } = jest.requireMock(
+      'model/backend/gitlab/measure/benchmark.utils',
+    );
+    expect(mergeExecutionStatus).toHaveBeenCalled();
 
     benchmarkStateMock.activePipelines = [];
     benchmarkStateMock.executionResults = [];
@@ -279,5 +286,7 @@ describe('Benchmark snackbar and polling', () => {
     await act(async () => {
       fireEvent.click(screen.getByTestId('start-btn'));
     });
+
+    expect(screen.getByTestId('benchmark-table')).toBeInTheDocument();
   });
 });

@@ -17,6 +17,8 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
 import type { RootState } from 'store/storeTypes';
+import { setRunnerTag, setBranchName } from 'store/settings.slice';
+import { setSecondaryRunnerTag } from 'store/benchmark.slice';
 
 type BenchmarkStore = {
   getState: () => RootState;
@@ -36,18 +38,6 @@ function getStore(): BenchmarkStore {
     );
   return _store;
 }
-
-export {
-  DEFAULT_BENCHMARK,
-  loadInitialBenchmark,
-  benchmarkSlice,
-  benchmarkReducer,
-  setTrials,
-  setSecondaryRunnerTag,
-  setPrimaryDTName,
-  setSecondaryDTName,
-  resetBenchmarkDefaults,
-} from 'store/benchmark.slice';
 
 export type Configuration = ExternalConfiguration;
 
@@ -324,25 +314,18 @@ export function restoreOriginalSettings(): void {
     const current = getStore().getState();
     // Only restore fields the user hasn't changed since the benchmark started.
     if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
-      getStore().dispatch({
-        type: 'settings/setRunnerTag',
-        payload: frozenSettings.RUNNER_TAG,
-      });
+      getStore().dispatch(setRunnerTag(frozenSettings.RUNNER_TAG));
     }
     if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
-      getStore().dispatch({
-        type: 'settings/setBranchName',
-        payload: frozenSettings.BRANCH_NAME,
-      });
+      getStore().dispatch(setBranchName(frozenSettings.BRANCH_NAME));
     }
     if (
       current.benchmark.secondaryRunnerTag ===
       frozenSettings.SECONDARY_RUNNER_TAG
     ) {
-      getStore().dispatch({
-        type: 'benchmark/setSecondaryRunnerTag',
-        payload: frozenSettings.SECONDARY_RUNNER_TAG,
-      });
+      getStore().dispatch(
+        setSecondaryRunnerTag(frozenSettings.SECONDARY_RUNNER_TAG),
+      );
     }
     frozenSettings = null;
     benchmarkState.originalPrimaryRunnerTag = null;

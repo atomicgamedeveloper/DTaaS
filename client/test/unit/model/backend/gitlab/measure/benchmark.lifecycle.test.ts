@@ -48,7 +48,7 @@ describe('benchmark.lifecycle', () => {
   });
 
   it('should cancel, restore settings, wait for promise and reset state', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     let resolve: () => void = () => {};
     harness.state.currentMeasurementPromise = new Promise((r) => {
       resolve = r;
@@ -62,7 +62,7 @@ describe('benchmark.lifecycle', () => {
   });
 
   it('should not restart if already restarting', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     await Promise.all([
       restartMeasurement(harness.setters, harness.isRunningRef),
       restartMeasurement(harness.setters, harness.isRunningRef),
@@ -71,10 +71,16 @@ describe('benchmark.lifecycle', () => {
   });
 
   it('should do nothing if not running or no active pipelines', () => {
-    handleBeforeUnload(harness.isRunningRef);
+    handleBeforeUnload(
+      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      harness.isRunningRef,
+    );
     expect(harness.state.shouldStopPipelines).toBe(false);
     harness.isRunningRef.current = true;
-    handleBeforeUnload(harness.isRunningRef);
+    handleBeforeUnload(
+      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      harness.isRunningRef,
+    );
     expect(harness.state.shouldStopPipelines).toBe(false);
   });
 
@@ -94,7 +100,10 @@ describe('benchmark.lifecycle', () => {
         phase: 'parent',
       },
     ];
-    handleBeforeUnload(harness.isRunningRef);
+    handleBeforeUnload(
+      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      harness.isRunningRef,
+    );
     expect(harness.state.shouldStopPipelines).toBe(true);
     expect(cancelFn).toHaveBeenCalledWith(1, 100);
 
@@ -115,7 +124,10 @@ describe('benchmark.lifecycle', () => {
         phase: 'parent',
       },
     ];
-    expect(() => handleBeforeUnload(harness.isRunningRef)).not.toThrow();
+    expect(() => handleBeforeUnload(
+      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      harness.isRunningRef,
+    )).not.toThrow();
     expect(restoreOriginalSettings).toHaveBeenCalled();
   });
 });

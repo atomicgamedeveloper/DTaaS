@@ -4,6 +4,7 @@ import {
   purgeBenchmarkData,
   restartMeasurement,
   handleBeforeUnload,
+  setMeasurementDB,
 } from 'model/backend/gitlab/measure/benchmark.runner';
 import {
   saveOriginalSettings,
@@ -41,32 +42,28 @@ jest.mock('model/backend/gitlab/measure/benchmark.pipeline', () => ({
   cancelActivePipelines: jest.fn().mockResolvedValue(undefined),
   runTrials: jest.fn().mockResolvedValue([]),
 }));
-jest.mock('database/measurementHistoryDB', () => ({
-  __esModule: true,
-  default: {
-    add: jest.fn(() => Promise.resolve()),
-    purge: jest.fn(() => Promise.resolve()),
-  },
-}));
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockMeasurementDB = require('database/measurementHistoryDB').default;
+const mockMeasurementDB = {
+  add: jest.fn(() => Promise.resolve('')),
+  purge: jest.fn(() => Promise.resolve()),
+};
 
 describe('benchmark.runner', () => {
   const harness = setupBenchmarkTestHarness();
 
   beforeEach(() => {
     harness.reset();
+    setMeasurementDB(mockMeasurementDB);
   });
 
   it('should not start if already running', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     harness.isRunningRef.current = true;
     await startMeasurement(harness.setters, harness.isRunningRef);
     expect(harness.setters.setIsRunning).not.toHaveBeenCalled();
   });
 
   it('should manage lifecycle and iterate through tasks', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     await startMeasurement(harness.setters, harness.isRunningRef);
     expect(harness.setters.setIsRunning).toHaveBeenCalledWith(true);
     expect(saveOriginalSettings).toHaveBeenCalled();
@@ -75,21 +72,29 @@ describe('benchmark.runner', () => {
   });
 
   it('should handle stop flag during measurement', async () => {
-    harness.BenchmarkConfig.trials = 1;
-    harness.state.shouldStopPipelines = true;
+    harness.mockBenchmarkConfig.trials = 1;
+    (runTrials as jest.Mock).mockImplementationOnce(async () => {
+      harness.state.shouldStopPipelines = true;
+      return [];
+    });
     await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
+    expect(runTrials).toHaveBeenCalledTimes(1);
+    expect(harness.isRunningRef.current).toBe(false);
   });
 
   it('should transition NOT_STARTED to PENDING and run multiple trials', async () => {
-    harness.BenchmarkConfig.trials = 2;
+    harness.mockBenchmarkConfig.trials = 2;
     harness.resultsRef.current = harness.resultsRef.current.map((t) => ({
       ...t,
       Status: 'NOT_STARTED' as const,
     }));
     await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
-    expect(runTrials).toHaveBeenCalled();
+    expect(runTrials).toHaveBeenCalledTimes(2);
+    const results = harness.resultsRef.current;
+    results.forEach((task) => {
+      expect(task.Status).not.toBe('NOT_STARTED');
+      expect(task.Status).not.toBe('PENDING');
+    });
   });
 
   it('should stop pipelines and update statuses', async () => {
@@ -104,13 +109,18 @@ describe('benchmark.runner', () => {
   });
 
   it('should create trials with SUCCESS/FAILURE status based on results', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
+    const results = harness.resultsRef.current;
+    expect(results).toHaveLength(2);
+    results.forEach((task) => {
+      expect(task.Status).toBe('SUCCESS');
+      expect(task['Time End']).toBeDefined();
+    });
   });
 
   it('should create STOPPED trial and capture pipelines on user stop', async () => {
-    harness.BenchmarkConfig.trials = 1;
+    harness.mockBenchmarkConfig.trials = 1;
     harness.state.currentTrialMinPipelineId = 100;
     harness.state.executionResults = [
       {
@@ -126,22 +136,37 @@ describe('benchmark.runner', () => {
         },
       },
     ];
-    harness.state.shouldStopPipelines = true;
+    (runTrials as jest.Mock).mockImplementationOnce(async () => {
+      harness.state.shouldStopPipelines = true;
+      return [];
+    });
     await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
+    const results = harness.resultsRef.current;
+    const stoppedTasks = results.filter((t) => t.Status === 'STOPPED');
+    expect(stoppedTasks.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('should handle errors and continue to next task', async () => {
-    harness.BenchmarkConfig.trials = 1;
-    await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
+  it('should clean up on task error', async () => {
+    harness.mockBenchmarkConfig.trials = 1;
+    (runTrials as jest.Mock).mockRejectedValueOnce(new Error('task error'));
+    await expect(
+      startMeasurement(harness.setters, harness.isRunningRef),
+    ).rejects.toThrow('task error');
+    expect(runTrials).toHaveBeenCalledTimes(1);
+    expect(harness.isRunningRef.current).toBe(false);
+    expect(restoreOriginalSettings).toHaveBeenCalled();
   });
 
   it('should break trial loop when shouldStopPipelines becomes true', async () => {
-    harness.BenchmarkConfig.trials = 3;
-    harness.state.shouldStopPipelines = false;
+    harness.mockBenchmarkConfig.trials = 3;
+    (runTrials as jest.Mock).mockImplementationOnce(async () => {
+      harness.state.shouldStopPipelines = true;
+      return [];
+    });
     await startMeasurement(harness.setters, harness.isRunningRef);
-    expect(harness.setters.setResults).toHaveBeenCalled();
+    expect(runTrials).toHaveBeenCalledTimes(1);
+    const secondTask = harness.resultsRef.current[1];
+    expect(secondTask.Status).not.toBe('RUNNING');
   });
 
   describe('purgeBenchmarkData', () => {
@@ -174,7 +199,10 @@ describe('benchmark.runner', () => {
         createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
       ] as unknown as typeof harness.state.activePipelines;
 
-      handleBeforeUnload(harness.isRunningRef);
+      handleBeforeUnload(
+        { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+        harness.isRunningRef,
+      );
 
       expect(mockBackend.api.cancelPipeline).toHaveBeenCalledWith(1, 10);
     });
@@ -185,7 +213,10 @@ describe('benchmark.runner', () => {
       );
       harness.isRunningRef.current = false;
 
-      handleBeforeUnload(harness.isRunningRef);
+      handleBeforeUnload(
+        { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+        harness.isRunningRef,
+      );
 
       expect(mockRestore).toHaveBeenCalled();
     });

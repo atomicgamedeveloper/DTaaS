@@ -119,8 +119,9 @@ class DigitalTwin implements DigitalTwinInterface {
   async execute(
     skipHistorySave: boolean = false,
     runnerTag?: string,
+    branchName?: string,
   ): Promise<number | null> {
-    return executeDT(this, skipHistorySave, runnerTag);
+    return executeDT(this, skipHistorySave, runnerTag, branchName);
   }
 
   /**

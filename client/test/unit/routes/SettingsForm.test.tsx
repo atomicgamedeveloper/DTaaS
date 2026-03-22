@@ -21,7 +21,7 @@ import {
   setTrials,
   setSecondaryRunnerTag,
   resetBenchmarkDefaults,
-} from 'model/backend/gitlab/measure/benchmark.execution';
+} from 'store/benchmark.slice';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 

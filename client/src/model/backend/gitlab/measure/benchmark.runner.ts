@@ -235,9 +235,13 @@ export async function restartMeasurement(
 }
 
 export function handleBeforeUnload(
+  event: BeforeUnloadEvent,
   isRunningRef: React.MutableRefObject<boolean>,
 ): void {
   if (isRunningRef.current && benchmarkState.activePipelines.length > 0) {
+    event.preventDefault();
+    event.returnValue = '';
+
     benchmarkState.shouldStopPipelines = true;
     for (const { backend, pipelineId } of benchmarkState.activePipelines) {
       try {

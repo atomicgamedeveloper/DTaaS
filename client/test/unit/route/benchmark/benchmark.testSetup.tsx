@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'model/backend/gitlab/measure/benchmark.execution';
+import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
 import { useSelector, useDispatch } from 'react-redux';
 
 export const MOCK_TASKS = [

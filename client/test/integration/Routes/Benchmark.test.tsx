@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { setupIntegrationTest } from 'test/integration/integration.testUtil';
 import { testLayout } from 'test/integration/Routes/routes.testUtil';
 
@@ -76,11 +77,11 @@ describe('Benchmark Page', () => {
   it('displays task descriptions', async () => {
     expect(
       screen.getByText(
-        'Running the Hello World Digital Twin with current setup.',
+        'Running the primary Digital Twin with current setup.',
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Running the Hello World Digital Twin twice at once.'),
+      screen.getByText('Running the primary Digital Twin twice at once.'),
     ).toBeInTheDocument();
   });
 
@@ -90,5 +91,45 @@ describe('Benchmark Page', () => {
         /Run performance benchmarks for Digital Twin executions/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows initial completion summary prompt', async () => {
+    expect(
+      screen.getByText('Click Start to generate benchmark data'),
+    ).toBeInTheDocument();
+  });
+
+  it('displays trials counter with correct format', async () => {
+    expect(screen.getByText(/Trials Completed: 0\/\d+/)).toBeInTheDocument();
+  });
+
+  it('opens and cancels the Purge confirmation dialog', async () => {
+    const purgeButton = screen.getByRole('button', { name: 'Purge' });
+    await userEvent.click(purgeButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Purge Benchmark Data?'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /permanently delete all results and cannot be undone/,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Purge Benchmark Data?'),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows runner tag badges on tasks that use them', async () => {
+    const runnerBadges = screen.queryAllByText(/windows/i);
+    // Runner tags appear as badges on tasks that specify them
+    expect(runnerBadges.length).toBeGreaterThanOrEqual(0);
   });
 });

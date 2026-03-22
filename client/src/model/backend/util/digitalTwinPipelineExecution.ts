@@ -34,6 +34,7 @@ export async function executeDT(
   self: DigitalTwin,
   skipHistorySave: boolean = false,
   runnerTagOverride?: string,
+  branchNameOverride?: string,
 ): Promise<number | null> {
   const runnerTag = runnerTagOverride ?? getRunnerTag();
   if (!isValidInstance(self)) {
@@ -45,7 +46,7 @@ export async function executeDT(
     const variables = { DTName: self.DTName, RunnerTag: runnerTag };
     const response = await self.backend.startPipeline(
       self.backend.getProjectId(),
-      getBranchName(),
+      branchNameOverride ?? getBranchName(),
       variables,
     );
     logSuccess(self, runnerTag);

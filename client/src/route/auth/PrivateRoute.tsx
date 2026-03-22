@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import CustomSnackbar from 'components/route/Snackbar';
@@ -13,13 +13,15 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const auth = useAuth();
   let returnJSX;
 
-  if (auth.isAuthenticated) {
-    if (auth.user !== null && auth.user !== undefined) {
-      sessionStorage.setItem('access_token', auth.user.access_token);
-    } else {
-      throw new Error('Access token was not available...');
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      if (auth.user !== null && auth.user !== undefined) {
+        sessionStorage.setItem('access_token', auth.user.access_token);
+      } else {
+        throw new Error('Access token was not available...');
+      }
     }
-  }
+  }, [auth.isAuthenticated, auth.user]);
 
   if (auth.isLoading) {
     returnJSX = <div>Loading...</div>;

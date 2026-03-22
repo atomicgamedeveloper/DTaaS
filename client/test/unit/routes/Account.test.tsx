@@ -1,23 +1,61 @@
+import '@testing-library/jest-dom';
+import React from 'react';
 import Account from 'route/account/Account';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { useAuth } from 'react-oidc-context';
 import { mockUser } from 'test/__mocks__/global_mocks';
 import {
+  renderWithRouter,
   testAccountSettings,
   testStaticAccountProfile,
 } from 'test/unit/unit.testUtil';
-import * as reactRedux from 'react-redux';
-import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { useSelector, useDispatch } from 'react-redux';
+import { DEFAULT_SETTINGS } from 'store/settings.slice';
+import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
 
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
+jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
+  useSelector: jest.fn(),
+  useDispatch: jest.fn(),
 }));
 
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
-}));
+/* eslint-disable @typescript-eslint/no-require-imports */
+jest.mock('page/Layout', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const R = require('react');
+  return { __esModule: true, default: (p: { children: unknown }) => R.createElement('div', null, p.children) };
+});
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 jest.mock('react-oidc-context');
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+jest.mock('components/tab/TabComponent', () => {
+  const R = require('react');
+  return {
+    __esModule: true,
+    default: ({
+      assetType,
+    }: {
+      assetType: { label: string; body: React.ReactNode }[];
+    }) => {
+      const [active, setActive] = R.useState(0);
+      return R.createElement(
+        'div',
+        null,
+        assetType.map((tab: { label: string }, i: number) =>
+          R.createElement(
+            'button',
+            { key: tab.label, onClick: () => setActive(i) },
+            tab.label,
+          ),
+        ),
+        assetType[active]?.body,
+      );
+    },
+  };
+});
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 describe('AccountTabs', () => {
   let accountMockUser = mockUser;
@@ -26,17 +64,21 @@ describe('AccountTabs', () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: accountMockUser,
     });
-    render(<Account />);
+    renderWithRouter(<Account />, { route: '/private' });
   }
 
   beforeEach(() => {
-    jest.spyOn(reactRedux, 'useSelector').mockReturnValue({
-      GROUP_NAME: 'mock-group',
-      DT_DIRECTORY: 'mock-dir',
-      COMMON_LIBRARY_PROJECT_ID: 123,
-      RUNNER_TAG: 'linux',
-      BRANCH_NAME: getBranchName(),
-    });
+    (useSelector as unknown as jest.Mock).mockImplementation(
+      (selector: (state: unknown) => unknown) =>
+        selector({
+          settings: DEFAULT_SETTINGS,
+          benchmark: DEFAULT_BENCHMARK,
+          snackbar: { open: false, message: '', severity: 'info' },
+          menu: { isOpen: false },
+          auth: { userName: '' },
+        }),
+    );
+    (useDispatch as unknown as jest.Mock).mockReturnValue(jest.fn());
   });
   afterEach(() => {
     accountMockUser = mockUser;

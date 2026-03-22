@@ -1,31 +1,73 @@
-// Factory for creating the jest.mock return value for benchmark.execution./
+// Mutable state shape matching benchmarkState from benchmark.execution.
+export type MockBenchmarkState = {
+  shouldStopPipelines: boolean;
+  activePipelines: unknown[];
+  executionResults: unknown[];
+  currentMeasurementPromise: Promise<void> | null;
+  currentTrialMinPipelineId: number | null;
+  currentTrialExecutionIndex: number;
+  isRunning: boolean;
+  results: unknown[] | null;
+  currentTaskIndexUI: number | null;
+  componentSetters: Record<string, (...args: unknown[]) => unknown> | null;
+};
+
+// Mirrors benchmark.execution.wrapSetters. Delegates to state + componentSetters.
+// persistResults is omitted because tests mock sessionStorage separately.
+export function createSetterWrappers(state: MockBenchmarkState) {
+  return {
+    setIsRunning: (v: boolean) => {
+      state.isRunning = v;
+      state.componentSetters?.setIsRunning(v);
+    },
+    setCurrentExecutions: (v: unknown[]) => {
+      state.componentSetters?.setCurrentExecutions(v);
+    },
+    setCurrentTaskIndex: (v: number | null) => {
+      state.currentTaskIndexUI = v;
+      state.componentSetters?.setCurrentTaskIndex(v);
+    },
+    setResults: (v: unknown) => {
+      state.results = typeof v === 'function' ? v(state.results ?? []) : v;
+      state.componentSetters?.setResults(v);
+    },
+  };
+}
+
+function createMockState(): MockBenchmarkState {
+  return {
+    shouldStopPipelines: false,
+    activePipelines: [],
+    executionResults: [],
+    currentMeasurementPromise: null,
+    currentTrialMinPipelineId: null,
+    currentTrialExecutionIndex: 0,
+    isRunning: false,
+    results: null,
+    currentTaskIndexUI: null,
+    componentSetters: null,
+  };
+}
+
+// Factory for creating the jest.mock return value for benchmark.execution.
+// Uses jest.requireActual for static exports (DEFAULT_TASK, DEFAULT_CONFIG)
+// so the mock stays in sync with the real module's data shapes.
 export function createBenchmarkExecutionMock(
   extras: Record<string, unknown> = {},
 ) {
-  const bs = {
-    shouldStopPipelines: false,
-    activePipelines: [] as unknown[],
-    executionResults: [] as unknown[],
-    currentMeasurementPromise: null as Promise<void> | null,
-    currentTrialMinPipelineId: null as number | null,
-    currentTrialExecutionIndex: 0,
-    isRunning: false,
-    results: null as unknown[] | null,
-    currentTaskIndexUI: null as number | null,
-    componentSetters: null as Record<
-      string,
-      (...args: unknown[]) => unknown
-    > | null,
+  const actual = jest.requireActual(
+    'model/backend/gitlab/measure/benchmark.execution',
+  ) as {
+    DEFAULT_TASK: Record<string, unknown>;
+    DEFAULT_CONFIG: Record<string, unknown>;
   };
 
+  const bs = createMockState();
+
   const createTask = (name: string, desc: string) => ({
+    ...actual.DEFAULT_TASK,
     'Task Name': name,
     Description: desc,
-    Trials: [],
-    'Time Start': undefined,
-    'Time End': undefined,
-    'Average Time (s)': undefined,
-    Status: 'PENDING' as const,
     Executions: () => [{ dtName: 'hello-world', config: {} }],
   });
 
@@ -43,30 +85,8 @@ export function createBenchmarkExecutionMock(
         bs.componentSetters = s;
       },
     ),
-    wrapSetters: () => ({
-      setIsRunning: (v: boolean) => {
-        bs.isRunning = v;
-        bs.componentSetters?.setIsRunning(v);
-      },
-      setCurrentExecutions: (v: unknown[]) => {
-        bs.componentSetters?.setCurrentExecutions(v);
-      },
-      setCurrentTaskIndex: (v: number | null) => {
-        bs.currentTaskIndexUI = v;
-        bs.componentSetters?.setCurrentTaskIndex(v);
-      },
-      setResults: (v: unknown) => {
-        bs.results = typeof v === 'function' ? v(bs.results ?? []) : v;
-        bs.componentSetters?.setResults(v);
-      },
-    }),
-    DEFAULT_CONFIG: {
-      'Branch name': 'main',
-      'Group name': 'dtaas',
-      'Common Library project name': 'common',
-      'DT directory': 'digital_twins',
-      'Runner tag': 'linux',
-    },
+    wrapSetters: () => createSetterWrappers(bs),
+    DEFAULT_CONFIG: actual.DEFAULT_CONFIG,
     getTasks: () => tasksArray,
     benchmarkConfig: { trials: 3, runnerTag1: 'linux', runnerTag2: 'windows' },
     resetTasks: jest.fn(() =>
@@ -76,11 +96,12 @@ export function createBenchmarkExecutionMock(
         'Time Start': undefined,
         'Time End': undefined,
         'Average Time (s)': undefined,
-        Status: 'PENDING' as const,
+        Status: 'NOT_STARTED' as const,
       })),
     ),
-    DEFAULT_TASK: createTask('', ''),
+    DEFAULT_TASK: actual.DEFAULT_TASK,
     clearPersistedResults: jest.fn(),
+    setBenchmarkStore: jest.fn(),
     ...extras,
   };
 }
