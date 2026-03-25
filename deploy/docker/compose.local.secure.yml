@@ -25,7 +25,7 @@ services:
       - users
 
   client:
-    image: intocps/dtaas-web:latest
+    image: intocps/dtaas-web:0.10.2
     restart: unless-stopped
     volumes:
       - "${DTAAS_DIR}/deploy/config/client/env.local.js:/dtaas/client/build/env.js"
@@ -38,7 +38,7 @@ services:
       - frontend
 
   user1:
-    image: intocps/workspace:latest
+    image: mltooling/ml-workspace-minimal:0.13.2
     restart: unless-stopped
     volumes:
       - "${DTAAS_DIR}/files/common:/workspace/common"
