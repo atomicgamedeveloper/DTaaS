@@ -1,4 +1,7 @@
-import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
+import {
+  BackendInterface,
+  CommitAction,
+} from 'model/backend/interfaces/backendInterfaces';
 import {
   DTAssetsInterface,
   FileHandlerInterface,
@@ -6,6 +9,39 @@ import {
   FileType,
 } from 'model/backend/interfaces/sharedInterfaces';
 import FileHandler from 'model/backend/fileHandler';
+import { getDTDirectory } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+
+type CreateFileInput =
+  | FileState
+  | {
+      name: string;
+      content: string;
+      isNew: boolean;
+      isFromCommonLibrary: boolean;
+    };
+
+function filterNewFiles(
+  files: CreateFileInput[] | FileState[],
+): CreateFileInput[] {
+  return (files as CreateFileInput[]).filter(
+    (file): file is CreateFileInput => file.isNew,
+  );
+}
+
+function resolveFilePath(
+  file: CreateFileInput,
+  mainFolderPath: string,
+  lifecycleFolderPath: string,
+): string {
+  const fileType = (file as FileState).type;
+  const mainPath = file.isFromCommonLibrary
+    ? `${mainFolderPath}/common`
+    : mainFolderPath;
+  const lifecyclePath = file.isFromCommonLibrary
+    ? `${mainPath}/lifecycle`
+    : lifecycleFolderPath;
+  return fileType === FileType.LIFECYCLE ? lifecyclePath : mainPath;
+}
 
 export function getFilePath(
   file: FileState,
@@ -30,6 +66,44 @@ class DTAssets implements DTAssetsInterface {
     this.fileHandler = new FileHandler(DTName, backend);
   }
 
+  buildCreateFileActions(
+    files:
+      | FileState[]
+      | Array<{
+          name: string;
+          content: string;
+          isNew: boolean;
+          isFromCommonLibrary: boolean;
+        }>,
+    mainFolderPath: string,
+    lifecycleFolderPath: string,
+  ): CommitAction[] {
+    return filterNewFiles(files).map((file) => ({
+      action: 'create' as const,
+      filePath: `${resolveFilePath(file, mainFolderPath, lifecycleFolderPath)}/${file.name}`,
+      content: file.content,
+    }));
+  }
+
+  private buildTriggerContent(): string {
+    return `\ntrigger_${this.DTName}:\n  stage: triggers\n  trigger:\n    include: ${getDTDirectory()}/${this.DTName}/.gitlab-ci.yml\n  rules:\n    - if: '$DTName == "${this.DTName}"'\n      when: always\n  variables:\n    RunnerTag: $RunnerTag\n`;
+  }
+
+  async buildTriggerAction(): Promise<CommitAction | null> {
+    const filePath = `.gitlab-ci.yml`;
+    const fileContent = await this.fileHandler.getFileContent(filePath);
+
+    if (fileContent.includes(`trigger_${this.DTName}`)) {
+      return null;
+    }
+
+    return {
+      action: 'update' as const,
+      filePath,
+      content: `${fileContent.trimEnd()}\n${this.buildTriggerContent()}`,
+    };
+  }
+
   async createFiles(
     files:
       | FileState[]
@@ -42,46 +116,18 @@ class DTAssets implements DTAssetsInterface {
     mainFolderPath: string,
     lifecycleFolderPath: string,
   ): Promise<void> {
-    const createPromises = (
-      files as Array<
-        | FileState
-        | {
-            name: string;
-            content: string;
-            isNew: boolean;
-            isFromCommonLibrary: boolean;
-          }
-      >
-    )
-      .filter(
-        (
+    await Promise.all(
+      filterNewFiles(files).map(async (file) => {
+        const filePath = resolveFilePath(
           file,
-        ): file is
-          | FileState
-          | {
-              name: string;
-              content: string;
-              isNew: boolean;
-              isFromCommonLibrary: boolean;
-            } => file.isNew,
-      )
-      .map(async (file) => {
+          mainFolderPath,
+          lifecycleFolderPath,
+        );
         const fileType = (file as FileState).type;
-        const mainFolderPathUpdated = file.isFromCommonLibrary
-          ? `${mainFolderPath}/common`
-          : mainFolderPath;
-        const lifecycleFolderPathUpdated = file.isFromCommonLibrary
-          ? `${mainFolderPathUpdated}/lifecycle`
-          : lifecycleFolderPath;
-        const filePath =
-          fileType === FileType.LIFECYCLE
-            ? lifecycleFolderPathUpdated
-            : mainFolderPathUpdated;
         const commitMessage = `Add ${file.name} to ${fileType} folder`;
-        return this.fileHandler.createFile(file, filePath, commitMessage);
-      });
-
-    await Promise.all(createPromises);
+        await this.fileHandler.createFile(file, filePath, commitMessage);
+      }),
+    );
   }
 
   async getFilesFromAsset(assetPath: string, isPrivate: boolean) {
@@ -121,8 +167,8 @@ class DTAssets implements DTAssetsInterface {
     const hasExtension = fileName.includes('.');
 
     const filePath = hasExtension
-      ? `digital_twins/${this.DTName}/${fileName}`
-      : `digital_twins/${this.DTName}/lifecycle/${fileName}`;
+      ? `${getDTDirectory()}/${this.DTName}/${fileName}`
+      : `${getDTDirectory()}/${this.DTName}/lifecycle/${fileName}`;
 
     const commitMessage = `Update ${fileName} content`;
 
@@ -146,25 +192,11 @@ class DTAssets implements DTAssetsInterface {
     try {
       const fileContent = await this.fileHandler.getFileContent(filePath);
 
-      const triggerKey = `trigger_${this.DTName}`;
-      if (fileContent.includes(triggerKey)) {
+      if (fileContent.includes(`trigger_${this.DTName}`)) {
         return `Trigger already exists in the pipeline for ${this.DTName}`;
       }
 
-      const triggerContent = `
-${triggerKey}:
-  stage: triggers
-  trigger:
-    include: digital_twins/${this.DTName}/.gitlab-ci.yml
-  rules:
-    - if: '$DTName == "${this.DTName}"'
-      when: always
-  variables:
-    RunnerTag: $RunnerTag
-`;
-
-      const updatedContent = `${fileContent.trimEnd()}\n${triggerContent}`;
-
+      const updatedContent = `${fileContent.trimEnd()}\n${this.buildTriggerContent()}`;
       const commitMessage = `Add trigger for ${this.DTName} to .gitlab-ci.yml`;
       await this.fileHandler.updateFile(
         filePath,
@@ -209,12 +241,15 @@ ${triggerKey}:
 
   async delete(): Promise<void> {
     await this.removeTriggerFromPipeline();
-    await this.fileHandler.deleteDT(`digital_twins/${this.DTName}`);
+    await this.fileHandler.deleteDT(`${getDTDirectory()}/${this.DTName}`);
 
-    const libraryDTs =
-      await this.fileHandler.getFolders(`common/digital_twins`);
-    if (libraryDTs.includes(`common/digital_twins/${this.DTName}`)) {
-      await this.fileHandler.deleteDT(`common/digital_twins/${this.DTName}`);
+    const libraryDTs = await this.fileHandler.getFolders(
+      `common/${getDTDirectory()}`,
+    );
+    if (libraryDTs.includes(`common/${getDTDirectory()}/${this.DTName}`)) {
+      await this.fileHandler.deleteDT(
+        `common/${getDTDirectory()}/${this.DTName}`,
+      );
     }
   }
 
@@ -222,8 +257,8 @@ ${triggerKey}:
     const isFileWithoutExtension = !fileName.includes('.');
 
     const filePath = isFileWithoutExtension
-      ? `digital_twins/${this.DTName}/lifecycle/${fileName}`
-      : `digital_twins/${this.DTName}/${fileName}`;
+      ? `${getDTDirectory()}/${this.DTName}/lifecycle/${fileName}`
+      : `${getDTDirectory()}/${this.DTName}/${fileName}`;
 
     const fileContent = await this.fileHandler.getFileContent(filePath);
 

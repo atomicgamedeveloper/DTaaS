@@ -6,6 +6,10 @@ import {
   LibraryConfigFile,
 } from 'model/backend/interfaces/sharedInterfaces';
 import { getUpdatedLibraryFile } from 'model/backend/util/digitalTwinUtils';
+import {
+  getBranchName,
+  getDTDirectory,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 type FolderEntry = { assetPath: string; fileNames: string[] };
 
@@ -35,7 +39,7 @@ const processFolderEntries = async (
 export async function getAssetFilesFn(
   self: DigitalTwin,
 ): Promise<{ assetPath: string; fileNames: string[] }[]> {
-  const mainFolderPath = `digital_twins/${self.DTName}`;
+  const mainFolderPath = `${getDTDirectory()}/${self.DTName}`;
   const excludeFolder = FileType.LIFECYCLE;
   const result: { assetPath: string; fileNames: string[] }[] = [];
 
@@ -105,7 +109,7 @@ export async function createDT(
   cartAssets: LibraryAssetInterface[],
   libraryFiles: LibraryConfigFile[],
 ): Promise<string> {
-  const mainFolderPath = `digital_twins/${self.DTName}`;
+  const mainFolderPath = `${getDTDirectory()}/${self.DTName}`;
   const lifecycleFolderPath = `${mainFolderPath}/lifecycle`;
 
   try {
@@ -119,15 +123,34 @@ export async function createDT(
       libraryFiles,
     );
 
-    await self.DTAssets.createFiles(files, mainFolderPath, lifecycleFolderPath);
+    const fileActions = self.DTAssets.buildCreateFileActions(
+      files,
+      mainFolderPath,
+      lifecycleFolderPath,
+    );
 
-    await self.DTAssets.createFiles(
+    const assetActions = self.DTAssets.buildCreateFileActions(
       assetFilesToCreate,
       mainFolderPath,
       lifecycleFolderPath,
     );
 
-    await self.DTAssets.appendTriggerToPipeline();
+    const triggerAction = await self.DTAssets.buildTriggerAction();
+
+    const allActions = [
+      ...fileActions,
+      ...assetActions,
+      ...(triggerAction ? [triggerAction] : []),
+    ];
+
+    if (allActions.length > 0) {
+      await self.backend.api.commitMultipleActions(
+        self.backend.getProjectId(),
+        getBranchName(),
+        `Create ${self.DTName} digital twin`,
+        allActions,
+      );
+    }
 
     return `${self.DTName} digital twin files initialized successfully.`;
   } catch (error) {
