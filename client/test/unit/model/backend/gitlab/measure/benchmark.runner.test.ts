@@ -200,7 +200,10 @@ describe('benchmark.runner', () => {
       ] as unknown as typeof harness.state.activePipelines;
 
       handleBeforeUnload(
-        { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+        {
+          preventDefault: jest.fn(),
+          returnValue: '',
+        } as unknown as BeforeUnloadEvent,
         harness.isRunningRef,
       );
 
@@ -214,7 +217,10 @@ describe('benchmark.runner', () => {
       harness.isRunningRef.current = false;
 
       handleBeforeUnload(
-        { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+        {
+          preventDefault: jest.fn(),
+          returnValue: '',
+        } as unknown as BeforeUnloadEvent,
         harness.isRunningRef,
       );
 

@@ -72,13 +72,19 @@ describe('benchmark.lifecycle', () => {
 
   it('should do nothing if not running or no active pipelines', () => {
     handleBeforeUnload(
-      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      {
+        preventDefault: jest.fn(),
+        returnValue: '',
+      } as unknown as BeforeUnloadEvent,
       harness.isRunningRef,
     );
     expect(harness.state.shouldStopPipelines).toBe(false);
     harness.isRunningRef.current = true;
     handleBeforeUnload(
-      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      {
+        preventDefault: jest.fn(),
+        returnValue: '',
+      } as unknown as BeforeUnloadEvent,
       harness.isRunningRef,
     );
     expect(harness.state.shouldStopPipelines).toBe(false);
@@ -101,7 +107,10 @@ describe('benchmark.lifecycle', () => {
       },
     ];
     handleBeforeUnload(
-      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
+      {
+        preventDefault: jest.fn(),
+        returnValue: '',
+      } as unknown as BeforeUnloadEvent,
       harness.isRunningRef,
     );
     expect(harness.state.shouldStopPipelines).toBe(true);
@@ -124,10 +133,15 @@ describe('benchmark.lifecycle', () => {
         phase: 'parent',
       },
     ];
-    expect(() => handleBeforeUnload(
-      { preventDefault: jest.fn(), returnValue: '' } as unknown as BeforeUnloadEvent,
-      harness.isRunningRef,
-    )).not.toThrow();
+    expect(() =>
+      handleBeforeUnload(
+        {
+          preventDefault: jest.fn(),
+          returnValue: '',
+        } as unknown as BeforeUnloadEvent,
+        harness.isRunningRef,
+      ),
+    ).not.toThrow();
     expect(restoreOriginalSettings).toHaveBeenCalled();
   });
 });

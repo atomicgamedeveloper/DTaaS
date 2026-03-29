@@ -24,8 +24,6 @@ const mockState = {
     COMMON_LIBRARY_PROJECT_NAME: 'test-common',
     RUNNER_TAG: 'linux',
     BRANCH_NAME: 'main',
-  },
-  benchmark: {
     trials: 5,
     secondaryRunnerTag: 'windows',
   },

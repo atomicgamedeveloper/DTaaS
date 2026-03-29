@@ -29,10 +29,10 @@ interface MeasurementDB {
   purge(): Promise<void>;
 }
 
-let _measurementDB: MeasurementDB | null = null;
+let measurementDB: MeasurementDB | null = null;
 
 export function setMeasurementDB(service: MeasurementDB): void {
-  _measurementDB = service;
+  measurementDB = service;
 }
 
 type TaskUpdater = (taskIndex: number, updates: Partial<TimedTask>) => void;
@@ -105,7 +105,7 @@ async function executeTask(
     Status: finalStatus,
   });
 
-  if (finalStatus === 'SUCCESS' && _measurementDB) {
+  if (finalStatus === 'SUCCESS' && measurementDB) {
     try {
       const taskToSave = {
         'Task Name': completedTask['Task Name'],
@@ -117,7 +117,7 @@ async function executeTask(
         Status: completedTask.Status,
         ExpectedTrials: completedTask.ExpectedTrials,
       };
-      await _measurementDB.add(taskToSave as TimedTask);
+      await measurementDB.add(taskToSave as TimedTask);
     } catch {
       // ignore storage errors
     }
@@ -188,7 +188,7 @@ export async function stopAllPipelines(): Promise<void> {
 let isRestarting = false;
 
 export async function purgeBenchmarkData(): Promise<void> {
-  await _measurementDB?.purge();
+  await measurementDB?.purge();
   clearPersistedResults();
   const fresh = resetTasks();
   benchmarkState.results = fresh;

@@ -7,11 +7,11 @@ const differentRunnersSameDT: TaskDefinition = {
   executions: () => [
     {
       dtName: BenchmarkConfig.primaryDTName,
-      config: { 'Runner tag': BenchmarkConfig.runnerTag1 },
+      config: { 'Runner tag': BenchmarkConfig.primaryRunnerTag },
     },
     {
       dtName: BenchmarkConfig.primaryDTName,
-      config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
+      config: { 'Runner tag': BenchmarkConfig.secondaryRunnerTag },
     },
   ],
 };

@@ -169,11 +169,8 @@ describe('MeasurementDBService (Real Implementation)', () => {
   ])(
     'should reject %s when database is not initialized',
     async (_name, operation) => {
-      const { default: MeasurementDBService } = await import(
-        'database/measurementHistoryDB'
-      );
       const uninitializedService = Object.create(
-        Object.getPrototypeOf(MeasurementDBService),
+        Object.getPrototypeOf(measurementDBService),
       );
       uninitializedService.db = undefined;
       uninitializedService.dbName = 'test-db';
@@ -188,10 +185,7 @@ describe('MeasurementDBService (Real Implementation)', () => {
   );
 
   it('should return existing init promise when called concurrently', async () => {
-    const { default: MeasurementDBService } = await import(
-      'database/measurementHistoryDB'
-    );
-    const service = Object.create(Object.getPrototypeOf(MeasurementDBService));
+    const service = Object.create(Object.getPrototypeOf(measurementDBService));
     service.db = undefined;
     service.dbName = 'concurrent-test-db';
     service.dbVersion = 1;

@@ -57,10 +57,7 @@ export function createBenchmarkExecutionMock(
 ) {
   const actual = jest.requireActual(
     'model/backend/gitlab/measure/benchmark.execution',
-  ) as {
-    DEFAULT_TASK: Record<string, unknown>;
-    DEFAULT_CONFIG: Record<string, unknown>;
-  };
+  );
 
   const bs = createMockState();
 
@@ -88,7 +85,11 @@ export function createBenchmarkExecutionMock(
     wrapSetters: () => createSetterWrappers(bs),
     DEFAULT_CONFIG: actual.DEFAULT_CONFIG,
     getTasks: () => tasksArray,
-    benchmarkConfig: { trials: 3, runnerTag1: 'linux', runnerTag2: 'windows' },
+    benchmarkConfig: {
+      trials: 3,
+      primaryRunnerTag: 'linux',
+      secondaryRunnerTag: 'windows',
+    },
     resetTasks: jest.fn(() =>
       tasksArray.map((t) => ({
         ...t,

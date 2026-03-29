@@ -2,6 +2,11 @@ import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter';
 import { IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
+import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
+import {
+  mapGitlabStatusToExecutionStatus,
+  isFinishedStatus,
+} from 'model/backend/gitlab/execution/statusChecking';
 
 class ExecutionStatusService {
   static async checkRunningExecutions(
@@ -12,12 +17,6 @@ class ExecutionStatusService {
     if (runningExecutions.length === 0) {
       return [];
     }
-    const { fetchJobLogs } = await import(
-      'model/backend/gitlab/execution/logFetching'
-    );
-    const { mapGitlabStatusToExecutionStatus, isFinishedStatus } = await import(
-      'model/backend/gitlab/execution/statusChecking'
-    );
     const updatedExecutions: DTExecutionResult[] = [];
     await Promise.all(
       runningExecutions.map(async (execution) => {

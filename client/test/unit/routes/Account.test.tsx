@@ -10,8 +10,7 @@ import {
   testStaticAccountProfile,
 } from 'test/unit/unit.testUtil';
 import { useSelector, useDispatch } from 'react-redux';
-import { DEFAULT_SETTINGS } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
+import { DEFAULT_SETTINGS, DEFAULT_BENCHMARK } from 'store/settings.slice';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -19,34 +18,34 @@ jest.mock('react-redux', () => ({
   useDispatch: jest.fn(),
 }));
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 jest.mock('page/Layout', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const R = require('react');
-  return { __esModule: true, default: (p: { children: unknown }) => R.createElement('div', null, p.children) };
+  const react = jest.requireActual('react');
+  return {
+    __esModule: true,
+    default: (props: { children: unknown }) =>
+      react.createElement('div', null, props.children),
+  };
 });
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 jest.mock('react-oidc-context');
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 jest.mock('components/tab/TabComponent', () => {
-  const R = require('react');
+  const react = jest.requireActual('react');
   return {
     __esModule: true,
-    default: ({
+    default: function MockTabComponent({
       assetType,
     }: {
       assetType: { label: string; body: React.ReactNode }[];
-    }) => {
-      const [active, setActive] = R.useState(0);
-      return R.createElement(
+    }) {
+      const [active, setActive] = react.useState(0);
+      return react.createElement(
         'div',
         null,
-        assetType.map((tab: { label: string }, i: number) =>
-          R.createElement(
+        assetType.map((tab: { label: string }, index: number) =>
+          react.createElement(
             'button',
-            { key: tab.label, onClick: () => setActive(i) },
+            { key: tab.label, onClick: () => setActive(index) },
             tab.label,
           ),
         ),
@@ -55,7 +54,6 @@ jest.mock('components/tab/TabComponent', () => {
     },
   };
 });
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 describe('AccountTabs', () => {
   let accountMockUser = mockUser;
@@ -71,8 +69,7 @@ describe('AccountTabs', () => {
     (useSelector as unknown as jest.Mock).mockImplementation(
       (selector: (state: unknown) => unknown) =>
         selector({
-          settings: DEFAULT_SETTINGS,
-          benchmark: DEFAULT_BENCHMARK,
+          settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK },
           snackbar: { open: false, message: '', severity: 'info' },
           menu: { isOpen: false },
           auth: { userName: '' },

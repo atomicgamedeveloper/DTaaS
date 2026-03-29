@@ -11,13 +11,13 @@ import {
   benchmarkState,
   getTasks,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import { RootState } from 'store/store';
+import type { BenchmarkStoreState } from 'model/backend/gitlab/measure/benchmark.execution';
 
 // Writable version of benchmarkConfig for use in tests that mock the module.
 export type MockBenchmarkConfig = {
   trials: number;
-  runnerTag1: string;
-  runnerTag2: string;
+  primaryRunnerTag: string;
+  secondaryRunnerTag: string;
 };
 
 export const DEFAULT_CONFIG: Configuration = {
@@ -101,13 +101,13 @@ export function createMockBackend(projectId: number = 1): MockBackend {
   };
 }
 
-export function createMockRootState(settings: {
+export function createMockStoreState(settings: {
   RUNNER_TAG: string;
   BRANCH_NAME: string;
   GROUP_NAME?: string;
   DT_DIRECTORY?: string;
   COMMON_LIBRARY_PROJECT_NAME?: string;
-}): RootState {
+}): BenchmarkStoreState {
   return {
     settings: {
       RUNNER_TAG: settings.RUNNER_TAG,
@@ -116,18 +116,12 @@ export function createMockRootState(settings: {
       DT_DIRECTORY: settings.DT_DIRECTORY ?? 'digital_twins',
       COMMON_LIBRARY_PROJECT_NAME:
         settings.COMMON_LIBRARY_PROJECT_NAME ?? 'common',
+      trials: 3,
+      secondaryRunnerTag: 'windows',
+      primaryDTName: 'hello-world',
+      secondaryDTName: 'mass-spring-damper',
     },
-    benchmark: { trials: 3, secondaryRunnerTag: 'windows' },
-    menu: { isOpen: false },
-    auth: { userName: '' },
-    assets: { items: [] },
-    digitalTwin: { digitalTwin: null },
-    snackbar: { open: false, message: '', severity: 'info' },
-    files: { files: [] },
-    cart: { items: [] },
-    libraryConfigFiles: { files: [] },
-    executionHistory: { executions: [], loading: false },
-  } as unknown as RootState;
+  };
 }
 
 export function createMockActivePipeline(

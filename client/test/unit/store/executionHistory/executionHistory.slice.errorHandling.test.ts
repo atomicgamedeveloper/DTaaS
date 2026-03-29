@@ -9,6 +9,12 @@ import {
 } from 'model/backend/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { setupStore } from './testSetup';
+import ExecutionStatusService from 'model/backend/state/ExecutionStatusService';
+
+jest.mock('model/backend/state/ExecutionStatusService', () => ({
+  __esModule: true,
+  default: { checkRunningExecutions: jest.fn() },
+}));
 
 describe('executionHistory slice - error handling', () => {
   let store: ReturnType<typeof setupStore>['store'];
@@ -125,9 +131,9 @@ describe('executionHistory slice - error handling', () => {
     store.dispatch(setExecutionHistoryEntries(entries));
 
     const errorMessage = 'Check status failed';
-    jest.mock('model/backend/state/ExecutionStatusService', () => {
-      throw new Error(errorMessage);
-    });
+    jest
+      .spyOn(ExecutionStatusService, 'checkRunningExecutions')
+      .mockRejectedValue(new Error(errorMessage));
 
     await (store.dispatch as (action: unknown) => Promise<void>)(
       checkRunningExecutions(),

@@ -18,10 +18,16 @@ export interface OidcConfig {
   loadUserInfo: boolean;
 }
 
-export const useOidcConfig = (): OidcConfig => {
-  const oidcConfig = useMemo<OidcConfig>(() => {
-    const CLIENT_ID = getClientID() ?? '';
-    const AUTH_AUTHORITY = getAuthority() ?? '';
+export const useOidcConfig = (): OidcConfig | null => {
+  const oidcConfig = useMemo<OidcConfig | null>(() => {
+    const CLIENT_ID = getClientID();
+    const AUTH_AUTHORITY = getAuthority();
+
+    const hasRequiredConfig = CLIENT_ID && AUTH_AUTHORITY;
+    if (!hasRequiredConfig) {
+      return null;
+    }
+
     const LOGOUT_URL = getLogoutRedirectURI() ?? '';
     const GITLAB_SCOPES = getGitLabScopes() ?? '';
     const REDIRECT_URI = getRedirectURI() ?? '';
