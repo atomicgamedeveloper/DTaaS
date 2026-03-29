@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import test from 'test/e2e/setup/fixtures';
+import { DEBOUNCE_TIME } from 'model/backend/gitlab/digitalTwinConfig/constants';
 
 // Increase the test timeout to 5 minutes
 test.setTimeout(300000);
@@ -44,17 +45,17 @@ test.describe('Concurrent Execution', () => {
     await expect(startButton).toBeVisible();
 
     // Start the first execution (with delay to simulate debounce)
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(DEBOUNCE_TIME);
     await startButton.click();
 
-    // Wait for debounce period (250ms) plus a bit for execution to start
-    await page.waitForTimeout(500);
+    // Wait for debounce period plus a bit for execution to start
+    await page.waitForTimeout(DEBOUNCE_TIME * 2);
 
     // Start a second execution
     await startButton.click();
 
     // Wait for debounce period plus a bit for second execution to start
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(DEBOUNCE_TIME * 2);
 
     // Click the History button
     const historyButton = helloWorldCard
@@ -198,7 +199,7 @@ test.describe('Concurrent Execution', () => {
       .first();
 
     // Start an execution (with delay to simulate debounce)
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(DEBOUNCE_TIME);
     await startButton.click();
 
     // Wait for debounce period plus a bit for execution to start

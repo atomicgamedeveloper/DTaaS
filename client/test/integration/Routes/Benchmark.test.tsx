@@ -76,9 +76,7 @@ describe('Benchmark Page', () => {
 
   it('displays task descriptions', async () => {
     expect(
-      screen.getByText(
-        'Running the primary Digital Twin with current setup.',
-      ),
+      screen.getByText('Running the primary Digital Twin with current setup.'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Running the primary Digital Twin twice at once.'),
@@ -108,13 +106,9 @@ describe('Benchmark Page', () => {
     await userEvent.click(purgeButton);
 
     await waitFor(() => {
+      expect(screen.getByText('Purge Benchmark Data?')).toBeInTheDocument();
       expect(
-        screen.getByText('Purge Benchmark Data?'),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          /permanently delete all results and cannot be undone/,
-        ),
+        screen.getByText(/permanently delete all results and cannot be undone/),
       ).toBeInTheDocument();
     });
 

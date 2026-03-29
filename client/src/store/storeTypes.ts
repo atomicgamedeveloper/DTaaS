@@ -9,7 +9,6 @@ import cartSlice from 'model/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
-import { benchmarkReducer as benchmarkSlice } from 'store/benchmark.slice';
 
 export const rootReducer = combineReducers({
   menu: menuSlice,
@@ -21,7 +20,6 @@ export const rootReducer = combineReducers({
   cart: cartSlice,
   libraryConfigFiles: libraryConfigFilesSlice,
   settings: settingsSlice,
-  benchmark: benchmarkSlice,
   executionHistory: executionHistorySlice,
 });
 

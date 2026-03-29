@@ -35,6 +35,15 @@ describe('AuthProvider', () => {
     expect(getByText('Dummy Component')).toBeInTheDocument();
   });
 
+  it('renders fallback when OIDC config is not available', () => {
+    (useOidcConfig as jest.Mock).mockReturnValue(null);
+    const { getByText } = renderAuthProvider(<DummyComponent />);
+
+    expect(
+      getByText('Authentication service unavailable...try again later'),
+    ).toBeInTheDocument();
+  });
+
   it('renders the children passed to AuthProvider', () => {
     const { getByText } = renderAuthProvider(<DummyComponent />);
 

@@ -8,29 +8,31 @@ import {
   setRunnerTag,
   resetToDefaults,
   DEFAULT_SETTINGS,
+  DEFAULT_BENCHMARK,
   setBranchName,
-} from 'store/settings.slice';
-import {
   setTrials,
   setSecondaryRunnerTag,
   setPrimaryDTName,
   setSecondaryDTName,
-  resetBenchmarkDefaults,
-  DEFAULT_BENCHMARK,
-} from 'store/benchmark.slice';
+} from 'store/settings.slice';
 import {
   Button,
-  TextField,
   Paper,
-  Typography,
   Grid,
   Box,
-  Divider,
   Snackbar,
   Alert,
   Stack,
 } from '@mui/material';
 import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
+import ApplicationSettingsFields from 'route/account/ApplicationSettingsFields';
+import BenchmarkSettingsFields from 'route/account/BenchmarkSettingsFields';
+
+export interface SettingsFieldProps {
+  formValues: Record<string, string>;
+  fieldErrors: Record<string, boolean>;
+  handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
 const SettingsForm: React.FC = () => {
   const dispatch = useDispatch();
@@ -46,7 +48,7 @@ const SettingsForm: React.FC = () => {
     secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
     primaryDTName: BENCHMARK_PRIMARY_DT_NAME,
     secondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
-  } = useSelector((state: RootState) => state.benchmark);
+  } = useSelector((state: RootState) => state.settings);
 
   // Local state for form values - prevents saving on each keystroke
   const [formValues, setFormValues] = useState({
@@ -115,7 +117,6 @@ const SettingsForm: React.FC = () => {
     setFieldErrors({});
 
     dispatch(resetToDefaults());
-    dispatch(resetBenchmarkDefaults());
 
     setNotificationMessage('Settings reset to defaults');
     setShowNotification(true);
@@ -199,181 +200,17 @@ const SettingsForm: React.FC = () => {
     setShowNotification(true);
   };
 
+  const fieldProps: SettingsFieldProps = {
+    formValues,
+    fieldErrors,
+    handleInputChange,
+  };
+
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       <Paper elevation={2} sx={{ p: 3 }}>
-        {/* Application Settings Section */}
-        <Typography variant="h6" gutterBottom>
-          Application Settings
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
-
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="groupName"
-              label="Group Name"
-              variant="outlined"
-              value={formValues.groupName}
-              onChange={handleInputChange}
-              error={fieldErrors.groupName}
-              helperText={
-                fieldErrors.groupName
-                  ? 'Group name is required'
-                  : 'The group name used for GitLab operations'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="dtDirectory"
-              label="DT Directory"
-              variant="outlined"
-              value={formValues.dtDirectory}
-              onChange={handleInputChange}
-              error={fieldErrors.dtDirectory}
-              helperText={
-                fieldErrors.dtDirectory
-                  ? 'DT directory is required'
-                  : 'Directory for Digital Twin files'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="commonLibraryProjectName"
-              label="Common Library Project name"
-              variant="outlined"
-              value={formValues.commonLibraryProjectName}
-              onChange={handleInputChange}
-              error={fieldErrors.commonLibraryProjectName}
-              helperText={
-                fieldErrors.commonLibraryProjectName
-                  ? 'Common library project name is required'
-                  : 'Project name for the common library'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="runnerTag"
-              label="Runner Tag"
-              variant="outlined"
-              value={formValues.runnerTag}
-              onChange={handleInputChange}
-              error={fieldErrors.runnerTag}
-              helperText={
-                fieldErrors.runnerTag
-                  ? 'Runner tag is required'
-                  : 'Tag used for GitLab CI runners (e.g., linux, windows)'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="branchName"
-              label="Branch Name"
-              variant="outlined"
-              value={formValues.branchName}
-              onChange={handleInputChange}
-              error={fieldErrors.branchName}
-              helperText={
-                fieldErrors.branchName
-                  ? 'Branch name is required'
-                  : 'Default branch name for GitLab projects'
-              }
-            />
-          </Grid>
-        </Grid>
-
-        {/* Benchmark Settings Section */}
-        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-          Benchmark Settings
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
-
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="benchmarkTrials"
-              label="Trial Number"
-              type="number"
-              variant="outlined"
-              value={formValues.benchmarkTrials}
-              onChange={handleInputChange}
-              error={fieldErrors.benchmarkTrials}
-              helperText={
-                fieldErrors.benchmarkTrials
-                  ? 'Trial number is required and must be at least 1'
-                  : 'Number of times each task is repeated to calculate average execution time'
-              }
-              slotProps={{
-                htmlInput: { min: 1 },
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="benchmarkSecondaryRunnerTag"
-              label="Benchmark Secondary Runner Tag"
-              variant="outlined"
-              value={formValues.benchmarkSecondaryRunnerTag}
-              onChange={handleInputChange}
-              error={fieldErrors.benchmarkSecondaryRunnerTag}
-              helperText={
-                fieldErrors.benchmarkSecondaryRunnerTag
-                  ? 'Benchmark secondary runner tag is required'
-                  : 'Runner tag used for multi-runner benchmark tests'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="benchmarkPrimaryDTName"
-              label="Primary Digital Twin Name"
-              variant="outlined"
-              value={formValues.benchmarkPrimaryDTName}
-              onChange={handleInputChange}
-              error={fieldErrors.benchmarkPrimaryDTName}
-              helperText={
-                fieldErrors.benchmarkPrimaryDTName
-                  ? 'Primary Digital Twin name is required'
-                  : 'Digital Twin used in single-DT and same-DT benchmark tasks'
-              }
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              id="benchmarkSecondaryDTName"
-              label="Secondary Digital Twin Name"
-              variant="outlined"
-              value={formValues.benchmarkSecondaryDTName}
-              onChange={handleInputChange}
-              error={fieldErrors.benchmarkSecondaryDTName}
-              helperText={
-                fieldErrors.benchmarkSecondaryDTName
-                  ? 'Secondary Digital Twin name is required'
-                  : 'Digital Twin used as the second DT in multi-DT benchmark tasks'
-              }
-            />
-          </Grid>
-        </Grid>
+        <ApplicationSettingsFields {...fieldProps} />
+        <BenchmarkSettingsFields {...fieldProps} />
 
         <Grid container>
           <Grid

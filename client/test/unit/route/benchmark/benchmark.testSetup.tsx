@@ -1,5 +1,4 @@
-import { DEFAULT_SETTINGS } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
+import { DEFAULT_SETTINGS, DEFAULT_BENCHMARK } from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
 
 export const MOCK_TASKS = [
@@ -53,14 +52,12 @@ export function setupBenchmarkComponentTest() {
   (useSelector as unknown as jest.Mock).mockImplementation(
     (
       selector: (state: {
-        settings: typeof DEFAULT_SETTINGS;
-        benchmark: typeof DEFAULT_BENCHMARK;
+        settings: typeof DEFAULT_SETTINGS & typeof DEFAULT_BENCHMARK;
         snackbar: { open: boolean; message: string; severity: string };
       }) => unknown,
     ) =>
       selector({
-        settings: DEFAULT_SETTINGS,
-        benchmark: DEFAULT_BENCHMARK,
+        settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK },
         snackbar: { open: false, message: '', severity: 'info' },
       }),
   );

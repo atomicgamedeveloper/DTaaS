@@ -5,6 +5,7 @@ import {
   act,
   waitFor,
   within,
+  cleanup,
 } from '@testing-library/react';
 import SettingsForm from 'route/account/SettingsForm';
 import {
@@ -15,13 +16,10 @@ import {
   setDTDirectory,
   setRunnerTag,
   setBranchName,
-} from 'store/settings.slice';
-import {
   DEFAULT_BENCHMARK,
   setTrials,
   setSecondaryRunnerTag,
-  resetBenchmarkDefaults,
-} from 'store/benchmark.slice';
+} from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 
@@ -41,9 +39,12 @@ const mockedUseDispatch = useDispatch as unknown as jest.Mock;
 describe('SettingsForm', () => {
   const mockDispatch = jest.fn();
 
+  afterEach(cleanup);
+
   beforeEach(() => {
+    mockDispatch.mockClear();
     mockedUseSelector.mockImplementation((selector) =>
-      selector({ settings: DEFAULT_SETTINGS, benchmark: DEFAULT_BENCHMARK }),
+      selector({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK } }),
     );
     mockedUseDispatch.mockReturnValue(mockDispatch);
     renderWithRouter(<SettingsForm />, { route: '/private' });
@@ -148,12 +149,6 @@ describe('SettingsForm', () => {
     expect(
       await screen.findByText(/settings reset to defaults/i),
     ).toBeInTheDocument();
-  });
-
-  it('dispatches resetBenchmarkDefaults when reset is clicked', () => {
-    fireEvent.click(screen.getByRole('button', { name: /reset to defaults/i }));
-
-    expect(mockDispatch).toHaveBeenCalledWith(resetBenchmarkDefaults());
   });
 
   it('shows error when required field is empty', () => {

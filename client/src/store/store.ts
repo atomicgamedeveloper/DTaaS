@@ -4,6 +4,11 @@ import { setStorageService } from 'model/backend/state/executionHistory.slice';
 import indexedDBService from 'database/executionHistoryDB';
 import measurementDBService from 'database/measurementHistoryDB';
 import { rootReducer } from 'store/storeTypes';
+import {
+  setRunnerTag,
+  setBranchName,
+  setSecondaryRunnerTag,
+} from 'store/settings.slice';
 import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
 import { setExecutionHistoryDB } from 'model/backend/util/digitalTwinExecutionHistory';
@@ -11,16 +16,6 @@ import { setPipelineExecutionDB } from 'model/backend/util/digitalTwinPipelineEx
 import { setMeasurementDB } from 'model/backend/gitlab/measure/benchmark.runner';
 
 setStorageService(indexedDBService);
-
-const loadSettings = () => {
-  const serializedSettings = localStorage.getItem('settings');
-  return serializedSettings ? JSON.parse(serializedSettings) : undefined;
-};
-
-const loadBenchmark = () => {
-  const serializedBenchmark = localStorage.getItem('benchmark');
-  return serializedBenchmark ? JSON.parse(serializedBenchmark) : undefined;
-};
 
 const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
   const result = next(action);
@@ -30,16 +25,10 @@ const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
     typeof action === 'object' &&
     'type' in action &&
     typeof action.type === 'string' &&
-    (action.type.startsWith('settings/') ||
-      action.type.startsWith('benchmark/'))
+    action.type.startsWith('settings/')
   ) {
     const state = store.getState();
-    if (action.type.startsWith('settings/')) {
-      localStorage.setItem('settings', JSON.stringify(state.settings));
-    }
-    if (action.type.startsWith('benchmark/')) {
-      localStorage.setItem('benchmark', JSON.stringify(state.benchmark));
-    }
+    localStorage.setItem('settings', JSON.stringify(state.settings));
   }
 
   return result;
@@ -47,7 +36,6 @@ const settingsPersistMiddleware: Middleware = (store) => (next) => (action) => {
 
 const store = configureStore({
   reducer: rootReducer,
-  preloadedState: { settings: loadSettings(), benchmark: loadBenchmark() },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -63,7 +51,12 @@ const store = configureStore({
 
 // Dependency injection: wire store and services into model modules
 setSettingsStore(store);
-setBenchmarkStore(store);
+setBenchmarkStore({
+  getState: store.getState,
+  restoreRunnerTag: (v) => store.dispatch(setRunnerTag(v)),
+  restoreBranchName: (v) => store.dispatch(setBranchName(v)),
+  restoreSecondaryRunnerTag: (v) => store.dispatch(setSecondaryRunnerTag(v)),
+});
 setExecutionHistoryDB(indexedDBService);
 setPipelineExecutionDB(indexedDBService);
 setMeasurementDB(measurementDBService);

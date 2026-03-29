@@ -12,7 +12,6 @@ import {
   TimedTask,
   setBenchmarkStore,
 } from 'model/backend/gitlab/measure/benchmark.execution';
-import store from 'store/store';
 import {
   BRANCH_NAME,
   GROUP_NAME,
@@ -21,24 +20,20 @@ import {
   RUNNER_TAG,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
-  createMockRootState,
+  createMockStoreState,
   createMockSetters,
 } from 'test/unit/model/backend/gitlab/measure/benchmark.testUtil';
 import { setupSessionStorage } from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
-jest.mock('store/store', () => ({
-  __esModule: true,
-  default: {
-    getState: jest.fn(),
-    dispatch: jest.fn(),
-  },
-}));
 jest.mock('util/envUtil', () => ({
   getAuthority: jest.fn(),
 }));
 
 describe('benchmark.execution', () => {
-  const mockStore = store as jest.Mocked<typeof store>;
+  const mockGetState = jest.fn();
+  const mockRestoreRunnerTag = jest.fn();
+  const mockRestoreBranchName = jest.fn();
+  const mockRestoreSecondaryRunnerTag = jest.fn();
 
   let originalBenchmarkState: typeof benchmarkState;
 
@@ -53,13 +48,18 @@ describe('benchmark.execution', () => {
 
     setupSessionStorage();
 
-    mockStore.getState.mockReturnValue(
-      createMockRootState({
+    mockGetState.mockReturnValue(
+      createMockStoreState({
         RUNNER_TAG: 'linux',
         BRANCH_NAME: 'main',
       }),
     );
-    setBenchmarkStore(mockStore);
+    setBenchmarkStore({
+      getState: mockGetState,
+      restoreRunnerTag: mockRestoreRunnerTag,
+      restoreBranchName: mockRestoreBranchName,
+      restoreSecondaryRunnerTag: mockRestoreSecondaryRunnerTag,
+    });
   });
 
   afterEach(() => {
@@ -99,8 +99,8 @@ describe('benchmark.execution', () => {
 
   describe('saveOriginalSettings', () => {
     it('should save settings from store state', () => {
-      mockStore.getState.mockReturnValue(
-        createMockRootState({
+      mockGetState.mockReturnValue(
+        createMockStoreState({
           RUNNER_TAG: 'custom-runner',
           BRANCH_NAME: 'develop',
         }),
@@ -109,24 +109,24 @@ describe('benchmark.execution', () => {
       restoreOriginalSettings();
       saveOriginalSettings();
 
-      expect(mockStore.getState).toHaveBeenCalled();
+      expect(mockGetState).toHaveBeenCalled();
     });
 
     it('should only save settings once if called multiple times', () => {
       restoreOriginalSettings();
 
-      mockStore.getState.mockReturnValue(
-        createMockRootState({
+      mockGetState.mockReturnValue(
+        createMockStoreState({
           RUNNER_TAG: 'first-runner',
           BRANCH_NAME: 'first-branch',
         }),
       );
 
       saveOriginalSettings();
-      const firstCallCount = mockStore.getState.mock.calls.length;
+      const firstCallCount = mockGetState.mock.calls.length;
 
-      mockStore.getState.mockReturnValue(
-        createMockRootState({
+      mockGetState.mockReturnValue(
+        createMockStoreState({
           RUNNER_TAG: 'second-runner',
           BRANCH_NAME: 'second-branch',
         }),
@@ -134,7 +134,7 @@ describe('benchmark.execution', () => {
 
       saveOriginalSettings();
 
-      expect(mockStore.getState.mock.calls.length).toBe(firstCallCount);
+      expect(mockGetState.mock.calls.length).toBe(firstCallCount);
     });
   });
 
@@ -142,8 +142,8 @@ describe('benchmark.execution', () => {
     it('should dispatch actions to restore settings', () => {
       restoreOriginalSettings();
 
-      mockStore.getState.mockReturnValue(
-        createMockRootState({
+      mockGetState.mockReturnValue(
+        createMockStoreState({
           RUNNER_TAG: 'saved-runner',
           BRANCH_NAME: 'saved-branch',
         }),
@@ -154,14 +154,8 @@ describe('benchmark.execution', () => {
 
       restoreOriginalSettings();
 
-      expect(mockStore.dispatch).toHaveBeenCalledWith({
-        type: 'settings/setRunnerTag',
-        payload: 'saved-runner',
-      });
-      expect(mockStore.dispatch).toHaveBeenCalledWith({
-        type: 'settings/setBranchName',
-        payload: 'saved-branch',
-      });
+      expect(mockRestoreRunnerTag).toHaveBeenCalledWith('saved-runner');
+      expect(mockRestoreBranchName).toHaveBeenCalledWith('saved-branch');
     });
 
     it('should not dispatch if no settings were saved', () => {
@@ -170,7 +164,9 @@ describe('benchmark.execution', () => {
 
       restoreOriginalSettings();
 
-      expect(mockStore.dispatch).not.toHaveBeenCalled();
+      expect(mockRestoreRunnerTag).not.toHaveBeenCalled();
+      expect(mockRestoreBranchName).not.toHaveBeenCalled();
+      expect(mockRestoreSecondaryRunnerTag).not.toHaveBeenCalled();
     });
   });
 
@@ -320,12 +316,12 @@ describe('benchmark.execution', () => {
       expect(benchmarkConfig.trials).toBe(3);
     });
 
-    it('runnerTag1 getter returns store value', () => {
-      expect(benchmarkConfig.runnerTag1).toBe('linux');
+    it('primaryRunnerTag getter returns store value', () => {
+      expect(benchmarkConfig.primaryRunnerTag).toBe('linux');
     });
 
-    it('runnerTag2 getter returns store value', () => {
-      expect(benchmarkConfig.runnerTag2).toBe('windows');
+    it('secondaryRunnerTag getter returns store value', () => {
+      expect(benchmarkConfig.secondaryRunnerTag).toBe('windows');
     });
   });
 });

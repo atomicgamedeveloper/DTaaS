@@ -1,7 +1,6 @@
 import { TextEncoder, TextDecoder } from 'node:util';
 import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { DEFAULT_SETTINGS } from 'store/settings.slice';
-import { DEFAULT_BENCHMARK } from 'store/benchmark.slice';
+import { DEFAULT_SETTINGS, DEFAULT_BENCHMARK } from 'store/settings.slice';
 
 Object.defineProperty(globalThis, 'TextEncoder', {
   value: TextEncoder,
@@ -22,5 +21,5 @@ globalThis.env.REACT_APP_AUTH_AUTHORITY ??= 'https://gitlab.example.com/';
 // work in tests without requiring the full Redux store.
 setSettingsStore({
   getState: () =>
-    ({ settings: DEFAULT_SETTINGS, benchmark: DEFAULT_BENCHMARK }) as never,
+    ({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK } }) as never,
 });

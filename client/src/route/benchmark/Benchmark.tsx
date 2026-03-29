@@ -77,7 +77,7 @@ function BenchmarkPageHeader() {
 function Benchmark() {
   const dispatch = useDispatch();
   const { trials: iterations, secondaryRunnerTag: alternateRunnerTag } =
-    useSelector((state: RootState) => state.benchmark);
+    useSelector((state: RootState) => state.settings);
   const primaryRunnerTag = useSelector(
     (state: RootState) => state.settings.RUNNER_TAG,
   );

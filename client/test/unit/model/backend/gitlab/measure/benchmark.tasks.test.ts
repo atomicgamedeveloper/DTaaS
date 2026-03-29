@@ -8,24 +8,24 @@ import {
 import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
 
 const mockStoreState = {
-  benchmark: {
-    trials: 3,
-    secondaryRunnerTag: 'windows',
-    primaryDTName: 'hello-world',
-    secondaryDTName: 'mass-spring-damper',
-  },
   settings: {
     RUNNER_TAG: 'linux',
     BRANCH_NAME: 'main',
     GROUP_NAME: 'dtaas',
     DT_DIRECTORY: 'digital_twins',
     COMMON_LIBRARY_PROJECT_NAME: 'common',
+    trials: 3,
+    secondaryRunnerTag: 'windows',
+    primaryDTName: 'hello-world',
+    secondaryDTName: 'mass-spring-damper',
   },
 };
 
 setBenchmarkStore({
   getState: () => mockStoreState as never,
-  dispatch: jest.fn(),
+  restoreRunnerTag: jest.fn(),
+  restoreBranchName: jest.fn(),
+  restoreSecondaryRunnerTag: jest.fn(),
 });
 
 describe('benchmark.tasks', () => {
@@ -35,12 +35,12 @@ describe('benchmark.tasks', () => {
     expect(BenchmarkConfig.trials).toBe(3);
   });
 
-  it('should read runnerTag1 from store settings', () => {
-    expect(BenchmarkConfig.runnerTag1).toBe('linux');
+  it('should read primaryRunnerTag from store settings', () => {
+    expect(BenchmarkConfig.primaryRunnerTag).toBe('linux');
   });
 
-  it('should read runnerTag2 from store benchmark', () => {
-    expect(BenchmarkConfig.runnerTag2).toBe('windows');
+  it('should read secondaryRunnerTag from store benchmark', () => {
+    expect(BenchmarkConfig.secondaryRunnerTag).toBe('windows');
   });
 
   it('should have correct DEFAULT_TASK values', () => {
@@ -194,11 +194,11 @@ describe('benchmark.tasks', () => {
     expect(executions).toEqual([
       {
         dtName: 'hello-world',
-        config: { 'Runner tag': BenchmarkConfig.runnerTag1 },
+        config: { 'Runner tag': BenchmarkConfig.primaryRunnerTag },
       },
       {
         dtName: 'hello-world',
-        config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
+        config: { 'Runner tag': BenchmarkConfig.secondaryRunnerTag },
       },
     ]);
   });
@@ -212,11 +212,11 @@ describe('benchmark.tasks', () => {
     expect(executions).toEqual([
       {
         dtName: 'hello-world',
-        config: { 'Runner tag': BenchmarkConfig.runnerTag1 },
+        config: { 'Runner tag': BenchmarkConfig.primaryRunnerTag },
       },
       {
         dtName: 'mass-spring-damper',
-        config: { 'Runner tag': BenchmarkConfig.runnerTag2 },
+        config: { 'Runner tag': BenchmarkConfig.secondaryRunnerTag },
       },
     ]);
   });

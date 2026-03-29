@@ -112,8 +112,11 @@ async function executeDigitalTwinPipeline(
     startTime,
     abortOptions,
   );
+
+  const pipelineTransitionDelayMs = 250;
+
   await consumeStatusGenerator(parentGenerator, pipelineId, 'parent');
-  await delay(250);
+  await delay(pipelineTransitionDelayMs);
 
   const childPipelineId = getChildPipelineId(pipelineId);
   const childGenerator = pollPipelineStatus(

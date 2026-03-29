@@ -49,14 +49,14 @@ export const useBranchName = (): string => {
 
 export const useBenchmarkTrials = (): number => {
   const benchmarkTrials = useSelector(
-    (state: RootState) => state.benchmark.trials,
+    (state: RootState) => state.settings.trials,
   );
   return benchmarkTrials;
 };
 
 export const useBenchmarkSecondaryRunnerTag = (): string => {
   const benchmarkSecondaryRunnerTag = useSelector(
-    (state: RootState) => state.benchmark.secondaryRunnerTag,
+    (state: RootState) => state.settings.secondaryRunnerTag,
   );
   return benchmarkSecondaryRunnerTag;
 };

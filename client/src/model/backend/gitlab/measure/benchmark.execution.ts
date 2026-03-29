@@ -1,172 +1,44 @@
 /**
- * Central benchmark types, configuration, and shared mutable state.
+ * Runtime state, setters, session persistence, and task helpers.
  *
- * - Pipeline operations are in ./benchmark.pipeline.ts
- * - Task orchestration is in ./benchmark.runner.ts
- * - Utility helpers are in ./benchmark.utils.ts
- * - Persisted settings (trials, runner tag) are in store/benchmark.slice.ts
+ * Central module for mutable benchmark state. benchmark.runner.ts drives
+ * execution; benchmark.pipeline.ts handles individual pipeline operations.
  */
-import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
-import type { Configuration as ExternalConfiguration } from 'model/backend/gitlab/execution/executionTypes';
-import {
-  GROUP_NAME,
-  DT_DIRECTORY,
-  COMMON_LIBRARY_PROJECT_NAME,
-  RUNNER_TAG,
-  BRANCH_NAME,
-} from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { taskDefinitions } from 'model/backend/gitlab/measure/tasks';
-import type { RootState } from 'store/storeTypes';
-import { setRunnerTag, setBranchName } from 'store/settings.slice';
-import { setSecondaryRunnerTag } from 'store/benchmark.slice';
+import type {
+  BenchmarkSetters,
+  ActivePipeline,
+  ExecutionResult,
+  TimedTask,
+  Status,
+} from './benchmark.types';
+import {
+  saveOriginalSettings as _saveOriginalSettings,
+  restoreOriginalSettings as _restoreOriginalSettings,
+} from './benchmark.settings';
 
-type BenchmarkStore = {
-  getState: () => RootState;
-  dispatch: (action: { type: string; payload?: unknown }) => void;
-};
-
-let _store: BenchmarkStore | null = null;
-
-export function setBenchmarkStore(store: BenchmarkStore): void {
-  _store = store;
-}
-
-function getStore(): BenchmarkStore {
-  if (!_store)
-    throw new Error(
-      'Benchmark store not initialized. Call setBenchmarkStore() first.',
-    );
-  return _store;
-}
-
-export type Configuration = ExternalConfiguration;
-
-export type Status =
-  | 'NOT_STARTED'
-  | 'PENDING'
-  | 'RUNNING'
-  | 'FAILURE'
-  | 'SUCCESS'
-  | 'STOPPED';
-
-export type ExecutionResult = {
-  dtName: string;
-  pipelineId: number | null;
-  status: string;
-  config: Configuration;
-  executionIndex?: number;
-};
-
-export type ActivePipeline = {
-  backend: BackendInterface;
-  pipelineId: number;
-  dtName: string;
-  config: Configuration;
-  status: string;
-  phase: 'parent' | 'child';
-  executionIndex?: number;
-};
-
-export type TrialError = { message: string; error: Error } | undefined;
-
-export type TimeStamp = Date | undefined;
-
-export type Trial = {
-  'Time Start': TimeStamp;
-  'Time End': TimeStamp;
-  Execution: ExecutionResult[];
-  Status: Status;
-  Error: TrialError;
-};
-
-export type TaskFunction = (
-  runDigitalTwin: (
-    name: string,
-    config?: Partial<Configuration>,
-  ) => Promise<ExecutionResult>,
-) => Promise<ExecutionResult[]>;
-
-export type Execution = {
-  dtName: string;
-  config: Partial<Configuration>;
-};
-
-export type TimedTask = {
-  'Task Name': string;
-  Description: string;
-  Trials: Trial[];
-  'Time Start': TimeStamp;
-  'Time End': TimeStamp;
-  'Average Time (s)': number | undefined;
-  Status: Status;
-  ExpectedTrials?: number;
-  Executions?: () => Execution[];
-};
-
-export type BenchmarkSetters = {
-  setIsRunning: (v: boolean) => void;
-  setCurrentExecutions: (v: ExecutionResult[]) => void;
-  setCurrentTaskIndex: (v: number | null) => void;
-  setResults: React.Dispatch<React.SetStateAction<TimedTask[]>>;
-};
-
-export const benchmarkConfig = {
-  get trials(): number {
-    return frozenSettings?.TRIALS ?? getStore().getState().benchmark.trials;
-  },
-  get runnerTag1(): string {
-    return (
-      frozenSettings?.RUNNER_TAG ?? getStore().getState().settings.RUNNER_TAG
-    );
-  },
-  get runnerTag2(): string {
-    return (
-      frozenSettings?.SECONDARY_RUNNER_TAG ??
-      getStore().getState().benchmark.secondaryRunnerTag
-    );
-  },
-  get primaryDTName(): string {
-    return (
-      frozenSettings?.PRIMARY_DT_NAME ??
-      getStore().getState().benchmark.primaryDTName
-    );
-  },
-  get secondaryDTName(): string {
-    return (
-      frozenSettings?.SECONDARY_DT_NAME ??
-      getStore().getState().benchmark.secondaryDTName
-    );
-  },
-};
-
-export function getDefaultConfig(): Configuration {
-  if (frozenSettings) {
-    return {
-      'Branch name': frozenSettings.BRANCH_NAME,
-      'Group name': frozenSettings.GROUP_NAME,
-      'Common Library project name': frozenSettings.COMMON_LIBRARY_PROJECT_NAME,
-      'DT directory': frozenSettings.DT_DIRECTORY,
-      'Runner tag': frozenSettings.RUNNER_TAG,
-    };
-  }
-  const state = getStore().getState().settings;
-  return {
-    'Branch name': state.BRANCH_NAME,
-    'Group name': state.GROUP_NAME,
-    'Common Library project name': state.COMMON_LIBRARY_PROJECT_NAME,
-    'DT directory': state.DT_DIRECTORY,
-    'Runner tag': state.RUNNER_TAG,
-  };
-}
-
-/** @deprecated Use getDefaultConfig() for current Redux values */
-export const DEFAULT_CONFIG: Configuration = {
-  'Branch name': BRANCH_NAME,
-  'Group name': GROUP_NAME,
-  'Common Library project name': COMMON_LIBRARY_PROJECT_NAME,
-  'DT directory': DT_DIRECTORY,
-  'Runner tag': RUNNER_TAG,
-};
+export type {
+  BenchmarkSetters,
+  BenchmarkStoreState,
+  ActivePipeline,
+  ExecutionResult,
+  TimedTask,
+  Status,
+  Configuration,
+  TrialError,
+  TimeStamp,
+  Trial,
+  TaskFunction,
+  Execution,
+  BenchmarkStore,
+} from './benchmark.types';
+export {
+  setBenchmarkStore,
+  getStore,
+  DEFAULT_CONFIG,
+  benchmarkConfig,
+  getDefaultConfig,
+} from './benchmark.settings';
 
 export const benchmarkState = {
   shouldStopPipelines: false,
@@ -262,7 +134,7 @@ export function wrapSetters(): BenchmarkSetters {
       benchmarkState.currentTaskIndexUI = v;
       benchmarkState.componentSetters?.setCurrentTaskIndex(v);
     },
-    setResults: (v: React.SetStateAction<TimedTask[]>) => {
+    setResults: (v: TimedTask[] | ((prev: TimedTask[]) => TimedTask[])) => {
       if (typeof v === 'function') {
         benchmarkState.results = v(benchmarkState.results ?? []);
       } else {
@@ -274,63 +146,18 @@ export function wrapSetters(): BenchmarkSetters {
   };
 }
 
-// Snapshot of settings captured when the benchmark starts.
-// While non-null, benchmarkConfig and getDefaultConfig() return these frozen values
-// so that mid-benchmark settings changes don't affect running executions.
-let frozenSettings: {
-  RUNNER_TAG: string;
-  BRANCH_NAME: string;
-  GROUP_NAME: string;
-  DT_DIRECTORY: string;
-  COMMON_LIBRARY_PROJECT_NAME: string;
-  SECONDARY_RUNNER_TAG: string;
-  TRIALS: number;
-  PRIMARY_DT_NAME: string;
-  SECONDARY_DT_NAME: string;
-} | null = null;
-
 export function saveOriginalSettings(): void {
-  if (frozenSettings === null) {
-    const state = getStore().getState();
-    frozenSettings = {
-      RUNNER_TAG: state.settings.RUNNER_TAG,
-      BRANCH_NAME: state.settings.BRANCH_NAME,
-      GROUP_NAME: state.settings.GROUP_NAME,
-      DT_DIRECTORY: state.settings.DT_DIRECTORY,
-      COMMON_LIBRARY_PROJECT_NAME: state.settings.COMMON_LIBRARY_PROJECT_NAME,
-      SECONDARY_RUNNER_TAG: state.benchmark.secondaryRunnerTag,
-      TRIALS: state.benchmark.trials,
-      PRIMARY_DT_NAME: state.benchmark.primaryDTName,
-      SECONDARY_DT_NAME: state.benchmark.secondaryDTName,
-    };
-    benchmarkState.originalPrimaryRunnerTag = state.settings.RUNNER_TAG;
-    benchmarkState.originalSecondaryRunnerTag =
-      state.benchmark.secondaryRunnerTag;
+  const tags = _saveOriginalSettings();
+  if (tags) {
+    benchmarkState.originalPrimaryRunnerTag = tags.primaryRunnerTag;
+    benchmarkState.originalSecondaryRunnerTag = tags.secondaryRunnerTag;
   }
 }
 
 export function restoreOriginalSettings(): void {
-  if (frozenSettings !== null) {
-    const current = getStore().getState();
-    // Only restore fields the user hasn't changed since the benchmark started.
-    if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
-      getStore().dispatch(setRunnerTag(frozenSettings.RUNNER_TAG));
-    }
-    if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
-      getStore().dispatch(setBranchName(frozenSettings.BRANCH_NAME));
-    }
-    if (
-      current.benchmark.secondaryRunnerTag ===
-      frozenSettings.SECONDARY_RUNNER_TAG
-    ) {
-      getStore().dispatch(
-        setSecondaryRunnerTag(frozenSettings.SECONDARY_RUNNER_TAG),
-      );
-    }
-    frozenSettings = null;
-    benchmarkState.originalPrimaryRunnerTag = null;
-    benchmarkState.originalSecondaryRunnerTag = null;
-  }
+  _restoreOriginalSettings();
+  benchmarkState.originalPrimaryRunnerTag = null;
+  benchmarkState.originalSecondaryRunnerTag = null;
 }
 
 export const DEFAULT_TASK: TimedTask = {

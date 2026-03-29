@@ -14,6 +14,7 @@ import {
   ShowNotificationPayload,
   IExecutionHistoryStorage,
 } from 'model/backend/interfaces/sharedInterfaces';
+import ExecutionStatusService from 'model/backend/state/ExecutionStatusService';
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -270,12 +271,12 @@ export const checkRunningExecutions =
     }
 
     try {
-      const module = await import('model/backend/state/ExecutionStatusService');
-      const updatedExecutions = await module.default.checkRunningExecutions(
-        runningExecutions,
-        state.digitalTwin.digitalTwin,
-        storageService,
-      );
+      const updatedExecutions =
+        await ExecutionStatusService.checkRunningExecutions(
+          runningExecutions,
+          state.digitalTwin.digitalTwin,
+          storageService,
+        );
 
       for (const updatedExecution of updatedExecutions) {
         dispatch(updateExecutionHistoryEntry(updatedExecution));

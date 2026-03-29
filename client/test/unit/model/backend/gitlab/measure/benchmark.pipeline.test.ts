@@ -1,4 +1,7 @@
-import { benchmarkState, setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
+import {
+  benchmarkState,
+  setBenchmarkStore,
+} from 'model/backend/gitlab/measure/benchmark.execution';
 import {
   runDigitalTwin,
   cancelActivePipelines,
@@ -7,7 +10,6 @@ import {
   runTrials,
 } from 'model/backend/gitlab/measure/benchmark.pipeline';
 import type { Trial } from 'model/backend/gitlab/measure/benchmark.execution';
-import store from 'store/store';
 import { getAuthority } from 'util/envUtil';
 import createGitlabInstance from 'model/backend/gitlab/gitlabFactory';
 import DigitalTwin from 'model/backend/digitalTwin';
@@ -18,7 +20,7 @@ import {
   getChildPipelineId,
 } from 'model/backend/gitlab/execution/pipelineCore';
 import {
-  createMockRootState,
+  createMockStoreState,
   createMockBackend,
   createMockExecution,
   createMockActivePipeline,
@@ -28,13 +30,6 @@ import {
   setupSessionStorageAuth,
 } from 'test/unit/model/backend/gitlab/measure/benchmark.envSetup';
 
-jest.mock('store/store', () => ({
-  __esModule: true,
-  default: {
-    getState: jest.fn(),
-    dispatch: jest.fn(),
-  },
-}));
 jest.mock('util/envUtil', () => ({
   getAuthority: jest.fn(),
 }));
@@ -54,7 +49,7 @@ jest.mock('model/backend/gitlab/execution/pipelineCore', () => ({
 }));
 
 describe('benchmark.pipeline', () => {
-  const mockStore = store as jest.Mocked<typeof store>;
+  const mockGetState = jest.fn();
   const mockGetAuthority = getAuthority as jest.MockedFunction<
     typeof getAuthority
   >;
@@ -88,13 +83,18 @@ describe('benchmark.pipeline', () => {
 
     setupSessionStorage();
 
-    mockStore.getState.mockReturnValue(
-      createMockRootState({
+    mockGetState.mockReturnValue(
+      createMockStoreState({
         RUNNER_TAG: 'linux',
         BRANCH_NAME: 'main',
       }),
     );
-    setBenchmarkStore(mockStore);
+    setBenchmarkStore({
+      getState: mockGetState,
+      restoreRunnerTag: jest.fn(),
+      restoreBranchName: jest.fn(),
+      restoreSecondaryRunnerTag: jest.fn(),
+    });
     mockGetAuthority.mockReturnValue('https://gitlab.example.com');
 
     mockBackendInstance = createMockBackend(1);
