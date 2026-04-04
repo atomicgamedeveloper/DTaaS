@@ -18,7 +18,8 @@ export const createMockStorageService =
     deleteByDTName: jest.fn().mockResolvedValue(undefined),
   });
 
-const digitalTwinReducer = (state = { digitalTwin: {} }) => state;
+const digitalTwinInitialState = { digitalTwin: {} };
+const digitalTwinReducer = (state = digitalTwinInitialState) => state;
 
 export const createTestStore = () =>
   configureStore({

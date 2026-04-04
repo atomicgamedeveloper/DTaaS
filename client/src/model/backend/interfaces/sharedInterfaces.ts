@@ -2,7 +2,6 @@
  * Interfaces, types, enums that are backend agnostic and work on Digital Twin concepts.
  */
 
-import React from 'react';
 import {
   DigitalTwinPipelineState,
   ExecutionStatus,
@@ -409,7 +408,7 @@ export type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
 export interface ShowNotificationPayload {
   message: string;
   severity: NotificationSeverity;
-  icon?: React.ReactNode;
+  icon?: string;
 }
 
 // indexedDBService interface

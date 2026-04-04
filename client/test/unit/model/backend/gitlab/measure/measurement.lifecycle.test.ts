@@ -4,12 +4,20 @@ import {
 } from 'model/backend/gitlab/measure/measurement.runner';
 import {
   restoreOriginalSettings,
-  DEFAULT_CONFIG,
   resetTasks,
 } from 'model/backend/gitlab/measure/measurement.execution';
+import type { Configuration } from 'model/backend/gitlab/measure/measurement.types';
 import { cancelActivePipelines } from 'model/backend/gitlab/measure/measurement.pipeline';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import { setupMeasurementTestHarness } from './measurement.testUtil';
+
+const STUB_CONFIG: Configuration = {
+  'Branch name': 'main',
+  'Group name': 'group',
+  'Common Library project name': 'common',
+  'DT directory': 'digital_twins',
+  'Runner tag': 'linux',
+};
 
 jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   const { createMeasurementExecutionMock } = jest.requireActual(
@@ -101,7 +109,7 @@ describe('measurement.lifecycle', () => {
         } as unknown as BackendInterface,
         pipelineId: 100,
         dtName: 'test',
-        config: DEFAULT_CONFIG,
+        config: STUB_CONFIG,
         status: 'running',
         phase: 'parent',
       },
@@ -128,7 +136,7 @@ describe('measurement.lifecycle', () => {
         } as unknown as BackendInterface,
         pipelineId: 100,
         dtName: 'test',
-        config: DEFAULT_CONFIG,
+        config: STUB_CONFIG,
         status: 'running',
         phase: 'parent',
       },

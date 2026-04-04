@@ -1,5 +1,3 @@
-import { createElement } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import {
   PayloadAction,
   createSlice,
@@ -234,7 +232,7 @@ export const removeExecution =
         payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
           severity: 'warning',
-          icon: createElement(ClearIcon, { fontSize: 'inherit' }),
+          icon: 'ClearIcon',
         } as ShowNotificationPayload,
       });
     } catch (error) {
@@ -279,7 +277,7 @@ export const clearExecutionHistoryForDT =
             : ({
                 message: `Deleted all entries from ${formatName(dtName)} execution history`,
                 severity: 'warning',
-                icon: createElement(ClearIcon, { fontSize: 'inherit' }),
+                icon: 'ClearIcon',
               } as ShowNotificationPayload),
       });
     } catch (error) {

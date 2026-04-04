@@ -6,7 +6,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
 import { showSnackbar } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
@@ -69,7 +68,7 @@ function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
       showSnackbar({
         message: `Deleting all entries from ${formatName(name)} execution history...`,
         severity: 'warning',
-        icon: <ClearIcon fontSize="inherit" />,
+        icon: 'ClearIcon',
       }),
     );
     dispatch(clearExecutionHistoryForDT(name));

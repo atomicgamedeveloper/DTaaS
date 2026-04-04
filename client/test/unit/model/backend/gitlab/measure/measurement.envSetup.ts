@@ -108,13 +108,6 @@ export function createMeasurementExecutionMock(
   };
 }
 
-export function setupStructuredClone() {
-  if (typeof globalThis.structuredClone !== 'function') {
-    globalThis.structuredClone = <T>(obj: T): T =>
-      JSON.parse(JSON.stringify(obj)) as T;
-  }
-}
-
 export function setupSessionStorage() {
   Object.defineProperty(globalThis, 'sessionStorage', {
     value: {

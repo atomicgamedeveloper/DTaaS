@@ -264,7 +264,6 @@ export function handleBeforeUnload(
 ): void {
   if (isRunningRef.current && measurementState.activePipelines.length > 0) {
     event.preventDefault();
-    event.returnValue = '';
 
     measurementState.shouldStopPipelines = true;
     for (const { backend, pipelineId } of measurementState.activePipelines) {

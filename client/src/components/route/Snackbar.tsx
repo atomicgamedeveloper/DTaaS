@@ -1,9 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { createElement, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import ClearIcon from '@mui/icons-material/Clear';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { RootState } from 'store/store';
 import { hideSnackbar, SnackbarItem } from 'store/snackbar.slice';
+
+const ICON_REGISTRY: Record<string, React.ElementType> = {
+  ClearIcon,
+  PlayArrowIcon,
+};
+
+const resolveIcon = (name: string | undefined) => {
+  if (!name) return undefined;
+  const Component = ICON_REGISTRY[name];
+  return Component
+    ? createElement(Component, { fontSize: 'inherit' })
+    : undefined;
+};
 
 const SNACKBAR_SPACING = 60;
 const SNACKBAR_DURATION = 6000;
@@ -66,7 +81,7 @@ const CustomSnackbar: React.FC = () => {
           <Alert
             onClose={handleClose(item.id)}
             severity={item.severity}
-            icon={item.icon}
+            icon={resolveIcon(item.icon)}
           >
             {item.message}
           </Alert>

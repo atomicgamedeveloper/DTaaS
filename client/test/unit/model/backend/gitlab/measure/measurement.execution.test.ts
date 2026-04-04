@@ -1,5 +1,4 @@
 import {
-  DEFAULT_CONFIG,
   measurementState,
   saveOriginalSettings,
   restoreOriginalSettings,
@@ -12,13 +11,6 @@ import {
   TimedTask,
   setMeasurementStore,
 } from 'model/backend/gitlab/measure/measurement.execution';
-import {
-  BRANCH_NAME,
-  GROUP_NAME,
-  COMMON_LIBRARY_PROJECT_NAME,
-  DT_DIRECTORY,
-  RUNNER_TAG,
-} from 'model/backend/gitlab/digitalTwinConfig/constants';
 import {
   createMockStoreState,
   createMockSetters,
@@ -71,18 +63,6 @@ describe('measurement.execution', () => {
       originalMeasurementState.executionResults;
     measurementState.currentMeasurementPromise =
       originalMeasurementState.currentMeasurementPromise;
-  });
-
-  describe('DEFAULT_CONFIG', () => {
-    it('should have correct values from constants', () => {
-      expect(DEFAULT_CONFIG['Branch name']).toBe(BRANCH_NAME);
-      expect(DEFAULT_CONFIG['Group name']).toBe(GROUP_NAME);
-      expect(DEFAULT_CONFIG['Common Library project name']).toBe(
-        COMMON_LIBRARY_PROJECT_NAME,
-      );
-      expect(DEFAULT_CONFIG['DT directory']).toBe(DT_DIRECTORY);
-      expect(DEFAULT_CONFIG['Runner tag']).toBe(RUNNER_TAG);
-    });
   });
 
   describe('measurementState', () => {

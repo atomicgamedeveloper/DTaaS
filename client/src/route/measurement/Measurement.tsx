@@ -5,7 +5,6 @@
  * - Results table is in ./MeasurementTable.tsx
  * - Trial cards and status indicators are in ./MeasurementComponents.tsx
  */
-import ClearIcon from '@mui/icons-material/Clear';
 import Layout from 'page/Layout';
 import { Box, Paper, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -63,14 +62,15 @@ function MeasurementPageHeader() {
         completes, you will be able to download a summary.
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        You can navigate away from this page while a measurement is running and it
-        will continue in the background. However,{' '}
+        You can navigate away from this page while a measurement is running and
+        it will continue in the background. However,{' '}
         <strong>
           changing the URL, refreshing, or closing the tab will stop the
           execution
         </strong>
-        . Notifications will inform you when a measurement completes or is
-        stopped.
+        {
+          '. Notifications will inform you when a measurement completes or is stopped.'
+        }
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         You can change the number of trials, runner tags, and Digital Twin names
@@ -201,7 +201,7 @@ function Measurement() {
       showSnackbar({
         message: 'Measurement data purged',
         severity: 'warning',
-        icon: <ClearIcon fontSize="inherit" />,
+        icon: 'ClearIcon',
       }),
     );
   };

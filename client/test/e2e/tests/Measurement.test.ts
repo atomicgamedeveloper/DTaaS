@@ -4,9 +4,7 @@ import test from 'test/e2e/setup/fixtures';
 test.describe('Measurement Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('./');
-    await page
-      .getByRole('button', { name: 'GitLab logo Sign In with GitLab' })
-      .click();
+    await page.getByRole('button', { name: 'SignIn' }).click();
     await page.getByRole('button', { name: 'Authorize' }).click();
     await expect(
       page.getByRole('button', { name: 'Open settings' }),

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   IconButton,
@@ -178,7 +177,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
         showSnackbar({
           message: `Deleting entry from ${formatName(dtName)} execution history...`,
           severity: 'warning',
-          icon: <ClearIcon fontSize="inherit" />,
+          icon: 'ClearIcon',
         }),
       );
       dispatch(removeExecution(executionToDelete));
