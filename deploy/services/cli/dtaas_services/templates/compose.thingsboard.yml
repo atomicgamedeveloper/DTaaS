@@ -1,27 +1,4 @@
 services:
-  postgres:
-    image: 'postgres:16.11'
-    container_name: postgres
-    restart: always
-    ports:
-      - '${POSTGRES_PORT}:5432'
-    volumes:
-      - './data/postgres:/var/lib/postgresql/data/pgdata'
-      - './certs/${HOSTNAME}:/etc/ssl'
-    environment:
-      POSTGRES_DB: '${POSTGRES_DB}'
-      POSTGRES_USER: '${POSTGRES_USER}'
-      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
-      PGDATA: '/var/lib/postgresql/data/pgdata'
-    entrypoint: |
-      bash -c '
-      chmod 600 /etc/ssl/postgres.key &&
-      chown postgres:postgres /etc/ssl/postgres.key /etc/ssl/postgres.crt &&
-      exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/etc/ssl/postgres.crt -c ssl_key_file=/etc/ssl/postgres.key
-      '
-    networks:
-      - platform-services
-
   thingsboard-ce:
     image: 'thingsboard/tb-node:4.2.1'
     container_name: thingsboard
@@ -36,9 +13,10 @@ services:
     volumes:
       - './log/thingsboard:/var/log/thingsboard'
       - './data/thingsboard:/data'
-      - './certs/${HOSTNAME}:/certs'
+      - './certs:/certs:ro'
     environment:
       TB_SERVICE_ID: tb-ce-node
+      # yamllint disable-line rule:line-length
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}?sslmode=require
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
@@ -51,11 +29,9 @@ services:
       options:
         max-size: '100m'
         max-file: '10'
-    depends_on:
-      - postgres
     networks:
       - platform-services
 
 networks:
   platform-services:
-    name: dtaas-platform-services
+    name: dtaas-services

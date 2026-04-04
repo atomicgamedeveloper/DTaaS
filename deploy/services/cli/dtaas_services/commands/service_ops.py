@@ -5,6 +5,7 @@ import click
 from rich.console import Console
 from ..pkg.lib import Service
 from ..pkg.formatter import format_container_status
+from ..pkg.password_store import remove_service_passwords
 from .utility import (
     services_command_runner,
     parse_service_list,
@@ -12,6 +13,7 @@ from .utility import (
     check_running_services_for_clean,
     print_clean_status,
     build_clean_status_message,
+    _handle_operation_result,
 )
 
 
@@ -85,6 +87,13 @@ def _print_remove_status(console: Console, service_list: Optional[list[str]]):
         console.print("[red]Removing all services...[/red]")
 
 
+def _clean_passwords(service_list: Optional[list[str]]) -> None:
+    """Remove password-store entries for removed services."""
+    targets = service_list or ["thingsboard", "thingsboard-ce", "gitlab"]
+    for svc in targets:
+        remove_service_passwords(svc)
+
+
 @click.command()
 @click.option(
     "--services",
@@ -106,6 +115,7 @@ def remove(service_names, volumes):
             err, msg = setup_obj.remove_services(service_list, remove_volumes=volumes)
         if err is not None:
             raise click.ClickException(msg)
+        _clean_passwords(service_list)
         console.print(f"[green]✅ {msg}[/green]")
 
     except FileNotFoundError as e:
@@ -124,7 +134,7 @@ def remove(service_names, volumes):
     is_flag=True,
     default=False,
     help=(
-        "Also delete copied TLS cert files under certs/<HOSTNAME>. "
+        "Also delete copied TLS cert files under certs. "
         "This will require re-running dtaas-services setup."
     ),
 )
@@ -135,7 +145,7 @@ def clean(service_names, certs):
     This removes all files from data and log directories for the specified services,
     including .gitkeep files. Useful for preparing to reinstall services.
 
-    By default, certificates under certs/<HOSTNAME> are preserved. Use --certs to delete them.
+    By default, certificates under certs are preserved. Use --certs to delete them.
 
     Services must be stopped before cleaning.
     """
@@ -156,10 +166,7 @@ def clean(service_names, certs):
         with console.status(status_msg, spinner="dots"):
             err, msg = setup_obj.clean_services(service_list, include_certs=certs)
 
-        if err is not None:
-            raise click.ClickException(msg)
-
-        console.print(f"[green]✅ {msg}[/green]")
+        _handle_operation_result(console, err, msg)
 
     except FileNotFoundError as e:
         raise click.ClickException(str(e)) from e

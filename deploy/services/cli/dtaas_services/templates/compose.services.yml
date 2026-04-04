@@ -12,9 +12,9 @@ services:
       RABBITMQ_DEFAULT_PASS: '${RABBITMQ_ADMIN_PASSWORD}'
     volumes:
       - './data/rabbitmq:/var/lib/rabbitmq'
-      - './certs/${HOSTNAME}:/etc/rabbitmq/certs'
-      - './config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf'
-      - './config/rabbitmq.enabled_plugins:/etc/rabbitmq/enabled_plugins'
+      - './certs:/etc/rabbitmq/certs:ro'
+      - './config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro'
+      - './config/rabbitmq/rabbitmq.enabled_plugins:/etc/rabbitmq/enabled_plugins:ro'
     networks:
       - platform-services
 
@@ -27,8 +27,8 @@ services:
       - '${MONGODB_PORT}:27017'
     volumes:
       - './data/mongodb:/data/db'
-      - './config/mongod.conf.secure:/etc/mongod.conf'
-      - './certs/${HOSTNAME}/combined.pem:/etc/ssl/cert.pem'
+      - './config/mongod.conf.secure:/etc/mongod.conf:ro'
+      - './certs/combined.pem:/etc/ssl/cert.pem:ro'
     environment:
       MONGO_INITDB_ROOT_USERNAME: '${MONGODB_ADMIN_USERNAME}'
       MONGO_INITDB_ROOT_PASSWORD: '${MONGODB_ADMIN_PASSWORD}'
@@ -45,7 +45,7 @@ services:
       - '${GRAFANA_PORT}:3000'
     volumes:
       - './data/grafana:/var/lib/grafana'
-      - './certs/${HOSTNAME}:/etc/ssl/certs'
+      - './certs:/etc/ssl/certs:ro'
     environment:
       GF_AUTH_BASIC_ENABLED: false
       GF_AUTH_PROXY_ENABLED: false
@@ -79,7 +79,7 @@ services:
     volumes:
       - './data/influxdb:/var/lib/influxdb2'
       - './config/influxdb:/etc/influxdb2'
-      - './certs/${HOSTNAME}:/etc/ssl'
+      - './certs:/etc/ssl:ro'
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: '${INFLUXDB_ADMIN_USERNAME}'
@@ -91,6 +91,32 @@ services:
     networks:
       - platform-services
 
+  postgres:
+    image: 'postgres:16.11'
+    container_name: postgres
+    restart: always
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    volumes:
+      - './data/postgres:/var/lib/postgresql/data/pgdata'
+      - './certs:/etc/ssl'
+    environment:
+      POSTGRES_DB: '${POSTGRES_DB}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+    entrypoint: |
+      bash -c '
+      chmod 600 /etc/ssl/postgres.key &&
+      chown postgres:postgres /etc/ssl/postgres.key /etc/ssl/postgres.crt &&
+      exec docker-entrypoint.sh postgres \
+        -c ssl=on \
+        -c ssl_cert_file=/etc/ssl/postgres.crt \
+        -c ssl_key_file=/etc/ssl/postgres.key
+      '
+    networks:
+      - platform-services
+
 networks:
   platform-services:
-    name: dtaas-platform-services
+    name: dtaas-services

@@ -8,7 +8,6 @@ import os
 import pytest
 from rich.console import Console
 from rich.panel import Panel
-from dtaas_services.pkg.lib import Service
 
 console = Console()
 pytestmark = pytest.mark.system
@@ -20,11 +19,13 @@ AVAILABLE_SERVICES = [
     "postgres",
     "thingsboard",
 ]
+AVAILABLE_SERVICES_CSV = ",".join(AVAILABLE_SERVICES)
 
 
 def is_running_as_root():
     """Check if running as root (Unix) or admin (Windows)"""
-    return os.geteuid() == 0 if hasattr(os, "geteuid") else True
+    geteuid = getattr(os, "geteuid", None)
+    return geteuid() == 0 if geteuid else True
 
 
 def setup_services():
@@ -145,37 +146,26 @@ def run_command(cmd_list, check=True):
 
 def get_service_status(service_names=None):
     """
-    Get the status of services using the Service class directly
+    Get the status of services by inspecting containers directly.
     Args:
         service_names: Optional list of specific services to check
 
     Returns:
-        dict mapping service names to their status)
+        dict mapping service names to their status
     """
-    service = Service()
-    err, containers = service.get_status(service_names)
-
-    if err is not None:
-        error_panel = Panel(
-            "[yellow]Failed to retrieve service status from Service class[/yellow]\n\n"
-            f"[yellow]Error:[/yellow] {err}",
-            title="[bold red]❌ Service Status Retrieval Failed[/bold red]",
-            border_style="red",
-        )
-        console.print(error_panel)
-        return {}
-
+    services_to_check = service_names or AVAILABLE_SERVICES
     status_dict = {}
-    for container in containers:
-        # Extract service name from container name (e.g., "rabbitmq" from "rabbitmq")
-        for service_name in AVAILABLE_SERVICES:
-            if service_name in container.name.lower():
-                # Get the container state
-                state = container.state.status
-                # Keep the actual state
-                status_dict[service_name] = state
-                break
-
+    for service_name in services_to_check:
+        result = subprocess.run(
+            ["docker", "inspect", "--format", "{{.State.Status}}", service_name],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            status_dict[service_name] = result.stdout.strip()
+        else:
+            status_dict[service_name] = "removed"
     return status_dict
 
 
@@ -242,7 +232,7 @@ def test_setup_start_status_all_services(ensure_services_stopped):
         )
 
     # Step 2: Start all services
-    result = run_command(["dtaas-services", "start"])
+    result = run_command(["dtaas-services", "start", "-s", AVAILABLE_SERVICES_CSV])
     assert_command_success(result, "Start all services")
 
     # Step 3: Check status of all services
@@ -265,7 +255,7 @@ def test_stop_influxdb_service(ensure_services_stopped):
         )
 
     # Step 2: Start all services
-    result = run_command(["dtaas-services", "start"])
+    result = run_command(["dtaas-services", "start", "-s", AVAILABLE_SERVICES_CSV])
     assert_command_success(result, "Start all services")
 
     # Step 3: Stop influxdb specifically
@@ -295,7 +285,7 @@ def test_stop_multiple_services(ensure_services_stopped):
             "[yellow]Warning: Setup failed "
             "(may be due to permissions), continuing with test...[/yellow]"
         )
-    run_command(["dtaas-services", "start"])
+    run_command(["dtaas-services", "start", "-s", AVAILABLE_SERVICES_CSV])
 
     # Stop rabbitmq and mongodb
     result = run_command(["dtaas-services", "stop", "-s", "rabbitmq,mongodb"])
@@ -343,7 +333,7 @@ def test_start_stop_start_cycle(ensure_services_stopped):
         )
 
     # First start
-    result = run_command(["dtaas-services", "start"])
+    result = run_command(["dtaas-services", "start", "-s", AVAILABLE_SERVICES_CSV])
     assert_command_success(result, "Start all services")
 
     # Verify running
@@ -356,7 +346,7 @@ def test_start_stop_start_cycle(ensure_services_stopped):
     result = run_command(["dtaas-services", "stop"])
     assert_command_success(result, "Stop all services")
     # Start again
-    result = run_command(["dtaas-services", "start"])
+    result = run_command(["dtaas-services", "start", "-s", AVAILABLE_SERVICES_CSV])
     assert_command_success(result, "Start all services (second time)")
     # Verify running again
     status = get_service_status()

@@ -3,6 +3,7 @@
 import shutil
 from pathlib import Path
 from typing import Tuple
+from .lib.utils import SERVICE_DATA_SUBDIRS
 
 
 def copy_directory_or_file(src_path: Path, dest_path: Path, item_name: str) -> str:
@@ -51,16 +52,18 @@ def copy_template_to_config(
 
 def _copy_template_items(target_dir: Path, package_root: Path, messages: list) -> None:
     """Copy template directories and files to target."""
+    templates_root = package_root / "templates"
     items_to_copy = [
         ("config", "config"),
         ("data", "data"),
         ("log", "log"),
         ("certs", "certs"),
-        ("compose.services.secure.yml", "compose.services.secure.yml"),
-        ("compose.thingsboard.secure.yml", "compose.thingsboard.secure.yml"),
+        ("compose.services.yml", "compose.services.yml"),
+        ("compose.thingsboard.yml", "compose.thingsboard.yml"),
+        ("compose.gitlab.yml", "compose.gitlab.yml"),
     ]
     for src_item, dest_item in items_to_copy:
-        src_path = package_root / src_item
+        src_path = templates_root / src_item
         dest_path = target_dir / dest_item
         msg = copy_directory_or_file(src_path, dest_path, dest_item)
         if msg:
@@ -83,15 +86,7 @@ def _copy_template_configs(target_dir: Path, messages: list) -> None:
 def _create_data_subdirs(target_dir: Path) -> None:
     """Create data subdirectories for services."""
     data_dir = target_dir / "data"
-    data_subdirs = [
-        "grafana",
-        "influxdb",
-        "mongodb",
-        "postgres",
-        "rabbitmq",
-        "thingsboard",
-    ]
-    for subdir in data_subdirs:
+    for subdir in SERVICE_DATA_SUBDIRS:
         (data_dir / subdir).mkdir(parents=True, exist_ok=True)
 
 

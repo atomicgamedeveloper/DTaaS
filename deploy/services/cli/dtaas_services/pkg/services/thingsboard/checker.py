@@ -2,10 +2,12 @@
 
 from typing import Optional, Tuple
 import logging
+from python_on_whales import DockerClient
+
 import sys
 import click
 from rich.console import Console
-from ...utils import is_ci
+from ...utils import has_running_container, is_ci, is_container_running
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +36,7 @@ def _validate_postgres_for_thingsboard_check(container_map: dict) -> bool:
         return False
 
     postgres_container = container_map["postgres"]
-    return (
-        hasattr(postgres_container, "state")
-        and postgres_container.state.status == "running"
-    )
+    return is_container_running(postgres_container)
 
 
 def _find_thingsboard_containers(docker) -> list:
@@ -56,30 +55,6 @@ def _find_thingsboard_containers(docker) -> list:
         return []
 
 
-def _is_container_running(container) -> bool:
-    """Check if a single container is running.
-
-    Args:
-        container: Container object
-
-    Returns:
-        True if container has state and is running
-    """
-    return hasattr(container, "state") and container.state.status == "running"
-
-
-def _has_running_container(containers: list) -> bool:
-    """Check if any container in list is running.
-
-    Args:
-        containers: List of container objects
-
-    Returns:
-        True if any container is running
-    """
-    return any(_is_container_running(container) for container in containers)
-
-
 def _is_thingsboard_container_running(docker) -> bool:
     """Check if ThingsBoard container is running.
 
@@ -88,7 +63,18 @@ def _is_thingsboard_container_running(docker) -> bool:
     while ThingsBoard is running since ThingsBoard depends on PostgreSQL.
     """
     containers = _find_thingsboard_containers(docker)
-    return _has_running_container(containers)
+    return has_running_container(containers)
+
+
+def is_thingsboard_running() -> bool:
+    """A wrapper around _is_thingsboard_container_running to create its own Docker client.
+
+    Returns:
+        True if the container is found and running, False otherwise
+    """
+
+    docker = DockerClient()
+    return _is_thingsboard_container_running(docker)
 
 
 def is_thingsboard_installed(docker, container_map: dict) -> bool:
