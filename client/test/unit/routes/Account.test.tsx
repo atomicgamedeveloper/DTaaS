@@ -10,7 +10,7 @@ import {
   testStaticAccountProfile,
 } from 'test/unit/unit.testUtil';
 import { useSelector, useDispatch } from 'react-redux';
-import { DEFAULT_SETTINGS, DEFAULT_BENCHMARK } from 'store/settings.slice';
+import { DEFAULT_SETTINGS, DEFAULT_MEASUREMENT } from 'store/settings.slice';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -69,8 +69,8 @@ describe('AccountTabs', () => {
     (useSelector as unknown as jest.Mock).mockImplementation(
       (selector: (state: unknown) => unknown) =>
         selector({
-          settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK },
-          snackbar: { open: false, message: '', severity: 'info' },
+          settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT },
+          snackbar: { items: [], nextId: 0 },
           menu: { isOpen: false },
           auth: { userName: '' },
         }),

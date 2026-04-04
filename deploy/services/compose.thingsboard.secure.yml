@@ -13,12 +13,14 @@ services:
       POSTGRES_USER: '${POSTGRES_USER}'
       POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
       PGDATA: '/var/lib/postgresql/data/pgdata'
+    # yamllint disable rule:line-length
     entrypoint: |
       bash -c '
       chmod 600 /etc/ssl/postgres.key &&
       chown postgres:postgres /etc/ssl/postgres.key /etc/ssl/postgres.crt &&
       exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/etc/ssl/postgres.crt -c ssl_key_file=/etc/ssl/postgres.key
       '
+    # yamllint enable rule:line-length
     networks:
       - platform-services
 
@@ -39,6 +41,7 @@ services:
       - './certs/${HOSTNAME}:/certs'
     environment:
       TB_SERVICE_ID: tb-ce-node
+      # yamllint disable-next-line rule:line-length
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}?sslmode=require
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}

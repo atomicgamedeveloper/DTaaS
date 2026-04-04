@@ -1,6 +1,6 @@
 comment:
-  layout: "header, diff, files, components"  # show component info in the PR comment
-  
+  # show component info in the PR comment
+  layout: "header, diff, files, components"
 coverage:
   status:
     project:
@@ -17,11 +17,13 @@ codecov:
 
 component_management:
   individual_components:
-    - component_id: client_website  # this is an identifier that should not be changed
-      name: Website  # this is a display name, and can be changed freely
+    # component_id is an identifier that should not be changed
+    # name is a display name, and can be changed freely
+    - component_id: client_website
+      name: Website
       paths:
         - client/**
-    - component_id: lib_ms  # this is an identifier that should not be changed
-      name: Lib Microservice  # this is a display name, and can be changed freely
+    - component_id: lib_ms
+      name: Lib Microservice
       paths:
         - servers/lib/**

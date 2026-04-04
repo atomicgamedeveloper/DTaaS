@@ -6,7 +6,9 @@ import {
   useMemo,
   useState,
 } from 'react';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
+import { showSnackbar } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
 import {
   fetchExecutionHistory,
@@ -49,21 +51,27 @@ function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
 
   const handleClearAllClick = useCallback(() => {
     if (executions.length === 0) {
-      dispatch(
-        dispatch({
-          type: 'snackbar/showSnackbar',
-          payload: {
-            message: 'Execution history is already empty',
-            severity: 'info',
-          } as ShowNotificationPayload,
-        }),
-      );
+      dispatch({
+        type: 'snackbar/showSnackbar',
+        payload: {
+          message:
+            'Execution history is already empty or only has active entries',
+          severity: 'info',
+        } as ShowNotificationPayload,
+      });
       return;
     }
     setDeleteAllDialogOpen(true);
   }, [dispatch, executions.length]);
 
   const handleClearAllConfirm = useCallback(() => {
+    dispatch(
+      showSnackbar({
+        message: `Deleting all entries from ${formatName(name)} execution history...`,
+        severity: 'warning',
+        icon: <ClearIcon fontSize="inherit" />,
+      }),
+    );
     dispatch(clearExecutionHistoryForDT(name));
     setDeleteAllDialogOpen(false);
   }, [dispatch, name]);

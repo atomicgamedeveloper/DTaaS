@@ -9,11 +9,12 @@ import {
   setBranchName,
   setSecondaryRunnerTag,
 } from 'store/settings.slice';
+import { showSnackbar } from 'store/snackbar.slice';
 import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
-import { setBenchmarkStore } from 'model/backend/gitlab/measure/benchmark.execution';
+import { setMeasurementStore } from 'model/backend/gitlab/measure/measurement.execution';
 import { setExecutionHistoryDB } from 'model/backend/util/digitalTwinExecutionHistory';
 import { setPipelineExecutionDB } from 'model/backend/util/digitalTwinPipelineExecution';
-import { setMeasurementDB } from 'model/backend/gitlab/measure/benchmark.runner';
+import { setMeasurementDB } from 'model/backend/gitlab/measure/measurement.runner';
 
 setStorageService(indexedDBService);
 
@@ -51,11 +52,13 @@ const store = configureStore({
 
 // Dependency injection: wire store and services into model modules
 setSettingsStore(store);
-setBenchmarkStore({
+setMeasurementStore({
   getState: store.getState,
   restoreRunnerTag: (v) => store.dispatch(setRunnerTag(v)),
   restoreBranchName: (v) => store.dispatch(setBranchName(v)),
   restoreSecondaryRunnerTag: (v) => store.dispatch(setSecondaryRunnerTag(v)),
+  showSnackbar: (message, severity) =>
+    store.dispatch(showSnackbar({ message, severity })),
 });
 setExecutionHistoryDB(indexedDBService);
 setPipelineExecutionDB(indexedDBService);

@@ -1,4 +1,4 @@
-import { benchmarkConfig as BenchmarkConfig } from 'model/backend/gitlab/measure/benchmark.execution';
+import { measurementConfig as MeasurementConfig } from 'model/backend/gitlab/measure/measurement.execution';
 import { TaskDefinition } from './taskDefinition';
 
 const differentRunnersSameDT: TaskDefinition = {
@@ -6,12 +6,12 @@ const differentRunnersSameDT: TaskDefinition = {
   description: 'Running the primary Digital Twin twice with 2 runners.',
   executions: () => [
     {
-      dtName: BenchmarkConfig.primaryDTName,
-      config: { 'Runner tag': BenchmarkConfig.primaryRunnerTag },
+      dtName: MeasurementConfig.primaryDTName,
+      config: { 'Runner tag': MeasurementConfig.primaryRunnerTag },
     },
     {
-      dtName: BenchmarkConfig.primaryDTName,
-      config: { 'Runner tag': BenchmarkConfig.secondaryRunnerTag },
+      dtName: MeasurementConfig.primaryDTName,
+      config: { 'Runner tag': MeasurementConfig.secondaryRunnerTag },
     },
   ],
 };

@@ -89,6 +89,14 @@ export const handleStart = async (
   } else {
     setButtonText('Start');
 
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: {
+        message: `Stopping execution for ${formatName(digitalTwin.DTName)}...`,
+        severity: 'warning',
+      } as ShowNotificationPayload,
+    });
+
     if (executionId) {
       await handleStop(digitalTwin, setButtonText, dispatch, executionId);
     } else {
@@ -119,7 +127,7 @@ export const handleStop = async (
         message: `Execution stopped successfully for ${formatName(
           digitalTwin.DTName,
         )}`,
-        severity: 'success',
+        severity: 'warning',
       } as ShowNotificationPayload,
     });
   } else {

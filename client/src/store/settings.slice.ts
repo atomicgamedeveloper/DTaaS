@@ -6,7 +6,7 @@ import {
   RUNNER_TAG,
   BRANCH_NAME,
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
-import DEFAULT_BENCHMARK from 'model/backend/gitlab/measure/constants';
+import DEFAULT_MEASUREMENT from 'model/backend/gitlab/measure/constants';
 
 // Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS = {
   BRANCH_NAME,
 };
 
-export { DEFAULT_BENCHMARK };
+export { DEFAULT_MEASUREMENT };
 
 interface SettingsState {
   GROUP_NAME: string;
@@ -32,7 +32,7 @@ interface SettingsState {
 }
 
 export const loadInitialSettings = (): SettingsState => {
-  const base = { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK };
+  const base = { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT };
   const settings = localStorage.getItem('settings');
   if (settings) {
     const parsed = JSON.parse(settings);
@@ -75,7 +75,7 @@ export const settingsSlice = createSlice({
       state.secondaryDTName = action.payload;
     },
     resetToDefaults: (state) => {
-      Object.assign(state, DEFAULT_SETTINGS, DEFAULT_BENCHMARK);
+      Object.assign(state, DEFAULT_SETTINGS, DEFAULT_MEASUREMENT);
     },
   },
 });

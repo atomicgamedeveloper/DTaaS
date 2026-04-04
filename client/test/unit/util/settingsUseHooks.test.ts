@@ -6,8 +6,8 @@ import {
   useCommonLibraryProjectName,
   useRunnerTag,
   useBranchName,
-  useBenchmarkTrials,
-  useBenchmarkSecondaryRunnerTag,
+  useMeasurementTrials,
+  useMeasurementSecondaryRunnerTag,
 } from 'util/settingsUseHooks';
 
 jest.mock('react-redux', () => ({
@@ -61,13 +61,13 @@ describe('settingsUseHooks', () => {
     expect(result.current).toBe('main');
   });
 
-  it('useBenchmarkTrials returns trials count', () => {
-    const { result } = renderHook(() => useBenchmarkTrials());
+  it('useMeasurementTrials returns trials count', () => {
+    const { result } = renderHook(() => useMeasurementTrials());
     expect(result.current).toBe(5);
   });
 
-  it('useBenchmarkSecondaryRunnerTag returns secondary runner tag', () => {
-    const { result } = renderHook(() => useBenchmarkSecondaryRunnerTag());
+  it('useMeasurementSecondaryRunnerTag returns secondary runner tag', () => {
+    const { result } = renderHook(() => useMeasurementSecondaryRunnerTag());
     expect(result.current).toBe('windows');
   });
 });
