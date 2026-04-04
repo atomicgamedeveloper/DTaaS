@@ -22,7 +22,7 @@ import {
 
 jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   const { createMeasurementExecutionMock } = jest.requireActual(
-    './measurement.mockSetup',
+    './measurement.envSetup',
   );
   return createMeasurementExecutionMock({ runDigitalTwin: jest.fn() });
 });

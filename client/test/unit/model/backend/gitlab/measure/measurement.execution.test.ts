@@ -23,7 +23,7 @@ import {
   createMockStoreState,
   createMockSetters,
 } from 'test/unit/model/backend/gitlab/measure/measurement.testUtil';
-import { setupSessionStorage } from 'test/unit/model/backend/gitlab/measure/measurement.mockSetup';
+import { setupSessionStorage } from 'test/unit/model/backend/gitlab/measure/measurement.envSetup';
 
 jest.mock('util/envUtil', () => ({
   getAuthority: jest.fn(),
