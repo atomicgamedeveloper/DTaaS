@@ -128,6 +128,9 @@ version = "3.3.3"
 package_file = "package.json"
 package_filters = ["prettier"]
 prefix = "client"
+# Workaround: qlty mangles this file's TypeScript types in its temp directory,
+# causing prettier to see invalid syntax.
+exclude_patterns = ["**/measurement.envSetup.ts"]
 
 [[plugin]]
 name = "prettier"
