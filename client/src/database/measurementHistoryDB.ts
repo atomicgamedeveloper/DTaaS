@@ -1,4 +1,4 @@
-import { TimedTask } from 'model/backend/gitlab/measure/benchmark.execution';
+import { TimedTask } from 'model/backend/gitlab/measure/measurement.execution';
 import BaseIndexedDBService from 'database/BaseIndexedDBService';
 
 export type MeasurementRecord = {

@@ -47,16 +47,16 @@ export const useBranchName = (): string => {
   return branchName;
 };
 
-export const useBenchmarkTrials = (): number => {
-  const benchmarkTrials = useSelector(
+export const useMeasurementTrials = (): number => {
+  const measurementTrials = useSelector(
     (state: RootState) => state.settings.trials,
   );
-  return benchmarkTrials;
+  return measurementTrials;
 };
 
-export const useBenchmarkSecondaryRunnerTag = (): string => {
-  const benchmarkSecondaryRunnerTag = useSelector(
+export const useMeasurementSecondaryRunnerTag = (): string => {
+  const measurementSecondaryRunnerTag = useSelector(
     (state: RootState) => state.settings.secondaryRunnerTag,
   );
-  return benchmarkSecondaryRunnerTag;
+  return measurementSecondaryRunnerTag;
 };

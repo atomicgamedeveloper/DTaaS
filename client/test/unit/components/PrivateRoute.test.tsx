@@ -89,7 +89,6 @@ describe('PrivateRoute', () => {
 
     expect(screen.getByText('Test Component')).toBeInTheDocument();
     expect(screen.getByText(/ExecutionHistoryLoader/i)).toBeInTheDocument();
-    expect(screen.getByText(/CustomSnackbar/i)).toBeInTheDocument();
   });
 
   test('renders error', () => {

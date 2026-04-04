@@ -59,13 +59,10 @@ describe('PipelineHandler Integration Tests', () => {
       dispatch,
     );
 
-    const snackbarState = store.getState().snackbar;
-    const expectedSnackbarState = {
-      open: true,
-      message: 'Execution mockedStatus for MockedDTName',
-      severity: 'error',
-    };
-    expect(snackbarState).toEqual(expectedSnackbarState);
+    const snackbarItems = store.getState().snackbar.items;
+    const lastItem = snackbarItems[snackbarItems.length - 1];
+    expect(lastItem.message).toBe('Execution mockedStatus for MockedDTName');
+    expect(lastItem.severity).toBe('error');
   });
 
   it('handles start when button text is Stop', async () => {
@@ -98,7 +95,8 @@ describe('PipelineHandler Integration Tests', () => {
 
     const snackbarState = store.getState().snackbar;
 
-    expect(snackbarState.message).toBe(
+    const { items } = snackbarState;
+    expect(items[items.length - 1].message).toBe(
       `Execution stop failed for ${formatName(digitalTwin.DTName)}`,
     );
 

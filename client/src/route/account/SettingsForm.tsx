@@ -8,7 +8,7 @@ import {
   setRunnerTag,
   resetToDefaults,
   DEFAULT_SETTINGS,
-  DEFAULT_BENCHMARK,
+  DEFAULT_MEASUREMENT,
   setBranchName,
   setTrials,
   setSecondaryRunnerTag,
@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
 import ApplicationSettingsFields from 'route/account/ApplicationSettingsFields';
-import BenchmarkSettingsFields from 'route/account/BenchmarkSettingsFields';
+import MeasurementSettingsFields from 'route/account/MeasurementSettingsFields';
 
 export interface SettingsFieldProps {
   formValues: Record<string, string>;
@@ -44,10 +44,10 @@ const SettingsForm: React.FC = () => {
     BRANCH_NAME,
   } = useSelector((state: RootState) => state.settings);
   const {
-    trials: BENCHMARK_TRIALS,
-    secondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
-    primaryDTName: BENCHMARK_PRIMARY_DT_NAME,
-    secondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
+    trials: MEASUREMENT_TRIALS,
+    secondaryRunnerTag: MEASUREMENT_SECONDARY_RUNNER_TAG,
+    primaryDTName: MEASUREMENT_PRIMARY_DT_NAME,
+    secondaryDTName: MEASUREMENT_SECONDARY_DT_NAME,
   } = useSelector((state: RootState) => state.settings);
 
   // Local state for form values - prevents saving on each keystroke
@@ -57,10 +57,10 @@ const SettingsForm: React.FC = () => {
     commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
     runnerTag: RUNNER_TAG,
     branchName: BRANCH_NAME,
-    benchmarkTrials: String(BENCHMARK_TRIALS),
-    benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
-    benchmarkPrimaryDTName: BENCHMARK_PRIMARY_DT_NAME,
-    benchmarkSecondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
+    measurementTrials: String(MEASUREMENT_TRIALS),
+    measurementSecondaryRunnerTag: MEASUREMENT_SECONDARY_RUNNER_TAG,
+    measurementPrimaryDTName: MEASUREMENT_PRIMARY_DT_NAME,
+    measurementSecondaryDTName: MEASUREMENT_SECONDARY_DT_NAME,
   });
 
   // Validation state
@@ -73,7 +73,7 @@ const SettingsForm: React.FC = () => {
   );
 
   // Sync local form state when Redux state changes (e.g. external reset)
-  const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${BENCHMARK_TRIALS}|${BENCHMARK_SECONDARY_RUNNER_TAG}|${BENCHMARK_PRIMARY_DT_NAME}|${BENCHMARK_SECONDARY_DT_NAME}`;
+  const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${MEASUREMENT_TRIALS}|${MEASUREMENT_SECONDARY_RUNNER_TAG}|${MEASUREMENT_PRIMARY_DT_NAME}|${MEASUREMENT_SECONDARY_DT_NAME}`;
   const [prevReduxKey, setPrevReduxKey] = useState(reduxKey);
   if (prevReduxKey !== reduxKey) {
     setPrevReduxKey(reduxKey);
@@ -83,10 +83,10 @@ const SettingsForm: React.FC = () => {
       commonLibraryProjectName: COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: RUNNER_TAG,
       branchName: BRANCH_NAME,
-      benchmarkTrials: String(BENCHMARK_TRIALS),
-      benchmarkSecondaryRunnerTag: BENCHMARK_SECONDARY_RUNNER_TAG,
-      benchmarkPrimaryDTName: BENCHMARK_PRIMARY_DT_NAME,
-      benchmarkSecondaryDTName: BENCHMARK_SECONDARY_DT_NAME,
+      measurementTrials: String(MEASUREMENT_TRIALS),
+      measurementSecondaryRunnerTag: MEASUREMENT_SECONDARY_RUNNER_TAG,
+      measurementPrimaryDTName: MEASUREMENT_PRIMARY_DT_NAME,
+      measurementSecondaryDTName: MEASUREMENT_SECONDARY_DT_NAME,
     });
     setFieldErrors({});
   }
@@ -109,10 +109,10 @@ const SettingsForm: React.FC = () => {
       commonLibraryProjectName: DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
       runnerTag: DEFAULT_SETTINGS.RUNNER_TAG,
       branchName: DEFAULT_SETTINGS.BRANCH_NAME,
-      benchmarkTrials: String(DEFAULT_BENCHMARK.trials),
-      benchmarkSecondaryRunnerTag: DEFAULT_BENCHMARK.secondaryRunnerTag,
-      benchmarkPrimaryDTName: DEFAULT_BENCHMARK.primaryDTName,
-      benchmarkSecondaryDTName: DEFAULT_BENCHMARK.secondaryDTName,
+      measurementTrials: String(DEFAULT_MEASUREMENT.trials),
+      measurementSecondaryRunnerTag: DEFAULT_MEASUREMENT.secondaryRunnerTag,
+      measurementPrimaryDTName: DEFAULT_MEASUREMENT.primaryDTName,
+      measurementSecondaryDTName: DEFAULT_MEASUREMENT.secondaryDTName,
     });
     setFieldErrors({});
 
@@ -130,9 +130,9 @@ const SettingsForm: React.FC = () => {
       'commonLibraryProjectName',
       'runnerTag',
       'branchName',
-      'benchmarkSecondaryRunnerTag',
-      'benchmarkPrimaryDTName',
-      'benchmarkSecondaryDTName',
+      'measurementSecondaryRunnerTag',
+      'measurementPrimaryDTName',
+      'measurementSecondaryDTName',
     ] as const;
 
     const errors: Record<string, boolean> = {};
@@ -142,13 +142,13 @@ const SettingsForm: React.FC = () => {
       }
     }
 
-    const trialsValue = Number.parseInt(formValues.benchmarkTrials, 10);
+    const trialsValue = Number.parseInt(formValues.measurementTrials, 10);
     if (
-      !formValues.benchmarkTrials.trim() ||
+      !formValues.measurementTrials.trim() ||
       Number.isNaN(trialsValue) ||
       trialsValue < 1
     ) {
-      errors.benchmarkTrials = true;
+      errors.measurementTrials = true;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -178,22 +178,25 @@ const SettingsForm: React.FC = () => {
       dispatch(setBranchName(formValues.branchName));
     }
 
-    if (trialsValue !== BENCHMARK_TRIALS) {
+    if (trialsValue !== MEASUREMENT_TRIALS) {
       dispatch(setTrials(trialsValue));
     }
 
     if (
-      formValues.benchmarkSecondaryRunnerTag !== BENCHMARK_SECONDARY_RUNNER_TAG
+      formValues.measurementSecondaryRunnerTag !==
+      MEASUREMENT_SECONDARY_RUNNER_TAG
     ) {
-      dispatch(setSecondaryRunnerTag(formValues.benchmarkSecondaryRunnerTag));
+      dispatch(setSecondaryRunnerTag(formValues.measurementSecondaryRunnerTag));
     }
 
-    if (formValues.benchmarkPrimaryDTName !== BENCHMARK_PRIMARY_DT_NAME) {
-      dispatch(setPrimaryDTName(formValues.benchmarkPrimaryDTName));
+    if (formValues.measurementPrimaryDTName !== MEASUREMENT_PRIMARY_DT_NAME) {
+      dispatch(setPrimaryDTName(formValues.measurementPrimaryDTName));
     }
 
-    if (formValues.benchmarkSecondaryDTName !== BENCHMARK_SECONDARY_DT_NAME) {
-      dispatch(setSecondaryDTName(formValues.benchmarkSecondaryDTName));
+    if (
+      formValues.measurementSecondaryDTName !== MEASUREMENT_SECONDARY_DT_NAME
+    ) {
+      dispatch(setSecondaryDTName(formValues.measurementSecondaryDTName));
     }
 
     setNotificationMessage('Settings saved successfully!');
@@ -210,7 +213,7 @@ const SettingsForm: React.FC = () => {
     <Box sx={{ width: '100%', mt: 2 }}>
       <Paper elevation={2} sx={{ p: 3 }}>
         <ApplicationSettingsFields {...fieldProps} />
-        <BenchmarkSettingsFields {...fieldProps} />
+        <MeasurementSettingsFields {...fieldProps} />
 
         <Grid container>
           <Grid

@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
-import CustomSnackbar from 'components/route/Snackbar';
 import ExecutionHistoryLoader from 'components/execution/ExecutionHistoryLoader';
 import WaitNavigateAndReload from 'route/auth/WaitAndNavigate';
 
@@ -40,7 +39,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
       <>
         {children}
         <ExecutionHistoryLoader />
-        <CustomSnackbar />
       </>
     );
   } else {

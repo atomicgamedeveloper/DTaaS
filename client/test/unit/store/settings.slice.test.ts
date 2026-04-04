@@ -5,12 +5,12 @@ import settingsReducer, {
   setRunnerTag,
   resetToDefaults,
   DEFAULT_SETTINGS,
-  DEFAULT_BENCHMARK,
+  DEFAULT_MEASUREMENT,
   loadInitialSettings,
 } from 'store/settings.slice';
 
 describe('settingsSlice', () => {
-  const initialState = { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK };
+  const initialState = { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT };
 
   beforeEach(() => {
     jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {});
@@ -72,7 +72,7 @@ describe('settingsSlice', () => {
     expect(parseSpy).toHaveBeenCalledWith(savedJson);
     expect(result).toEqual({
       ...DEFAULT_SETTINGS,
-      ...DEFAULT_BENCHMARK,
+      ...DEFAULT_MEASUREMENT,
       ...parsedSettings,
     });
   });
@@ -80,7 +80,7 @@ describe('settingsSlice', () => {
   it('returns defaults when localStorage is empty', () => {
     expect(loadInitialSettings()).toEqual({
       ...DEFAULT_SETTINGS,
-      ...DEFAULT_BENCHMARK,
+      ...DEFAULT_MEASUREMENT,
     });
   });
 });

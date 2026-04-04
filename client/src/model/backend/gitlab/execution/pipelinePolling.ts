@@ -18,7 +18,7 @@ export interface PollOptions {
  * Polls a GitLab pipeline until it completes, times out, or is aborted.
  * Yields status strings as the pipeline progresses.
  *
- * This is a shared utility used by both the benchmark execution layer and
+ * This is a shared utility used by both the measurement execution layer and
  * (in future) the DT DevOps execution layer.
  */
 export async function* pollPipelineStatus(

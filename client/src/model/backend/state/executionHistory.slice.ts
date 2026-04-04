@@ -1,3 +1,5 @@
+import { createElement } from 'react';
+import ClearIcon from '@mui/icons-material/Clear';
 import {
   PayloadAction,
   createSlice,
@@ -223,12 +225,16 @@ export const removeExecution =
 
     try {
       await storageService.delete(id);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 800);
+      });
       dispatch(setError(null));
       dispatch({
         type: 'snackbar/showSnackbar',
         payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
-          severity: 'success',
+          severity: 'warning',
+          icon: createElement(ClearIcon, { fontSize: 'inherit' }),
         } as ShowNotificationPayload,
       });
     } catch (error) {
@@ -241,18 +247,40 @@ export const removeExecution =
 
 export const clearExecutionHistoryForDT =
   (dtName: string): AppThunk =>
-  async (dispatch) => {
+  async (dispatch, getState) => {
     try {
-      await storageService.deleteByDTName(dtName);
+      const state = getState();
+      const entriesToDelete = state.executionHistory.entries.filter(
+        (entry) =>
+          entry.dtName === dtName && entry.status !== ExecutionStatus.RUNNING,
+      );
 
-      dispatch(removeEntriesForDT(dtName));
+      await Promise.all(
+        entriesToDelete.map((entry) => storageService.delete(entry.id)),
+      );
+      for (const entry of entriesToDelete) {
+        dispatch(removeExecutionHistoryEntry(entry.id));
+      }
+
+      const arteficialWaitingTime = 850;
+      await new Promise((resolve) => {
+        setTimeout(resolve, arteficialWaitingTime);
+      });
       dispatch(setError(null));
       dispatch({
         type: 'snackbar/showSnackbar',
-        payload: {
-          message: `Deleted all entries from ${formatName(dtName)} execution history`,
-          severity: 'success',
-        } as ShowNotificationPayload,
+        payload:
+          entriesToDelete.length === 0
+            ? ({
+                message:
+                  'Execution history is already empty or only has active entries',
+                severity: 'info',
+              } as ShowNotificationPayload)
+            : ({
+                message: `Deleted all entries from ${formatName(dtName)} execution history`,
+                severity: 'warning',
+                icon: createElement(ClearIcon, { fontSize: 'inherit' }),
+              } as ShowNotificationPayload),
       });
     } catch (error) {
       dispatch(setError(`Failed to clear execution history: ${error}`));

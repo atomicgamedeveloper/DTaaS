@@ -1,4 +1,4 @@
-import type { Execution } from 'model/backend/gitlab/measure/benchmark.execution';
+import type { Execution } from 'model/backend/gitlab/measure/measurement.execution';
 
 export interface TaskDefinition {
   name: string;

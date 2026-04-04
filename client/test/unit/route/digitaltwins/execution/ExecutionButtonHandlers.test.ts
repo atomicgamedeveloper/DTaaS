@@ -185,7 +185,7 @@ describe('ExecutionButtonHandlers', () => {
       type: 'snackbar/showSnackbar',
       payload: {
         message: expect.stringContaining('stopped successfully'),
-        severity: 'success',
+        severity: 'warning',
       },
     });
     expect(updatePipelineStateOnStop).toHaveBeenCalled();

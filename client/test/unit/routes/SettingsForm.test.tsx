@@ -16,7 +16,7 @@ import {
   setDTDirectory,
   setRunnerTag,
   setBranchName,
-  DEFAULT_BENCHMARK,
+  DEFAULT_MEASUREMENT,
   setTrials,
   setSecondaryRunnerTag,
 } from 'store/settings.slice';
@@ -44,7 +44,7 @@ describe('SettingsForm', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
     mockedUseSelector.mockImplementation((selector) =>
-      selector({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_BENCHMARK } }),
+      selector({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT } }),
     );
     mockedUseDispatch.mockReturnValue(mockDispatch);
     renderWithRouter(<SettingsForm />, { route: '/private' });
@@ -212,7 +212,7 @@ describe('SettingsForm', () => {
   });
 
   it('dispatches setSecondaryRunnerTag when secondary runner tag changes', () => {
-    const input = screen.getByLabelText(/benchmark secondary runner tag/i);
+    const input = screen.getByLabelText(/measurement secondary runner tag/i);
     fireEvent.change(input, { target: { value: 'macos' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
@@ -220,12 +220,12 @@ describe('SettingsForm', () => {
   });
 
   it('shows error when secondary runner tag is empty', () => {
-    const input = screen.getByLabelText(/benchmark secondary runner tag/i);
+    const input = screen.getByLabelText(/measurement secondary runner tag/i);
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
     expect(
-      screen.getByText('Benchmark secondary runner tag is required'),
+      screen.getByText('Measurement secondary runner tag is required'),
     ).toBeInTheDocument();
   });
 });

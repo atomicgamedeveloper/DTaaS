@@ -10,7 +10,10 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('store/snackbar.slice', () => ({
-  hideSnackbar: jest.fn(() => ({ type: 'snackbar/hideSnackbar' })),
+  hideSnackbar: jest.fn((id: number) => ({
+    type: 'snackbar/hideSnackbar',
+    payload: id,
+  })),
 }));
 
 // Track calls to the mock Snackbar
@@ -101,32 +104,32 @@ describe('CustomSnackbar', () => {
     );
   });
 
-  const renderSnackbar = (snackbarState = {}) => {
-    const defaultState = {
-      open: true,
-      message: 'Test message',
-      severity: 'success' as const,
-    };
-    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue({
-      ...defaultState,
-      ...snackbarState,
-    });
+  const renderSnackbar = (
+    items: Array<{ id: number; message: string; severity: string }> = [
+      { id: 0, message: 'Test message', severity: 'success' },
+    ],
+  ) => {
+    (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue(
+      items,
+    );
     return render(<CustomSnackbar />);
   };
 
   it('renders the Snackbar with the correct message', () => {
-    renderSnackbar({ message: 'Custom test message' });
+    renderSnackbar([
+      { id: 0, message: 'Custom test message', severity: 'success' },
+    ]);
     expect(screen.getByText('Custom test message')).toBeInTheDocument();
   });
 
   it('renders the Alert with correct severity', () => {
-    renderSnackbar({ severity: 'error' });
+    renderSnackbar([{ id: 0, message: 'Test', severity: 'error' }]);
     const alert = screen.getByRole('alert');
     expect(alert).toHaveClass('MuiAlert-standardError');
   });
 
-  it('does not render when open is false', () => {
-    renderSnackbar({ open: false });
+  it('does not render when items array is empty', () => {
+    renderSnackbar([]);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -135,75 +138,68 @@ describe('CustomSnackbar', () => {
 
     mockDispatch.mockClear();
 
-    // Trigger the clickaway event through our mock
     const clickawayButton = screen.getByTestId('trigger-clickaway');
     fireEvent.click(clickawayButton);
 
-    // Should NOT dispatch hideSnackbar when reason is 'clickaway'
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  it('dispatches hideSnackbar on timeout', () => {
-    renderSnackbar();
+  it('dispatches hideSnackbar with id on timeout', () => {
+    renderSnackbar([{ id: 5, message: 'Test', severity: 'success' }]);
 
     mockDispatch.mockClear();
 
-    // Trigger the timeout event through our mock
     const timeoutButton = screen.getByTestId('trigger-timeout');
     fireEvent.click(timeoutButton);
 
-    // Should dispatch hideSnackbar when reason is 'timeout'
-    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar());
+    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar(5));
   });
 
-  it('dispatches hideSnackbar on escape key down', () => {
-    renderSnackbar();
+  it('dispatches hideSnackbar with id on escape key down', () => {
+    renderSnackbar([{ id: 7, message: 'Test', severity: 'success' }]);
 
     mockDispatch.mockClear();
 
-    // Trigger the escapeKeyDown event through our mock
     const escapeButton = screen.getByTestId('trigger-escapeKeyDown');
     fireEvent.click(escapeButton);
 
-    // Should dispatch hideSnackbar when reason is 'escapeKeyDown'
-    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar());
+    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar(7));
   });
 
   it('dispatches hideSnackbar when close button is clicked', () => {
-    renderSnackbar();
+    renderSnackbar([{ id: 3, message: 'Test', severity: 'success' }]);
 
     const closeButton = screen.getByRole('button', { name: /close/i });
     fireEvent.click(closeButton);
 
-    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar());
+    expect(mockDispatch).toHaveBeenCalledWith(hideSnackbar(3));
   });
 
-  it('uses correct selector to get snackbar state', () => {
-    const mockSnackbarState = {
-      open: true,
-      message: 'Selector test',
-      severity: 'warning' as const,
-    };
+  it('uses correct selector to get snackbar items', () => {
+    const mockItems = [
+      { id: 0, message: 'Selector test', severity: 'warning' as const },
+    ];
     (useSelector as jest.MockedFunction<typeof useSelector>).mockReturnValue(
-      mockSnackbarState,
+      mockItems,
     );
 
     render(<CustomSnackbar />);
 
     expect(useSelector).toHaveBeenCalledWith(expect.any(Function));
 
-    // Verify the selector function extracts snackbar state correctly
     const selectorFn = (useSelector as jest.MockedFunction<typeof useSelector>)
       .mock.calls[0][0];
-    const result = selectorFn({ snackbar: mockSnackbarState });
-    expect(result).toEqual(mockSnackbarState);
+    const result = selectorFn({ snackbar: { items: mockItems, nextId: 1 } });
+    expect(result).toEqual(mockItems);
   });
 
   it('renders with different severity levels', () => {
     const severities = ['success', 'error', 'warning', 'info'] as const;
 
     severities.forEach((severity) => {
-      const { unmount } = renderSnackbar({ severity });
+      const { unmount } = renderSnackbar([
+        { id: 0, message: 'Test', severity },
+      ]);
       const alert = screen.getByRole('alert');
       expect(alert).toHaveClass(
         `MuiAlert-standard${severity.charAt(0).toUpperCase() + severity.slice(1)}`,
@@ -212,11 +208,23 @@ describe('CustomSnackbar', () => {
     });
   });
 
-  it('passes autoHideDuration to Snackbar', () => {
+  it('does not pass autoHideDuration to Snackbar (managed via useEffect)', () => {
     renderSnackbar();
 
-    // Verify Snackbar was called with autoHideDuration prop
     expect(mockSnackbarCalls.length).toBeGreaterThan(0);
-    expect(mockSnackbarCalls[0].autoHideDuration).toBe(6000);
+    expect(mockSnackbarCalls[0].autoHideDuration).toBeUndefined();
+  });
+
+  it('renders multiple snackbars when items has multiple entries', () => {
+    renderSnackbar([
+      { id: 0, message: 'First', severity: 'success' },
+      { id: 1, message: 'Second', severity: 'error' },
+      { id: 2, message: 'Third', severity: 'warning' },
+    ]);
+
+    expect(screen.getByText('First')).toBeInTheDocument();
+    expect(screen.getByText('Second')).toBeInTheDocument();
+    expect(screen.getByText('Third')).toBeInTheDocument();
+    expect(screen.getAllByRole('alert')).toHaveLength(3);
   });
 });

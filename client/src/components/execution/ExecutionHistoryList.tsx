@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   IconButton,
@@ -43,6 +44,8 @@ import { createDigitalTwinFromData } from 'model/backend/util/digitalTwinAdapter
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
+import { showSnackbar } from 'store/snackbar.slice';
+import { formatName } from 'model/backend/digitalTwin';
 
 interface ExecutionHistoryListProps {
   dtName: string;
@@ -171,6 +174,13 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
 
   const handleDeleteConfirm = () => {
     if (executionToDelete) {
+      dispatch(
+        showSnackbar({
+          message: `Deleting entry from ${formatName(dtName)} execution history...`,
+          severity: 'warning',
+          icon: <ClearIcon fontSize="inherit" />,
+        }),
+      );
       dispatch(removeExecution(executionToDelete));
     }
     setDeleteDialogOpen(false);
@@ -195,6 +205,13 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
       event.stopPropagation();
     }
     if (digitalTwin) {
+      dispatch(
+        showSnackbar({
+          message: `Stopping execution for ${formatName(digitalTwin.DTName)}...`,
+          severity: 'warning',
+        }),
+      );
+
       const digitalTwinInstance = await createDigitalTwinFromData(
         digitalTwin,
         digitalTwin.DTName,

@@ -1,12 +1,12 @@
-import { benchmarkConfig as BenchmarkConfig } from 'model/backend/gitlab/measure/benchmark.execution';
+import { measurementConfig as MeasurementConfig } from 'model/backend/gitlab/measure/measurement.execution';
 import { TaskDefinition } from './taskDefinition';
 
 const multipleDifferentDTs: TaskDefinition = {
   name: 'Multiple different Digital Twins Simultaneously',
   description: 'Running the primary and secondary Digital Twins at once.',
   executions: () => [
-    { dtName: BenchmarkConfig.primaryDTName, config: {} },
-    { dtName: BenchmarkConfig.secondaryDTName, config: {} },
+    { dtName: MeasurementConfig.primaryDTName, config: {} },
+    { dtName: MeasurementConfig.secondaryDTName, config: {} },
   ],
 };
 

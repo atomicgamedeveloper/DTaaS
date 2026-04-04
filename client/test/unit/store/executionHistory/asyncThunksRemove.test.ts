@@ -37,7 +37,7 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
-    mockStorageService.deleteByDTName.mockResolvedValue(undefined);
+    mockStorageService.delete.mockResolvedValue(undefined);
 
     await (store.dispatch as (action: unknown) => Promise<void>)(
       clearExecutionHistoryForDT('test-dt'),
@@ -47,7 +47,65 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
     expect(state.entries.length).toBe(1);
     expect(state.entries[0].dtName).toBe('other-dt');
     expect(state.error).toBeNull();
-    expect(mockStorageService.deleteByDTName).toHaveBeenCalledWith('test-dt');
+    expect(mockStorageService.delete).toHaveBeenCalledWith('1');
+  });
+
+  it('should not clear active (running) pipelines', async () => {
+    const entries = [
+      {
+        id: '1',
+        dtName: 'test-dt',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.COMPLETED,
+        jobLogs: [],
+      },
+      {
+        id: '2',
+        dtName: 'test-dt',
+        pipelineId: 456,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      },
+    ];
+
+    store.dispatch(setExecutionHistoryEntries(entries));
+    mockStorageService.delete.mockResolvedValue(undefined);
+
+    await (store.dispatch as (action: unknown) => Promise<void>)(
+      clearExecutionHistoryForDT('test-dt'),
+    );
+
+    const state = store.getState().executionHistory;
+    expect(state.entries.length).toBe(1);
+    expect(state.entries[0].id).toBe('2');
+    expect(state.entries[0].status).toBe(ExecutionStatus.RUNNING);
+    expect(mockStorageService.delete).toHaveBeenCalledWith('1');
+    expect(mockStorageService.delete).not.toHaveBeenCalledWith('2');
+  });
+
+  it('should not delete anything when all entries are running', async () => {
+    const entries = [
+      {
+        id: '1',
+        dtName: 'test-dt',
+        pipelineId: 123,
+        timestamp: Date.now(),
+        status: ExecutionStatus.RUNNING,
+        jobLogs: [],
+      },
+    ];
+
+    store.dispatch(setExecutionHistoryEntries(entries));
+
+    await (store.dispatch as (action: unknown) => Promise<void>)(
+      clearExecutionHistoryForDT('test-dt'),
+    );
+
+    const state = store.getState().executionHistory;
+    expect(state.entries.length).toBe(1);
+    expect(mockStorageService.delete).not.toHaveBeenCalled();
   });
 
   it('should handle checkRunningExecutions with no running executions', async () => {
