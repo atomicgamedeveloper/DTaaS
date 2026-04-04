@@ -1,0 +1,3 @@
+# Workaround: qlty mangles this file's TypeScript types in its temp directory,
+# causing prettier to receive invalid syntax.
+test/unit/model/backend/gitlab/measure/measurement.envSetup.ts
