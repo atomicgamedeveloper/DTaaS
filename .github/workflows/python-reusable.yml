@@ -46,8 +46,8 @@ jobs:
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - name: Setup Python
       # v6.1.0
+      - name: Setup Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: "3.12"
@@ -81,6 +81,7 @@ jobs:
           # Just ensure the service is running
           docker --version
 
+      # yamllint disable rule:line-length
       - name: Install Docker on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -101,6 +102,7 @@ jobs:
             "Path","User")
           # Start Docker service
           Start-Service docker
+      # yamllint enable rule:line-length
 
       - name: Install Docker on macOS
         if: runner.os == 'macOS'
@@ -117,8 +119,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
-          poetry run pylint ${{ inputs.src-directory }} ${{ inputs.tests-directory }} --rcfile=${GITHUB_WORKSPACE}/.pylintrc --fail-under=9.0
-            
+          poetry run pylint \
+            ${{ inputs.src-directory }} ${{ inputs.tests-directory }} \
+            --rcfile=${GITHUB_WORKSPACE}/.pylintrc --fail-under=9.0
+
       - name: Run pytest (with coverage, Linux only)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -151,8 +155,8 @@ jobs:
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - name: Setup Python
       # v6.1.0
+      - name: Setup Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: "3.12"

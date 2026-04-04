@@ -30,7 +30,7 @@ test.describe('Account Settings Form', () => {
     await page.getByLabel('Group Name').fill('DTaaS-test');
     await page.getByLabel('DT Directory').fill('digital_twins-test');
     await page.getByLabel('Common Library Project name').fill('Common-test');
-    await page.getByLabel('Runner Tag').fill('Runner-test');
+    await page.getByLabel('Runner Tag', { exact: true }).fill('Runner-test');
     await page.getByLabel('Branch Name').fill('Branch-test');
 
     // Save settings
@@ -48,7 +48,9 @@ test.describe('Account Settings Form', () => {
     await expect(page.getByLabel('Common Library Project name')).toHaveValue(
       'Common-test',
     );
-    await expect(page.getByLabel('Runner Tag')).toHaveValue('Runner-test');
+    await expect(page.getByLabel('Runner Tag', { exact: true })).toHaveValue(
+      'Runner-test',
+    );
     await expect(page.getByLabel('Branch Name')).toHaveValue('Branch-test');
   });
 
@@ -66,7 +68,7 @@ test.describe('Account Settings Form', () => {
     await expect(page.getByLabel('Common Library Project name')).toHaveValue(
       DEFAULT_SETTINGS.COMMON_LIBRARY_PROJECT_NAME,
     );
-    await expect(page.getByLabel('Runner Tag')).toHaveValue(
+    await expect(page.getByLabel('Runner Tag', { exact: true })).toHaveValue(
       DEFAULT_SETTINGS.RUNNER_TAG,
     );
     await expect(page.getByLabel('Branch Name')).toHaveValue(
