@@ -10,6 +10,7 @@ import {
 import {
   ProjectId,
   BackendInterface,
+  CommitAction,
 } from 'model/backend/interfaces/backendInterfaces';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
@@ -198,6 +199,19 @@ export type LibraryConfigFile = {
 // DTAssets.ts
 
 export interface DTAssetsFileCreator {
+  buildCreateFileActions(
+    files:
+      | FileState[]
+      | Array<{
+          name: string;
+          content: string;
+          isNew: boolean;
+          isFromCommonLibrary: boolean;
+        }>,
+    mainFolderPath: string,
+    lifecycleFolderPath: string,
+  ): CommitAction[];
+
   createFiles(
     files:
       | FileState[]
@@ -250,6 +264,7 @@ export interface DTAssetsLibraryFileProvider {
 }
 
 export interface DTAssetsPipelineProvider {
+  buildTriggerAction(): Promise<CommitAction | null>;
   appendTriggerToPipeline(): Promise<string>;
   removeTriggerFromPipeline(): Promise<string>;
 }

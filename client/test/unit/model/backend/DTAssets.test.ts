@@ -210,4 +210,32 @@ describe('DTAssets', () => {
     expect(result).toBe(`No trigger found for ${dtName} in ${filePath}`);
     expect(dtAssets.fileHandler.updateFile).not.toHaveBeenCalled();
   });
+
+  describe('removeTriggerFromPipeline error path', () => {
+    it('should return error message when an exception occurs', async () => {
+      dtAssets.fileHandler.getFileContent = jest
+        .fn()
+        .mockRejectedValue(new Error('Read failed'));
+
+      const result = await dtAssets.removeTriggerFromPipeline();
+
+      expect(result).toBe(
+        'Error removing trigger from pipeline: Error: Read failed',
+      );
+    });
+  });
+
+  describe('appendTriggerToPipeline error path', () => {
+    it('should return error message when an exception occurs', async () => {
+      dtAssets.fileHandler.getFileContent = jest
+        .fn()
+        .mockRejectedValue(new Error('Network error'));
+
+      const result = await dtAssets.appendTriggerToPipeline();
+
+      expect(result).toBe(
+        'Error appending trigger to pipeline: Error: Network error',
+      );
+    });
+  });
 });
