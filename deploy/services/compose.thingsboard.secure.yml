@@ -41,7 +41,6 @@ services:
       - './certs/${HOSTNAME}:/certs'
     environment:
       TB_SERVICE_ID: tb-ce-node
-      # yamllint disable-next-line rule:line-length
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}?sslmode=require
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}

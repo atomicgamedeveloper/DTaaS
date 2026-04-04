@@ -13,7 +13,7 @@ import { setupMeasurementTestHarness } from './measurement.testUtil';
 
 jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   const { createMeasurementExecutionMock } = jest.requireActual(
-    './measurement.envSetup',
+    './measurement.mockSetup',
   );
   return createMeasurementExecutionMock();
 });

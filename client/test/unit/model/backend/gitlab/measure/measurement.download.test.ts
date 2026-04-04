@@ -8,7 +8,7 @@ import {
   createMockExecution,
   DEFAULT_CONFIG,
 } from 'test/unit/model/backend/gitlab/measure/measurement.testUtil';
-import { setupMockDownload } from 'test/unit/model/backend/gitlab/measure/measurement.envSetup';
+import { setupMockDownload } from 'test/unit/model/backend/gitlab/measure/measurement.mockSetup';
 
 function captureJsonDownload<T>(action: () => void): T {
   let capturedJson = '';

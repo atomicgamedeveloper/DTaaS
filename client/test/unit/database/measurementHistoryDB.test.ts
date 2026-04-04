@@ -4,7 +4,7 @@ import { createMockTask } from 'test/unit/model/backend/gitlab/measure/measureme
 import {
   clearDatabase,
   setupStructuredClone,
-} from 'test/unit/model/backend/gitlab/measure/measurement.envSetup';
+} from 'test/unit/model/backend/gitlab/measure/measurement.mockSetup';
 
 setupStructuredClone();
 
