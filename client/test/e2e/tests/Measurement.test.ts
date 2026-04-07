@@ -16,7 +16,7 @@ test.describe('Measurement Page', () => {
 
   test.afterEach(async ({ page }) => {
     const stopButton = page.getByRole('button', { name: 'Stop', exact: true });
-    if (await stopButton.isVisible()) {
+    if (await stopButton.isEnabled()) {
       await stopButton.click();
       const dialog = page.getByRole('dialog');
       if (await dialog.isVisible()) {
@@ -93,9 +93,9 @@ test.describe('Measurement Page', () => {
       .getByRole('button', { name: 'Stop' })
       .click();
 
-    // Verify measurement has stopped (Stop button replaced by Start or Continue)
+    // Verify measurement has stopped (Stop button is now disabled)
     await expect(
       page.getByRole('button', { name: 'Stop', exact: true }),
-    ).not.toBeVisible();
+    ).toBeDisabled();
   });
 });

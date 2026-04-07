@@ -19,11 +19,17 @@ import {
   DEFAULT_MEASUREMENT,
   setTrials,
   setSecondaryRunnerTag,
+  setPrimaryDTName,
+  setSecondaryDTName,
 } from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 
 jest.mock('routes', () => ({ __esModule: true, default: [] }));
+
+jest.mock('model/backend/util/init', () => ({
+  fetchDigitalTwins: jest.fn().mockResolvedValue(undefined),
+}));
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -44,7 +50,15 @@ describe('SettingsForm', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
     mockedUseSelector.mockImplementation((selector) =>
-      selector({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT } }),
+      selector({
+        settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT },
+        digitalTwin: {
+          digitalTwin: {
+            [DEFAULT_MEASUREMENT.primaryDTName]: {},
+            [DEFAULT_MEASUREMENT.secondaryDTName]: {},
+          },
+        },
+      }),
     );
     mockedUseDispatch.mockReturnValue(mockDispatch);
     renderWithRouter(<SettingsForm />, { route: '/private' });
@@ -227,5 +241,97 @@ describe('SettingsForm', () => {
     expect(
       screen.getByText('Measurement secondary runner tag is required'),
     ).toBeInTheDocument();
+  });
+
+  describe('DT name dropdowns while twins are loading', () => {
+    beforeEach(() => {
+      cleanup();
+      const { fetchDigitalTwins } = jest.requireMock('model/backend/util/init');
+      fetchDigitalTwins.mockReturnValueOnce(new Promise(() => {}));
+      mockedUseSelector.mockImplementation((selector) =>
+        selector({
+          settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT },
+          digitalTwin: { digitalTwin: {} },
+        }),
+      );
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+    });
+
+    it('disables both DT dropdowns', () => {
+      expect(screen.getByLabelText(/primary digital twin/i)).toBeDisabled();
+      expect(screen.getByLabelText(/secondary digital twin/i)).toBeDisabled();
+    });
+
+    it('shows saved values as placeholder options', () => {
+      expect(
+        screen.getByRole('option', { name: DEFAULT_MEASUREMENT.primaryDTName }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('option', {
+          name: DEFAULT_MEASUREMENT.secondaryDTName,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it('enables dropdowns after fetch completes', async () => {
+      let resolve!: () => void;
+      const promise = new Promise<void>((res) => {
+        resolve = res;
+      });
+      const { fetchDigitalTwins } = jest.requireMock('model/backend/util/init');
+      fetchDigitalTwins.mockReturnValueOnce(promise);
+
+      cleanup();
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+
+      expect(screen.getByLabelText(/primary digital twin/i)).toBeDisabled();
+
+      await act(async () => {
+        resolve();
+        await promise;
+      });
+
+      expect(screen.getByLabelText(/primary digital twin/i)).not.toBeDisabled();
+      expect(
+        screen.getByLabelText(/secondary digital twin/i),
+      ).not.toBeDisabled();
+    });
+  });
+
+  it('renders twin names as options in the primary DT dropdown', () => {
+    expect(
+      screen.getAllByRole('option', {
+        name: DEFAULT_MEASUREMENT.primaryDTName,
+      }),
+    ).not.toHaveLength(0);
+    expect(
+      screen.getAllByRole('option', {
+        name: DEFAULT_MEASUREMENT.secondaryDTName,
+      }),
+    ).not.toHaveLength(0);
+  });
+
+  it('dispatches setPrimaryDTName when a different twin is selected', () => {
+    const select = screen.getByLabelText(/primary digital twin/i);
+    fireEvent.change(select, {
+      target: { value: DEFAULT_MEASUREMENT.secondaryDTName },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      setPrimaryDTName(DEFAULT_MEASUREMENT.secondaryDTName),
+    );
+  });
+
+  it('dispatches setSecondaryDTName when a different twin is selected', () => {
+    const select = screen.getByLabelText(/secondary digital twin/i);
+    fireEvent.change(select, {
+      target: { value: DEFAULT_MEASUREMENT.primaryDTName },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      setSecondaryDTName(DEFAULT_MEASUREMENT.primaryDTName),
+    );
   });
 });

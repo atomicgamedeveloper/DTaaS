@@ -1,7 +1,8 @@
 // Measurement results table with per-trial execution details
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
+  Collapse,
   Paper,
   Table,
   TableBody,
@@ -62,6 +63,16 @@ export function TaskControls({
   );
 }
 
+function resolveDescription(
+  description: string,
+  primaryDTName: string,
+  secondaryDTName: string,
+): string {
+  return description
+    .replace(/\bprimary\b/gi, primaryDTName)
+    .replace(/\bsecondary\b/gi, secondaryDTName);
+}
+
 function MeasurementTableRow({
   task,
   index,
@@ -70,6 +81,10 @@ function MeasurementTableRow({
   onDownloadTask,
   primaryRunnerTag,
   secondaryRunnerTag,
+  primaryDTName,
+  secondaryDTName,
+  isExpanded,
+  onToggle,
   rowRef,
 }: Readonly<{
   task: TimedTask;
@@ -79,108 +94,146 @@ function MeasurementTableRow({
   onDownloadTask: (task: TimedTask) => void;
   primaryRunnerTag: string;
   secondaryRunnerTag: string;
+  primaryDTName: string;
+  secondaryDTName: string;
+  isExpanded: boolean;
+  onToggle: () => void;
   rowRef?: React.Ref<HTMLTableRowElement>;
 }>) {
+  const { primaryTag, secondaryTag } = getRunnerTags(
+    task,
+    primaryRunnerTag,
+    secondaryRunnerTag,
+  );
+
+  const isActiveTask =
+    index === currentTaskIndex &&
+    task.Trials.length < (task.ExpectedTrials ?? Infinity);
+
+  const isNotStartedOrPending =
+    task.Status === 'NOT_STARTED' || task.Status === 'PENDING';
+
+  const latestTrial: Trial | undefined = isActiveTask
+    ? {
+        'Time Start': undefined,
+        'Time End': undefined,
+        Execution: currentExecutions,
+        Status: 'RUNNING',
+        Error: undefined,
+      }
+    : task.Trials[task.Trials.length - 1];
+
+  const trialCardCell = (() => {
+    if (isNotStartedOrPending) {
+      return (
+        <Typography variant="body1" color="text.disabled">
+          —
+        </Typography>
+      );
+    }
+    if (latestTrial) {
+      return (
+        <TrialCard
+          trial={latestTrial}
+          trialIndex={
+            isActiveTask ? task.Trials.length : task.Trials.length - 1
+          }
+          executions={task.Executions?.()}
+          allTrials={task.Trials}
+          expectedTrials={task.ExpectedTrials}
+          isRunning={isActiveTask}
+        />
+      );
+    }
+    return null;
+  })();
+
   return (
-    <TableRow ref={rowRef}>
-      <TableCell>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-          <Typography
-            variant="body2"
-            color="grey.500"
-            sx={{ minWidth: '20px', mt: 0.2 }}
-          >
-            {index + 1}
-          </Typography>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-              {task['Task Name']}
+    <>
+      <TableRow
+        ref={rowRef}
+        hover
+        onClick={onToggle}
+        sx={{ cursor: 'pointer' }}
+      >
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography
+              variant="body2"
+              color="grey.500"
+              sx={{ minWidth: '20px' }}
+            >
+              {index + 1}
             </Typography>
+            <Box sx={{ flex: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                  {task['Task Name']}
+                </Typography>
+                {primaryTag && (
+                  <RunnerTagBadge runnerTag={primaryTag} variant="primary" />
+                )}
+                {secondaryTag && (
+                  <RunnerTagBadge
+                    runnerTag={secondaryTag}
+                    variant="secondary"
+                  />
+                )}
+              </Box>
+            </Box>
+          </Box>
+        </TableCell>
+        <TableCell align="center" sx={{ color: statusColorMap[task.Status] }}>
+          {task.Status === 'NOT_STARTED' ? '—' : task.Status}
+        </TableCell>
+        <TableCell align="center">
+          {task['Average Time (s)'] === undefined ? (
+            <Typography variant="body1" color="text.disabled">
+              —
+            </Typography>
+          ) : (
+            `${task['Average Time (s)'].toFixed(1)}s`
+          )}
+        </TableCell>
+        <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+          {trialCardCell}
+        </TableCell>
+        <TableCell
+          align="center"
+          sx={{ verticalAlign: 'middle' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <TaskControls task={task} onDownloadTask={onDownloadTask} />
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell
+          colSpan={5}
+          sx={{ py: 0, borderBottom: isExpanded ? undefined : 'none' }}
+        >
+          <Collapse in={isExpanded}>
             <Typography
               variant="caption"
               color="text.secondary"
-              component="div"
-              sx={{ display: 'inline' }}
+              sx={{ display: 'block', px: 1, py: 1 }}
             >
-              {task.Description}
-              {(() => {
-                const { primaryTag, secondaryTag } = getRunnerTags(
-                  task,
-                  primaryRunnerTag,
-                  secondaryRunnerTag,
-                );
-                return (
-                  <>
-                    {primaryTag && (
-                      <RunnerTagBadge
-                        runnerTag={primaryTag}
-                        variant="primary"
-                      />
-                    )}
-                    {secondaryTag && (
-                      <RunnerTagBadge
-                        runnerTag={secondaryTag}
-                        variant="secondary"
-                      />
-                    )}
-                  </>
-                );
-              })()}
+              {resolveDescription(
+                task.Description ?? '',
+                primaryDTName,
+                secondaryDTName,
+              )}
             </Typography>
-          </Box>
-        </Box>
-      </TableCell>
-      <TableCell align="center" sx={{ color: statusColorMap[task.Status] }}>
-        {task.Status === 'NOT_STARTED' ? '—' : task.Status}
-      </TableCell>
-      <TableCell align="center">
-        {task['Average Time (s)'] === undefined ? (
-          <Typography variant="body1" color="text.disabled">
-            —
-          </Typography>
-        ) : (
-          `${task['Average Time (s)'].toFixed(1)}s`
-        )}
-      </TableCell>
-      <TableCell align="center">
-        {task.Status === 'NOT_STARTED' || task.Status === 'PENDING' ? (
-          <Typography variant="body1" color="text.disabled">
-            —
-          </Typography>
-        ) : (
-          (() => {
-            const isActiveTask =
-              index === currentTaskIndex &&
-              task.Trials.length < (task.ExpectedTrials ?? Infinity);
-            const latestTrial: Trial | undefined = isActiveTask
-              ? {
-                  'Time Start': undefined,
-                  'Time End': undefined,
-                  Execution: currentExecutions,
-                  Status: 'RUNNING',
-                  Error: undefined,
-                }
-              : task.Trials[task.Trials.length - 1];
-
-            return latestTrial ? (
-              <TrialCard
-                trial={latestTrial}
-                trialIndex={
-                  isActiveTask ? task.Trials.length : task.Trials.length - 1
-                }
-                executions={task.Executions?.()}
-                allTrials={task.Trials}
-                expectedTrials={task.ExpectedTrials}
-                isRunning={isActiveTask}
-              />
-            ) : null;
-          })()
-        )}
-      </TableCell>
-      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
-        <TaskControls task={task} onDownloadTask={onDownloadTask} />
-      </TableCell>
-    </TableRow>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -191,6 +244,8 @@ export default function MeasurementTable({
   onDownloadTask,
   primaryRunnerTag,
   secondaryRunnerTag,
+  primaryDTName,
+  secondaryDTName,
 }: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
@@ -198,8 +253,20 @@ export default function MeasurementTable({
   onDownloadTask: (task: TimedTask) => void;
   primaryRunnerTag: string;
   secondaryRunnerTag: string;
+  primaryDTName: string;
+  secondaryDTName: string;
 }>) {
   const runningRowRef = useRef<HTMLTableRowElement | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (taskName: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskName)) next.delete(taskName);
+      else next.add(taskName);
+      return next;
+    });
+  };
 
   // Find the last RUNNING task index
   const lastRunningIndex = (() => {
@@ -222,7 +289,7 @@ export default function MeasurementTable({
   return (
     <TableContainer
       component={Paper}
-      sx={{ maxHeight: '50vh', overflow: 'auto' }}
+      sx={{ maxHeight: '50vh', overflow: 'auto', clipPath: 'inset(0)' }}
     >
       <Table size="small" sx={{ tableLayout: 'fixed' }}>
         <TableHead>
@@ -255,6 +322,10 @@ export default function MeasurementTable({
               onDownloadTask={onDownloadTask}
               primaryRunnerTag={primaryRunnerTag}
               secondaryRunnerTag={secondaryRunnerTag}
+              primaryDTName={primaryDTName}
+              secondaryDTName={secondaryDTName}
+              isExpanded={expandedRows.has(task['Task Name'])}
+              onToggle={() => toggleRow(task['Task Name'])}
               rowRef={index === lastRunningIndex ? runningRowRef : undefined}
             />
           ))}

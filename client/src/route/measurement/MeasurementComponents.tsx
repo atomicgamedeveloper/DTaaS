@@ -14,7 +14,7 @@ export const statusColorMap: Record<Status, string> = {
   PENDING: '#9e9e9e',
   RUNNING: '#1976d2',
   FAILURE: '#d32f2f',
-  SUCCESS: '#1976d2',
+  SUCCESS: '#2e7d32',
   STOPPED: '#616161',
 };
 
@@ -184,7 +184,12 @@ export function TrialCard({
   );
 
   return (
-    <Tooltip title={tooltipContent} arrow placement="left">
+    <Tooltip
+      title={tooltipContent}
+      arrow
+      placement="left"
+      slotProps={{ popper: { disablePortal: true } }}
+    >
       <Box sx={trialCardStyle}>
         <Box sx={trialHeaderRowStyle}>
           <Box sx={trialHeaderLeftStyle}>

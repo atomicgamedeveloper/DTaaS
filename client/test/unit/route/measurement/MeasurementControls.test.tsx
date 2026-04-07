@@ -10,6 +10,7 @@ describe('MeasurementControls', () => {
     completedTasks: 0,
     completedTrials: 0,
     totalTasks: 5,
+    results: [],
     onStart: jest.fn(),
     onRestart: jest.fn(),
     onStop: jest.fn(),
@@ -101,7 +102,6 @@ describe('MeasurementControls', () => {
       /Are you sure you want to stop the measurement/,
       'onStop',
     ],
-    ['Restart', 'hasStarted', 'Restart Measurement?', /restart/, 'onRestart'],
     [
       'Purge',
       'none',
@@ -140,7 +140,6 @@ describe('MeasurementControls', () => {
 
   const cancelDialogCases: CancelDialogCase[] = [
     ['Stop', 'isRunning', 'onStop'],
-    ['Restart', 'hasStarted', 'onRestart'],
     ['Purge', 'none', 'onPurge'],
   ];
 
@@ -160,6 +159,19 @@ describe('MeasurementControls', () => {
       expect(handler).not.toHaveBeenCalled();
     },
   );
+
+  it('calls onRestart directly when Restart button is clicked', () => {
+    const onRestart = jest.fn();
+    render(
+      <MeasurementControls
+        {...defaultControlProps}
+        hasStarted={true}
+        onRestart={onRestart}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Restart' }));
+    expect(onRestart).toHaveBeenCalled();
+  });
 
   it('disables Restart button when not started or when running', () => {
     const { rerender } = render(

@@ -27,6 +27,10 @@ jest.mock('page/Layout', () => {
   };
 });
 
+jest.mock('model/backend/util/init', () => ({
+  fetchDigitalTwins: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('react-oidc-context');
 
 jest.mock('components/tab/TabComponent', () => {
@@ -73,6 +77,7 @@ describe('AccountTabs', () => {
           snackbar: { items: [], nextId: 0 },
           menu: { isOpen: false },
           auth: { userName: '' },
+          digitalTwin: { digitalTwin: {} },
         }),
     );
     (useDispatch as unknown as jest.Mock).mockReturnValue(jest.fn());

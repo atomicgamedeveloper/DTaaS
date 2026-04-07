@@ -11,12 +11,6 @@ import { getDTSubfolders } from 'model/backend/util/digitalTwinUtils';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
 import LibraryManager from 'model/backend/libraryManager';
 
-const initialGitlabInstance = createGitlabInstance(
-  sessionStorage.getItem('username') || '',
-  sessionStorage.getItem('access_token') || '',
-  getAuthority(),
-);
-
 export const fetchLibraryAssets = async (
   dispatch: ReduxDispatch,
   setError: Dispatch<SetStateAction<string | null>>,
@@ -24,19 +18,24 @@ export const fetchLibraryAssets = async (
   isPrivate: boolean,
 ) => {
   try {
-    await initialGitlabInstance.init();
+    const instance = createGitlabInstance(
+      sessionStorage.getItem('username') || '',
+      sessionStorage.getItem('access_token') || '',
+      getAuthority(),
+    );
+    await instance.init();
     const subfolders = await getLibrarySubfolders(
-      initialGitlabInstance.getProjectId(),
+      instance.getProjectId(),
       type as keyof typeof AssetTypes,
-      initialGitlabInstance,
+      instance,
+    );
+    const gitlabInstance = createGitlabInstance(
+      sessionStorage.getItem('username') || '',
+      sessionStorage.getItem('access_token') || '',
+      getAuthority(),
     );
     const assets = await Promise.all(
       subfolders.map(async (subfolder) => {
-        const gitlabInstance = createGitlabInstance(
-          sessionStorage.getItem('username') || '',
-          sessionStorage.getItem('access_token') || '',
-          getAuthority(),
-        );
         await gitlabInstance.init();
         const libraryManager = new LibraryManager(
           subfolder.name,
@@ -66,22 +65,28 @@ export const fetchDigitalTwins = async (
   setError: Dispatch<SetStateAction<string | null>>,
 ) => {
   try {
-    await initialGitlabInstance.init();
-    const subfolders = await getDTSubfolders(
-      initialGitlabInstance.getProjectId(),
-      initialGitlabInstance.api,
+    const instance = createGitlabInstance(
+      sessionStorage.getItem('username') || '',
+      sessionStorage.getItem('access_token') || '',
+      getAuthority(),
     );
+    await instance.init();
+    const subfolders = await getDTSubfolders(
+      instance.getProjectId(),
+      instance.api,
+    );
+
     await fetchLibraryAssets(dispatch, setError, 'Digital Twins', true);
 
+    const dtInstance = createGitlabInstance(
+      sessionStorage.getItem('username') || '',
+      sessionStorage.getItem('access_token') || '',
+      getAuthority(),
+    );
     const digitalTwins = await Promise.all(
       subfolders.map(async (asset) => {
-        const gitlabInstance = createGitlabInstance(
-          sessionStorage.getItem('username') || '',
-          sessionStorage.getItem('access_token') || '',
-          getAuthority(),
-        );
-        await gitlabInstance.init();
-        const digitalTwin = new DigitalTwin(asset.name, gitlabInstance);
+        await dtInstance.init();
+        const digitalTwin = new DigitalTwin(asset.name, dtInstance);
         await digitalTwin.getDescription();
         return { assetName: asset.name, digitalTwin };
       }),

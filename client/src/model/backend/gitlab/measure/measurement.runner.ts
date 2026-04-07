@@ -24,7 +24,6 @@ import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/measurement.utils';
-import { formatName } from 'model/backend/digitalTwin';
 
 interface MeasurementDB {
   add(task: TimedTask): Promise<string>;
@@ -81,23 +80,7 @@ async function executeTask(
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
       updateTask(taskIndex, { Trials: updatedTrials });
-      const newTrials = updatedTrials.slice(previousTrialCount.value);
       previousTrialCount.value = updatedTrials.length;
-      for (const trial of newTrials) {
-        const trialNum = updatedTrials.indexOf(trial) + 1;
-        const trialCounter = ` (${trialNum}/${MeasurementConfig.trials})`;
-        if (trial.Status === 'FAILURE') {
-          getStore().showSnackbar(
-            `Measurement: Execution failed for ${formatName(trial.Execution[0]?.dtName ?? '')}${trialCounter}`,
-            'error',
-          );
-        } else if (trial.Status === 'SUCCESS') {
-          getStore().showSnackbar(
-            `Measurement: Execution completed successfully for ${formatName(trial.Execution[0]?.dtName ?? '')}${trialCounter}`,
-            'success',
-          );
-        }
-      }
     },
   );
 
@@ -183,7 +166,7 @@ export async function startMeasurement(
       await executeTask(i, allTasks[i], proxy, updateTask);
     }
     if (!measurementState.shouldStopPipelines) {
-      getStore().showSnackbar('All measurements completed', 'success');
+      getStore().showSnackbar('All measurements completed', 'info');
     }
   } finally {
     isRunningRef.current = false;

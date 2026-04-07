@@ -33,7 +33,6 @@ const CustomSnackbar: React.FC = () => {
       if (reason === 'clickaway') {
         return;
       }
-      // Clear the timeout if it exists
       const timeout = timeoutsRef.current.get(id);
       if (timeout) {
         clearTimeout(timeout);
@@ -43,22 +42,18 @@ const CustomSnackbar: React.FC = () => {
     };
 
   useEffect(() => {
-    // Set up auto-hide timers for each item
     items.forEach((item) => {
-      // Only set timeout if not already set
       if (!timeoutsRef.current.has(item.id)) {
         const timeout = setTimeout(() => {
-          dispatch(hideSnackbar(item.id));
           timeoutsRef.current.delete(item.id);
+          dispatch(hideSnackbar(item.id));
         }, SNACKBAR_DURATION);
         timeoutsRef.current.set(item.id, timeout);
       }
     });
 
-    // Cleanup function
     const timeouts = timeoutsRef.current;
     return () => {
-      // Clear any timeouts for removed items
       const currentIds = new Set(items.map((item) => item.id));
       for (const [id, timeout] of timeouts.entries()) {
         if (!currentIds.has(id)) {
@@ -76,7 +71,10 @@ const CustomSnackbar: React.FC = () => {
           key={item.id}
           open
           onClose={handleClose(item.id)}
-          style={{ bottom: 24 + (items.length - 1 - index) * SNACKBAR_SPACING }}
+          style={{
+            bottom: 24 + (items.length - 1 - index) * SNACKBAR_SPACING,
+            transition: 'bottom 0.3s ease',
+          }}
         >
           <Alert
             onClose={handleClose(item.id)}

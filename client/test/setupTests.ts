@@ -8,7 +8,7 @@ Object.defineProperty(globalThis, 'TextEncoder', {
 });
 
 // jsdom does not expose Node.js's structuredClone; fake-indexeddb v6+ requires it.
- 
+
 if (typeof globalThis.structuredClone !== 'function') {
   globalThis.structuredClone = (val) =>
     JSON.parse(JSON.stringify(val)) as typeof val;

@@ -34,7 +34,7 @@ export const handleButtonClick = async (
   dispatch: PipelineHandlerDispatch,
 ) => {
   if (buttonText === 'Start') {
-    handleStart(
+    await handleStart(
       buttonText,
       setButtonText,
       digitalTwin,
@@ -42,7 +42,7 @@ export const handleButtonClick = async (
       dispatch,
     );
   } else {
-    handleStop(digitalTwin, setButtonText, dispatch);
+    await handleStop(digitalTwin, setButtonText, dispatch);
   }
 };
 

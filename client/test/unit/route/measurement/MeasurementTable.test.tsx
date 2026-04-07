@@ -49,6 +49,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -73,6 +75,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -91,6 +95,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -117,6 +123,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -145,6 +153,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -174,6 +184,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 
@@ -199,6 +211,8 @@ describe('MeasurementTable', () => {
         onDownloadTask={mockDownload}
         primaryRunnerTag="linux"
         secondaryRunnerTag="windows"
+        primaryDTName="dt-primary"
+        secondaryDTName="dt-secondary"
       />,
     );
 

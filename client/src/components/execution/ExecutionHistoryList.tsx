@@ -173,13 +173,6 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
 
   const handleDeleteConfirm = () => {
     if (executionToDelete) {
-      dispatch(
-        showSnackbar({
-          message: `Deleting entry from ${formatName(dtName)} execution history...`,
-          severity: 'warning',
-          icon: 'ClearIcon',
-        }),
-      );
       dispatch(removeExecution(executionToDelete));
     }
     setDeleteDialogOpen(false);

@@ -83,7 +83,7 @@ describe('measurement.runner', () => {
 
     expect(mockShowSnackbar).toHaveBeenCalledWith(
       'All measurements completed',
-      'success',
+      'info',
     );
   });
 
