@@ -10,6 +10,7 @@ coverage:
     patch:
       default:
         informational: true
+
 codecov:
   require_ci_to_pass: false
   notify:
@@ -17,13 +18,23 @@ codecov:
 
 component_management:
   individual_components:
-    # component_id is an identifier that should not be changed
-    # name is a display name, and can be changed freely
+    # this is an identifier that should not be changed
     - component_id: client_website
+      # this is a display name, and can be changed freely
       name: Website
       paths:
         - client/**
+    # this is an identifier that should not be changed
     - component_id: lib_ms
+      # this is a display name, and can be changed freely
       name: Lib Microservice
       paths:
         - servers/lib/**
+    - component_id: dtaas_services
+      name: dtaas-Services
+      paths:
+        - deploy/services/cli/**
+    - component_id: dtaas_cli
+      name: dtaas-CLI
+      paths:
+        - cli/**

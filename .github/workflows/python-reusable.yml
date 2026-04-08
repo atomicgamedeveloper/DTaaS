@@ -27,6 +27,11 @@ name: Python Reusable Workflow
         description: 'Path for artifact upload'
         required: true
         type: string
+      run-pyright:
+        description: 'Whether to run pyright type checking'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   python-tests:
@@ -46,8 +51,8 @@ jobs:
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      # v6.1.0
       - name: Setup Python
+        # v6.1.0
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: "3.12"
@@ -81,7 +86,6 @@ jobs:
           # Just ensure the service is running
           docker --version
 
-      # yamllint disable rule:line-length
       - name: Install Docker on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -97,9 +101,11 @@ jobs:
           # Install Docker Desktop
           choco install docker-desktop -y
           # Refresh PATH
-            $env:Path = [System.Environment]::GetEnvironmentVariable(`
-            "Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable(`
-            "Path","User")
+            $machinePath = [System.Environment]::GetEnvironmentVariable(`
+              "Path", "Machine")
+            $userPath = [System.Environment]::GetEnvironmentVariable(`
+              "Path", "User")
+            $env:Path = "$machinePath;$userPath"
           # Start Docker service
           Start-Service docker
       # yamllint enable rule:line-length
@@ -128,6 +134,10 @@ jobs:
             --rcfile=${GITHUB_WORKSPACE}/.pylintrc \
             --fail-under=9.0
 
+      - name: Run pyright type checking
+        if: inputs.run-pyright && matrix.os == 'ubuntu-latest'
+        run: poetry run pyright
+
       - name: Run pytest (with coverage, Linux only)
         if: matrix.os == 'ubuntu-latest'
         env:
@@ -135,7 +145,6 @@ jobs:
         run: |
           poetry run pytest --cov="$SRC_DIR" --cov-report=xml \
             --cov-report=term-missing
-
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'
         # v5
@@ -162,8 +171,8 @@ jobs:
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      # v6.1.0
       - name: Setup Python
+        # v6.1.0
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: "3.12"

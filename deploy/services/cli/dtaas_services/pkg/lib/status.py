@@ -1,6 +1,8 @@
 """Service status & inspection"""
 
+import os
 from typing import Tuple, Optional, Set
+from python_on_whales import Container
 from .utils import check_compose_file, DOCKER_OPERATION_EXCEPTIONS
 from ..formatter import RemovedServiceEntry
 from .docker_executor import DockerExecutor, handle_docker_not_running
@@ -8,6 +10,17 @@ from .docker_executor import DockerExecutor, handle_docker_not_running
 
 class Status(DockerExecutor):
     """Service status operations."""
+
+    def _get_project_name_for_hostname(self) -> str:
+        """Compute the docker compose project name for the current hostname.
+
+        Returns the project name derived from HOSTNAME, or empty string if not set.
+        This matches the logic in ServiceInitializer._setup_project_name.
+        """
+        hostname = os.environ.get("HOSTNAME", "")
+        if not hostname:
+            return ""
+        return hostname.lower().replace(".", "-").replace("_", "-")
 
     def _add_service_to_state_set(
         self, service_name: str, status: str, state_sets: dict
@@ -19,7 +32,7 @@ class Status(DockerExecutor):
             state_sets["restarting"].add(service_name)
 
     def _match_container_by_name(
-        self, container: object, container_map: dict, all_services: set
+        self, container: Container, container_map: dict, all_services: set
     ) -> bool:
         """Try to match container by name. Returns True if matched."""
         if container.name in all_services:
@@ -27,7 +40,7 @@ class Status(DockerExecutor):
             return True
         return False
 
-    def _container_compose_service_label(self, container) -> Optional[str]:
+    def _container_compose_service_label(self, container: Container) -> Optional[str]:
         """Get the compose service label from a container if it exists."""
         if hasattr(container, "config") and container.config.labels:
             return container.config.labels.get("com.docker.compose.service")
@@ -41,12 +54,12 @@ class Status(DockerExecutor):
             return set(service_list) & all_services
         return all_services
 
-    def _is_container_running(self, container) -> bool:
+    def _is_container_running(self, container: Container) -> bool:
         """Check if a container is running."""
         return hasattr(container, "state") and container.state.status == "running"
 
     def _match_container_by_label(
-        self, container: object, container_map: dict, all_services: set
+        self, container: Container, container_map: dict, all_services: set
     ) -> None:
         """Try to match container by service label and add to map if matched."""
         service_label = self._container_compose_service_label(container)
@@ -193,7 +206,7 @@ class Status(DockerExecutor):
             )
 
     def _process_single_container(
-        self, container: object, container_map: dict, all_services: set
+        self, container: Container, container_map: dict, all_services: set
     ) -> None:
         """Process a single container and add to map if it matches a service."""
         if not self._match_container_by_name(container, container_map, all_services):
@@ -207,7 +220,16 @@ class Status(DockerExecutor):
             Tuple of (Exception or None, dict mapping container name to container object)
         """
         try:
-            all_containers = self.docker.container.list(all=True)
+            project_name = self._get_project_name_for_hostname()
+            if project_name:
+                # Filter containers to only this project
+                all_containers = self.docker.container.list(
+                    all=True,
+                    filters={"label": f"com.docker.compose.project={project_name}"},
+                )
+            else:
+                # No hostname set, list all containers
+                all_containers = self.docker.container.list(all=True)
             err, all_services = self.get_all_service_names()
             if err is not None:
                 return err, {}

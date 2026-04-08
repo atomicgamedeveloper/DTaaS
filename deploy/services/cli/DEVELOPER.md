@@ -1,4 +1,4 @@
-# DTaaS Services CLI - Developer Guide
+# Developer Guide
 
 This guide covers development setup, testing, and contribution workflows
 for the DTaaS Services CLI package.
@@ -37,9 +37,31 @@ poetry run dtaas-services <command>
 ```text
 cli/
 ├── pyproject.toml          # Poetry configuration and dependencies
-├── build.py                # Build script to copy external files
 ├── README.md               # User documentation
 ├── DEVELOPER.md            # This file
+├── templates/              # Template source files (mirrors dtaas_services/templates/)
+│   ├── compose.services.yml
+│   ├── compose.thingsboard.yml
+│   ├── compose.gitlab.yml
+│   ├── certs/
+│   ├── config/
+│   │   ├── services.env.template
+│   │   ├── credentials.csv.template
+│   │   ├── mongod.conf.secure
+│   │   ├── influxdb/
+│   │   ├── rabbitmq/           # rabbitmq.conf + rabbitmq.enabled_plugins
+│   │   └── gitlab/
+│   ├── data/
+│   │   ├── grafana/
+│   │   ├── gitlab/
+│   │   ├── influxdb/
+│   │   ├── mongodb/
+│   │   ├── postgres/
+│   │   ├── rabbitmq/
+│   │   └── thingsboard/
+│   └── log/
+│       ├── gitlab/
+│       └── thingsboard/
 ├── dtaas_services/         # Main package directory
 │   ├── __init__.py
 │   ├── cmd.py              # CLI entry point (imports from commands/)
@@ -49,25 +71,13 @@ cli/
 │   │   ├── setup_ops.py    # Setup commands (generate-project, setup, install)
 │   │   ├── user_ops.py     # User management commands (user add, user reset-password)
 │   │   └── utility.py      # Command utilities
-│   ├── compose.services.secure.yml  # Main services Docker Compose configuration (copied by build.py)
-│   ├── compose.thingsboard.secure.yml  # ThingsBoard and PostgreSQL Docker Compose configuration (copied by build.py)
-│   ├── config/             # Configuration files (copied by build.py)
-│   │   ├── services.env.template
-│   │   ├── credentials.csv.template
-│   │   └── ...
-│   ├── data/               # Data directories structure (copied by build.py)
-│   │   ├── grafana/
-│   │   ├── influxdb/
-│   │   ├── mongodb/
-│   │   ├── postgres/
-│   │   ├── rabbitmq/
-│   │   └── thingsboard/
-│   ├── log/                # Log directory structure (copied by build.py)
+│   ├── templates/          # Package-bundled templates used by generate-project (committed)
 │   └── pkg/
 │       ├── __init__.py
 │       ├── config.py       # Configuration loader
 │       ├── cert.py         # TLS certificate operations
 │       ├── formatter.py    # Output formatting utilities
+│       ├── password_store.py # Tracks current service passwords in current.passwords.env
 │       ├── template.py     # Project structure and template file management
 │       ├── utils.py        # Shared utilities (Docker, file operations)
 │       ├── lib/            # Core service management
@@ -91,16 +101,27 @@ cli/
 │           │   ├── postgres.py     # Certificate setup and readiness waiting
 │           │   └── status.py       # Container health and state checking
 │           └── thingsboard/
+│          │    ├── __init__.py
+│          │    ├── activation.py    # Shared user activation utilities
+│          │    ├── customer_user.py # Customer and customer user creation
+│          │    ├── setup.py         # ThingsBoard setup orchestration
+│          │    ├── setup_credentials.py # Credential file processing for customer users
+│          │    ├── sysadmin.py      # Sysadmin authentication and password management
+│          │    ├── sysadmin_util.py  # Tenant management and sysadmin email operations
+│          │    ├── tenant_admin.py  # Tenant admin provisioning and password reset
+│          │    ├── checker.py       # Installation checking
+│          │    ├── permissions.py   # Certificate setup
+│          │    ├── tb_cert.py       # Certificate operations
+│          │    └── tb_utility.py
+│          └── gitlab/     # GitLab service module
 │               ├── __init__.py
-│               ├── activation.py    # Shared user activation utilities
-│               ├── customer_user.py # Customer and customer user creation
-│               ├── setup.py         # ThingsBoard setup orchestration
-│               ├── sysadmin.py      # System admin operations
-│               ├── tenant_admin.py  # Tenant admin provisioning and password reset
-│               ├── checker.py       # Installation checking
-│               ├── permissions.py   # Certificate setup
-│               ├── tb_cert.py       # Certificate operations
-│               └── tb_utility.py
+│               ├── _api.py         # python-gitlab client factory
+│               ├── app_token.py    # OAuth application creation, listing, and deletion
+│               ├── health.py       # Container health checking and readiness waiting
+│               ├── password.py     # Root password retrieval and reset
+│               ├── personal_token.py  # Personal Access Token creation via gitlab-rails
+│               ├── setup.py        # Full post-install orchestration
+│               └── users.py        # User creation from credentials.csv
 └── tests/
     ├── __init__.py
     ├── test_cert.py
@@ -129,26 +150,34 @@ cli/
     │   ├── test_rabbitmq.py
     │   ├── test_influxdb/
     │   │   ├── __init__.py
-    │   │   ├── test_utils.py           # Tests for _utils.py
-    │   │   ├── test_influxdb.py        # Tests for influxdb.py
-    │   │   └── test_user_management.py # Tests for user_management.py
+    │   │   ├── test_utils.py
+    │   │   ├── test_influxdb.py
+    │   │   └── test_user_management.py
     │   ├── test_postgres/
     │   │   ├── __init__.py
-    │   │   ├── test_postgres.py        # Tests for postgres.py
-    │   │   └── test_status.py          # Tests for status.py
-    │   └── test_thingsboard/
+    │   │   ├── test_postgres.py
+    │   │   └── test_status.py
+    │   ├── test_thingsboard/
+    │   │   ├── __init__.py
+    │   │   ├── test_permissions.py
+    │   │   ├── test_setup.py
+    │   │   ├── test_setup_credentials.py
+    │   │   ├── test_reset_password.py
+    │   │   ├── test_sysadmin.py
+    │   │   ├── test_sysadmin_util.py
+    │   │   ├── test_checker.py
+    │   │   ├── test_tb_cert.py
+    │   │   ├── test_tb_utility.py
+    │   │   └── test_tenant_admin.py
+    │   └── test_gitlab/
     │       ├── __init__.py
-    │       ├── test_activation.py
-    │       ├── test_customer_user.py
-    │       ├── test_permissions.py
+    │       ├── test_api.py
+    │       ├── test_app_token.py
+    │       ├── test_health.py
+    │       ├── test_password.py
+    │       ├── test_personal_token.py
     │       ├── test_setup.py
-    │       ├── test_reset_password.py
-    │       ├── test_sysadmin.py
-    │       ├── test_checker.py
-    │       ├── test_tb_cert.py
-    │       ├── test_tb_utility.py
-    │       ├── test_tenant_admin_compose.py
-    │       └── test_tenant_admin_user.py
+    │       └── test_users.py
     ├── config/             # Test configuration files (REQUIRED for system tests)
     │   ├── services.env    # Test environment variables
     │   └── credentials.csv # Test user credentials
@@ -156,8 +185,8 @@ cli/
         └── test_services_commands.py  # Real CLI workflow tests
 ```
 
-**Note:** Files marked as "copied by build.py" are generated during the build process
-from the parent `deploy/services/` directory and are gitignored.
+**Note:** `dtaas_services/templates/` is generated during the build process by copying
+`cli/templates/` and is gitignored. Edit source files in `cli/templates/` instead.
 
 ## Code Organization
 
@@ -180,6 +209,9 @@ The package uses a modular, three-layer architecture:
  directory detection
 * **`cert.py`**: TLS certificate copying and normalization
 * **`formatter.py`**: Output formatting utilities
+* **`password_store.py`**: Read/write access to `config/current.passwords.env`;
+  tracks the last-known password for each service account so that
+  `reset-password` can be run repeatedly
 * **`template.py`**: Project structure and template file management
 * **`utils.py`**: Shared utilities (Docker operations, credentials handling)
 * **`lib/`**: Core service management modules
@@ -193,27 +225,56 @@ The package uses a modular, three-layer architecture:
 #### Service Layer (`pkg/services/`)
 
 * **`mongodb.py`**: MongoDB certificate and permission setup
+
 * **`rabbitmq.py`**: RabbitMQ certificate, permission, and user management
+
 * **`influxdb/`**: InfluxDB service module
   * `_utils.py`: Shared Docker command wrapper (`execute_influxdb_command`)
   and JSON parsing
   * `influxdb.py`: Certificate permissions and setup orchestration
   * `user_management.py`: User, organisation, and bucket management
+
 * **`postgres/`**: PostgreSQL service module
   * `postgres.py`: Certificate setup and readiness waiting
   * `status.py`: Container health and state checking
+
 * **`thingsboard/`**: ThingsBoard modules
   * `activation.py`: Shared user activation utilities (token extraction,
     activation API calls)
   * `customer_user.py`: Customer and CUSTOMER_USER creation from credentials.csv
   * `setup.py`: Setup orchestration (creates tenant and admin, authenticates
-    as tenant admin, processes credentials file)
-  * `sysadmin.py`: System admin operations
+    as tenant admin, password reset)
+  * `setup_credentials.py`: Credential file processing (CSV parsing, customer
+    user creation from credentials.csv)
+  * `sysadmin.py`: Sysadmin authentication and password management
+  * `sysadmin_util.py`: Tenant management and sysadmin email operations
   * `tenant_admin.py`: Tenant admin user provisioning and password reset
   * `checker.py`: Installation validation
   * `permissions.py`: Certificate setup
   * `tb_cert.py`: Certificate operations
   * `tb_utility.py`: ThingsBoard utility helpers
+
+  * **`gitlab/`**: GitLab service module
+  * `_api.py`: `python-gitlab` client factory; builds an authenticated
+    `gitlab.Gitlab` instance from environment variables (`HOSTNAME`,
+    `GITLAB_PORT`, `SSL_VERIFY`)
+  * `app_token.py`: OAuth application creation, listing, and deletion
+    via `python-gitlab`; used during post-install to register the DTaaS client
+  * `health.py`: Container health polling and readiness waiting;
+    exports `is_gitlab_running()` for pre-flight checks and
+    `is_gitlab_healthy()` for non-blocking health status queries
+  * `password.py`: Reads the auto-generated root password from
+    `/etc/gitlab/initial_root_password` and resets it to
+    `GITLAB_ROOT_NEW_PASSWORD` via the API
+  * `personal_token.py`: Creates the initial root Personal Access Token
+    via `docker exec gitlab gitlab-rails runner`;
+    saves the result to `config/gitlab_tokens.json`
+  * `setup.py`: Post-install orchestration — checks health (non-blocking),
+    and when healthy: resets password, creates PAT, and registers
+    the OAuth application. Returns immediately with a status hint
+    if GitLab is still starting.
+  * `users.py`: Creates GitLab user accounts from `config/credentials.csv`
+    using `python-gitlab` and the root PAT
 
 ### Configuration Pattern
 
@@ -228,15 +289,20 @@ Docker Compose variables are properly configured without additional setup.
 
 #### Key Environment Variables
 
-* **`HOSTNAME`**: Used for certificate paths (`certs/<HOSTNAME>/`)
-and ThingsBoard API URL.
-  Must match certificate domain name for SSL to work.
+* **`HOSTNAME`**: Used for ThingsBoard API URL and GitLab `external_url`
+  configuration. Must match the certificate domain name for SSL to work.
+  TLS certificates are stored in the flat `certs/` directory (not
+  `certs/<HOSTNAME>/`).
 * **`SSL_VERIFY`**: Enable/disable SSL certificate verification for API calls
 (`True` or `False`).
   Set to `False` for development with self-signed certificates.
 * **`THINGSBOARD_PORT`**: ThingsBoard API port (default: 8080)
 * **`THINGSBOARD_SCHEME`**: Protocol for ThingsBoard API (`http` or `https`,
 default: `https`)
+* **`GITLAB_PORT`**: Port the local GitLab container listens on (default: `8090`);
+  must be set before any `gitlab/` module function is called
+* **`GITLAB_ROOT_NEW_PASSWORD`**: Strong password to apply to the GitLab `root`
+  admin account during post-install setup
 
 #### ThingsBoard SSL Configuration
 
@@ -291,6 +357,36 @@ Stops and removes Docker containers:
 * **Error Handling**: "Already exists" errors are handled gracefully and do not
   cause the operation to fail.
 
+#### GitLab Users
+
+* **Prerequisites**: `dtaas-services install -s gitlab` must be run to
+  complete post-install setup (health check → password reset → PAT creation).
+  The install command is non-blocking: if GitLab is still starting it returns
+  immediately with a status hint. Re-run the command once
+  `dtaas-services status -s gitlab` shows the container as healthy.
+  The PAT stored in `config/gitlab_tokens.json` is used for all subsequent API calls.
+* **Credentials File**: GitLab users are created from `config/credentials.csv`
+  (columns: `username`, `password`, `email`) using `dtaas-services user add -s gitlab`.
+* **Per-user PATs**: After creating each user, the CLI creates a Personal Access
+  Token for that user via the `python-gitlab` admin API with scopes `api`,
+  `read_repository`, `write_repository` and a 1-year expiry. Tokens for newly created
+  users are written to
+  `config/gitlab_user_tokens.json`.
+* **Root user**: The `root` admin account (user ID `1`) is created automatically
+  by GitLab Omnibus on first boot. DTaaS does not create it — it only reads the
+  auto-generated password and resets it to `GITLAB_ROOT_NEW_PASSWORD`.
+  During `dtaas-services install -s gitlab`, the root password is automatically
+  changed to `GITLAB_ROOT_NEW_PASSWORD` and recorded in
+  `config/current.passwords.env`.
+* **Password Reset**: The root password can be reset independently using
+  `dtaas-services user reset-password -s gitlab`, which reads
+  `GITLAB_ROOT_NEW_PASSWORD` from `config/services.env` and updates the account
+  via the `python-gitlab` library. The new password is saved to
+  `config/current.passwords.env` on success.
+* **Token Storage**: The Personal Access Token created during install is written
+  to `config/gitlab_tokens.json`. All user-management API calls load the PAT from
+  this file at runtime.
+
 #### ThingsBoard Users
 
 * **Install**: Running `dtaas-services install` only initializes the ThingsBoard
@@ -306,12 +402,30 @@ Stops and removes Docker containers:
   (tries default password `"tenant"` first, falls back to
   `TB_TENANT_ADMIN_PASSWORD`)
 * **Password Reset**: Running `dtaas-services user reset-password -s thingsboard`
-  resets both the sysadmin password (from default to `TB_SYSADMIN_NEW_PASSWORD`)
-  and the tenant admin password (from `"tenant"` to `TB_TENANT_ADMIN_PASSWORD`).
+  resets both the sysadmin password (to `TB_SYSADMIN_NEW_PASSWORD`)
+  and the tenant admin password (to `TB_TENANT_ADMIN_PASSWORD`).
+  Passwords can be reset as many times as needed — the current password
+  is tracked in `config/current.passwords.env` so subsequent resets
+  always know the correct current password.
+  If sysadmin password change fails, the tenant admin change still proceeds.
 * **SSL Configuration**: ThingsBoard API calls use TLS verification controlled by
   the `SSL_VERIFY` environment variable (from `services.env`) and use
   verification enabled by default. For self-signed certificates in non-production
   environments, set `SSL_VERIFY=false`.
+
+### Password Store (`config/current.passwords.env`)
+
+The file `config/current.passwords.env` tracks the current passwords for
+ThingsBoard sysadmin, ThingsBoard tenant admin, and GitLab root accounts.
+It is managed by `pkg/password_store.py`.
+
+* **Created** automatically on first write (by `save_password`); do not create
+  or edit this file manually.
+* **Updated** automatically whenever a password is changed via
+  `dtaas-services user reset-password` or during
+  `dtaas-services install -s gitlab`.
+* **Cleaned** when a service is removed via `dtaas-services remove`.
+  Only entries belonging to the removed service are deleted.
 
 ### Error Handling Pattern
 
@@ -454,7 +568,6 @@ You can ignore the system tests for quick testing
 
 ```bash
 poetry run pytest tests --ignore=tests\system_tests  --cov=dtaas_services --cov-report=html --cov-report=term-missing
-
 ```
 
 ### Test Coverage
@@ -469,10 +582,8 @@ Aim for high test coverage, especially for:
 
 ## Building the package
 
-Finally to build the pip package run
-
 ```bash
 poetry build
 ```
 
-Then you can find the whl package in cli\dist.
+The built wheel and sdist are written to `cli/dist/`.

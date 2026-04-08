@@ -3,18 +3,17 @@
 from pathlib import Path
 from unittest.mock import Mock
 from dtaas_services.pkg.lib.manager import ServiceActionResult
-from .conftest import _make_service, _make_simple_service
+from .conftest import (
+    _make_service,
+    _make_simple_service,
+    _setup_service_with_compose_not_found,
+)
 # pylint: disable=W0621, W0212
 
 
 def test_start_services_compose_file_not_found(patch_service_deps, mocker):
     """Test start_services when compose file does not exist"""
-    service, _, _ = _make_simple_service(
-        patch_service_deps,
-        base_dir=Path("/nonexistent/base"),
-        use_magic_mock=True,
-    )
-    mocker.patch.object(Path, "exists", return_value=False)
+    service = _setup_service_with_compose_not_found(patch_service_deps, mocker)
     err, _ = service.manage_services("start")
 
     assert err is not None
@@ -77,7 +76,7 @@ def test_prepare_all_services_to_start_error(patch_service_deps):
         skip_services=set()
     )
     assert to_start == []
-    assert skipped == []
+    assert not skipped
     assert not restarting
 
 
@@ -90,6 +89,7 @@ def test_filter_postgres_if_needed_stop_postgres_tb_running(patch_service_deps, 
     )
     _, err, msg = service._filter_postgres_if_needed("stop", ["postgres"])
     assert err is not None
+    assert msg is not None
     assert "thingsboard" in msg.lower()
 
 

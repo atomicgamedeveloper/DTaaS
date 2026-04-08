@@ -22,6 +22,26 @@ def get_credentials_path() -> Path:
     return base_dir / "config" / "credentials.csv"
 
 
+def is_container_running(container) -> bool:
+    """Check if a container has a running state."""
+    return hasattr(container, "state") and container.state.status == "running"
+
+
+def has_running_container(containers: list) -> bool:
+    """Check if any container in a list is running."""
+    return any(is_container_running(container) for container in containers)
+
+
+def get_container_health_status(container) -> str:
+    """Get a container health status when Docker exposes one."""
+    try:
+        if hasattr(container.state, "health") and container.state.health:
+            return container.state.health.status
+    except (AttributeError, TypeError):
+        return "unknown state"
+    return "unknown state"
+
+
 def _get_stderr_content(error_str: str) -> str:
     """Extract stderr content from Docker error string.
 
@@ -103,9 +123,7 @@ def execute_docker_command(
         if verbose:
             print(error_msg)
         return False, error_msg
-    if verbose:
-        print("Output:", result)
-    return True, result
+    return True, str(result) if result is not None else ""
 
 
 def _is_running_unix_system() -> bool:
@@ -116,7 +134,7 @@ def _is_running_unix_system() -> bool:
 def _is_current_user_root() -> bool:
     """Check if current user is root."""
     try:
-        return os.geteuid() == 0
+        return os.geteuid() == 0  # type: ignore[attr-defined]
     except AttributeError:
         return False
 
@@ -206,3 +224,29 @@ def create_users_from_credentials(
         if not success:
             return False, error_msg
     return True, ""
+
+
+def write_secret_file(path: Path, content: str, encoding: str = "utf-8") -> None:
+    """Write *content* to *path* with mode 0o600 (owner read/write only).
+
+    Creates parent directories as needed. Uses a temporary file and an
+    atomic rename so the destination is never visible with world-readable
+    permissions.
+
+    Args:
+        path: Destination file path.
+        content: Text content to write.
+        encoding: Text encoding (default UTF-8).
+
+    Raises:
+        OSError: If the write or rename fails.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    try:
+        tmp.write_text(content, encoding=encoding)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise

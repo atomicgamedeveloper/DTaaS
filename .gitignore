@@ -200,6 +200,7 @@ deploy/services/certs/*
 !deploy/services/certs/services.foo.com
 deploy/services/cli/certs/*
 deploy/services/cli/data
+deploy/services/cli/log
 
 # qlty config
 .qlty
@@ -218,14 +219,16 @@ deploy/services/cli/dtaas_services/config/
 deploy/services/cli/dtaas_services/data/
 deploy/services/cli/dtaas_services/certs/
 deploy/services/cli/dtaas_services/log/
-deploy/services/cli/dtaas_services/compose.services.secure.yml
-deploy/services/cli/dtaas_services/compose.thingsboard.secure.yml
+deploy/services/cli/dtaas_services/compose.services.yml
+deploy/services/cli/dtaas_services/compose.thingsboard.yml
+deploy/services/cli/dtaas_services/compose.gitlab.yml
+
 #ignore developer files
 docker/.env
 docker/conf.dev
 
 # Deploy services data
-deploy/services/data/*
+#deploy/services/data/*
 !deploy/services/data/.gitkeep
 deploy/services/data/*/*
 !deploy/services/data/*/.gitkeep
@@ -235,9 +238,18 @@ deploy/services/cli/log/thingsboard
 
 deploy/services/config/credentials.csv
 deploy/services/cli/config/credentials.csv
+# Generated secret files (defense-in-depth; also covered by the directory rule below)
+deploy/services/cli/config/gitlab_tokens.json
+deploy/services/cli/config/backup_gitlab_tokens.json
+deploy/services/cli/config/gitlab_user_tokens.json
+deploy/services/cli/config/password.env.current
+# GitLab runtime directories (Docker compose bind mounts)
+deploy/services/cli/config/gitlab/
+deploy/services/cli/log/gitlab/
 deploy/services/cli/config
-deploy/services/cli/compose.services.secure.yml
-deploy/services/cli/compose.thingsboard.secure.yml
+deploy/services/cli/compose.services.yml
+deploy/services/cli/compose.thingsboard.yml
+deploy/services/cli/compose.gitlab.yml
 
 deploy/services/cli/test-output
 
