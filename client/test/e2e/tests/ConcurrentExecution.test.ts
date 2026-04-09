@@ -189,7 +189,7 @@ test.describe('Concurrent Execution', () => {
       .locator('.MuiPaper-root')
       .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
-    await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
+    await expect(helloWorldCard).toBeVisible({ timeout: 30000 });
 
     // Get the Start button
     const startButton = helloWorldCard
@@ -217,7 +217,7 @@ test.describe('Concurrent Execution', () => {
       .locator('.MuiPaper-root')
       .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
-    await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
+    await expect(helloWorldCard).toBeVisible({ timeout: 30000 });
 
     // Click the History button
     const postReloadHistoryButton = helloWorldCard

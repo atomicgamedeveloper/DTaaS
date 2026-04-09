@@ -26,7 +26,9 @@ const SNACKBAR_DURATION = 6000;
 const CustomSnackbar: React.FC = () => {
   const dispatch = useDispatch();
   const items = useSelector((state: RootState) => state.snackbar.items);
-  const timeoutsReference = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const timeoutsReference = useRef<Map<number, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   const handleClose =
     (id: number) => (_event: React.SyntheticEvent | Event, reason?: string) => {

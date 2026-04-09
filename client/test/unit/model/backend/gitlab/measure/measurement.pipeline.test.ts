@@ -117,8 +117,7 @@ afterEach(() => {
   measurementState.shouldStopPipelines =
     originalMeasurementState.shouldStopPipelines;
   measurementState.activePipelines = originalMeasurementState.activePipelines;
-  measurementState.executionResults =
-    originalMeasurementState.executionResults;
+  measurementState.executionResults = originalMeasurementState.executionResults;
   measurementState.currentMeasurementPromise =
     originalMeasurementState.currentMeasurementPromise;
 });

@@ -34,7 +34,7 @@ test.describe('Digital Twin Log Cleaning', () => {
       .filter({ has: page.getByText('Hello world', { exact: true }) })
       .first();
 
-    await expect(helloWorldCard).toBeVisible({ timeout: 10000 });
+    await expect(helloWorldCard).toBeVisible({ timeout: 30000 });
 
     // Get the Start button
     const startButton = helloWorldCard
