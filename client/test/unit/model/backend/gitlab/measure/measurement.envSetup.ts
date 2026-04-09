@@ -1,4 +1,3 @@
-// Mutable state shape matching measurementState from measurement.execution.
 export type MockMeasurementState = {
   shouldStopPipelines: boolean;
   activePipelines: unknown[];
@@ -12,8 +11,6 @@ export type MockMeasurementState = {
   componentSetters: Record<string, (...args: unknown[]) => unknown> | null;
 };
 
-// Mirrors measurement.execution.wrapSetters. Delegates to state + componentSetters.
-// persistResults is omitted because tests mock sessionStorage separately.
 export function createSetterWrappers(state: MockMeasurementState) {
   return {
     setIsRunning: (v: boolean) => {
@@ -49,9 +46,6 @@ function createMockState(): MockMeasurementState {
   };
 }
 
-// Factory for creating the jest.mock return value for measurement.execution.
-// Uses jest.requireActual for static exports (DEFAULT_TASK, DEFAULT_CONFIG)
-// so the mock stays in sync with the real module's data shapes.
 export function createMeasurementExecutionMock(
   extras: Record<string, unknown> = {},
 ) {
@@ -83,7 +77,6 @@ export function createMeasurementExecutionMock(
       },
     ),
     wrapSetters: () => createSetterWrappers(bs),
-    DEFAULT_CONFIG: actual.DEFAULT_CONFIG,
     getTasks: () => tasksArray,
     measurementConfig: {
       trials: 3,

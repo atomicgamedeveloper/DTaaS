@@ -16,18 +16,18 @@ import {
   logSuccess,
 } from 'model/backend/util/digitalTwinUtils';
 
-let _dbService: IExecutionHistory | null = null;
+let dbService: IExecutionHistory | null = null;
 
 export function setPipelineExecutionDB(service: IExecutionHistory): void {
-  _dbService = service;
+  dbService = service;
 }
 
 function getDB(): IExecutionHistory {
-  if (!_dbService)
+  if (!dbService)
     throw new Error(
       'Pipeline execution DB not initialized. Call setPipelineExecutionDB() first.',
     );
-  return _dbService;
+  return dbService;
 }
 
 export async function executeDT(

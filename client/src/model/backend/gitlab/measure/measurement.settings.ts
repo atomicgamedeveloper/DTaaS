@@ -1,17 +1,3 @@
-/**
- * Store wiring, frozen settings snapshot, and config accessors.
- *
- * Reads persisted settings from store/settings.slice.ts and exposes a
- * Configuration object consumed by measurement.execution.ts and
- * measurement.pipeline.ts.
- */
-import {
-  GROUP_NAME,
-  DT_DIRECTORY,
-  COMMON_LIBRARY_PROJECT_NAME,
-  RUNNER_TAG,
-  BRANCH_NAME,
-} from 'model/backend/gitlab/digitalTwinConfig/constants';
 import type { MeasurementStore, Configuration } from './measurement.types';
 
 export type { MeasurementStore } from './measurement.types';
@@ -30,18 +16,6 @@ export function getStore(): MeasurementStore {
   return _store;
 }
 
-/** @deprecated Use getDefaultConfig() for current Redux values */
-export const DEFAULT_CONFIG: Configuration = {
-  'Branch name': BRANCH_NAME,
-  'Group name': GROUP_NAME,
-  'Common Library project name': COMMON_LIBRARY_PROJECT_NAME,
-  'DT directory': DT_DIRECTORY,
-  'Runner tag': RUNNER_TAG,
-};
-
-// Snapshot of settings captured when the measurement starts.
-// While non-null, measurementConfig and getDefaultConfig() return these frozen values
-// so that mid-measurement settings changes don't affect running executions.
 let frozenSettings: {
   RUNNER_TAG: string;
   BRANCH_NAME: string;
@@ -103,7 +77,6 @@ export function getDefaultConfig(): Configuration {
   };
 }
 
-/** Returns the captured runner tags so the caller can store them on measurementState. */
 export function saveOriginalSettings(): {
   primaryRunnerTag: string;
   secondaryRunnerTag: string;
@@ -130,7 +103,6 @@ export function saveOriginalSettings(): {
 export function restoreOriginalSettings(): void {
   if (frozenSettings === null) return;
   const current = getStore().getState();
-  // Only restore fields the user hasn't changed since the measurement started.
   if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
     getStore().restoreRunnerTag(frozenSettings.RUNNER_TAG);
   }

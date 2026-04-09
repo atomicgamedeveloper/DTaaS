@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import test from 'test/e2e/setup/fixtures';
+import DEBOUNCE_TIME from 'test/e2e/tests/constants';
 
 // Increase the test timeout to 5 minutes
 test.setTimeout(300000);
@@ -41,8 +42,8 @@ test.describe('Digital Twin Log Cleaning', () => {
       .first();
     await expect(startButton).toBeVisible({ timeout: 10000 });
 
-    // Start the execution (with delay to simulate debounce)
-    await page.waitForTimeout(250);
+    // Enforce debounce between requests to avoid overwhelming GitLab
+    await page.waitForTimeout(DEBOUNCE_TIME);
     await startButton.click();
 
     // Wait for debounce period plus a bit for execution to start

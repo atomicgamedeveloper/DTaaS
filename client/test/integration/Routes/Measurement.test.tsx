@@ -66,7 +66,6 @@ describe('Measurement Page', () => {
   });
 
   it('shows all tasks with NOT_STARTED status initially', async () => {
-    // NOT_STARTED status is displayed as '—' in the UI
     const statusCells = screen.getAllByRole('cell');
     const dashStatuses = statusCells.filter((cell) =>
       cell.textContent?.includes('—'),

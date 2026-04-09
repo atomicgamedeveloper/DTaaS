@@ -47,6 +47,10 @@ your account settings page.
 - **Secondary Digital Twin Name**: The Digital Twin used as the second DT
   in multi-DT measurement tasks (default: `mass-spring-damper`).
 
+Note: the Primary and Secondary Digital Twin dropdowns need to load the
+available Digital Twins the first time you visit the settings page in a
+session. They will appear disabled until loading completes.
+
   ![Showcase of the measurement specific settings](./images/measurement-settings.png)
 
 ### Controls
@@ -54,6 +58,8 @@ your account settings page.
 - **Start**: Begin the measurement suite from the first task
 - **Stop**: Cancel all running executions (shows confirmation dialog)
 - **Restart**: Discard all current results and start fresh (shows confirmation dialog)
+- **Export**: Download all measurement results as a JSON file
+  (available when results exist)
 - **Purge**: Clear all stored measurement data from the database
 
 ## Understanding Results
@@ -85,6 +91,9 @@ The measurement results table displays the following columns:
 | Trials | Visual cards showing each trial's execution details and status. Each trial represents one iteration of the task |
 | Data | Download button to export individual task results as JSON |
 
+Each row in the table can be clicked to expand and show additional details
+about the task's trial executions.
+
 ## Data Storage
 
 Measurement data is stored separately from regular execution history
@@ -103,10 +112,13 @@ Data column to export that specific task's measurements as JSON.
 
 ### Full Results Download
 
-After all tasks complete, a "Download JSON" link appears at the bottom
-of the page to export the complete measurement results.
+Use the **Export** button in the controls toolbar to download all
+measurement results as JSON. This button is available whenever results exist.
 
-Both links shown below, from a completed measurement run.
+After all tasks complete, an additional **Download JSON** link appears
+at the bottom of the page in the completion summary.
+
+Both options shown below, from a completed measurement run.
 
 ![Highlighted download links for measurement data](./images/measurement-download-options.png)
 

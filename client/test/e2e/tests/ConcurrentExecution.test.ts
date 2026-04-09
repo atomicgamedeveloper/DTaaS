@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import test from 'test/e2e/setup/fixtures';
-import { DEBOUNCE_TIME } from 'model/backend/gitlab/digitalTwinConfig/constants';
+import DEBOUNCE_TIME from 'test/e2e/tests/constants';
 
 // Increase the test timeout to 5 minutes
 test.setTimeout(300000);
@@ -42,7 +42,7 @@ test.describe('Concurrent Execution', () => {
       .first();
     await expect(startButton).toBeVisible();
 
-    // Start the first execution (with delay to simulate debounce)
+    // Enforce debounce between requests to avoid overwhelming GitLab
     await page.waitForTimeout(DEBOUNCE_TIME);
     await startButton.click();
 
@@ -196,7 +196,7 @@ test.describe('Concurrent Execution', () => {
       .getByRole('button', { name: 'Start' })
       .first();
 
-    // Start an execution (with delay to simulate debounce)
+    // Enforce debounce between requests to avoid overwhelming GitLab
     await page.waitForTimeout(DEBOUNCE_TIME);
     await startButton.click();
 

@@ -113,7 +113,6 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   );
   return {
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
-    DEFAULT_CONFIG: {},
     DEFAULT_MEASUREMENT: actual.DEFAULT_MEASUREMENT,
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),

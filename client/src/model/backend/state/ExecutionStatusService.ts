@@ -6,6 +6,9 @@ import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import {
   mapGitlabStatusToExecutionStatus,
   isFinishedStatus,
+  isFailureStatus,
+  isCanceledStatus,
+  isSuccessStatus,
 } from 'model/backend/gitlab/execution/statusChecking';
 
 class ExecutionStatusService {
@@ -35,8 +38,8 @@ class ExecutionStatusService {
               execution.pipelineId,
             );
           if (
-            parentPipelineStatus === 'failed' ||
-            parentPipelineStatus === 'canceled'
+            isFailureStatus(parentPipelineStatus) ||
+            isCanceledStatus(parentPipelineStatus)
           ) {
             const updatedExecution = {
               ...execution,
@@ -46,7 +49,7 @@ class ExecutionStatusService {
             updatedExecutions.push(updatedExecution);
             return;
           }
-          if (parentPipelineStatus !== 'success') {
+          if (!isSuccessStatus(parentPipelineStatus)) {
             return;
           }
           const childPipelineId = execution.pipelineId + 1;

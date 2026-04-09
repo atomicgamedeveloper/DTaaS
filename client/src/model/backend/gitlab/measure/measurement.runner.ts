@@ -1,4 +1,3 @@
-// Top-level measurement orchestrator (runs tasks across trials, updates UI, persists results)
 /* eslint-disable no-await-in-loop */
 import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import {
@@ -123,7 +122,7 @@ async function executeTask(
       };
       await measurementDB.add(taskToSave as TimedTask);
     } catch {
-      // ignore storage errors
+      // ignore
     }
   }
 }
@@ -138,8 +137,6 @@ export async function startMeasurement(
 
   isRunningRef.current = true;
 
-  // Hook up the page's update functions and wrap them so every change
-  // is kept in memory even if the user navigates away mid-measurement
   attachSetters(setters);
   const proxy = wrapSetters();
 
@@ -179,7 +176,6 @@ export async function startMeasurement(
 export async function stopAllPipelines(): Promise<void> {
   measurementState.shouldStopPipelines = true;
   restoreOriginalSettings();
-  // Save the stop to memory and update the screen if the page is open
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
   await cancelActivePipelines();

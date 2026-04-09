@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Measurement from 'route/measurement/Measurement';
 import { setupMeasurementComponentTest } from './measurement.testSetup';
@@ -159,48 +159,104 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   };
 });
 
-describe('Measurement', () => {
+let mockDispatch: jest.Mock;
+
+describe('Measurement - dispatch and interactions', () => {
   beforeEach(() => {
-    setupMeasurementComponentTest();
+    ({ mockDispatch } = setupMeasurementComponentTest());
   });
 
   const renderMeasurement = () => render(<Measurement />);
 
-  it('renders the Measurement page with layout and initial state', () => {
+  it('calls startMeasurement when Start is clicked', async () => {
     renderMeasurement();
-    expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
-    expect(screen.getByText('Digital Twin Measurement')).toBeInTheDocument();
-    expect(screen.getByTestId('is-running')).toHaveTextContent('stopped');
-    expect(screen.getByTestId('has-started')).toHaveTextContent('not-started');
-    expect(screen.getByTestId('iterations')).toHaveTextContent('3');
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(mockStartMeasurement).toHaveBeenCalled();
   });
 
-  it('renders the measurement table with tasks', () => {
+  it('calls restartMeasurement when Restart is clicked', async () => {
     renderMeasurement();
-    expect(screen.getByText('Task 1')).toBeInTheDocument();
-    expect(screen.getByText('Task 2')).toBeInTheDocument();
-    expect(screen.getByTestId('measurement-table')).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(mockRestartMeasurement).toHaveBeenCalled();
   });
 
-  it('renders task status and completion summary correctly', () => {
+  it('calls stopAllPipelines when Stop is clicked', async () => {
     renderMeasurement();
-    expect(screen.getByTestId('completion-summary')).toBeInTheDocument();
-    expect(screen.getByText('Tasks: 2')).toBeInTheDocument();
-    expect(screen.getByTestId('completed-tasks')).toHaveTextContent('0');
-    expect(screen.getByTestId('total-tasks')).toHaveTextContent('2');
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('stop-btn'));
+    });
+    expect(mockStopAllPipelines).toHaveBeenCalled();
   });
 
-  it('adds and removes beforeunload event listener', () => {
-    const addSpy = jest.spyOn(globalThis, 'addEventListener');
-    const removeSpy = jest.spyOn(globalThis, 'removeEventListener');
-    const { unmount } = renderMeasurement();
-    expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
-    unmount();
-    expect(removeSpy).toHaveBeenCalledWith(
-      'beforeunload',
-      expect.any(Function),
+  it('purges data when Purge is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('purge-btn'));
+    });
+    expect(mockPurgeMeasurementData).toHaveBeenCalled();
+  });
+
+  it('calls downloadTaskResultJson when download is triggered', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getAllByText('Download')[0]);
+    });
+    expect(mockDownloadTaskResultJson).toHaveBeenCalled();
+  });
+
+  it('dispatches start snackbar when Start is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Measurement started' }),
+      }),
     );
-    addSpy.mockRestore();
-    removeSpy.mockRestore();
+  });
+
+  it('dispatches restart snackbar when Restart is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Measurement restarted' }),
+      }),
+    );
+  });
+
+  it('dispatches stop snackbar when Stop is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('stop-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          message: 'Stopping measurement...',
+        }),
+      }),
+    );
+  });
+
+  it('dispatches purge snackbar when Purge is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('purge-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          message: 'Measurement data purged',
+        }),
+      }),
+    );
   });
 });

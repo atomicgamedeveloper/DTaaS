@@ -35,7 +35,6 @@ export type {
 export {
   setMeasurementStore,
   getStore,
-  DEFAULT_CONFIG,
   measurementConfig,
   getDefaultConfig,
 } from './measurement.settings';

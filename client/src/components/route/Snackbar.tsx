@@ -7,14 +7,14 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { RootState } from 'store/store';
 import { hideSnackbar, SnackbarItem } from 'store/snackbar.slice';
 
-const ICON_REGISTRY: Record<string, React.ElementType> = {
+const ICONS: Record<string, React.ElementType> = {
   ClearIcon,
   PlayArrowIcon,
 };
 
 const resolveIcon = (name: string | undefined) => {
   if (!name) return undefined;
-  const Component = ICON_REGISTRY[name];
+  const Component = ICONS[name];
   return Component
     ? createElement(Component, { fontSize: 'inherit' })
     : undefined;
@@ -26,33 +26,33 @@ const SNACKBAR_DURATION = 6000;
 const CustomSnackbar: React.FC = () => {
   const dispatch = useDispatch();
   const items = useSelector((state: RootState) => state.snackbar.items);
-  const timeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const timeoutsReference = useRef<Map<number, NodeJS.Timeout>>(new Map());
 
   const handleClose =
     (id: number) => (_event: React.SyntheticEvent | Event, reason?: string) => {
       if (reason === 'clickaway') {
         return;
       }
-      const timeout = timeoutsRef.current.get(id);
+      const timeout = timeoutsReference.current.get(id);
       if (timeout) {
         clearTimeout(timeout);
-        timeoutsRef.current.delete(id);
+        timeoutsReference.current.delete(id);
       }
       dispatch(hideSnackbar(id));
     };
 
   useEffect(() => {
     items.forEach((item) => {
-      if (!timeoutsRef.current.has(item.id)) {
+      if (!timeoutsReference.current.has(item.id)) {
         const timeout = setTimeout(() => {
-          timeoutsRef.current.delete(item.id);
+          timeoutsReference.current.delete(item.id);
           dispatch(hideSnackbar(item.id));
         }, SNACKBAR_DURATION);
-        timeoutsRef.current.set(item.id, timeout);
+        timeoutsReference.current.set(item.id, timeout);
       }
     });
 
-    const timeouts = timeoutsRef.current;
+    const timeouts = timeoutsReference.current;
     return () => {
       const currentIds = new Set(items.map((item) => item.id));
       for (const [id, timeout] of timeouts.entries()) {
