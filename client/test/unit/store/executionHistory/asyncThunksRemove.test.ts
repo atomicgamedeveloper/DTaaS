@@ -6,7 +6,7 @@ import {
   checkRunningExecutions,
 } from 'model/backend/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { setupStore } from './testSetup';
+import { setupStore, createMockEntry } from './testSetup';
 
 describe('executionHistory slice - async thunks (remove & clear)', () => {
   let store: ReturnType<typeof setupStore>['store'];
@@ -18,22 +18,8 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should handle clearExecutionHistoryForDT success', async () => {
     const entries = [
-      {
-        id: '1',
-        dtName: 'test-dt',
-        pipelineId: 123,
-        timestamp: Date.now(),
-        status: ExecutionStatus.COMPLETED,
-        jobLogs: [],
-      },
-      {
-        id: '2',
-        dtName: 'other-dt',
-        pipelineId: 456,
-        timestamp: Date.now(),
-        status: ExecutionStatus.RUNNING,
-        jobLogs: [],
-      },
+      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+      createMockEntry('2', 'other-dt', 456, ExecutionStatus.RUNNING),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -52,22 +38,8 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should not clear active (running) pipelines', async () => {
     const entries = [
-      {
-        id: '1',
-        dtName: 'test-dt',
-        pipelineId: 123,
-        timestamp: Date.now(),
-        status: ExecutionStatus.COMPLETED,
-        jobLogs: [],
-      },
-      {
-        id: '2',
-        dtName: 'test-dt',
-        pipelineId: 456,
-        timestamp: Date.now(),
-        status: ExecutionStatus.RUNNING,
-        jobLogs: [],
-      },
+      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+      createMockEntry('2', 'test-dt', 456, ExecutionStatus.RUNNING),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -87,14 +59,7 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should not delete anything when all entries are running', async () => {
     const entries = [
-      {
-        id: '1',
-        dtName: 'test-dt',
-        pipelineId: 123,
-        timestamp: Date.now(),
-        status: ExecutionStatus.RUNNING,
-        jobLogs: [],
-      },
+      createMockEntry('1', 'test-dt', 123, ExecutionStatus.RUNNING),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -110,14 +75,7 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should handle checkRunningExecutions with no running executions', async () => {
     const entries = [
-      {
-        id: '1',
-        dtName: 'test-dt',
-        pipelineId: 123,
-        timestamp: Date.now(),
-        status: ExecutionStatus.COMPLETED,
-        jobLogs: [],
-      },
+      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -131,16 +89,11 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
   });
 
   it('should handle removeExecution success', async () => {
-    const entry = {
-      id: '1',
-      dtName: 'test-dt',
-      pipelineId: 123,
-      timestamp: Date.now(),
-      status: ExecutionStatus.COMPLETED,
-      jobLogs: [],
-    };
-
-    store.dispatch(addExecutionHistoryEntry(entry));
+    store.dispatch(
+      addExecutionHistoryEntry(
+        createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+      ),
+    );
     mockStorageService.delete.mockResolvedValue(undefined);
 
     await (store.dispatch as (action: unknown) => Promise<void>)(
@@ -154,16 +107,11 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
   });
 
   it('should handle removeExecution error', async () => {
-    const entry = {
-      id: '1',
-      dtName: 'test-dt',
-      pipelineId: 123,
-      timestamp: Date.now(),
-      status: ExecutionStatus.COMPLETED,
-      jobLogs: [],
-    };
-
-    store.dispatch(addExecutionHistoryEntry(entry));
+    store.dispatch(
+      addExecutionHistoryEntry(
+        createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+      ),
+    );
     const errorMessage = 'Delete failed';
     mockStorageService.delete.mockRejectedValue(new Error(errorMessage));
 

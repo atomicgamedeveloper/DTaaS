@@ -115,9 +115,6 @@ Data column to export that specific task's measurements as JSON.
 Use the **Export** button in the controls toolbar to download all
 measurement results as JSON. This button is available whenever results exist.
 
-After all tasks complete, an additional **Download JSON** link appears
-at the bottom of the page in the completion summary.
-
 Both options shown below, from a completed measurement run.
 
 ![Highlighted download links for measurement data](./images/measurement-download-options.png)

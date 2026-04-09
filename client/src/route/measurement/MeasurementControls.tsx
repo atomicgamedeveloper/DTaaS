@@ -193,9 +193,9 @@ export function CompletionSummary({
         <Typography variant="body2">
           Completed in {totalTime.toFixed(1)}s
         </Typography>
-        <Button size="small" onClick={() => downloadResultsJson(results)}>
-          Download JSON
-        </Button>
+        <Typography variant="body2">
+          Measurement data generation complete
+        </Typography>
       </Box>
     );
   }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Measurement from 'route/measurement/Measurement';
 import { setupMeasurementComponentTest } from './measurement.testSetup';
@@ -159,12 +159,14 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   };
 });
 
+let mockDispatch: jest.Mock;
+
+const renderMeasurement = () => render(<Measurement />);
+
 describe('Measurement', () => {
   beforeEach(() => {
-    setupMeasurementComponentTest();
+    ({ mockDispatch } = setupMeasurementComponentTest());
   });
-
-  const renderMeasurement = () => render(<Measurement />);
 
   it('renders the Measurement page with layout and initial state', () => {
     renderMeasurement();
@@ -202,5 +204,103 @@ describe('Measurement', () => {
     );
     addSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+});
+
+describe('Measurement - dispatch and interactions', () => {
+  beforeEach(() => {
+    ({ mockDispatch } = setupMeasurementComponentTest());
+  });
+
+  it('calls startMeasurement when Start is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(mockStartMeasurement).toHaveBeenCalled();
+  });
+
+  it('calls restartMeasurement when Restart is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(mockRestartMeasurement).toHaveBeenCalled();
+  });
+
+  it('calls stopAllPipelines when Stop is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('stop-btn'));
+    });
+    expect(mockStopAllPipelines).toHaveBeenCalled();
+  });
+
+  it('purges data when Purge is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('purge-btn'));
+    });
+    expect(mockPurgeMeasurementData).toHaveBeenCalled();
+  });
+
+  it('calls downloadTaskResultJson when download is triggered', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getAllByText('Download')[0]);
+    });
+    expect(mockDownloadTaskResultJson).toHaveBeenCalled();
+  });
+
+  it('dispatches start snackbar when Start is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('start-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Measurement started' }),
+      }),
+    );
+  });
+
+  it('dispatches restart snackbar when Restart is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('restart-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ message: 'Measurement restarted' }),
+      }),
+    );
+  });
+
+  it('dispatches stop snackbar when Stop is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('stop-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          message: 'Stopping measurement...',
+        }),
+      }),
+    );
+  });
+
+  it('dispatches purge snackbar when Purge is clicked', async () => {
+    renderMeasurement();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('purge-btn'));
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          message: 'Measurement data purged',
+        }),
+      }),
+    );
   });
 });

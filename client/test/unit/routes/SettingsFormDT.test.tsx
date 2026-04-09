@@ -9,8 +9,8 @@ import {
   setPrimaryDTName,
   setSecondaryDTName,
 } from 'store/settings.slice';
-import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
+import { setupSettingsFormTest } from './settingsForm.testSetup';
 
 jest.mock('routes', () => ({ __esModule: true, default: [] }));
 
@@ -26,28 +26,14 @@ jest.mock('react-redux', () => ({
 
 jest.useFakeTimers();
 
-const mockedUseSelector = useSelector as unknown as jest.Mock;
-const mockedUseDispatch = useDispatch as unknown as jest.Mock;
-
 describe('SettingsForm - measurement and DT fields', () => {
-  const mockDispatch = jest.fn();
+  let mockDispatch: jest.Mock;
+  let mockedUseSelector: jest.Mock;
 
   afterEach(cleanup);
 
   beforeEach(() => {
-    mockDispatch.mockClear();
-    mockedUseSelector.mockImplementation((selector) =>
-      selector({
-        settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT },
-        digitalTwin: {
-          digitalTwin: {
-            [DEFAULT_MEASUREMENT.primaryDTName]: {},
-            [DEFAULT_MEASUREMENT.secondaryDTName]: {},
-          },
-        },
-      }),
-    );
-    mockedUseDispatch.mockReturnValue(mockDispatch);
+    ({ mockDispatch, mockedUseSelector } = setupSettingsFormTest());
     renderWithRouter(<SettingsForm />, { route: '/private' });
   });
 

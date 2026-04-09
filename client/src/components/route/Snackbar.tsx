@@ -26,7 +26,7 @@ const SNACKBAR_DURATION = 6000;
 const CustomSnackbar: React.FC = () => {
   const dispatch = useDispatch();
   const items = useSelector((state: RootState) => state.snackbar.items);
-  const timeoutsReference = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const timeoutsReference = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const handleClose =
     (id: number) => (_event: React.SyntheticEvent | Event, reason?: string) => {
@@ -40,6 +40,15 @@ const CustomSnackbar: React.FC = () => {
       }
       dispatch(hideSnackbar(id));
     };
+
+  useEffect(() => {
+    const timeouts = timeoutsReference.current;
+    return () => {
+      for (const timeout of timeouts.values()) {
+        clearTimeout(timeout);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     items.forEach((item) => {

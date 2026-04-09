@@ -18,23 +18,24 @@ const createStore = () =>
       }),
   });
 
+function renderSnackbar(store: ReturnType<typeof createStore>) {
+  act(() => {
+    render(
+      <Provider store={store}>
+        <CustomSnackbar />
+      </Provider>,
+    );
+  });
+}
+
 describe('CustomSnackbar Integration Test', () => {
   it('renders the Snackbar with the correct message', async () => {
     const store = createStore();
     store.dispatch(
-      showSnackbar({
-        message: 'test message',
-        severity: 'success',
-      }),
+      showSnackbar({ message: 'test message', severity: 'success' }),
     );
 
-    act(() => {
-      render(
-        <Provider store={store}>
-          <CustomSnackbar />
-        </Provider>,
-      );
-    });
+    renderSnackbar(store);
 
     expect(screen.getByText('test message')).toBeInTheDocument();
   });
@@ -42,19 +43,10 @@ describe('CustomSnackbar Integration Test', () => {
   it('handles the close event', async () => {
     const store = createStore();
     store.dispatch(
-      showSnackbar({
-        message: 'test message',
-        severity: 'success',
-      }),
+      showSnackbar({ message: 'test message', severity: 'success' }),
     );
 
-    act(() => {
-      render(
-        <Provider store={store}>
-          <CustomSnackbar />
-        </Provider>,
-      );
-    });
+    renderSnackbar(store);
 
     act(() => {
       jest.advanceTimersByTime(6000);
@@ -70,13 +62,7 @@ describe('CustomSnackbar Integration Test', () => {
     store.dispatch(showSnackbar({ message: 'Second', severity: 'error' }));
     store.dispatch(showSnackbar({ message: 'Third', severity: 'warning' }));
 
-    act(() => {
-      render(
-        <Provider store={store}>
-          <CustomSnackbar />
-        </Provider>,
-      );
-    });
+    renderSnackbar(store);
 
     expect(screen.getByText('First')).toBeInTheDocument();
     expect(screen.getByText('Second')).toBeInTheDocument();
@@ -92,13 +78,7 @@ describe('CustomSnackbar Integration Test', () => {
     store.dispatch(showSnackbar({ message: 'Third', severity: 'warning' }));
     store.dispatch(showSnackbar({ message: 'Fourth', severity: 'info' }));
 
-    act(() => {
-      render(
-        <Provider store={store}>
-          <CustomSnackbar />
-        </Provider>,
-      );
-    });
+    renderSnackbar(store);
 
     expect(screen.queryByText('First')).not.toBeInTheDocument();
     expect(screen.getByText('Second')).toBeInTheDocument();
