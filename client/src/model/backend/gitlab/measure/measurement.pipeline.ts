@@ -10,6 +10,7 @@ import {
 } from 'model/backend/gitlab/execution/pipelineCore';
 import { pollPipelineStatus } from 'model/backend/gitlab/execution/pipelinePolling';
 import { isFailureStatus } from 'model/backend/gitlab/execution/statusChecking';
+import { BETWEEN_TRIAL_DELAY } from 'model/backend/gitlab/measure/constants';
 import {
   Configuration,
   ExecutionResult,
@@ -222,7 +223,7 @@ export async function runTrials(
     trialNumber += 1
   ) {
     if (measurementState.shouldStopPipelines) break;
-    if (trialNumber > 0) await delay(250);
+    if (trialNumber > 0) await delay(BETWEEN_TRIAL_DELAY);
 
     measurementState.executionResults = [];
     measurementState.activePipelines = [];
@@ -232,8 +233,10 @@ export async function runTrials(
 
     try {
       const results: ExecutionResult[] = [];
-      for (const { dtName, config } of executions) {
+      for (let i = 0; i < executions.length; i += 1) {
         if (measurementState.shouldStopPipelines) break;
+        if (i > 0) await delay(BETWEEN_TRIAL_DELAY);
+        const { dtName, config } = executions[i];
         results.push(await runDigitalTwin(dtName, config));
       }
       trials.push(createTrialFromExecution(trialStart, results));
