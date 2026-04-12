@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, DEFAULT_MEASUREMENT } from 'store/settings.slice';
 import { useSelector, useDispatch } from 'react-redux';
 
-export function setupSettingsFormTest() {
+export default function setupSettingsFormTest() {
   const mockDispatch = jest.fn();
   const mockedUseSelector = useSelector as unknown as jest.Mock;
   const mockedUseDispatch = useDispatch as unknown as jest.Mock;

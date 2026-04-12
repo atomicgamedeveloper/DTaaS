@@ -10,7 +10,7 @@ import {
   setSecondaryDTName,
 } from 'store/settings.slice';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
-import { setupSettingsFormTest } from './settingsForm.testSetup';
+import setupSettingsFormTest from 'test/unit/routes/settingsForm.testSetup';
 
 jest.mock('routes', () => ({ __esModule: true, default: [] }));
 

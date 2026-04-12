@@ -68,6 +68,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
+      testIgnore: /ConcurrentExecution|DigitalTwins/,
       dependencies: ['setup'],
     },
     {
@@ -77,8 +78,29 @@ export default defineConfig({
         // Use prepared auth state.
         storageState: 'playwright/.auth/user.json',
       },
+      testIgnore: /ConcurrentExecution|DigitalTwins/,
       timeout: 2 * 60 * 1000,
       dependencies: ['setup'],
+    },
+    // Pipeline-dependent tests run sequentially to avoid GitLab runner contention
+    {
+      name: 'pipeline-chromium',
+      testMatch: /ConcurrentExecution|DigitalTwins/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'pipeline-firefox',
+      testMatch: /ConcurrentExecution|DigitalTwins/,
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      timeout: 2 * 60 * 1000,
+      dependencies: ['pipeline-chromium'],
     },
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',

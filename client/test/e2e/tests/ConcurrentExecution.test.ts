@@ -91,7 +91,7 @@ test.describe('Concurrent Execution', () => {
         .filter({ hasText: /Status: (Completed|Failed|Canceled)/ });
       const completedCount = await completedExecutions.count();
       expect(completedCount).toBeGreaterThanOrEqual(1);
-    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
+    }).toPass({ timeout: 180000 }); // Increased timeout for GitLab pipeline
 
     // For the first completed execution, expand the accordion to view the logs
     const firstCompletedExecution = historyDialog
@@ -252,7 +252,7 @@ test.describe('Concurrent Execution', () => {
         .filter({ hasText: /Status: (Completed|Failed|Canceled)/ });
       const completedCount = await completedExecutions.count();
       expect(completedCount).toBeGreaterThanOrEqual(1);
-    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
+    }).toPass({ timeout: 180000 }); // Increased timeout for GitLab pipeline
 
     const completedSelector = postReloadHistoryDialog
       .locator('.MuiAccordionSummary-root')

@@ -17,7 +17,7 @@ import {
   setBranchName,
 } from 'store/settings.slice';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
-import { setupSettingsFormTest } from './settingsForm.testSetup';
+import setupSettingsFormTest from './settingsForm.testSetup';
 
 jest.mock('routes', () => ({ __esModule: true, default: [] }));
 

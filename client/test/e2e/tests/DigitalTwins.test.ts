@@ -78,7 +78,7 @@ test.describe('Digital Twin Log Cleaning', () => {
         .filter({ hasText: /Status: (Completed|Failed|Canceled)/ });
       const completedCount = await completedExecutions.count();
       expect(completedCount).toBeGreaterThanOrEqual(1);
-    }).toPass({ timeout: 60000 }); // Increased timeout for GitLab pipeline
+    }).toPass({ timeout: 180000 }); // Increased timeout for GitLab pipeline
 
     const completedExecution = historyDialog
       .locator('.MuiAccordionSummary-root')
