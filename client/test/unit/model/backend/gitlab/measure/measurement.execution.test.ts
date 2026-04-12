@@ -124,6 +124,13 @@ describe('measurement.execution', () => {
       saveOriginalSettings();
       jest.clearAllMocks();
 
+      mockGetState.mockReturnValue(
+        createMockStoreState({
+          RUNNER_TAG: 'changed-runner',
+          BRANCH_NAME: 'changed-branch',
+        }),
+      );
+
       restoreOriginalSettings();
 
       expect(mockRestoreRunnerTag).toHaveBeenCalledWith('saved-runner');

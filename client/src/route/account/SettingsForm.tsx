@@ -28,6 +28,7 @@ import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
 import ApplicationSettingsFields from 'route/account/ApplicationSettingsFields';
 import MeasurementSettingsFields from 'route/account/MeasurementSettingsFields';
 import { fetchDigitalTwins } from 'model/backend/util/init';
+import { updateFrozenSettings } from 'model/backend/gitlab/measure/measurement.settings';
 
 export interface SettingsFieldProps {
   formValues: Record<string, string>;
@@ -136,6 +137,7 @@ const SettingsForm: React.FC = () => {
     setFieldErrors({});
 
     dispatch(resetToDefaults());
+    updateFrozenSettings();
 
     setNotificationMessage('Settings reset to defaults');
     setShowNotification(true);
@@ -217,6 +219,8 @@ const SettingsForm: React.FC = () => {
     ) {
       dispatch(setSecondaryDTName(formValues.measurementSecondaryDTName));
     }
+
+    updateFrozenSettings();
 
     setNotificationMessage('Settings saved successfully!');
     setNotificationSeverity('success');

@@ -100,17 +100,33 @@ export function saveOriginalSettings(): {
   };
 }
 
+export function updateFrozenSettings(): void {
+  if (frozenSettings === null) return;
+  const state = getStore().getState();
+  frozenSettings = {
+    RUNNER_TAG: state.settings.RUNNER_TAG,
+    BRANCH_NAME: state.settings.BRANCH_NAME,
+    GROUP_NAME: state.settings.GROUP_NAME,
+    DT_DIRECTORY: state.settings.DT_DIRECTORY,
+    COMMON_LIBRARY_PROJECT_NAME: state.settings.COMMON_LIBRARY_PROJECT_NAME,
+    SECONDARY_RUNNER_TAG: state.settings.secondaryRunnerTag,
+    TRIALS: state.settings.trials,
+    PRIMARY_DT_NAME: state.settings.primaryDTName,
+    SECONDARY_DT_NAME: state.settings.secondaryDTName,
+  };
+}
+
 export function restoreOriginalSettings(): void {
   if (frozenSettings === null) return;
   const current = getStore().getState();
-  if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
+  if (current.settings.RUNNER_TAG !== frozenSettings.RUNNER_TAG) {
     getStore().restoreRunnerTag(frozenSettings.RUNNER_TAG);
   }
-  if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
+  if (current.settings.BRANCH_NAME !== frozenSettings.BRANCH_NAME) {
     getStore().restoreBranchName(frozenSettings.BRANCH_NAME);
   }
   if (
-    current.settings.secondaryRunnerTag === frozenSettings.SECONDARY_RUNNER_TAG
+    current.settings.secondaryRunnerTag !== frozenSettings.SECONDARY_RUNNER_TAG
   ) {
     getStore().restoreSecondaryRunnerTag(frozenSettings.SECONDARY_RUNNER_TAG);
   }
