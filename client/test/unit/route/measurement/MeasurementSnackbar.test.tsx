@@ -86,6 +86,7 @@ jest.mock('model/backend/gitlab/measure/measurement.runner', () => ({
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   restartMeasurement: jest.fn().mockResolvedValue(undefined),
   handleBeforeUnload: jest.fn(),
+  handleUnload: jest.fn(),
   purgeMeasurementData: jest.fn().mockResolvedValue(undefined),
 }));
 

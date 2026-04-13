@@ -232,13 +232,15 @@ export async function runTrials(
     const trialStart = new Date();
 
     try {
-      const results: ExecutionResult[] = [];
-      for (let i = 0; i < executions.length; i += 1) {
-        if (measurementState.shouldStopPipelines) break;
-        if (i > 0) await delay(BETWEEN_TRIAL_DELAY);
-        const { dtName, config } = executions[i];
-        results.push(await runDigitalTwin(dtName, config));
-      }
+      const promises = executions.map(({ dtName, config }, i) =>
+        delay(i * BETWEEN_TRIAL_DELAY).then(() => {
+          if (measurementState.shouldStopPipelines) {
+            throw new Error('Measurement stopped by user');
+          }
+          return runDigitalTwin(dtName, config);
+        }),
+      );
+      const results = await Promise.all(promises);
       trials.push(createTrialFromExecution(trialStart, results));
     } catch (caughtError) {
       const errorMessage =

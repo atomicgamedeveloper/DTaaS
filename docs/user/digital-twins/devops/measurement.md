@@ -163,6 +163,24 @@ The exported JSON follows the structure below:
 }
 ```
 
+## Timing Behavior
+
+The measurement system uses deliberate delays of 750ms to avoid
+overloading the GitLab instance with simultaneous requests:
+
+- **Between trials**: A 750ms delay is applied before each trial
+  *except the first*. Trial 0 starts immediately; trials 1, 2, … each
+  wait 750ms after the previous trial completes.
+- **Between executions within a trial**: When a task runs multiple
+  Digital Twins (e.g. "Multiple different Digital Twins Simultaneously"),
+  each execution is staggered by 750ms. The first execution starts
+  immediately, the second after 750ms, the third after 1500ms, and so on.
+
+When interpreting the **Average Duration** of a task, keep in mind that
+the stagger delay between executions is included in the measured time.
+The delay between trials is *not* included, since each trial's timer
+starts after its delay.
+
 ## Best Practices
 
 1. **Run measurements during low-usage periods** to get consistent results

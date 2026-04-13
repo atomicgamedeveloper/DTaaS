@@ -128,6 +128,7 @@ jest.mock('model/backend/gitlab/measure/measurement.runner', () => ({
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   restartMeasurement: (...args: unknown[]) => mockRestartMeasurement(...args),
   handleBeforeUnload: jest.fn(),
+  handleUnload: jest.fn(),
   purgeMeasurementData: (...args: unknown[]) =>
     mockPurgeMeasurementData(...args),
 }));
@@ -192,16 +193,18 @@ describe('Measurement', () => {
     expect(screen.getByTestId('total-tasks')).toHaveTextContent('2');
   });
 
-  it('adds and removes beforeunload event listener', () => {
+  it('adds and removes beforeunload and unload event listeners', () => {
     const addSpy = jest.spyOn(globalThis, 'addEventListener');
     const removeSpy = jest.spyOn(globalThis, 'removeEventListener');
     const { unmount } = renderMeasurement();
     expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('unload', expect.any(Function));
     unmount();
     expect(removeSpy).toHaveBeenCalledWith(
       'beforeunload',
       expect.any(Function),
     );
+    expect(removeSpy).toHaveBeenCalledWith('unload', expect.any(Function));
     addSpy.mockRestore();
     removeSpy.mockRestore();
   });

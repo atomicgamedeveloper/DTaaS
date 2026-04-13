@@ -304,17 +304,19 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="Delete">
-                    <IconButton
-                      component="div"
-                      edge="end"
-                      aria-label="delete"
-                      onClick={(e) => handleDeleteClick(execution.id, e)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
+                  {execution.status !== ExecutionStatus.RUNNING && (
+                    <Tooltip title="Delete">
+                      <IconButton
+                        component="div"
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(e) => handleDeleteClick(execution.id, e)}
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Box>
               </AccordionSummary>
               <AccordionDetails>

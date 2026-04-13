@@ -40,6 +40,7 @@ import {
   stopAllPipelines,
   restartMeasurement,
   handleBeforeUnload,
+  handleUnload,
   purgeMeasurementData,
 } from 'model/backend/gitlab/measure/measurement.runner';
 import {
@@ -192,9 +193,14 @@ function Measurement() {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) =>
       handleBeforeUnload(event, measurementState.isRunningRef);
+    const onUnload = () => handleUnload(measurementState.isRunningRef);
 
     window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    window.addEventListener('unload', onUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      window.removeEventListener('unload', onUnload);
+    };
   }, []);
 
   const handleStart = () => {

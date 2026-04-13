@@ -243,7 +243,13 @@ export function handleBeforeUnload(
 ): void {
   if (isRunningRef.current && measurementState.activePipelines.length > 0) {
     event.preventDefault();
+  }
+}
 
+export function handleUnload(
+  isRunningRef: React.MutableRefObject<boolean>,
+): void {
+  if (isRunningRef.current && measurementState.activePipelines.length > 0) {
     measurementState.shouldStopPipelines = true;
     for (const { backend, pipelineId } of measurementState.activePipelines) {
       try {

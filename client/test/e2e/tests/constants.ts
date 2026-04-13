@@ -1,2 +1,2 @@
-const DEBOUNCE_TIME = 500;
+const DEBOUNCE_TIME = 750;
 export default DEBOUNCE_TIME;
