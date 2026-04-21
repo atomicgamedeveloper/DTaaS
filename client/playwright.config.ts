@@ -84,8 +84,9 @@ export default defineConfig({
     },
     // Pipeline-dependent tests run sequentially to avoid GitLab runner contention
     {
-      name: 'pipeline-chromium',
+      name: 'chromium-serial',
       testMatch: /ConcurrentExecution|DigitalTwins/,
+      workers: 1,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
@@ -93,14 +94,15 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     {
-      name: 'pipeline-firefox',
+      name: 'firefox-serial',
       testMatch: /ConcurrentExecution|DigitalTwins/,
+      workers: 1,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json',
       },
       timeout: 2 * 60 * 1000,
-      dependencies: ['pipeline-chromium'],
+      dependencies: ['chromium-serial'],
     },
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',

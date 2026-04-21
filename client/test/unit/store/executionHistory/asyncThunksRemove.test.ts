@@ -6,7 +6,7 @@ import {
   checkRunningExecutions,
 } from 'model/backend/state/executionHistory.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { setupStore, createMockEntry } from './testSetup';
+import { setupStore, createMockDTExecutionResult } from './testSetup';
 
 describe('executionHistory slice - async thunks (remove & clear)', () => {
   let store: ReturnType<typeof setupStore>['store'];
@@ -18,8 +18,18 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should handle clearExecutionHistoryForDT success', async () => {
     const entries = [
-      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
-      createMockEntry('2', 'other-dt', 456, ExecutionStatus.RUNNING),
+      createMockDTExecutionResult(
+        '1',
+        'test-dt',
+        123,
+        ExecutionStatus.COMPLETED,
+      ),
+      createMockDTExecutionResult(
+        '2',
+        'other-dt',
+        456,
+        ExecutionStatus.RUNNING,
+      ),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -38,8 +48,13 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should not clear active (running) pipelines', async () => {
     const entries = [
-      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
-      createMockEntry('2', 'test-dt', 456, ExecutionStatus.RUNNING),
+      createMockDTExecutionResult(
+        '1',
+        'test-dt',
+        123,
+        ExecutionStatus.COMPLETED,
+      ),
+      createMockDTExecutionResult('2', 'test-dt', 456, ExecutionStatus.RUNNING),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -59,7 +74,7 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should not delete anything when all entries are running', async () => {
     const entries = [
-      createMockEntry('1', 'test-dt', 123, ExecutionStatus.RUNNING),
+      createMockDTExecutionResult('1', 'test-dt', 123, ExecutionStatus.RUNNING),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -75,7 +90,12 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
 
   it('should handle checkRunningExecutions with no running executions', async () => {
     const entries = [
-      createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+      createMockDTExecutionResult(
+        '1',
+        'test-dt',
+        123,
+        ExecutionStatus.COMPLETED,
+      ),
     ];
 
     store.dispatch(setExecutionHistoryEntries(entries));
@@ -91,7 +111,12 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
   it('should handle removeExecution success', async () => {
     store.dispatch(
       addExecutionHistoryEntry(
-        createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+        createMockDTExecutionResult(
+          '1',
+          'test-dt',
+          123,
+          ExecutionStatus.COMPLETED,
+        ),
       ),
     );
     mockStorageService.delete.mockResolvedValue(undefined);
@@ -109,7 +134,12 @@ describe('executionHistory slice - async thunks (remove & clear)', () => {
   it('should handle removeExecution error', async () => {
     store.dispatch(
       addExecutionHistoryEntry(
-        createMockEntry('1', 'test-dt', 123, ExecutionStatus.COMPLETED),
+        createMockDTExecutionResult(
+          '1',
+          'test-dt',
+          123,
+          ExecutionStatus.COMPLETED,
+        ),
       ),
     );
     const errorMessage = 'Delete failed';

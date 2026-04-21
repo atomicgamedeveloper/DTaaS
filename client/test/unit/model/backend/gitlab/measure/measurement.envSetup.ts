@@ -101,6 +101,22 @@ export function createMeasurementExecutionMock(
   };
 }
 
+export function createPipelineCoreMock() {
+  return {
+    delay: jest.fn().mockResolvedValue(undefined),
+    getChildPipelineId: jest.fn((id: number) => id + 1),
+  };
+}
+
+export function createStatusCheckingMock() {
+  return {
+    isFailureStatus: jest.fn(
+      (s: string) =>
+        s.toLowerCase() === 'failed' || s.toLowerCase() === 'skipped',
+    ),
+  };
+}
+
 export function setupSessionStorage() {
   Object.defineProperty(globalThis, 'sessionStorage', {
     value: {

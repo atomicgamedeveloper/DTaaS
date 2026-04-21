@@ -29,18 +29,9 @@ export const fetchLibraryAssets = async (
       type as keyof typeof AssetTypes,
       instance,
     );
-    const gitlabInstance = createGitlabInstance(
-      sessionStorage.getItem('username') || '',
-      sessionStorage.getItem('access_token') || '',
-      getAuthority(),
-    );
     const assets = await Promise.all(
       subfolders.map(async (subfolder) => {
-        await gitlabInstance.init();
-        const libraryManager = new LibraryManager(
-          subfolder.name,
-          gitlabInstance,
-        );
+        const libraryManager = new LibraryManager(subfolder.name, instance);
         const libraryAsset = new LibraryAsset(
           libraryManager,
           subfolder.path,
@@ -83,9 +74,9 @@ export const fetchDigitalTwins = async (
       sessionStorage.getItem('access_token') || '',
       getAuthority(),
     );
+    await dtInstance.init();
     const digitalTwins = await Promise.all(
       subfolders.map(async (asset) => {
-        await dtInstance.init();
         const digitalTwin = new DigitalTwin(asset.name, dtInstance);
         await digitalTwin.getDescription();
         return { assetName: asset.name, digitalTwin };

@@ -46,7 +46,7 @@ export const createTestStore = () =>
 
 export type TestStore = ReturnType<typeof createTestStore>;
 
-export const createMockEntry = (
+export const createMockDTExecutionResult = (
   id: string,
   dtName: string,
   pipelineId: number,

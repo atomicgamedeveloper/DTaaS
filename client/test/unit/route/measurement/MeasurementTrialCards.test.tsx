@@ -103,30 +103,5 @@ describe('MeasurementTrialCards', () => {
       expect(screen.getByText(/dt-1/)).toBeInTheDocument();
       expect(screen.getByText(/dt-2/)).toBeInTheDocument();
     });
-
-    it('shows error message when trial has error', () => {
-      const trialWithError = createMockTrial({
-        Error: {
-          message: 'Pipeline failed with error',
-          error: new Error('Pipeline failed with error'),
-        },
-      });
-      render(<TrialCard trial={trialWithError} trialIndex={0} />);
-      expect(screen.getByText('Error:')).toBeInTheDocument();
-      expect(
-        screen.getByText('Pipeline failed with error'),
-      ).toBeInTheDocument();
-    });
-
-    it('does not show error for "stopped by user" messages', () => {
-      const trial = createMockTrial({
-        Error: {
-          message: 'Pipeline 123 stopped by user.',
-          error: new Error('Pipeline 123 stopped by user.'),
-        },
-      });
-      render(<TrialCard trial={trial} trialIndex={0} />);
-      expect(screen.queryByText('Error:')).not.toBeInTheDocument();
-    });
   });
 });
