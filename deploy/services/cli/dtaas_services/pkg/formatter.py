@@ -1,10 +1,17 @@
 """Output formatting utilities using rich library"""
 
-from typing import List, Union
+from typing import List, Optional, Union
 from rich.console import Console
 from rich.table import Table
 from python_on_whales import Container
 # pylint: disable=too-few-public-methods
+
+
+class _ServiceState:
+    """Typed state object for RemovedServiceEntry."""
+
+    def __init__(self, status: str) -> None:
+        self.status = status
 
 
 class RemovedServiceEntry:
@@ -12,7 +19,7 @@ class RemovedServiceEntry:
 
     def __init__(self, name: str) -> None:
         self.name = name
-        self.state = type("obj", (object,), {"status": "removed"})
+        self.state = _ServiceState("removed")
 
 
 # Service name mapping for display
@@ -23,6 +30,7 @@ SERVICE_DISPLAY_NAMES = {
     "influxdb": "InfluxDB",
     "postgres": "PostgreSQL",
     "thingsboard-ce": "ThingsBoard",
+    "gitlab": "GitLab",
 }
 
 # User input to actual service name mapping
@@ -37,6 +45,8 @@ STATUS_INFO = {
     "restarting": ("🔃", "restarting", "yellow"),
     "exited": ("🔴", "stopped", "red"),
     "removed": ("🗑️", "removed", "dim"),
+    "starting": ("⏳", "starting", "cyan"),
+    "unhealthy": ("⚠️", "not ready", "yellow"),
 }
 
 
@@ -57,6 +67,28 @@ def normalize_service_name(user_input: str) -> str:
     return USER_TO_SERVICE_NAME.get(user_input.lower(), user_input.lower())
 
 
+def _running_health_status(container) -> str | None:
+    """Return health status when it should override 'running'."""
+    health = getattr(getattr(container, "state", None), "health", None)
+    status = getattr(health, "status", None)
+    if status in ("starting", "unhealthy"):
+        return status
+    return None
+
+
+def _effective_status(container) -> str:
+    """Return the most informative status for a container.
+
+    When Docker reports 'running' but the health check is 'starting' or
+    'unhealthy', return the health status instead so the user sees the
+    real readiness state.
+    """
+    state = getattr(getattr(container, "state", None), "status", None) or "unknown"
+    if state != "running":
+        return state
+    return _running_health_status(container) or state
+
+
 def _format_status_display(state: str) -> str:
     """Format status with emoji and colored text."""
     emoji, status_text, color = STATUS_INFO.get(state, ("❓", state, "white"))
@@ -64,7 +96,8 @@ def _format_status_display(state: str) -> str:
 
 
 def format_container_status(
-    containers: List[Union[Container, RemovedServiceEntry]], console: Console = None
+    containers: List[Union[Container, RemovedServiceEntry]],
+    console: Optional[Console] = None,
 ) -> None:
     """
     Format and display container status in a nice table.
@@ -87,8 +120,7 @@ def format_container_status(
     for container in sorted_containers:
         display_name = _get_display_name(container.name)
         container_name = container.name
-        state = container.state.status
-        status_display = _format_status_display(state)
+        status_display = _format_status_display(_effective_status(container))
         table.add_row(display_name, container_name, status_display)
     console.print(table)
 
@@ -107,13 +139,13 @@ def _sort_service_names(
             status_display = "❌ [red]not installed[/red]"
         else:
             container_name = container.name
-            state = container.state.status
-            status_display = _format_status_display(state)
+            status_display = _format_status_display(_effective_status(container))
         table.add_row(display_name, container_name, status_display)
+    return sorted_services
 
 
 def format_service_list_status(
-    services: dict, all_services: List[str], console: Console = None
+    services: dict, all_services: List[str], console: Optional[Console] = None
 ) -> None:
     """
     Format and display status of specific services, showing which are installed and their status.

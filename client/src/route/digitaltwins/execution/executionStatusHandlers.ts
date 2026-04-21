@@ -1,4 +1,4 @@
-import { createElement, Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { useDispatch } from 'react-redux';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import {
@@ -6,7 +6,6 @@ import {
   setPipelineCompleted,
   setPipelineLoading,
 } from 'model/backend/state/digitalTwin.slice';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { JobLog } from 'model/backend/gitlab/types/executionHistory';
 import {
   updateExecutionLogs,
@@ -52,7 +51,7 @@ export const startPipeline = async (
     payload: {
       message: executionStatusMessage,
       severity: 'success',
-      icon: createElement(PlayArrowIcon, { fontSize: 'inherit' }),
+      icon: 'PlayArrowIcon',
     } as ShowNotificationPayload,
   });
 

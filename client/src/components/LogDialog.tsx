@@ -6,9 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
-import { showSnackbar } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
 import {
   fetchExecutionHistory,
@@ -65,13 +63,6 @@ function LogDialog({ showLog, setShowLog, name }: LogDialogProps) {
   }, [dispatch, executions.length]);
 
   const handleClearAllConfirm = useCallback(() => {
-    dispatch(
-      showSnackbar({
-        message: `Deleting all entries from ${formatName(name)} execution history...`,
-        severity: 'warning',
-        icon: <ClearIcon fontSize="inherit" />,
-      }),
-    );
     dispatch(clearExecutionHistoryForDT(name));
     setDeleteAllDialogOpen(false);
   }, [dispatch, name]);

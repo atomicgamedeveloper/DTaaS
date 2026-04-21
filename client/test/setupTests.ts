@@ -7,21 +7,23 @@ Object.defineProperty(globalThis, 'TextEncoder', {
   writable: true,
 });
 
+if (typeof globalThis.structuredClone !== 'function') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const v8 = require('node:v8');
+  globalThis.structuredClone = (val) =>
+    v8.deserialize(v8.serialize(val)) as typeof val;
+}
+
 Object.defineProperty(globalThis, 'TextDecoder', {
   value: TextDecoder,
   writable: true,
 });
 
-// jsdom doesn't implement scrollIntoView; stub it so component tests pass.
 Element.prototype.scrollIntoView ??= () => {};
 
-// Provide a minimal globalThis.env so modules that read env vars at
-// import time (e.g. init.ts calling getAuthority()) don't crash.
 globalThis.env ??= {} as typeof globalThis.env;
 globalThis.env.REACT_APP_AUTH_AUTHORITY ??= 'https://gitlab.example.com/';
 
-// Initialize the settings store so non-hook getters (getGroupName, getBranchName, etc.)
-// work in tests without requiring the full Redux store.
 setSettingsStore({
   getState: () =>
     ({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT } }) as never,

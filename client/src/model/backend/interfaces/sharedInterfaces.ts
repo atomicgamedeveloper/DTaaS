@@ -2,7 +2,6 @@
  * Interfaces, types, enums that are backend agnostic and work on Digital Twin concepts.
  */
 
-import React from 'react';
 import {
   DigitalTwinPipelineState,
   ExecutionStatus,
@@ -10,6 +9,7 @@ import {
 import {
   ProjectId,
   BackendInterface,
+  CommitAction,
 } from 'model/backend/interfaces/backendInterfaces';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
@@ -198,6 +198,19 @@ export type LibraryConfigFile = {
 // DTAssets.ts
 
 export interface DTAssetsFileCreator {
+  buildCreateFileActions(
+    files:
+      | FileState[]
+      | Array<{
+          name: string;
+          content: string;
+          isNew: boolean;
+          isFromCommonLibrary: boolean;
+        }>,
+    mainFolderPath: string,
+    lifecycleFolderPath: string,
+  ): CommitAction[];
+
   createFiles(
     files:
       | FileState[]
@@ -250,6 +263,7 @@ export interface DTAssetsLibraryFileProvider {
 }
 
 export interface DTAssetsPipelineProvider {
+  buildTriggerAction(): Promise<CommitAction | null>;
   appendTriggerToPipeline(): Promise<string>;
   removeTriggerFromPipeline(): Promise<string>;
 }
@@ -394,7 +408,7 @@ export type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
 export interface ShowNotificationPayload {
   message: string;
   severity: NotificationSeverity;
-  icon?: React.ReactNode;
+  icon?: string;
 }
 
 // indexedDBService interface

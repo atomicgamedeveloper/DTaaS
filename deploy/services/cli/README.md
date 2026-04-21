@@ -14,6 +14,7 @@ The following services can be installed:
 * **MongoDB** database server
 * **ThingsBoard** IoT device management and data visualization platform
 (with PostgreSQL backend)
+* **GitLab** OAuth2 identity provider and Git repository service
 
 ## Directory Structure
 
@@ -31,7 +32,7 @@ You can install and manage the services using:
 ## DTaaS Services CLI
 
 A command-line tool for managing DTaaS platform services including MongoDB,
-InfluxDB, RabbitMQ, and Grafana.
+InfluxDB, RabbitMQ, Grafana, ThingsBoard, and GitLab.
 
 ## Features
 
@@ -39,7 +40,7 @@ InfluxDB, RabbitMQ, and Grafana.
 * **Automated Setup:** One command setup of TLS certificates and permissions
 * **Service Management:** Start, stop, and check status of all services
 * **User Management:** Easy creation of user accounts in InfluxDB,
-RabbitMQ, and ThingsBoard
+RabbitMQ, ThingsBoard, and GitLab
 * **Cross platform:** Works on Linux, macOS, and Windows
 * **Configuration-driven:** Reads settings from `config/services.env`
 
@@ -56,7 +57,7 @@ RabbitMQ, and ThingsBoard
 Install the standalone wheel package using pip:
 
 ```bash
-pip install dtaas_services-0.1.0-py3-none-any.whl
+pip install dtaas_services-0.3.0-py3-none-any.whl
 ```
 
 This installs the `dtaas-services` command.
@@ -79,16 +80,20 @@ structure and run:
    This creates:
    * `config/` directory with configuration templates
    * `data/` directory for service data
-   * `compose.services.secure.yml` for main services
-   * `compose.thingsboard.secure.yml` for ThingsBoard and PostgreSQL
+   * `compose.services.yml` for main services
+   * `compose.thingsboard.yml` for ThingsBoard and PostgreSQL
 
 2. Update `config/services.env` with your environment values:
+   * `HOSTNAME`: Public hostname of the DTaaS server (used for certificate paths)
+   * `GITLAB_PORT`: Port for the local GitLab instance (default: `8090`)
+   * `GITLAB_ROOT_NEW_PASSWORD`: Strong password to set for the GitLab root admin
+   * `TB_SYSADMIN_NEW_PASSWORD`: New password for the ThingsBoard system admin
+   * Port numbers for each service
+   * `TB_TENANT_NEW_PASSWORD`: New password for the tenant admin
    * `SERVICES_UID`: User ID for service file ownership
    * `SERVICES_GID`: Group ID for service file ownership
-   * `SERVER_DNS`: Your server hostname
-   * Port numbers for each service
 
-3. Update `config/credentials.csv` with user accounts (format: `username,password`)
+3. Update `config/credentials.csv` with user accounts (format: `username,password,email`)
 
 **Options:**
 
@@ -118,147 +123,57 @@ This command will:
 * Set up RabbitMQ certificates and permissions
 * Set up PostgreSQL and ThingsBoard certificates and permissions
 
-Make sure you run the clean command
-
-### ThingsBoard Installation
-
-To install ThingsBoard, run this command:
+Make sure you run the clean command right after
 
 ```bash
 dtaas-services clean
 ```
 
-```bash
-#  (It starts PostgreSQL if it's not running, and it checks its health)
-dtaas-services install
-```
+### Managing Services
 
-```bash
-dtaas-services start -s thingsboard
-```
+Now you can manage services by simple commands (Start, Stop, Remove and Restart)
 
-```bash
-
-#  After installation, wait some time before adding users
-#  This creates the tenant, tenant admin and users.
-dtaas-services user add -s thingsboard
-```
-
-### Service Management
-
-Start all services:
+Example:
 
 ```bash
 dtaas-services start
 ```
 
-Stop all services:
+you can specify a services to manage
 
 ```bash
-dtaas-services stop
-```
-
-Restart services:
-
-```bash
-dtaas-services restart
-```
-
-Check service status:
-
-```bash
-dtaas-services status
-```
-
-Remove services (with confirmation prompt):
-
-```bash
-dtaas-services remove
+dtaas-services stop -s influxdb
 ```
 
 Remove services and their volumes:
 
 ```bash
 dtaas-services remove -v
-```
+# Specify
+dtaas-services remove -v -s <service_name>
 
-Clean all data and log files for services (with confirmation prompt):
-
-```bash
-dtaas-services clean
-```
-
-This command removes all files from data and log directories,
-including `.gitkeep` files.
-Useful for preparing to reinstall services or troubleshooting installation issues.
-
-**Options:**
-
-The start command is just an example, the options are for all commands listed above
-
-* `-s, --services` Comma-separated list of specific services to manage
-* `--volumes, -v` (remove command only) Remove volumes as well
-* `--yes` (clean command only) Skip confirmation prompt
-
-**Service Names:**
-
-* Main platform services: `mongodb`, `grafana`, `influxdb`, `rabbitmq`
-* PostgreSQL database: `postgres` or `postgresql`
-* ThingsBoard IoT platform: `thingsboard` or `thingsboard-ce`
-
-**Examples:**
-
-```bash
-# Start specific services
-dtaas-services start -s influxdb,rabbitmq,thingsboard
-
-# Start PostgreSQL
-dtaas-services start -s postgresql
-
-# Clean all services (removes all data and log files)
-dtaas-services clean
-
-# Clean specific service without confirmation
-dtaas-services clean -s postgres --yes
-
-# Clean multiple services
-dtaas-services clean -s "postgres,thingsboard"
 ```
 
 ### User Account Management
 
 1. Edit `config/credentials.csv` with user accounts (format: `username,password,email`)
 
-2. Add users to services:
+2. Add users to all supported services:
 
    ```bash
    dtaas-services user add
    ```
 
-   This creates user accounts in InfluxDB, RabbitMQ, and ThingsBoard (if installed).
-   For ThingsBoard, each user is created as a CUSTOMER_USER under a customer
-   named after their username, within the tenant created during installation.
+   This creates user accounts in InfluxDB, RabbitMQ, ThingsBoard, and GitLab
+   (each service is skipped gracefully if it is not running).
+   For GitLab, a Personal Access Token is created for each new user and
+   saved to `config/gitlab_user_tokens.json`.
 
-3. Add user to a specific service
+3. Add users to a specific service:
 
    ```bash
    dtaas-services user add -s rabbitmq
    ```
-
-### Reset Service Passwords
-
-Reset the ThingsBoard sysadmin and tenant admin passwords using values
-configured in `config/services.env`:
-
-```bash
-dtaas-services user reset-password -s thingsboard
-```
-
-This command:
-
-* Changes the sysadmin password from the default to `TB_SYSADMIN_NEW_PASSWORD`
-* Changes the tenant admin password from the default (`"tenant"`) to
-  `TB_TENANT_ADMIN_PASSWORD`
 
 ## ThingsBoard
 
@@ -272,13 +187,126 @@ The steps given above install two services:
 * **ThingsBoard** is an IoT device management and data visualization platform
 * **PostgreSQL** is a database server for ThingsBoard
 
-## ThingsBoard Directory Structure
+### ThingsBoard Directory Structure
 
 * **config** is used for storing the service configuration
 * **data** is used by the services for storing data
 * **log** is used by the services for logging
 * **certs** is used for storing the TLS certificates needed by the services
 * **script** contains scripts for creating user accounts and service management
+
+### ThingsBoard Installation
+
+> **Warning:** Running `dtaas-services install -s thingsboard` more than once
+> will re-run the ThingsBoard schema migration against an already-populated
+> PostgreSQL database, which can corrupt it. If you need to reinstall from
+> scratch, run `dtaas-services clean -s "postgres,thingsboard"` first to wipe
+> all data before re-running the install command.
+> **Note:** It's recommended to specify the service explicitly with `-s <service>`
+> when installing.
+> Make sure that you have runned the clean command before the installation
+
+```bash
+#  (It starts PostgreSQL if it's not running, and it checks its health)
+dtaas-services install -s thingsboard
+```
+
+```bash
+dtaas-services start -s thingsboard
+```
+
+```bash
+
+#  After installation, wait some time before adding users
+#  This creates the tenant, tenant admin and users.
+dtaas-services user add -s thingsboard
+```
+
+Reset the ThingsBoard sysadmin and tenant admin passwords using values
+configured in `config/services.env`:
+
+```bash
+dtaas-services user reset-password -s thingsboard
+```
+
+This command:
+
+* Changes the sysadmin password from the default (`"sysadmin"`) to `TB_SYSADMIN_NEW_PASSWORD`
+* Changes the tenant admin password from the default (`"tenant"`) to
+  `TB_TENANT_ADMIN_PASSWORD`
+
+### GitLab Installation
+
+**Prerequisites:**
+
+* The GitLab container joins the `dtaas-services` Docker network
+  (`platform-services`), which is created automatically when the other
+  platform services are running. Start them first with
+  `dtaas-services start` before installing GitLab.
+* Set `REACT_APP_AUTH_AUTHORITY` in the client config file
+  (`deploy/config/client/env.js` for server deployments, or
+  `deploy/config/client/env.local.js` for localhost) to
+  `https://<hostname>:<GITLAB_PORT>/gitlab`.
+
+> **Note:** The DTaaS client uses `react-oidc-context`, which forces
+> redirects to use HTTPS. GitLab must therefore be served over HTTPS
+> at `https://<hostname>:<GITLAB_PORT>/gitlab`
+
+To install and configure the local GitLab instance:
+
+```bash
+dtaas-services install -s gitlab
+```
+
+GitLab takes 5–10 minutes to become healthy after the first start.
+The install command checks GitLab’s readiness and returns immediately:
+
+* **If GitLab is healthy**: the command runs post-install setup
+  (password reset, PAT creation, OAuth app registration) and
+  saves the access token to `config/gitlab_tokens.json`.
+* **If GitLab is still starting**: the command prints a status hint
+  and exits. Check progress with `dtaas-services status -s gitlab`
+  and re-run `dtaas-services install -s gitlab` once the status
+  shows "healthy".
+
+> **Note:** After a successful setup, `config/gitlab_tokens.json` is backed
+> up to `config/backup_gitlab_tokens.json` and the `root_password` entry is
+> removed from the live tokens file.
+> If the GitLab installation becomes corrupted before the root password is
+> changed, the initial password can be found in the backup file:
+> `config/backup_gitlab_tokens.json`.
+> If that file is also missing, re-install GitLab to generate a new
+> initial password.
+> **Warning:** `config/password.env.current` is managed automatically by
+> the CLI and tracks the current service passwords. Do **not** edit or delete
+> this file manually — doing so may cause password reset commands to fail.
+
+To complete the OAuth2 integration with DTaaS and set up GitLab Runner,
+follow the [integration guide](GITLAB_INTEGRATION.md) and
+[runner setup guide](../runner/GITLAB-RUNNER.md).
+
+Reset the GitLab root admin password using the value configured in
+`config/services.env` (`GITLAB_ROOT_NEW_PASSWORD`):
+
+```bash
+dtaas-services user reset-password -s gitlab
+```
+
+The command reads the new password from `GITLAB_ROOT_NEW_PASSWORD`
+and applies it via the GitLab API.
+
+## GitLab Post-Install Flow
+
+The `dtaas-services install -s gitlab` command performs the following steps
+automatically:
+
+1. Starts the GitLab Docker container
+2. Checks if GitLab is healthy (non-blocking — exits immediately if not ready)
+3. Reads the auto-generated root password from the container
+   (`/etc/gitlab/initial_root_password`)
+4. Creates an initial Personal Access Token and saves it to
+   `config/gitlab_tokens.json`
+5. Creates Server and Client OAuth application tokens.
 
 ## Troubleshooting
 
@@ -289,14 +317,6 @@ ensure you run the setup command with appropriate privileges:
 
 ```bash
 sudo -E env PATH="$PATH" dtaas-services setup
-```
-
-### Postgres Restarting
-
-Make sure to run the clean command before starting postgres or installing thingsboard.
-
-```bash
-dtaas-services clean
 ```
 
 ### Thingsboard connection error

@@ -4,9 +4,7 @@ import test from 'test/e2e/setup/fixtures';
 test.describe('Measurement Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('./');
-    await page
-      .getByRole('button', { name: 'GitLab logo Sign In with GitLab' })
-      .click();
+    await page.getByRole('button', { name: 'SignIn' }).click();
     await page.getByRole('button', { name: 'Authorize' }).click();
     await expect(
       page.getByRole('button', { name: 'Open settings' }),
@@ -18,7 +16,7 @@ test.describe('Measurement Page', () => {
 
   test.afterEach(async ({ page }) => {
     const stopButton = page.getByRole('button', { name: 'Stop', exact: true });
-    if (await stopButton.isVisible()) {
+    if (await stopButton.isEnabled()) {
       await stopButton.click();
       const dialog = page.getByRole('dialog');
       if (await dialog.isVisible()) {
@@ -95,9 +93,9 @@ test.describe('Measurement Page', () => {
       .getByRole('button', { name: 'Stop' })
       .click();
 
-    // Verify measurement has stopped (Stop button replaced by Start or Continue)
+    // Verify measurement has stopped (Stop button is now disabled)
     await expect(
       page.getByRole('button', { name: 'Stop', exact: true }),
-    ).not.toBeVisible();
+    ).toBeDisabled();
   });
 });

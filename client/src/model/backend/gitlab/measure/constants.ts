@@ -5,4 +5,6 @@ const DEFAULT_MEASUREMENT = {
   secondaryDTName: 'mass-spring-damper',
 };
 
+export const BETWEEN_TRIAL_DELAY = 750;
+
 export default DEFAULT_MEASUREMENT;

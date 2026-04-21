@@ -16,14 +16,12 @@ jest.mock('store/snackbar.slice', () => ({
   })),
 }));
 
-// Track calls to the mock Snackbar
 const mockSnackbarCalls: Array<{
   open: boolean;
   autoHideDuration?: number;
   onClose?: (event: React.SyntheticEvent | Event, reason?: string) => void;
 }> = [];
 
-// Mock MUI Snackbar to capture onClose handler
 jest.mock('@mui/material/Snackbar', () => {
   const MockSnackbar = (props: {
     children: React.ReactNode;

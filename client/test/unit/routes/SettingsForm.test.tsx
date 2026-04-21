@@ -9,44 +9,36 @@ import {
 } from '@testing-library/react';
 import SettingsForm from 'route/account/SettingsForm';
 import {
-  DEFAULT_SETTINGS,
   setGroupName,
   resetToDefaults,
   setCommonLibraryProjectName,
   setDTDirectory,
   setRunnerTag,
   setBranchName,
-  DEFAULT_MEASUREMENT,
-  setTrials,
-  setSecondaryRunnerTag,
 } from 'store/settings.slice';
-import { useSelector, useDispatch } from 'react-redux';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
+import setupSettingsFormTest from './settingsForm.testSetup';
 
 jest.mock('routes', () => ({ __esModule: true, default: [] }));
+
+jest.mock('model/backend/util/init', () => ({
+  fetchDigitalTwins: jest.fn().mockResolvedValue(undefined),
+}));
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useSelector: jest.fn(),
   useDispatch: jest.fn(),
 }));
-
 jest.useFakeTimers();
 
-const mockedUseSelector = useSelector as unknown as jest.Mock;
-const mockedUseDispatch = useDispatch as unknown as jest.Mock;
-
 describe('SettingsForm', () => {
-  const mockDispatch = jest.fn();
+  let mockDispatch: jest.Mock;
 
   afterEach(cleanup);
 
   beforeEach(() => {
-    mockDispatch.mockClear();
-    mockedUseSelector.mockImplementation((selector) =>
-      selector({ settings: { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT } }),
-    );
-    mockedUseDispatch.mockReturnValue(mockDispatch);
+    ({ mockDispatch } = setupSettingsFormTest());
     renderWithRouter(<SettingsForm />, { route: '/private' });
   });
 
@@ -167,30 +159,6 @@ describe('SettingsForm', () => {
     expect(screen.getByText('Group name is required')).toBeInTheDocument();
   });
 
-  it('shows error when trials field is empty', () => {
-    const input = screen.getByLabelText(/trial number/i);
-    fireEvent.change(input, { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
-  });
-
-  it('shows error when trials value is not a number', () => {
-    const input = screen.getByLabelText(/trial number/i);
-    fireEvent.change(input, { target: { value: 'abc' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
-  });
-
-  it('shows error when trials value is less than 1', () => {
-    const input = screen.getByLabelText(/trial number/i);
-    fireEvent.change(input, { target: { value: '0' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(screen.getByText(/trial number is required/i)).toBeInTheDocument();
-  });
-
   it('clears field error when user starts retyping', () => {
     const input = screen.getByLabelText(/group name/i);
     fireEvent.change(input, { target: { value: '' } });
@@ -201,31 +169,5 @@ describe('SettingsForm', () => {
     expect(
       screen.queryByText('Group name is required'),
     ).not.toBeInTheDocument();
-  });
-
-  it('dispatches setTrials when trials value changes', () => {
-    const input = screen.getByLabelText(/trial number/i);
-    fireEvent.change(input, { target: { value: '5' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(mockDispatch).toHaveBeenCalledWith(setTrials(5));
-  });
-
-  it('dispatches setSecondaryRunnerTag when secondary runner tag changes', () => {
-    const input = screen.getByLabelText(/measurement secondary runner tag/i);
-    fireEvent.change(input, { target: { value: 'macos' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(mockDispatch).toHaveBeenCalledWith(setSecondaryRunnerTag('macos'));
-  });
-
-  it('shows error when secondary runner tag is empty', () => {
-    const input = screen.getByLabelText(/measurement secondary runner tag/i);
-    fireEvent.change(input, { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-
-    expect(
-      screen.getByText('Measurement secondary runner tag is required'),
-    ).toBeInTheDocument();
   });
 });

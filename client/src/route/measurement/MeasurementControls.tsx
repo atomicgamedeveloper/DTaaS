@@ -1,4 +1,4 @@
-// Measurement action buttons (start, stop, download, clear) and confirmation dialogs
+// Measurement action buttons (start, stop, restart, export, purge) and confirmation dialog
 import { useState } from 'react';
 import {
   Box,
@@ -17,16 +17,18 @@ import {
   isTaskComplete,
 } from 'model/backend/gitlab/measure/measurement.utils';
 
-interface MeasurementPageHeaderProps {
+interface MeasurementControlsProps {
   isRunning: boolean;
   hasStarted: boolean;
   iterations: number;
   completedTasks: number;
   completedTrials: number;
   totalTasks: number;
+  results: TimedTask[];
   onStart: () => void;
   onRestart: () => void;
   onStop: () => void;
+  onPurge: () => void;
 }
 
 interface CompletionSummaryProps {
@@ -73,43 +75,18 @@ export default function MeasurementControls({
   completedTasks,
   completedTrials,
   totalTasks,
+  results,
   onStart,
   onRestart,
   onStop,
   onPurge,
-}: MeasurementPageHeaderProps & {
-  onPurge: () => void;
-}) {
+}: Readonly<MeasurementControlsProps>) {
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
-  const [restartDialogOpen, setRestartDialogOpen] = useState(false);
+
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
 
-  const getPrimaryButton = () => {
-    if (isRunning) {
-      return (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setStopDialogOpen(true)}
-          size="small"
-        >
-          Stop
-        </Button>
-      );
-    }
-    const isComplete = completedTasks === totalTasks && totalTasks > 0;
-    return (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={onStart}
-        size="small"
-        disabled={isComplete || hasStarted}
-      >
-        Start
-      </Button>
-    );
-  };
+  const isComplete = completedTasks === totalTasks && totalTasks > 0;
+  const hasAnyResults = results.some((t) => t.Trials.some(isTaskComplete));
 
   return (
     <Box>
@@ -124,16 +101,44 @@ export default function MeasurementControls({
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {getPrimaryButton()}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onStart}
+            size="small"
+            disabled={isComplete || hasStarted}
+          >
+            Start
+          </Button>
 
           <Button
             variant="outlined"
             color="primary"
-            onClick={() => setRestartDialogOpen(true)}
+            onClick={() => setStopDialogOpen(true)}
+            size="small"
+            disabled={!isRunning}
+          >
+            Stop
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={onRestart}
             disabled={!hasStarted || isRunning}
             size="small"
           >
             Restart
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => downloadResultsJson(results)}
+            disabled={!hasAnyResults}
+            size="small"
+          >
+            Export
           </Button>
 
           <Button
@@ -158,17 +163,7 @@ export default function MeasurementControls({
         description="Are you sure you want to stop the measurement? This will cancel all running executions and mark the current task as stopped."
         confirmLabel="Stop"
       />
-      <ConfirmDialog
-        open={restartDialogOpen}
-        onClose={() => setRestartDialogOpen(false)}
-        onConfirm={() => {
-          setRestartDialogOpen(false);
-          onRestart();
-        }}
-        title="Restart Measurement?"
-        description="Are you sure you want to restart the measurement? This will discard all current results and start from the beginning."
-        confirmLabel="Restart"
-      />
+
       <ConfirmDialog
         open={purgeDialogOpen}
         onClose={() => setPurgeDialogOpen(false)}
@@ -196,19 +191,10 @@ export function CompletionSummary({
     return (
       <Box sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
         <Typography variant="body2">
-          Completed in {totalTime.toFixed(1)}s |{' '}
-          <Typography
-            component="span"
-            variant="body2"
-            sx={{
-              color: 'primary.main',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-            onClick={() => downloadResultsJson(results)}
-          >
-            Download JSON
-          </Typography>
+          Completed in {totalTime.toFixed(1)}s
+        </Typography>
+        <Typography variant="body2">
+          Measurement data generation complete
         </Typography>
       </Box>
     );

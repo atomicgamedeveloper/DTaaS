@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   IconButton,
@@ -174,13 +173,6 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
 
   const handleDeleteConfirm = () => {
     if (executionToDelete) {
-      dispatch(
-        showSnackbar({
-          message: `Deleting entry from ${formatName(dtName)} execution history...`,
-          severity: 'warning',
-          icon: <ClearIcon fontSize="inherit" />,
-        }),
-      );
       dispatch(removeExecution(executionToDelete));
     }
     setDeleteDialogOpen(false);
@@ -312,17 +304,19 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="Delete">
-                    <IconButton
-                      component="div"
-                      edge="end"
-                      aria-label="delete"
-                      onClick={(e) => handleDeleteClick(execution.id, e)}
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
+                  {execution.status !== ExecutionStatus.RUNNING && (
+                    <Tooltip title="Delete">
+                      <IconButton
+                        component="div"
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(e) => handleDeleteClick(execution.id, e)}
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Box>
               </AccordionSummary>
               <AccordionDetails>

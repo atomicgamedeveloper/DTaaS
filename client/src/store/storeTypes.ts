@@ -9,6 +9,7 @@ import cartSlice from 'model/store/cart.slice';
 import menuSlice from 'store/menu.slice';
 import authSlice from 'store/auth.slice';
 import settingsSlice from 'store/settings.slice';
+import workbenchSlice from 'store/workbench.slice';
 
 export const rootReducer = combineReducers({
   menu: menuSlice,
@@ -21,6 +22,7 @@ export const rootReducer = combineReducers({
   libraryConfigFiles: libraryConfigFilesSlice,
   settings: settingsSlice,
   executionHistory: executionHistorySlice,
+  workbench: workbenchSlice,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

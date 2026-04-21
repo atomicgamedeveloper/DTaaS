@@ -3,18 +3,18 @@ import { ExecutionStatus, JobLog } from 'model/backend/interfaces/execution';
 import type { IExecutionHistory } from 'model/backend/interfaces/execution';
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 
-let _dbService: IExecutionHistory | null = null;
+let dbService: IExecutionHistory | null = null;
 
 export function setExecutionHistoryDB(service: IExecutionHistory): void {
-  _dbService = service;
+  dbService = service;
 }
 
 function getDB(): IExecutionHistory {
-  if (!_dbService)
+  if (!dbService)
     throw new Error(
       'Execution history DB not initialized. Call setExecutionHistoryDB() first.',
     );
-  return _dbService;
+  return dbService;
 }
 
 export async function getExecutionHistoryFn(

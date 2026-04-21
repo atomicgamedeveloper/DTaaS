@@ -25,7 +25,7 @@ export default defineConfig({
   retries: process.env.CI ? 0 : 1, // Disable retries on Github actions for now as setup always fails
   timeout: 90 * 1000, // 90 seconds per test
   globalTimeout: 10 * 60 * 1000,
-  workers: 1,
+  workers: 3,
   testDir: './test/e2e/tests',
   testMatch: /.*\.test\.ts/,
   reporter: [
@@ -68,6 +68,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
+      testIgnore: /ConcurrentExecution|DigitalTwins/,
       dependencies: ['setup'],
     },
     {
@@ -77,8 +78,31 @@ export default defineConfig({
         // Use prepared auth state.
         storageState: 'playwright/.auth/user.json',
       },
+      testIgnore: /ConcurrentExecution|DigitalTwins/,
       timeout: 2 * 60 * 1000,
       dependencies: ['setup'],
+    },
+    // Pipeline-dependent tests run sequentially to avoid GitLab runner contention
+    {
+      name: 'chromium-serial',
+      testMatch: /ConcurrentExecution|DigitalTwins/,
+      workers: 1,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox-serial',
+      testMatch: /ConcurrentExecution|DigitalTwins/,
+      workers: 1,
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      timeout: 2 * 60 * 1000,
+      dependencies: ['chromium-serial'],
     },
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',

@@ -86,6 +86,7 @@ jest.mock('model/backend/gitlab/measure/measurement.runner', () => ({
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   restartMeasurement: jest.fn().mockResolvedValue(undefined),
   handleBeforeUnload: jest.fn(),
+  handleUnload: jest.fn(),
   purgeMeasurementData: jest.fn().mockResolvedValue(undefined),
 }));
 
@@ -113,7 +114,6 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   );
   return {
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
-    DEFAULT_CONFIG: {},
     DEFAULT_MEASUREMENT: actual.DEFAULT_MEASUREMENT,
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),

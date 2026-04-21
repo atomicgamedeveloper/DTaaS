@@ -10,6 +10,7 @@ import {
 } from 'model/backend/gitlab/execution/pipelineCore';
 import { pollPipelineStatus } from 'model/backend/gitlab/execution/pipelinePolling';
 import { isFailureStatus } from 'model/backend/gitlab/execution/statusChecking';
+import { BETWEEN_TRIAL_DELAY } from 'model/backend/gitlab/measure/constants';
 import {
   Configuration,
   ExecutionResult,
@@ -222,7 +223,7 @@ export async function runTrials(
     trialNumber += 1
   ) {
     if (measurementState.shouldStopPipelines) break;
-    if (trialNumber > 0) await delay(250);
+    if (trialNumber > 0) await delay(BETWEEN_TRIAL_DELAY);
 
     measurementState.executionResults = [];
     measurementState.activePipelines = [];
@@ -231,11 +232,15 @@ export async function runTrials(
     const trialStart = new Date();
 
     try {
-      const results: ExecutionResult[] = [];
-      for (const { dtName, config } of executions) {
-        if (measurementState.shouldStopPipelines) break;
-        results.push(await runDigitalTwin(dtName, config));
-      }
+      const promises = executions.map(({ dtName, config }, i) =>
+        delay(i * BETWEEN_TRIAL_DELAY).then(() => {
+          if (measurementState.shouldStopPipelines) {
+            throw new Error('Measurement stopped by user');
+          }
+          return runDigitalTwin(dtName, config);
+        }),
+      );
+      const results = await Promise.all(promises);
       trials.push(createTrialFromExecution(trialStart, results));
     } catch (caughtError) {
       const errorMessage =

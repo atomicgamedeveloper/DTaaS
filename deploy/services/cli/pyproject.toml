@@ -1,17 +1,13 @@
 [tool.poetry]
 name = "dtaas-services"
-version = "0.2.1"
+version = "0.3.0"
 description = "DTaaS Platform Services Management CLI"
 authors = ["Mohamed Abdulkarim"]
 license = "INTO-CPS-Association"
 readme = "README.md"
 packages = [{include = "dtaas_services"}]
 include = [
-    { path = "dtaas_services/config/*", format = ["sdist", "wheel"] },
-    { path = "dtaas_services/data/**/*", format = ["sdist", "wheel"] },
-    { path = "dtaas_services/log/*", format = ["sdist", "wheel"] },
-    { path = "dtaas_services/certs/*", format = ["sdist", "wheel"] },
-    { path = "dtaas_services/*.yml", format = ["sdist", "wheel"] }
+    { path = "dtaas_services/templates/**/*", format = ["sdist", "wheel"] }
 ]
 
 [tool.poetry.dependencies]
@@ -21,12 +17,14 @@ python-dotenv = "^1.0.1"
 python-on-whales = "^0.75.0"
 rich = "^14.2.0"
 httpx = "^0.28.1"
+python-gitlab = "^8.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 pytest-mock = "^3.14.0"
 pylint = "^3.3.1"
+pyright = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -35,12 +33,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 dtaas-services = "dtaas_services.cmd:services"
 
-[tool.poetry.build]
-script = "build.py"
-generate-setup-file = false
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "--strict-markers"
 
+[tool.pyright]
+include = ["dtaas_services", "tests"]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"

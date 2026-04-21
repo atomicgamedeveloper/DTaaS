@@ -61,8 +61,10 @@ describe('PipelineHandler Integration Tests', () => {
 
     const snackbarItems = store.getState().snackbar.items;
     const lastItem = snackbarItems[snackbarItems.length - 1];
-    expect(lastItem.message).toBe('Execution mockedStatus for MockedDTName');
-    expect(lastItem.severity).toBe('error');
+    expect(lastItem.message).toBe(
+      'Execution stopped successfully for MockedDTName',
+    );
+    expect(lastItem.severity).toBe('warning');
   });
 
   it('handles start when button text is Stop', async () => {

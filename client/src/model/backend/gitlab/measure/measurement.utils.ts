@@ -69,7 +69,7 @@ export function getTotalTime(results: TimedTask[]): number | null {
 }
 
 function timestampSlug(): string {
-  return new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  return new Date().toISOString().slice(0, 19).split(':').join('-');
 }
 
 function triggerJsonDownload(data: unknown, filename: string): void {

@@ -2,7 +2,6 @@ import { Dispatch, SetStateAction, useState, useCallback } from 'react';
 import { Button, CircularProgress, Box } from '@mui/material';
 import { handleStart } from 'route/digitaltwins/execution';
 import { useSelector, useDispatch } from 'react-redux';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { showSnackbar } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
 import { selectDigitalTwinByName } from 'store/selectors/digitalTwin.selectors';
@@ -64,7 +63,7 @@ function StartButton({
       showSnackbar({
         message: `Starting execution for ${formatName(assetName)}...`,
         severity: 'success',
-        icon: <PlayArrowIcon fontSize="inherit" />,
+        icon: 'PlayArrowIcon',
       }),
     );
 

@@ -1,17 +1,3 @@
-/**
- * Store wiring, frozen settings snapshot, and config accessors.
- *
- * Reads persisted settings from store/settings.slice.ts and exposes a
- * Configuration object consumed by measurement.execution.ts and
- * measurement.pipeline.ts.
- */
-import {
-  GROUP_NAME,
-  DT_DIRECTORY,
-  COMMON_LIBRARY_PROJECT_NAME,
-  RUNNER_TAG,
-  BRANCH_NAME,
-} from 'model/backend/gitlab/digitalTwinConfig/constants';
 import type { MeasurementStore, Configuration } from './measurement.types';
 
 export type { MeasurementStore } from './measurement.types';
@@ -30,18 +16,6 @@ export function getStore(): MeasurementStore {
   return _store;
 }
 
-/** @deprecated Use getDefaultConfig() for current Redux values */
-export const DEFAULT_CONFIG: Configuration = {
-  'Branch name': BRANCH_NAME,
-  'Group name': GROUP_NAME,
-  'Common Library project name': COMMON_LIBRARY_PROJECT_NAME,
-  'DT directory': DT_DIRECTORY,
-  'Runner tag': RUNNER_TAG,
-};
-
-// Snapshot of settings captured when the measurement starts.
-// While non-null, measurementConfig and getDefaultConfig() return these frozen values
-// so that mid-measurement settings changes don't affect running executions.
 let frozenSettings: {
   RUNNER_TAG: string;
   BRANCH_NAME: string;
@@ -103,7 +77,6 @@ export function getDefaultConfig(): Configuration {
   };
 }
 
-/** Returns the captured runner tags so the caller can store them on measurementState. */
 export function saveOriginalSettings(): {
   primaryRunnerTag: string;
   secondaryRunnerTag: string;
@@ -127,18 +100,33 @@ export function saveOriginalSettings(): {
   };
 }
 
+export function updateFrozenSettings(): void {
+  if (frozenSettings === null) return;
+  const state = getStore().getState();
+  frozenSettings = {
+    RUNNER_TAG: state.settings.RUNNER_TAG,
+    BRANCH_NAME: state.settings.BRANCH_NAME,
+    GROUP_NAME: state.settings.GROUP_NAME,
+    DT_DIRECTORY: state.settings.DT_DIRECTORY,
+    COMMON_LIBRARY_PROJECT_NAME: state.settings.COMMON_LIBRARY_PROJECT_NAME,
+    SECONDARY_RUNNER_TAG: state.settings.secondaryRunnerTag,
+    TRIALS: state.settings.trials,
+    PRIMARY_DT_NAME: state.settings.primaryDTName,
+    SECONDARY_DT_NAME: state.settings.secondaryDTName,
+  };
+}
+
 export function restoreOriginalSettings(): void {
   if (frozenSettings === null) return;
   const current = getStore().getState();
-  // Only restore fields the user hasn't changed since the measurement started.
-  if (current.settings.RUNNER_TAG === frozenSettings.RUNNER_TAG) {
+  if (current.settings.RUNNER_TAG !== frozenSettings.RUNNER_TAG) {
     getStore().restoreRunnerTag(frozenSettings.RUNNER_TAG);
   }
-  if (current.settings.BRANCH_NAME === frozenSettings.BRANCH_NAME) {
+  if (current.settings.BRANCH_NAME !== frozenSettings.BRANCH_NAME) {
     getStore().restoreBranchName(frozenSettings.BRANCH_NAME);
   }
   if (
-    current.settings.secondaryRunnerTag === frozenSettings.SECONDARY_RUNNER_TAG
+    current.settings.secondaryRunnerTag !== frozenSettings.SECONDARY_RUNNER_TAG
   ) {
     getStore().restoreSecondaryRunnerTag(frozenSettings.SECONDARY_RUNNER_TAG);
   }

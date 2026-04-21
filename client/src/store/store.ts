@@ -65,5 +65,6 @@ setPipelineExecutionDB(indexedDBService);
 setMeasurementDB(measurementDBService);
 
 export type { RootState } from 'store/storeTypes';
+export type AppDispatch = typeof store.dispatch;
 
 export default store;

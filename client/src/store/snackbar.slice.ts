@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertColor } from '@mui/material';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
@@ -9,7 +8,7 @@ export interface SnackbarItem {
   id: number;
   message: string;
   severity: AlertColor;
-  icon?: React.ReactNode;
+  icon?: string;
 }
 
 export interface SnackbarState {
@@ -40,10 +39,10 @@ const snackbarSlice = createSlice({
       }
     },
     hideSnackbar(state, action: PayloadAction<number | undefined>) {
-      if (action.payload !== undefined) {
-        state.items = state.items.filter((item) => item.id !== action.payload);
-      } else {
+      if (action.payload === undefined) {
         state.items = [];
+      } else {
+        state.items = state.items.filter((item) => item.id !== action.payload);
       }
     },
   },

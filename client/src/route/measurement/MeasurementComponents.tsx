@@ -14,7 +14,7 @@ export const statusColorMap: Record<Status, string> = {
   PENDING: '#9e9e9e',
   RUNNING: '#1976d2',
   FAILURE: '#d32f2f',
-  SUCCESS: '#1976d2',
+  SUCCESS: '#2e7d32',
   STOPPED: '#616161',
 };
 
@@ -78,12 +78,6 @@ const trialHeaderLeftStyle: SxProps<Theme> = {
   display: 'flex',
   alignItems: 'center',
   gap: 1,
-};
-const errorBoxStyle: SxProps<Theme> = {
-  mt: 0.5,
-  p: 1,
-  bgcolor: 'error.light',
-  borderRadius: 1,
 };
 const bold: SxProps<Theme> = { fontWeight: 'bold' };
 
@@ -162,6 +156,89 @@ function TrialHistoryTooltip({
   );
 }
 
+function buildTooltipContent(
+  allTrials: Trial[] | undefined,
+  expectedTrials: number | undefined,
+  isRunning: boolean | undefined,
+) {
+  if (
+    (allTrials && allTrials.length > 0) ||
+    (expectedTrials && expectedTrials > 0)
+  ) {
+    return (
+      <TrialHistoryTooltip
+        allTrials={allTrials ?? []}
+        expectedTrials={expectedTrials ?? allTrials?.length ?? 0}
+        isRunning={isRunning ?? false}
+      />
+    );
+  }
+  return '';
+}
+
+function TrialHeaderRow({
+  trialIndex,
+  trial,
+}: Readonly<{ trialIndex: number; trial: Trial }>) {
+  const hasTiming = !!(trial['Time Start'] && trial['Time End']);
+  return (
+    <Box sx={trialHeaderRowStyle}>
+      <Box sx={trialHeaderLeftStyle}>
+        <Typography variant="caption" color="text.secondary" sx={bold}>
+          Trial {trialIndex + 1}
+        </Typography>
+        {trial.Status === 'STOPPED' && (
+          <Typography variant="caption" sx={{ color: statusColorMap.STOPPED }}>
+            (stopped)
+          </Typography>
+        )}
+      </Box>
+      <Typography
+        variant="caption"
+        color={hasTiming ? 'text.secondary' : 'text.disabled'}
+      >
+        {hasTiming
+          ? `${secondsDifference(trial['Time Start'], trial['Time End'])?.toFixed(1)}s`
+          : '—'}
+      </Typography>
+    </Box>
+  );
+}
+
+function TrialExecutionList({
+  trial,
+  executions,
+}: Readonly<{ trial: Trial; executions?: Execution[] }>) {
+  if (trial.Execution.length > 0) {
+    return (
+      <>
+        {trial.Execution.map((execution) => (
+          <ExecutionCard
+            key={`execution-${execution.dtName}-${execution.pipelineId ?? execution.executionIndex ?? 'pending'}`}
+            execution={execution}
+          />
+        ))}
+      </>
+    );
+  }
+  return (
+    <>
+      {(executions ?? []).map((exp, i) => (
+        <ExecutionCard
+          key={`expected-${exp.dtName}-${i}`}
+          execution={{
+            dtName: exp.dtName,
+            pipelineId: null,
+            status: '—',
+            config: { ...getDefaultConfig(), ...exp.config },
+            executionIndex: i,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
 export function TrialCard({
   trial,
   trialIndex,
@@ -170,78 +247,16 @@ export function TrialCard({
   expectedTrials,
   isRunning,
 }: Readonly<TrialCardProps & { executions?: Execution[] }>) {
-  const showTooltip =
-    (allTrials && allTrials.length > 0) ||
-    (expectedTrials && expectedTrials > 0);
-  const tooltipContent = showTooltip ? (
-    <TrialHistoryTooltip
-      allTrials={allTrials ?? []}
-      expectedTrials={expectedTrials ?? allTrials?.length ?? 0}
-      isRunning={isRunning ?? false}
-    />
-  ) : (
-    ''
-  );
-
   return (
-    <Tooltip title={tooltipContent} arrow placement="left">
+    <Tooltip
+      title={buildTooltipContent(allTrials, expectedTrials, isRunning)}
+      arrow
+      placement="left"
+      slotProps={{ popper: { disablePortal: true } }}
+    >
       <Box sx={trialCardStyle}>
-        <Box sx={trialHeaderRowStyle}>
-          <Box sx={trialHeaderLeftStyle}>
-            <Typography variant="caption" color="text.secondary" sx={bold}>
-              Trial {trialIndex + 1}
-            </Typography>
-            {trial.Status === 'STOPPED' && (
-              <Typography
-                variant="caption"
-                sx={{ color: statusColorMap.STOPPED }}
-              >
-                (stopped)
-              </Typography>
-            )}
-          </Box>
-          <Typography
-            variant="caption"
-            color={
-              trial['Time Start'] && trial['Time End']
-                ? 'text.secondary'
-                : 'text.disabled'
-            }
-          >
-            {trial['Time Start'] && trial['Time End']
-              ? `${secondsDifference(trial['Time Start'], trial['Time End'])?.toFixed(1)}s`
-              : '—'}
-          </Typography>
-        </Box>
-        {trial.Execution.length > 0
-          ? trial.Execution.map((execution) => (
-              <ExecutionCard
-                key={`execution-${execution.dtName}-${execution.pipelineId ?? execution.executionIndex ?? 'pending'}`}
-                execution={execution}
-              />
-            ))
-          : (executions ?? []).map((exp, i) => (
-              <ExecutionCard
-                key={`expected-${exp.dtName}-${i}`}
-                execution={{
-                  dtName: exp.dtName,
-                  pipelineId: null,
-                  status: '—',
-                  config: { ...getDefaultConfig(), ...exp.config },
-                  executionIndex: i,
-                }}
-              />
-            ))}
-        {trial.Error && !trial.Error.message.includes('stopped by user') && (
-          <Box sx={errorBoxStyle}>
-            <Typography variant="caption" color="error.dark">
-              <Typography component="span" variant="caption" sx={bold}>
-                Error:
-              </Typography>{' '}
-              {trial.Error.message}
-            </Typography>
-          </Box>
-        )}
+        <TrialHeaderRow trialIndex={trialIndex} trial={trial} />
+        <TrialExecutionList trial={trial} executions={executions} />
       </Box>
     </Tooltip>
   );

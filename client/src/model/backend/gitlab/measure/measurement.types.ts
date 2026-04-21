@@ -96,6 +96,13 @@ export type TimedTask = {
   Executions?: () => Execution[];
 };
 
+export type MeasurementRecord = {
+  id: string;
+  taskName: string;
+  timestamp: number;
+  task: TimedTask;
+};
+
 export type MeasurementSetters = {
   setIsRunning: (v: boolean) => void;
   setCurrentExecutions: (v: ExecutionResult[]) => void;

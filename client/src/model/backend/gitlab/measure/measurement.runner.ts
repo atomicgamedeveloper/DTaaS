@@ -1,4 +1,3 @@
-// Top-level measurement orchestrator (runs tasks across trials, updates UI, persists results)
 /* eslint-disable no-await-in-loop */
 import { getChildPipelineId } from 'model/backend/gitlab/execution/pipelineCore';
 import {
@@ -24,7 +23,6 @@ import {
   computeAverageTime,
   computeFinalStatus,
 } from 'model/backend/gitlab/measure/measurement.utils';
-import { formatName } from 'model/backend/digitalTwin';
 
 interface MeasurementDB {
   add(task: TimedTask): Promise<string>;
@@ -81,23 +79,7 @@ async function executeTask(
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
       updateTask(taskIndex, { Trials: updatedTrials });
-      const newTrials = updatedTrials.slice(previousTrialCount.value);
       previousTrialCount.value = updatedTrials.length;
-      for (const trial of newTrials) {
-        const trialNum = updatedTrials.indexOf(trial) + 1;
-        const trialCounter = ` (${trialNum}/${MeasurementConfig.trials})`;
-        if (trial.Status === 'FAILURE') {
-          getStore().showSnackbar(
-            `Measurement: Execution failed for ${formatName(trial.Execution[0]?.dtName ?? '')}${trialCounter}`,
-            'error',
-          );
-        } else if (trial.Status === 'SUCCESS') {
-          getStore().showSnackbar(
-            `Measurement: Execution completed successfully for ${formatName(trial.Execution[0]?.dtName ?? '')}${trialCounter}`,
-            'success',
-          );
-        }
-      }
     },
   );
 
@@ -140,7 +122,7 @@ async function executeTask(
       };
       await measurementDB.add(taskToSave as TimedTask);
     } catch {
-      // ignore storage errors
+      // ignore
     }
   }
 }
@@ -155,8 +137,6 @@ export async function startMeasurement(
 
   isRunningRef.current = true;
 
-  // Hook up the page's update functions and wrap them so every change
-  // is kept in memory even if the user navigates away mid-measurement
   attachSetters(setters);
   const proxy = wrapSetters();
 
@@ -183,7 +163,7 @@ export async function startMeasurement(
       await executeTask(i, allTasks[i], proxy, updateTask);
     }
     if (!measurementState.shouldStopPipelines) {
-      getStore().showSnackbar('All measurements completed', 'success');
+      getStore().showSnackbar('All measurements completed', 'info');
     }
   } finally {
     isRunningRef.current = false;
@@ -196,7 +176,6 @@ export async function startMeasurement(
 export async function stopAllPipelines(): Promise<void> {
   measurementState.shouldStopPipelines = true;
   restoreOriginalSettings();
-  // Save the stop to memory and update the screen if the page is open
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
   await cancelActivePipelines();
@@ -264,8 +243,13 @@ export function handleBeforeUnload(
 ): void {
   if (isRunningRef.current && measurementState.activePipelines.length > 0) {
     event.preventDefault();
-    event.returnValue = '';
+  }
+}
 
+export function handleUnload(
+  isRunningRef: React.MutableRefObject<boolean>,
+): void {
+  if (isRunningRef.current && measurementState.activePipelines.length > 0) {
     measurementState.shouldStopPipelines = true;
     for (const { backend, pipelineId } of measurementState.activePipelines) {
       try {

@@ -4,6 +4,7 @@ import {
   purgeMeasurementData,
   restartMeasurement,
   handleBeforeUnload,
+  handleUnload,
   setMeasurementDB,
 } from 'model/backend/gitlab/measure/measurement.runner';
 import {
@@ -83,7 +84,7 @@ describe('measurement.runner', () => {
 
     expect(mockShowSnackbar).toHaveBeenCalledWith(
       'All measurements completed',
-      'success',
+      'info',
     );
   });
 
@@ -228,6 +229,37 @@ describe('measurement.runner', () => {
   });
 
   describe('handleBeforeUnload', () => {
+    it('calls preventDefault when running with active pipelines', () => {
+      const mockBackend = createMockBackend(1);
+      harness.isRunningRef.current = true;
+      harness.state.activePipelines = [
+        createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
+      ] as unknown as typeof harness.state.activePipelines;
+
+      const preventDefault = jest.fn();
+      handleBeforeUnload(
+        { preventDefault, returnValue: '' } as unknown as BeforeUnloadEvent,
+        harness.isRunningRef,
+      );
+
+      expect(preventDefault).toHaveBeenCalled();
+      expect(mockBackend.api.cancelPipeline).not.toHaveBeenCalled();
+    });
+
+    it('does not call preventDefault when not running', () => {
+      harness.isRunningRef.current = false;
+      const preventDefault = jest.fn();
+
+      handleBeforeUnload(
+        { preventDefault, returnValue: '' } as unknown as BeforeUnloadEvent,
+        harness.isRunningRef,
+      );
+
+      expect(preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleUnload', () => {
     it('cancels active pipelines when running', () => {
       const mockBackend = createMockBackend(1);
       harness.isRunningRef.current = true;
@@ -235,13 +267,7 @@ describe('measurement.runner', () => {
         createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
       ] as unknown as typeof harness.state.activePipelines;
 
-      handleBeforeUnload(
-        {
-          preventDefault: jest.fn(),
-          returnValue: '',
-        } as unknown as BeforeUnloadEvent,
-        harness.isRunningRef,
-      );
+      handleUnload(harness.isRunningRef);
 
       expect(mockBackend.api.cancelPipeline).toHaveBeenCalledWith(1, 10);
     });
@@ -252,13 +278,7 @@ describe('measurement.runner', () => {
       );
       harness.isRunningRef.current = false;
 
-      handleBeforeUnload(
-        {
-          preventDefault: jest.fn(),
-          returnValue: '',
-        } as unknown as BeforeUnloadEvent,
-        harness.isRunningRef,
-      );
+      handleUnload(harness.isRunningRef);
 
       expect(mockRestore).toHaveBeenCalled();
     });

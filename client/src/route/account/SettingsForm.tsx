@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from 'store/store';
 import {
@@ -27,6 +27,8 @@ import {
 import { Save as SaveIcon, RestartAlt as ResetIcon } from '@mui/icons-material';
 import ApplicationSettingsFields from 'route/account/ApplicationSettingsFields';
 import MeasurementSettingsFields from 'route/account/MeasurementSettingsFields';
+import { fetchDigitalTwins } from 'model/backend/util/init';
+import { updateFrozenSettings } from 'model/backend/gitlab/measure/measurement.settings';
 
 export interface SettingsFieldProps {
   formValues: Record<string, string>;
@@ -36,6 +38,9 @@ export interface SettingsFieldProps {
 
 const SettingsForm: React.FC = () => {
   const dispatch = useDispatch();
+  const digitalTwins = useSelector(
+    (state: RootState) => state.digitalTwin.digitalTwin,
+  );
   const {
     GROUP_NAME,
     DT_DIRECTORY,
@@ -71,6 +76,21 @@ const SettingsForm: React.FC = () => {
   const [notificationMessage, setNotificationMessage] = useState(
     'Settings saved successfully!',
   );
+  const [notificationSeverity, setNotificationSeverity] = useState<
+    'success' | 'error'
+  >('success');
+
+  const [twinsLoading, setTwinsLoading] = useState(
+    Object.keys(digitalTwins).length === 0,
+  );
+
+  useEffect(() => {
+    if (Object.keys(digitalTwins).length === 0) {
+      fetchDigitalTwins(dispatch, () => {}).finally(() =>
+        setTwinsLoading(false),
+      );
+    }
+  }, [dispatch, digitalTwins]);
 
   // Sync local form state when Redux state changes (e.g. external reset)
   const reduxKey = `${GROUP_NAME}|${DT_DIRECTORY}|${COMMON_LIBRARY_PROJECT_NAME}|${RUNNER_TAG}|${BRANCH_NAME}|${MEASUREMENT_TRIALS}|${MEASUREMENT_SECONDARY_RUNNER_TAG}|${MEASUREMENT_PRIMARY_DT_NAME}|${MEASUREMENT_SECONDARY_DT_NAME}`;
@@ -117,6 +137,7 @@ const SettingsForm: React.FC = () => {
     setFieldErrors({});
 
     dispatch(resetToDefaults());
+    updateFrozenSettings();
 
     setNotificationMessage('Settings reset to defaults');
     setShowNotification(true);
@@ -199,7 +220,10 @@ const SettingsForm: React.FC = () => {
       dispatch(setSecondaryDTName(formValues.measurementSecondaryDTName));
     }
 
+    updateFrozenSettings();
+
     setNotificationMessage('Settings saved successfully!');
+    setNotificationSeverity('success');
     setShowNotification(true);
   };
 
@@ -213,7 +237,10 @@ const SettingsForm: React.FC = () => {
     <Box sx={{ width: '100%', mt: 2 }}>
       <Paper elevation={2} sx={{ p: 3 }}>
         <ApplicationSettingsFields {...fieldProps} />
-        <MeasurementSettingsFields {...fieldProps} />
+        <MeasurementSettingsFields
+          {...fieldProps}
+          twinsLoading={twinsLoading}
+        />
 
         <Grid container>
           <Grid
@@ -248,7 +275,10 @@ const SettingsForm: React.FC = () => {
         onClose={() => setShowNotification(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setShowNotification(false)} severity="success">
+        <Alert
+          onClose={() => setShowNotification(false)}
+          severity={notificationSeverity}
+        >
           {notificationMessage}
         </Alert>
       </Snackbar>

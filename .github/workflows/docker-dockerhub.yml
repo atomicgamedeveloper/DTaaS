@@ -16,7 +16,7 @@ permissions:
   contents: read  # Required for checking out the code
   packages: write  # Push to github package registry
 
-on:
+'on':
   workflow_call:
     inputs:
       image-name:
@@ -89,8 +89,9 @@ jobs:
       - name: Check if version exists
         id: check_version
         env:
-          # yamllint disable-line rule:line-length
-          IMAGE_TAG: "${{ env.registry }}/${{ env.dockerhub-scope }}/${{ inputs.image-name }}:${{ inputs.version }}"
+          IMAGE_TAG: >
+            ${{ env.registry }}/${{ env.dockerhub-scope }}/
+            ${{ inputs.image-name }}:${{ inputs.version }}
         run: |
           if docker manifest inspect "$IMAGE_TAG" > /dev/null 2>&1; then
             echo "Version ${{ inputs.version }} already exists."
@@ -104,20 +105,24 @@ jobs:
         if: env.exists == 'false'
         # v6.18.0
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        env:
+          IMAGE_REPO: >-
+            ${{ format('{0}/{1}/{2}', env.registry, env.dockerhub-scope,
+            inputs.image-name) }}
         with:
           context: .
           file: ./docker/${{ inputs.dockerfile }}
           push: true
           # yamllint disable rule:line-length
           tags: |
-            ${{ env.registry }}/${{ env.dockerhub-scope }}/${{ inputs.image-name }}:${{ inputs.version }}
-            ${{ env.registry }}/${{ env.dockerhub-scope }}/${{ inputs.image-name }}:latest
+            ${{ env.IMAGE_REPO }}:${{ inputs.version }}
+            ${{ env.IMAGE_REPO }}:latest
           # yamllint enable rule:line-length
-
       - name: Docker Hub Description
         # v5.0.0
-        # yamllint disable-line rule:line-length
+        # yamllint disable rule:line-length
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa
+        # yamllint enable rule:line-length
         with:
           username: ${{ env.username }}
           password: ${{ env.password }}

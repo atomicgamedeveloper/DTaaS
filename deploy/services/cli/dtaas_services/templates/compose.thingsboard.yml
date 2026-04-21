@@ -1,0 +1,37 @@
+services:
+  thingsboard-ce:
+    image: 'thingsboard/tb-node:4.2.1'
+    container_name: thingsboard
+    restart: always
+    user: root
+    ports:
+      - '${THINGSBOARD_PORT}:8080'
+      - '${THINGSBOARD_EDGE_RPC_PORT}:7070'
+      - '${THINGSBOARD_MQTT_PORT}:1883'
+      - '${THINGSBOARD_MQTT_SSL_PORT}:8883'
+      - '${THINGSBOARD_COAP_LwM2M_PORTS}:5683-5688/udp'
+    volumes:
+      - './log/thingsboard:/var/log/thingsboard'
+      - './data/thingsboard:/data'
+      - './certs:/certs:ro'
+    environment:
+      TB_SERVICE_ID: tb-ce-node
+      # yamllint disable-line rule:line-length
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}?sslmode=require
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SSL_ENABLED: "true"
+      SSL_CREDENTIALS_TYPE: "PEM"
+      SSL_PEM_CERT: "/certs/thingsboard-fullchain.pem"
+      SSL_PEM_KEY: "/certs/thingsboard-privkey.pem"
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '10'
+    networks:
+      - platform-services
+
+networks:
+  platform-services:
+    name: dtaas-services

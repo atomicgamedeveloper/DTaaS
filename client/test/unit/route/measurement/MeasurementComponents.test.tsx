@@ -24,7 +24,6 @@ const mockUtils = jest.requireMock(
   'model/backend/gitlab/measure/measurement.utils',
 );
 const mockGetTotalTime = mockUtils.getTotalTime as jest.Mock;
-const mockDownloadResultsJson = mockUtils.downloadResultsJson as jest.Mock;
 
 describe('MeasurementComponents', () => {
   beforeEach(() => {
@@ -142,7 +141,7 @@ describe('MeasurementComponents', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows completion summary with download link when all complete', () => {
+  it('shows completion summary with concluded text when all complete', () => {
     mockGetTotalTime.mockReturnValue(45.5);
     const results = [
       createMockTask({ Status: 'SUCCESS' }),
@@ -156,9 +155,9 @@ describe('MeasurementComponents', () => {
       />,
     );
     expect(screen.getByText(/Completed in 45.5s/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Download JSON'));
-    expect(mockDownloadResultsJson).toHaveBeenCalledWith(results);
+    expect(
+      screen.getByText('Measurement data generation complete'),
+    ).toBeInTheDocument();
   });
 
   it('shows completion summary for mix of SUCCESS and FAILURE', () => {
@@ -175,6 +174,8 @@ describe('MeasurementComponents', () => {
       />,
     );
     expect(screen.getByText(/Completed in 30.0s/)).toBeInTheDocument();
-    expect(screen.getByText('Download JSON')).toBeInTheDocument();
+    expect(
+      screen.getByText('Measurement data generation complete'),
+    ).toBeInTheDocument();
   });
 });

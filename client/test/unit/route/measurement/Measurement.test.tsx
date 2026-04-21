@@ -128,6 +128,7 @@ jest.mock('model/backend/gitlab/measure/measurement.runner', () => ({
   stopAllPipelines: (...args: unknown[]) => mockStopAllPipelines(...args),
   restartMeasurement: (...args: unknown[]) => mockRestartMeasurement(...args),
   handleBeforeUnload: jest.fn(),
+  handleUnload: jest.fn(),
   purgeMeasurementData: (...args: unknown[]) =>
     mockPurgeMeasurementData(...args),
 }));
@@ -152,7 +153,6 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   );
   return {
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
-    DEFAULT_CONFIG: {},
     DEFAULT_MEASUREMENT: actual.DEFAULT_MEASUREMENT,
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),
@@ -162,12 +162,12 @@ jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
 
 let mockDispatch: jest.Mock;
 
+const renderMeasurement = () => render(<Measurement />);
+
 describe('Measurement', () => {
   beforeEach(() => {
     ({ mockDispatch } = setupMeasurementComponentTest());
   });
-
-  const renderMeasurement = () => render(<Measurement />);
 
   it('renders the Measurement page with layout and initial state', () => {
     renderMeasurement();
@@ -183,6 +183,36 @@ describe('Measurement', () => {
     expect(screen.getByText('Task 1')).toBeInTheDocument();
     expect(screen.getByText('Task 2')).toBeInTheDocument();
     expect(screen.getByTestId('measurement-table')).toBeInTheDocument();
+  });
+
+  it('renders task status and completion summary correctly', () => {
+    renderMeasurement();
+    expect(screen.getByTestId('completion-summary')).toBeInTheDocument();
+    expect(screen.getByText('Tasks: 2')).toBeInTheDocument();
+    expect(screen.getByTestId('completed-tasks')).toHaveTextContent('0');
+    expect(screen.getByTestId('total-tasks')).toHaveTextContent('2');
+  });
+
+  it('adds and removes beforeunload and unload event listeners', () => {
+    const addSpy = jest.spyOn(globalThis, 'addEventListener');
+    const removeSpy = jest.spyOn(globalThis, 'removeEventListener');
+    const { unmount } = renderMeasurement();
+    expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('unload', expect.any(Function));
+    unmount();
+    expect(removeSpy).toHaveBeenCalledWith(
+      'beforeunload',
+      expect.any(Function),
+    );
+    expect(removeSpy).toHaveBeenCalledWith('unload', expect.any(Function));
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+});
+
+describe('Measurement - dispatch and interactions', () => {
+  beforeEach(() => {
+    ({ mockDispatch } = setupMeasurementComponentTest());
   });
 
   it('calls startMeasurement when Start is clicked', async () => {
@@ -215,28 +245,6 @@ describe('Measurement', () => {
       fireEvent.click(screen.getByTestId('purge-btn'));
     });
     expect(mockPurgeMeasurementData).toHaveBeenCalled();
-  });
-
-  it('renders task status and completion summary correctly', () => {
-    renderMeasurement();
-    expect(screen.getByTestId('completion-summary')).toBeInTheDocument();
-    expect(screen.getByText('Tasks: 2')).toBeInTheDocument();
-    expect(screen.getByTestId('completed-tasks')).toHaveTextContent('0');
-    expect(screen.getByTestId('total-tasks')).toHaveTextContent('2');
-  });
-
-  it('adds and removes beforeunload event listener', () => {
-    const addSpy = jest.spyOn(globalThis, 'addEventListener');
-    const removeSpy = jest.spyOn(globalThis, 'removeEventListener');
-    const { unmount } = renderMeasurement();
-    expect(addSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
-    unmount();
-    expect(removeSpy).toHaveBeenCalledWith(
-      'beforeunload',
-      expect.any(Function),
-    );
-    addSpy.mockRestore();
-    removeSpy.mockRestore();
   });
 
   it('calls downloadTaskResultJson when download is triggered', async () => {

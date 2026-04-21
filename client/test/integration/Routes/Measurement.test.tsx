@@ -66,7 +66,6 @@ describe('Measurement Page', () => {
   });
 
   it('shows all tasks with NOT_STARTED status initially', async () => {
-    // NOT_STARTED status is displayed as '—' in the UI
     const statusCells = screen.getAllByRole('cell');
     const dashStatuses = statusCells.filter((cell) =>
       cell.textContent?.includes('—'),
@@ -75,12 +74,12 @@ describe('Measurement Page', () => {
   });
 
   it('displays task descriptions', async () => {
-    expect(
-      screen.getByText('Running the primary Digital Twin with current setup.'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Running the primary Digital Twin twice at once.'),
-    ).toBeInTheDocument();
+    expect(document.body.textContent).toContain(
+      'Running the hello-world Digital Twin with current setup.',
+    );
+    expect(document.body.textContent).toContain(
+      'Running the hello-world Digital Twin twice at once.',
+    );
   });
 
   it('displays helper text about the measurement', async () => {

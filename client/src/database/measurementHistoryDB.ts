@@ -1,12 +1,8 @@
 import { TimedTask } from 'model/backend/gitlab/measure/measurement.execution';
 import BaseIndexedDBService from 'database/BaseIndexedDBService';
+import type { MeasurementRecord } from 'model/backend/gitlab/measure/measurement.types';
 
-export type MeasurementRecord = {
-  id: string;
-  taskName: string;
-  timestamp: number;
-  task: TimedTask;
-};
+export type { MeasurementRecord } from 'model/backend/gitlab/measure/measurement.types';
 
 const STORE = 'measurementHistory';
 

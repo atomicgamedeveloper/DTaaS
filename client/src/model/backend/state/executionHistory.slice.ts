@@ -1,5 +1,3 @@
-import { createElement } from 'react';
-import ClearIcon from '@mui/icons-material/Clear';
 import {
   PayloadAction,
   createSlice,
@@ -225,16 +223,13 @@ export const removeExecution =
 
     try {
       await storageService.delete(id);
-      await new Promise((resolve) => {
-        setTimeout(resolve, 800);
-      });
       dispatch(setError(null));
       dispatch({
         type: 'snackbar/showSnackbar',
         payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
           severity: 'warning',
-          icon: createElement(ClearIcon, { fontSize: 'inherit' }),
+          icon: 'ClearIcon',
         } as ShowNotificationPayload,
       });
     } catch (error) {
@@ -262,10 +257,6 @@ export const clearExecutionHistoryForDT =
         dispatch(removeExecutionHistoryEntry(entry.id));
       }
 
-      const arteficialWaitingTime = 850;
-      await new Promise((resolve) => {
-        setTimeout(resolve, arteficialWaitingTime);
-      });
       dispatch(setError(null));
       dispatch({
         type: 'snackbar/showSnackbar',
@@ -279,7 +270,7 @@ export const clearExecutionHistoryForDT =
             : ({
                 message: `Deleted all entries from ${formatName(dtName)} execution history`,
                 severity: 'warning',
-                icon: createElement(ClearIcon, { fontSize: 'inherit' }),
+                icon: 'ClearIcon',
               } as ShowNotificationPayload),
       });
     } catch (error) {

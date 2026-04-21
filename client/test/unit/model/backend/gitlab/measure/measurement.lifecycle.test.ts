@@ -1,15 +1,24 @@
 import {
   restartMeasurement,
   handleBeforeUnload,
+  handleUnload,
 } from 'model/backend/gitlab/measure/measurement.runner';
 import {
   restoreOriginalSettings,
-  DEFAULT_CONFIG,
   resetTasks,
 } from 'model/backend/gitlab/measure/measurement.execution';
+import type { Configuration } from 'model/backend/gitlab/measure/measurement.types';
 import { cancelActivePipelines } from 'model/backend/gitlab/measure/measurement.pipeline';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import { setupMeasurementTestHarness } from './measurement.testUtil';
+
+const STUB_CONFIG: Configuration = {
+  'Branch name': 'main',
+  'Group name': 'group',
+  'Common Library project name': 'common',
+  'DT directory': 'digital_twins',
+  'Runner tag': 'linux',
+};
 
 jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
   const { createMeasurementExecutionMock } = jest.requireActual(
@@ -70,27 +79,30 @@ describe('measurement.lifecycle', () => {
     expect(cancelActivePipelines).toHaveBeenCalledTimes(1);
   });
 
-  it('should do nothing if not running or no active pipelines', () => {
+  it('handleBeforeUnload should do nothing if not running or no active pipelines', () => {
+    const preventDefault = jest.fn();
     handleBeforeUnload(
-      {
-        preventDefault: jest.fn(),
-        returnValue: '',
-      } as unknown as BeforeUnloadEvent,
+      { preventDefault, returnValue: '' } as unknown as BeforeUnloadEvent,
       harness.isRunningRef,
     );
-    expect(harness.state.shouldStopPipelines).toBe(false);
+    expect(preventDefault).not.toHaveBeenCalled();
     harness.isRunningRef.current = true;
     handleBeforeUnload(
-      {
-        preventDefault: jest.fn(),
-        returnValue: '',
-      } as unknown as BeforeUnloadEvent,
+      { preventDefault, returnValue: '' } as unknown as BeforeUnloadEvent,
       harness.isRunningRef,
     );
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('handleUnload should do nothing if not running or no active pipelines', () => {
+    handleUnload(harness.isRunningRef);
+    expect(harness.state.shouldStopPipelines).toBe(false);
+    harness.isRunningRef.current = true;
+    handleUnload(harness.isRunningRef);
     expect(harness.state.shouldStopPipelines).toBe(false);
   });
 
-  it('should cancel pipelines and handle errors gracefully', () => {
+  it('handleUnload should cancel pipelines and handle errors gracefully', () => {
     harness.isRunningRef.current = true;
     const cancelFn = jest.fn().mockReturnValue({ catch: jest.fn() });
     harness.state.activePipelines = [
@@ -101,18 +113,12 @@ describe('measurement.lifecycle', () => {
         } as unknown as BackendInterface,
         pipelineId: 100,
         dtName: 'test',
-        config: DEFAULT_CONFIG,
+        config: STUB_CONFIG,
         status: 'running',
         phase: 'parent',
       },
     ];
-    handleBeforeUnload(
-      {
-        preventDefault: jest.fn(),
-        returnValue: '',
-      } as unknown as BeforeUnloadEvent,
-      harness.isRunningRef,
-    );
+    handleUnload(harness.isRunningRef);
     expect(harness.state.shouldStopPipelines).toBe(true);
     expect(cancelFn).toHaveBeenCalledWith(1, 100);
 
@@ -128,20 +134,12 @@ describe('measurement.lifecycle', () => {
         } as unknown as BackendInterface,
         pipelineId: 100,
         dtName: 'test',
-        config: DEFAULT_CONFIG,
+        config: STUB_CONFIG,
         status: 'running',
         phase: 'parent',
       },
     ];
-    expect(() =>
-      handleBeforeUnload(
-        {
-          preventDefault: jest.fn(),
-          returnValue: '',
-        } as unknown as BeforeUnloadEvent,
-        harness.isRunningRef,
-      ),
-    ).not.toThrow();
+    expect(() => handleUnload(harness.isRunningRef)).not.toThrow();
     expect(restoreOriginalSettings).toHaveBeenCalled();
   });
 });
