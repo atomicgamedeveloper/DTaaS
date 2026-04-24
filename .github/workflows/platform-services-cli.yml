@@ -2,8 +2,8 @@ name: Platform Services CLI
 
 'on':
   push:
-    paths:
-      - 'deploy/services/cli/**'
+    tags:
+      - 'dtaas-services-python-v*'
   pull_request:
     paths:
       - 'deploy/services/cli/**'
@@ -23,7 +23,6 @@ jobs:
       tests-directory: tests
       coverage-file: deploy/services/cli/coverage.xml
       artifact-name: dtaas-cli
-      artifact-path: |
-        deploy/services/cli/dist/*.whl
-        deploy/services/cli/dist/*.tar.gz
       run-pyright: true
+      # yamllint disable-line rule:line-length
+      publish: ${{ startsWith(github.ref, 'refs/tags/dtaas-services-python-v') }}
