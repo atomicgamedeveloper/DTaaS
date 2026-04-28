@@ -6,9 +6,7 @@ import {
   itHasCorrectTabNameinDTIframe,
 } from 'test/unit/unit.testUtil';
 
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
-}));
+jest.unmock('components/tab/TabComponent');
 
 describe('Digital Twins', () => {
   const tabLabels: string[] = [];

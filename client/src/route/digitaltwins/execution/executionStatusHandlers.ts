@@ -14,7 +14,6 @@ import {
 } from 'model/backend/state/executionHistory.slice';
 import { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 // Re-export for test compatibility
 export { fetchJobLogs } from 'model/backend/gitlab/execution/logFetching';
@@ -40,7 +39,7 @@ export const startPipeline = async (
       payload: {
         message: executionStatusMessage,
         severity: 'error',
-      } as ShowNotificationPayload,
+      },
     });
     return null;
   }
@@ -51,7 +50,7 @@ export const startPipeline = async (
     payload: {
       message: executionStatusMessage,
       severity: 'success',
-    } as ShowNotificationPayload,
+    },
   });
 
   dispatch(setSelectedExecutionId(digitalTwin.currentExecutionId));

@@ -10,10 +10,7 @@ import {
 } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import {
-  ShowNotificationPayload,
-  IExecutionHistoryStorage,
-} from 'model/backend/interfaces/sharedInterfaces';
+import { IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -228,7 +225,7 @@ export const removeExecution =
         payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
           severity: 'success',
-        } as ShowNotificationPayload,
+        },
       });
     } catch (error) {
       if (execution) {
@@ -251,7 +248,7 @@ export const clearExecutionHistoryForDT =
         payload: {
           message: `Deleted all entries from ${formatName(dtName)} execution history`,
           severity: 'success',
-        } as ShowNotificationPayload,
+        },
       });
     } catch (error) {
       dispatch(setError(`Failed to clear execution history: ${error}`));

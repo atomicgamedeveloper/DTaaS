@@ -9,9 +9,7 @@ import {
   TabLabelURLPair,
 } from 'test/unit/unit.testUtil';
 
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
-}));
+jest.unmock('components/tab/TabComponent');
 
 const urlsByTabs: TabLabelURLPair[] = assetType.map((tab) => ({
   label: tab.label,

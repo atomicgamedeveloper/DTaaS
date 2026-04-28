@@ -9,13 +9,7 @@ import {
 import * as reactRedux from 'react-redux';
 import { getBranchName } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
-}));
-
-jest.mock('components/tab/TabComponent', () => ({
-  ...jest.requireActual('components/tab/TabComponent'),
-}));
+jest.unmock('components/tab/TabComponent');
 
 jest.mock('react-oidc-context');
 

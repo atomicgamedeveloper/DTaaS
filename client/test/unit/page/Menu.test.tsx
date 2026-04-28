@@ -9,6 +9,8 @@ import userEvent from '@testing-library/user-event';
 import { mockUser } from 'test/__mocks__/global_mocks';
 import { closestDiv } from 'test/integration/integration.testUtil';
 
+jest.unmock('page/Menu');
+
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
 }));
@@ -16,10 +18,6 @@ jest.mock('react-redux', () => ({
 jest.mock('react-oidc-context', () => ({
   ...jest.requireActual('react-oidc-context'),
   useAuth: jest.fn(),
-}));
-
-jest.mock('page/Menu', () => ({
-  ...jest.requireActual('page/Menu'),
 }));
 
 describe('Menu', () => {

@@ -6,6 +6,7 @@ import { addOrUpdateFile } from 'model/store/file.slice';
 import { addOrUpdateLibraryFile } from 'model/store/libraryConfigFiles.slice';
 
 jest.mock('@monaco-editor/react', () => ({
+  __esModule: true,
   default: ({ onChange }: { onChange?: (value: string) => void }) => (
     <textarea
       data-testid="monaco-editor"

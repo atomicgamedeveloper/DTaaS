@@ -49,9 +49,7 @@ const AssetGridItem: React.FC<{
 const LoadingSpinner: React.FC = () => (
   <Grid
     container
-    justifyContent="center"
-    alignItems="center"
-    sx={{ minHeight: '10rem' }}
+    sx={{ justifyContent: 'center', alignItems: 'center', minHeight: '10rem' }}
   >
     <CircularProgress />
   </Grid>

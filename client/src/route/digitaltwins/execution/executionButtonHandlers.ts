@@ -10,7 +10,6 @@ import {
 } from 'route/digitaltwins/execution/executionStatusHandlers';
 import { startPipelineStatusCheck } from 'route/digitaltwins/execution/executionStatusManager';
 import { stopPipelines } from 'model/backend/gitlab/execution/pipelineCore';
-import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 export type PipelineHandlerDispatch = ThunkDispatch<
   RootState,
@@ -120,7 +119,7 @@ export const handleStop = async (
           digitalTwin.DTName,
         )}`,
         severity: 'success',
-      } as ShowNotificationPayload,
+      },
     });
   } else {
     dispatch({
@@ -128,7 +127,7 @@ export const handleStop = async (
       payload: {
         message: `Execution stop failed for ${formatName(digitalTwin.DTName)}`,
         severity: 'error',
-      } as ShowNotificationPayload,
+      },
     });
   }
 

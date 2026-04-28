@@ -96,8 +96,9 @@ const useValidationResults = () => {
       try {
         const results = await getValidationResults();
         setValidationResults(results);
-      } catch (_error) {
-        throw new Error('Failed to fetch validation results');
+      } catch (error) {
+        // eslint-disable-next-line preserve-caught-error
+        throw new Error(`Failed to fetch validation results: ${error}`);
       } finally {
         setIsLoading(false);
       }

@@ -21,7 +21,7 @@ const snackbarSlice = createSlice({
     showSnackbar(state, action: PayloadAction<ShowNotificationPayload>) {
       state.open = true;
       state.message = action.payload.message;
-      state.severity = action.payload.severity as AlertColor;
+      state.severity = action.payload.severity;
     },
     hideSnackbar(state) {
       state.open = false;

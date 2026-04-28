@@ -126,9 +126,9 @@ describe('useSignOut', () => {
     const auth = useAuth();
     const signOut = useSignOut();
     globalThis.fetch = jest.fn().mockRejectedValueOnce('foo');
-    await expect(signOut(auth)).rejects.toThrow(
-      Error('Error occurred during logout: foo'),
-    );
+    await expect(signOut(auth)).rejects.toMatchObject({
+      message: 'Error occurred during logout: foo',
+    });
   });
 
   it('throws an error if signoutRedirect rejects', async () => {
@@ -137,9 +137,9 @@ describe('useSignOut', () => {
     auth.signoutRedirect = jest
       .fn()
       .mockRejectedValueOnce(new Error('signoutRedirect rejected'));
-    await expect(signOut(auth)).rejects.toThrow(
-      Error('Error occurred during logout: Error: signoutRedirect rejected'),
-    );
+    await expect(signOut(auth)).rejects.toMatchObject({
+      message: 'Error occurred during logout: Error: signoutRedirect rejected',
+    });
   });
 
   it('clears sessionStorage', async () => {
