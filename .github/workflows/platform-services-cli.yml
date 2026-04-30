@@ -2,8 +2,8 @@ name: Platform Services CLI
 
 'on':
   push:
-    paths:
-      - 'deploy/services/cli/**'
+    tags:
+      - 'dtaas-services-python-v*'
   pull_request:
     paths:
       - 'deploy/services/cli/**'
@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: read  # Required for checking out the code
       actions: write  # Required for uploading artifacts
+      id-token: write  # Required for OIDC trusted publisher
     uses: ./.github/workflows/python-reusable.yml
     with:
       working-directory: deploy/services/cli
@@ -23,7 +24,6 @@ jobs:
       tests-directory: tests
       coverage-file: deploy/services/cli/coverage.xml
       artifact-name: dtaas-cli
-      artifact-path: |
-        deploy/services/cli/dist/*.whl
-        deploy/services/cli/dist/*.tar.gz
       run-pyright: true
+      # yamllint disable-line rule:line-length
+      publish: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/distributed-demo' }}
