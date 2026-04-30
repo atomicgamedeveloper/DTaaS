@@ -79,7 +79,8 @@ cli/
 │       ├── formatter.py    # Output formatting utilities
 │       ├── password_store.py # Tracks current service passwords in current.passwords.env
 │       ├── template.py     # Project structure and template file management
-│       ├── utils.py        # Shared utilities (Docker, file operations)
+│       ├── docker_utils.py # Docker command execution with retry logic
+│       ├── utils.py        # Shared utilities (credentials, container state)
 │       ├── lib/            # Core service management
 │       │   ├── __init__.py
 │       │   ├── manager.py  # Docker Compose service management
@@ -99,7 +100,8 @@ cli/
 │           ├── postgres/   # PostgreSQL service module
 │           │   ├── __init__.py
 │           │   ├── postgres.py     # Certificate setup and readiness waiting
-│           │   └── status.py       # Container health and state checking
+│           │   ├── status.py       # Container health and state checking
+│           │   └── user_management.py  # User and database creation
 │           └── thingsboard/
 │          │    ├── __init__.py
 │          │    ├── activation.py    # Shared user activation utilities
@@ -128,6 +130,7 @@ cli/
     ├── test_config.py
     ├── test_formatter.py
     ├── test_template.py
+    ├── test_docker_utils.py
     ├── test_utils.py
     ├── test_commands/
     │   ├── __init__.py
@@ -156,7 +159,8 @@ cli/
     │   ├── test_postgres/
     │   │   ├── __init__.py
     │   │   ├── test_postgres.py
-    │   │   └── test_status.py
+    │   │   ├── test_status.py
+    │   │   └── test_user_management.py
     │   ├── test_thingsboard/
     │   │   ├── __init__.py
     │   │   ├── test_permissions.py
@@ -213,7 +217,9 @@ The package uses a modular, three-layer architecture:
   tracks the last-known password for each service account so that
   `reset-password` can be run repeatedly
 * **`template.py`**: Project structure and template file management
-* **`utils.py`**: Shared utilities (Docker operations, credentials handling)
+* **`docker_utils.py`**: Docker command execution helpers `execute_docker_command`
+* **`utils.py`**: Shared utilities (credentials file handling, container state
+  helpers, root-check, CI detection)
 * **`lib/`**: Core service management modules
   * `manager.py`: Docker Compose service management
   * `docker_executor.py`: Docker command execution
@@ -237,6 +243,9 @@ The package uses a modular, three-layer architecture:
 * **`postgres/`**: PostgreSQL service module
   * `postgres.py`: Certificate setup and readiness waiting
   * `status.py`: Container health and state checking
+  * `user_management.py`: User and database creation via a direct psycopg3
+    connection; uses `psycopg.sql.Identifier` and `psycopg.sql.Literal` for
+    driver-level escaping of all user input, preventing SQL injection
 
 * **`thingsboard/`**: ThingsBoard modules
   * `activation.py`: Shared user activation utilities (token extraction,
@@ -345,6 +354,21 @@ Stops and removes Docker containers:
   organisations using the `--owner` flag, giving them full administrative rights.
 * **User-specific Resources**: Each user gets their own organisation and bucket
   with the same name as their username.
+
+#### PostgreSQL Users
+
+* **Direct Connection**: User and database creation connects directly to PostgreSQL
+  over TCP via `psycopg.connect()` — no `docker exec` or shell
+  subprocess is involved, eliminating shell injection as an attack surface.
+* **Driver-level Escaping**: All usernames are wrapped in `psycopg.sql.Identifier`
+  and passwords in `psycopg.sql.Literal`. The psycopg3 driver escapes these at the
+  binary protocol level before any SQL reaches the database. Malicious input such
+  as`alice"; DROP TABLE users; --` or `$(curl ...)` is treated as a literal identifier
+  name and cannot break out of its context.
+* **Idempotent**: `DuplicateObject` (role already exists) and `DuplicateDatabase`
+  errors are caught and treated as success, so the command is safe to re-run.
+* **Config Keys Required**: `HOSTNAME`, `POSTGRES_PORT`, `POSTGRES_USER`,
+  `POSTGRES_PASSWORD` must be set in `config/services.env`.
 
 #### RabbitMQ Users
 
