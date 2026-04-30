@@ -95,7 +95,7 @@ export function createMockBackend(projectId: number = 1): MockBackend {
     getProjectId: jest.fn().mockReturnValue(projectId),
     api: {
       cancelPipeline: jest.fn().mockResolvedValue(undefined),
-    } as MockBackendApi,
+    },
     init: jest.fn().mockResolvedValue(undefined),
     getPipelineStatus: jest.fn(),
   };

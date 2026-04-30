@@ -1,9 +1,24 @@
 import { DB_CONFIG } from 'database/types';
 
-/**
- * Base class for IndexedDB services.
- * Handles database initialization and provides helpers for store transactions.
- */
+function setupObjectStores(db: IDBDatabase): void {
+  for (const [storeName, storeConfig] of Object.entries(DB_CONFIG.stores)) {
+    if (!db.objectStoreNames.contains(storeName)) {
+      const store = db.createObjectStore(storeName, {
+        keyPath: storeConfig.keyPath,
+      });
+      for (const index of storeConfig.indexes) {
+        store.createIndex(index.name, index.keyPath);
+      }
+    }
+  }
+}
+
+export interface CursorQuery {
+  storeName: string;
+  indexName: string;
+  key: IDBValidKey;
+}
+
 export default abstract class BaseIndexedDBService {
   protected db: IDBDatabase | undefined;
 
@@ -42,21 +57,7 @@ export default abstract class BaseIndexedDBService {
       };
 
       request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        for (const [storeName, storeConfig] of Object.entries(
-          DB_CONFIG.stores,
-        )) {
-          if (!db.objectStoreNames.contains(storeName)) {
-            const store = db.createObjectStore(storeName, {
-              keyPath: storeConfig.keyPath,
-            });
-
-            for (const index of storeConfig.indexes) {
-              store.createIndex(index.name, index.keyPath);
-            }
-          }
-        }
+        setupObjectStores((event.target as IDBOpenDBRequest).result);
       };
     });
 
@@ -94,9 +95,7 @@ export default abstract class BaseIndexedDBService {
   }
 
   protected async withCursor(
-    storeName: string,
-    indexName: string,
-    key: IDBValidKey,
+    query: CursorQuery,
     cursorAction: (cursor: IDBCursorWithValue) => void,
     errorMessage: string,
   ): Promise<void> {
@@ -110,10 +109,10 @@ export default abstract class BaseIndexedDBService {
         return;
       }
 
-      const transaction = this.db.transaction([storeName], 'readwrite');
-      const store = transaction.objectStore(storeName);
-      const index = store.index(indexName);
-      const request = index.openCursor(IDBKeyRange.only(key));
+      const transaction = this.db.transaction([query.storeName], 'readwrite');
+      const store = transaction.objectStore(query.storeName);
+      const index = store.index(query.indexName);
+      const request = index.openCursor(IDBKeyRange.only(query.key));
 
       request.onerror = () => {
         reject(new Error(errorMessage));

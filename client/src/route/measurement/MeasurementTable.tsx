@@ -184,21 +184,25 @@ interface RowState {
   latestTrial: Trial | undefined;
 }
 
+interface RowContext {
+  currentTaskIndex: number | null;
+  currentExecutions: ExecutionResult[];
+  primaryRunnerTag: string;
+  secondaryRunnerTag: string;
+}
+
 function deriveRowState(
   task: TimedTask,
   index: number,
-  currentTaskIndex: number | null,
-  currentExecutions: ExecutionResult[],
-  primaryRunnerTag: string,
-  secondaryRunnerTag: string,
+  ctx: RowContext,
 ): RowState {
   const { primaryTag, secondaryTag } = getRunnerTags(
     task,
-    primaryRunnerTag,
-    secondaryRunnerTag,
+    ctx.primaryRunnerTag,
+    ctx.secondaryRunnerTag,
   );
   const isActiveTask =
-    index === currentTaskIndex &&
+    index === ctx.currentTaskIndex &&
     task.Trials.length < (task.ExpectedTrials ?? Infinity);
   const isNotStartedOrPending =
     task.Status === 'NOT_STARTED' || task.Status === 'PENDING';
@@ -206,7 +210,7 @@ function deriveRowState(
     ? {
         'Time Start': undefined,
         'Time End': undefined,
-        Execution: currentExecutions,
+        Execution: ctx.currentExecutions,
         Status: 'RUNNING',
         Error: undefined,
       }
@@ -321,14 +325,12 @@ function MeasurementTableRow({
     isActiveTask,
     isNotStartedOrPending,
     latestTrial,
-  } = deriveRowState(
-    task,
-    index,
+  } = deriveRowState(task, index, {
     currentTaskIndex,
     currentExecutions,
     primaryRunnerTag,
     secondaryRunnerTag,
-  );
+  });
 
   return (
     <>
@@ -399,6 +401,13 @@ function MeasurementTableHeader() {
   );
 }
 
+function toggleSetEntry(prev: Set<string>, name: string): Set<string> {
+  const next = new Set(prev);
+  if (next.has(name)) next.delete(name);
+  else next.add(name);
+  return next;
+}
+
 export default function MeasurementTable({
   results,
   currentTaskIndex,
@@ -428,22 +437,18 @@ export default function MeasurementTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const toggleRow = (taskName: string) => {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(taskName)) next.delete(taskName);
-      else next.add(taskName);
-      return next;
-    });
+    setExpandedRows((prev) => toggleSetEntry(prev, taskName));
   };
 
   const lastRunningIndex = findLastRunningIndex(results);
 
   useEffect(() => {
-    if (lastRunningIndex < 0) return;
-    runningRowRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
+    if (lastRunningIndex >= 0) {
+      runningRowRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
   }, [lastRunningIndex]);
 
   return (

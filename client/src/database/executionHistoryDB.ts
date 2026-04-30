@@ -1,6 +1,8 @@
 import { DTExecutionResult } from 'model/backend/gitlab/types/executionHistory';
 import { IExecutionHistory } from 'model/backend/interfaces/execution';
-import BaseIndexedDBService from 'database/BaseIndexedDBService';
+import BaseIndexedDBService, {
+  type CursorQuery,
+} from 'database/BaseIndexedDBService';
 
 const STORE = 'executionHistory';
 
@@ -65,10 +67,13 @@ class IndexedDBService
   }
 
   public async deleteByDTName(dtName: string): Promise<void> {
+    const query: CursorQuery = {
+      storeName: STORE,
+      indexName: 'dtName',
+      key: dtName,
+    };
     return this.withCursor(
-      STORE,
-      'dtName',
-      dtName,
+      query,
       (cursor) => cursor.delete(),
       'Failed to delete execution history by DT name',
     );

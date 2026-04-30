@@ -165,7 +165,7 @@ const ReconfigureMainDialog = ({
   <Dialog
     open={showDialog}
     onClose={() => handleCloseReconfigureDialog(setShowDialog)}
-    fullWidth={true}
+    fullWidth
     maxWidth="lg"
     sx={{
       '& .MuiDialog-paper': {

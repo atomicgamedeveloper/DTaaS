@@ -112,6 +112,30 @@ export function ExecutionCard({ execution }: Readonly<ExecutionCardProps>) {
   );
 }
 
+function trialStatusColor(status: string): string {
+  if (status === 'SUCCESS') return '#a5d6a7';
+  if (status === 'FAILURE') return '#ef9a9a';
+  return '#e0e0e0';
+}
+
+function buildPendingRows(
+  allTrials: Trial[],
+  expectedTrials: number,
+  isRunning: boolean,
+): { label: string; color: string }[] {
+  const pendingStatus = isRunning ? 'RUNNING' : 'PENDING';
+  const rows = [
+    {
+      label: `Trial ${allTrials.length + 1}: ${pendingStatus}`,
+      color: '#90caf9',
+    },
+  ];
+  for (let i = allTrials.length + 2; i <= expectedTrials; i += 1) {
+    rows.push({ label: `Trial ${i}: PENDING`, color: '#e0e0e0' });
+  }
+  return rows;
+}
+
 function TrialHistoryTooltip({
   allTrials,
   expectedTrials,
@@ -121,24 +145,18 @@ function TrialHistoryTooltip({
   expectedTrials: number;
   isRunning: boolean;
 }>) {
-  const rows: { label: string; color: string }[] = allTrials.map((t, i) => {
-    let color = '#e0e0e0';
-    if (t.Status === 'SUCCESS') color = '#a5d6a7';
-    else if (t.Status === 'FAILURE') color = '#ef9a9a';
-    return { label: `Trial ${i + 1}: ${t.Status}`, color };
-  });
+  const completedRows = allTrials.map((t, i) => ({
+    label: `Trial ${i + 1}: ${t.Status}`,
+    color: trialStatusColor(t.Status),
+  }));
 
-  const remaining = expectedTrials - allTrials.length;
-  if (remaining > 0) {
-    const pendingStatus = isRunning ? 'RUNNING' : 'PENDING';
-    rows.push({
-      label: `Trial ${allTrials.length + 1}: ${pendingStatus}`,
-      color: '#90caf9',
-    });
-    for (let i = allTrials.length + 2; i <= expectedTrials; i += 1) {
-      rows.push({ label: `Trial ${i}: PENDING`, color: '#e0e0e0' });
-    }
-  }
+  const rows =
+    expectedTrials > allTrials.length
+      ? [
+          ...completedRows,
+          ...buildPendingRows(allTrials, expectedTrials, isRunning),
+        ]
+      : completedRows;
 
   return (
     <Box>

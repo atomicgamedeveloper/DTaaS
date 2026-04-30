@@ -49,6 +49,24 @@ function createTaskUpdater(
   };
 }
 
+async function persistTaskResult(task: TimedTask): Promise<void> {
+  if (!measurementDB) return;
+  try {
+    await measurementDB.add({
+      'Task Name': task['Task Name'],
+      Description: task.Description,
+      Trials: task.Trials,
+      'Time Start': task['Time Start'],
+      'Time End': task['Time End'],
+      'Average Time (s)': task['Average Time (s)'],
+      Status: task.Status,
+      ExpectedTrials: task.ExpectedTrials,
+    } as TimedTask);
+  } catch {
+    // ignore
+  }
+}
+
 async function executeTask(
   taskIndex: number,
   currentTask: TimedTask,
@@ -108,21 +126,36 @@ async function executeTask(
     Status: finalStatus,
   });
 
-  if (finalStatus === 'SUCCESS' && measurementDB) {
-    try {
-      const taskToSave = {
-        'Task Name': completedTask['Task Name'],
-        Description: completedTask.Description,
-        Trials: completedTask.Trials,
-        'Time Start': completedTask['Time Start'],
-        'Time End': completedTask['Time End'],
-        'Average Time (s)': completedTask['Average Time (s)'],
-        Status: completedTask.Status,
-        ExpectedTrials: completedTask.ExpectedTrials,
-      };
-      await measurementDB.add(taskToSave as TimedTask);
-    } catch {
-      // ignore
+  if (finalStatus === 'SUCCESS') {
+    await persistTaskResult(completedTask);
+  }
+}
+
+function markPendingTasks(
+  proxy: ReturnType<typeof wrapSetters>,
+  disabledNames: Set<string>,
+): void {
+  proxy.setResults((previous) =>
+    previous.map((task) =>
+      task.Status === 'NOT_STARTED' && !disabledNames.has(task['Task Name'])
+        ? { ...task, Status: 'PENDING' as Status }
+        : task,
+    ),
+  );
+}
+
+async function runEnabledTasks(
+  proxy: ReturnType<typeof wrapSetters>,
+  disabledNames: Set<string>,
+  updateTask: TaskUpdater,
+): Promise<void> {
+  const allTasks = getTasks();
+  for (let i = 0; i < allTasks.length; i += 1) {
+    if (measurementState.shouldStopPipelines) {
+      break;
+    }
+    if (!disabledNames.has(allTasks[i]['Task Name'])) {
+      await executeTask(i, allTasks[i], proxy, updateTask);
     }
   }
 }
@@ -136,10 +169,8 @@ export async function startMeasurement(
   }
 
   isRunningRef.current = true;
-
   attachSetters(setters);
   const proxy = wrapSetters();
-
   measurementState.shouldStopPipelines = false;
   proxy.setIsRunning(true);
   saveOriginalSettings();
@@ -147,27 +178,11 @@ export async function startMeasurement(
   const disabledNames = new Set(
     getStore().getState().settings.disabledTaskNames,
   );
-
-  proxy.setResults((previous) =>
-    previous.map((task) =>
-      task.Status === 'NOT_STARTED' && !disabledNames.has(task['Task Name'])
-        ? { ...task, Status: 'PENDING' as Status }
-        : task,
-    ),
-  );
-
+  markPendingTasks(proxy, disabledNames);
   const updateTask = createTaskUpdater(proxy.setResults);
 
   try {
-    const allTasks = getTasks();
-    for (let i = 0; i < allTasks.length; i += 1) {
-      if (measurementState.shouldStopPipelines) {
-        break;
-      }
-      if (!disabledNames.has(allTasks[i]['Task Name'])) {
-        await executeTask(i, allTasks[i], proxy, updateTask);
-      }
-    }
+    await runEnabledTasks(proxy, disabledNames, updateTask);
     if (!measurementState.shouldStopPipelines) {
       getStore().showSnackbar('All measurements completed', 'info');
     }
@@ -252,23 +267,26 @@ export function handleBeforeUnload(
   }
 }
 
+function cancelPipelinesFireAndForget(): void {
+  measurementState.shouldStopPipelines = true;
+  for (const { backend, pipelineId } of measurementState.activePipelines) {
+    try {
+      const projectId = backend.getProjectId();
+      backend.api.cancelPipeline(projectId, pipelineId).catch(() => {});
+      backend.api
+        .cancelPipeline(projectId, getChildPipelineId(pipelineId))
+        .catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+}
+
 export function handleUnload(
   isRunningRef: React.MutableRefObject<boolean>,
 ): void {
   if (isRunningRef.current && measurementState.activePipelines.length > 0) {
-    measurementState.shouldStopPipelines = true;
-    for (const { backend, pipelineId } of measurementState.activePipelines) {
-      try {
-        const projectId = backend.getProjectId();
-        backend.api.cancelPipeline(projectId, pipelineId).catch(() => {});
-        backend.api
-          .cancelPipeline(projectId, getChildPipelineId(pipelineId))
-          .catch(() => {});
-      } catch {
-        // ignore
-      }
-    }
+    cancelPipelinesFireAndForget();
   }
-
   restoreOriginalSettings();
 }

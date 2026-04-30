@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import { showSnackbar } from 'store/snackbar.slice';
@@ -113,6 +113,54 @@ function MeasurementPageHeader() {
   );
 }
 
+function initCurrentExecutions(): ExecutionResult[] {
+  if (
+    !measurementState.isRunning ||
+    measurementState.currentTaskIndexUI === null
+  ) {
+    return [];
+  }
+  const task = getTasks()[measurementState.currentTaskIndexUI];
+  const executions = task?.Executions?.() ?? [];
+  return mergeExecutionStatus(
+    executions,
+    measurementState.activePipelines,
+    measurementState.executionResults,
+    getDefaultConfig(),
+  );
+}
+
+function initInterruptedDialogOpen(): boolean {
+  if (measurementState.restoredAfterRefresh) {
+    measurementState.restoredAfterRefresh = false;
+    return true;
+  }
+  return false;
+}
+
+function usePollingEffect(
+  isRunning: boolean,
+  currentTaskIndex: number | null,
+  setCurrentExecutions: (executions: ExecutionResult[]) => void,
+) {
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      if (currentTaskIndex === null) return;
+      const task = getTasks()[currentTaskIndex];
+      const executions = task?.Executions?.() ?? [];
+      const merged = mergeExecutionStatus(
+        executions,
+        measurementState.activePipelines,
+        measurementState.executionResults,
+        getDefaultConfig(),
+      );
+      setCurrentExecutions(merged);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isRunning, currentTaskIndex, setCurrentExecutions]);
+}
+
 function Measurement() {
   const dispatch = useDispatch();
   const {
@@ -129,31 +177,19 @@ function Measurement() {
     () => measurementState.results ?? [...getTasks()],
   );
   const [currentExecutions, setCurrentExecutions] = useState<ExecutionResult[]>(
-    () => {
-      if (
-        !measurementState.isRunning ||
-        measurementState.currentTaskIndexUI === null
-      )
-        return [];
-      const task = getTasks()[measurementState.currentTaskIndexUI];
-      const executions = task?.Executions?.() ?? [];
-      return mergeExecutionStatus(
-        executions,
-        measurementState.activePipelines,
-        measurementState.executionResults,
-        getDefaultConfig(),
-      );
-    },
+    initCurrentExecutions,
   );
   const [currentTaskIndex, setCurrentTaskIndex] = useState<number | null>(
     measurementState.isRunning ? measurementState.currentTaskIndexUI : null,
   );
   const [isRunning, setIsRunning] = useState(measurementState.isRunning);
-  const [interruptedDialogOpen, setInterruptedDialogOpen] = useState(false);
-  const originalPrimaryRunnerTag = useRef(
+  const [interruptedDialogOpen, setInterruptedDialogOpen] = useState(
+    initInterruptedDialogOpen,
+  );
+  const [originalPrimaryRunnerTag, setOriginalPrimaryRunnerTag] = useState(
     measurementState.originalPrimaryRunnerTag ?? primaryRunnerTag,
   );
-  const originalSecondaryRunnerTag = useRef(
+  const [originalSecondaryRunnerTag, setOriginalSecondaryRunnerTag] = useState(
     measurementState.originalSecondaryRunnerTag ?? alternateRunnerTag,
   );
 
@@ -167,30 +203,11 @@ function Measurement() {
   useEffect(() => {
     measurementState.results ??= [...getTasks()];
     attachSetters(setters);
-    if (measurementState.restoredAfterRefresh) {
-      measurementState.restoredAfterRefresh = false;
-      setInterruptedDialogOpen(true);
-    }
     return () => detachSetters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!isRunning) return undefined;
-    const interval = setInterval(() => {
-      if (currentTaskIndex === null) return;
-      const task = getTasks()[currentTaskIndex];
-      const executions = task?.Executions?.() ?? [];
-      const merged = mergeExecutionStatus(
-        executions,
-        measurementState.activePipelines,
-        measurementState.executionResults,
-        getDefaultConfig(),
-      );
-      setCurrentExecutions(merged);
-    }, 500);
-    return () => clearInterval(interval);
-  }, [isRunning, currentTaskIndex]);
+  usePollingEffect(isRunning, currentTaskIndex, setCurrentExecutions);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) =>
@@ -206,28 +223,28 @@ function Measurement() {
   }, []);
 
   const handleStart = () => {
-    originalPrimaryRunnerTag.current = primaryRunnerTag;
-    originalSecondaryRunnerTag.current = alternateRunnerTag;
+    setOriginalPrimaryRunnerTag(primaryRunnerTag);
+    setOriginalSecondaryRunnerTag(alternateRunnerTag);
     dispatch(
       showSnackbar({ message: 'Measurement started', severity: 'info' }),
     );
-    return startMeasurement(setters, measurementState.isRunningRef);
+    startMeasurement(setters, measurementState.isRunningRef);
   };
 
   const handleRestart = () => {
-    originalPrimaryRunnerTag.current = primaryRunnerTag;
-    originalSecondaryRunnerTag.current = alternateRunnerTag;
+    setOriginalPrimaryRunnerTag(primaryRunnerTag);
+    setOriginalSecondaryRunnerTag(alternateRunnerTag);
     dispatch(
       showSnackbar({ message: 'Measurement restarted', severity: 'info' }),
     );
-    return restartMeasurement(setters, measurementState.isRunningRef);
+    restartMeasurement(setters, measurementState.isRunningRef);
   };
 
   const handleStop = () => {
     dispatch(
       showSnackbar({ message: 'Stopping measurement...', severity: 'warning' }),
     );
-    return stopAllPipelines();
+    stopAllPipelines();
   };
 
   const handlePurge = async () => {
@@ -247,10 +264,10 @@ function Measurement() {
     (t) => !disabledTaskNames.includes(t['Task Name']),
   ).length;
   const effectivePrimaryTag = isRunning
-    ? originalPrimaryRunnerTag.current
+    ? originalPrimaryRunnerTag
     : primaryRunnerTag;
   const effectiveSecondaryTag = isRunning
-    ? originalSecondaryRunnerTag.current
+    ? originalSecondaryRunnerTag
     : alternateRunnerTag;
 
   return (

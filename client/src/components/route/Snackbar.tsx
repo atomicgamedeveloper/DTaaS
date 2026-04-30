@@ -30,18 +30,15 @@ const CustomSnackbar: React.FC = () => {
     new Map(),
   );
 
-  const handleClose =
-    (id: number) => (_event: React.SyntheticEvent | Event, reason?: string) => {
-      if (reason === 'clickaway') {
-        return;
-      }
-      const timeout = timeoutsReference.current.get(id);
-      if (timeout) {
-        clearTimeout(timeout);
-        timeoutsReference.current.delete(id);
-      }
-      dispatch(hideSnackbar(id));
-    };
+  const closeById = (id: number) => {
+    const timeouts = timeoutsReference.current;
+    const timeout = timeouts.get(id);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeouts.delete(id);
+    }
+    dispatch(hideSnackbar(id));
+  };
 
   useEffect(() => {
     const timeouts = timeoutsReference.current;
@@ -53,26 +50,25 @@ const CustomSnackbar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    items.forEach((item) => {
-      if (!timeoutsReference.current.has(item.id)) {
+    const timeouts = timeoutsReference.current;
+    const currentIds = new Set(items.map((item) => item.id));
+
+    for (const [id, timeout] of timeouts.entries()) {
+      if (!currentIds.has(id)) {
+        clearTimeout(timeout);
+        timeouts.delete(id);
+      }
+    }
+
+    for (const item of items) {
+      if (!timeouts.has(item.id)) {
         const timeout = setTimeout(() => {
-          timeoutsReference.current.delete(item.id);
+          timeouts.delete(item.id);
           dispatch(hideSnackbar(item.id));
         }, SNACKBAR_DURATION);
-        timeoutsReference.current.set(item.id, timeout);
+        timeouts.set(item.id, timeout);
       }
-    });
-
-    const timeouts = timeoutsReference.current;
-    return () => {
-      const currentIds = new Set(items.map((item) => item.id));
-      for (const [id, timeout] of timeouts.entries()) {
-        if (!currentIds.has(id)) {
-          clearTimeout(timeout);
-          timeouts.delete(id);
-        }
-      }
-    };
+    }
   }, [items, dispatch]);
 
   return (
@@ -81,14 +77,17 @@ const CustomSnackbar: React.FC = () => {
         <Snackbar
           key={item.id}
           open
-          onClose={handleClose(item.id)}
+          onClose={(_event, reason) => {
+            if (reason === 'clickaway') return;
+            closeById(item.id);
+          }}
           style={{
             bottom: 24 + (items.length - 1 - index) * SNACKBAR_SPACING,
             transition: 'bottom 0.3s ease',
           }}
         >
           <Alert
-            onClose={handleClose(item.id)}
+            onClose={() => closeById(item.id)}
             severity={item.severity}
             icon={resolveIcon(item.icon)}
           >

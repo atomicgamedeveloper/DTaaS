@@ -91,8 +91,8 @@ The measurement results table displays the following columns:
 | Trials | Visual cards showing each trial's execution details and status. Each trial represents one iteration of the task |
 | Data | Download button to export individual task results as JSON |
 
-Each row in the table can be clicked to expand and show additional details
-about the task's trial executions.
+Each row can be clicked to expand it and show a toggle alongside the
+task description. Disabling a task skips it during execution.
 
 ## Data Storage
 

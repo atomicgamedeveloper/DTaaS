@@ -221,31 +221,40 @@ function formatPipelineExecution(
   };
 }
 
+function mergeRunningOnly(
+  activePipelines: ActivePipeline[],
+  completedResults: ExecutionResult[],
+): ExecutionResult[] {
+  const completedIds = new Set(completedResults.map((r) => r.pipelineId));
+  return [
+    ...completedResults,
+    ...activePipelines
+      .filter((p) => !completedIds.has(p.pipelineId))
+      .map((p) => formatPipelineExecution(p)),
+  ];
+}
+
 export function mergeExecutionStatus(
   executions: Execution[],
   activePipelines: ActivePipeline[],
   completedResults: ExecutionResult[],
   defaultConfig: Configuration,
 ): ExecutionResult[] {
-  if (executions.length > 0) {
-    return executions.map((expected, i) => {
-      const completed = completedResults.find((r) => r.executionIndex === i);
-      if (completed) return completed;
-      const active = activePipelines.find((p) => p.executionIndex === i);
-      if (active) return formatPipelineExecution(active, i);
-      return {
-        dtName: expected.dtName,
-        pipelineId: null,
-        status: '—',
-        config: { ...defaultConfig, ...expected.config },
-        executionIndex: i,
-      };
-    });
+  if (executions.length === 0) {
+    return mergeRunningOnly(activePipelines, completedResults);
   }
 
-  const completedIds = new Set(completedResults.map((r) => r.pipelineId));
-  const running = activePipelines
-    .filter((p) => !completedIds.has(p.pipelineId))
-    .map((p) => formatPipelineExecution(p));
-  return [...completedResults, ...running];
+  return executions.map((expected, i) => {
+    const completed = completedResults.find((r) => r.executionIndex === i);
+    if (completed) return completed;
+    const active = activePipelines.find((p) => p.executionIndex === i);
+    if (active) return formatPipelineExecution(active, i);
+    return {
+      dtName: expected.dtName,
+      pipelineId: null,
+      status: '—',
+      config: { ...defaultConfig, ...expected.config },
+      executionIndex: i,
+    };
+  });
 }

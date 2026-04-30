@@ -96,9 +96,8 @@ beforeEach(() => {
   mockGetAuthority.mockReturnValue('https://gitlab.example.com');
 
   mockBackendInstance = createMockBackend(1);
-  mockCreateGitlabInstance.mockReturnValue(
-    mockBackendInstance as unknown as ReturnType<typeof createGitlabInstance>,
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockCreateGitlabInstance.mockReturnValue(mockBackendInstance as any);
   setupSessionStorageAuth();
 
   mockDigitalTwin.mockImplementation(

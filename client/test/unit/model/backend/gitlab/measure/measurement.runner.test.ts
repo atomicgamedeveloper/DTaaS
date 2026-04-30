@@ -240,7 +240,7 @@ describe('measurement.runner', () => {
       harness.isRunningRef.current = true;
       harness.state.activePipelines = [
         createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
-      ] as unknown as typeof harness.state.activePipelines;
+      ];
 
       const preventDefault = jest.fn();
       handleBeforeUnload(
@@ -271,7 +271,7 @@ describe('measurement.runner', () => {
       harness.isRunningRef.current = true;
       harness.state.activePipelines = [
         createMockActivePipeline({ backend: mockBackend, pipelineId: 10 }),
-      ] as unknown as typeof harness.state.activePipelines;
+      ];
 
       handleUnload(harness.isRunningRef);
 

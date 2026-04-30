@@ -14,13 +14,19 @@ export interface PollOptions {
   shouldAbort?: () => boolean;
 }
 
-/**
- * Polls a GitLab pipeline until it completes, times out, or is aborted.
- * Yields status strings as the pipeline progresses.
- *
- * This is a shared utility used by both the measurement execution layer and
- * (in future) the DT DevOps execution layer.
- */
+function checkAbortConditions(
+  pipelineId: number,
+  startTime: number,
+  options?: PollOptions,
+): void {
+  if (options?.shouldAbort?.()) {
+    throw new Error(`Pipeline ${pipelineId} stopped by user.`);
+  }
+  if (hasTimedOut(startTime, MAX_EXECUTION_TIME)) {
+    throw new Error(`Pipeline ${pipelineId} timed out.`);
+  }
+}
+
 export async function* pollPipelineStatus(
   backend: BackendInterface,
   pipelineId: number,
@@ -31,12 +37,7 @@ export async function* pollPipelineStatus(
   yield status;
 
   while (!isPipelineCompleted(status)) {
-    if (options?.shouldAbort?.()) {
-      throw new Error(`Pipeline ${pipelineId} stopped by user.`);
-    }
-    if (hasTimedOut(startTime, MAX_EXECUTION_TIME)) {
-      throw new Error(`Pipeline ${pipelineId} timed out.`);
-    }
+    checkAbortConditions(pipelineId, startTime, options);
     await delay(PIPELINE_POLL_INTERVAL);
     try {
       const newStatus = await backend.getPipelineStatus(

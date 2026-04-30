@@ -50,6 +50,23 @@ const initialState: ExecutionHistoryState = {
   error: null,
 };
 
+function buildClearHistoryNotification(
+  dtName: string,
+  deletedCount: number,
+): ShowNotificationPayload {
+  if (deletedCount === 0) {
+    return {
+      message: 'Execution history is already empty or only has active entries',
+      severity: 'info',
+    };
+  }
+  return {
+    message: `Deleted all entries from ${formatName(dtName)} execution history`,
+    severity: 'warning',
+    icon: 'ClearIcon',
+  };
+}
+
 let storageService: IExecutionHistoryStorage;
 
 export const setStorageService = (service: IExecutionHistoryStorage) => {
@@ -240,42 +257,34 @@ export const removeExecution =
     }
   };
 
+async function deleteDTEntries(entries: DTExecutionResult[]): Promise<void> {
+  await Promise.all(entries.map((entry) => storageService.delete(entry.id)));
+}
+
 export const clearExecutionHistoryForDT =
   (dtName: string): AppThunk =>
   async (dispatch, getState) => {
+    const state = getState();
+    const entriesToDelete = state.executionHistory.entries.filter(
+      (entry) =>
+        entry.dtName === dtName && entry.status !== ExecutionStatus.RUNNING,
+    );
+
     try {
-      const state = getState();
-      const entriesToDelete = state.executionHistory.entries.filter(
-        (entry) =>
-          entry.dtName === dtName && entry.status !== ExecutionStatus.RUNNING,
-      );
-
-      await Promise.all(
-        entriesToDelete.map((entry) => storageService.delete(entry.id)),
-      );
-      for (const entry of entriesToDelete) {
-        dispatch(removeExecutionHistoryEntry(entry.id));
-      }
-
-      dispatch(setError(null));
-      dispatch({
-        type: 'snackbar/showSnackbar',
-        payload:
-          entriesToDelete.length === 0
-            ? ({
-                message:
-                  'Execution history is already empty or only has active entries',
-                severity: 'info',
-              } as ShowNotificationPayload)
-            : ({
-                message: `Deleted all entries from ${formatName(dtName)} execution history`,
-                severity: 'warning',
-                icon: 'ClearIcon',
-              } as ShowNotificationPayload),
-      });
+      await deleteDTEntries(entriesToDelete);
     } catch (error) {
       dispatch(setError(`Failed to clear execution history: ${error}`));
+      return;
     }
+
+    for (const entry of entriesToDelete) {
+      dispatch(removeExecutionHistoryEntry(entry.id));
+    }
+    dispatch(setError(null));
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: buildClearHistoryNotification(dtName, entriesToDelete.length),
+    });
   };
 
 export const checkRunningExecutions =

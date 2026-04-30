@@ -173,15 +173,23 @@ export function createTrialFromExecution(
   };
 }
 
+function normalizeError(caughtError: unknown): {
+  message: string;
+  error: Error;
+} {
+  const message =
+    caughtError instanceof Error ? caughtError.message : String(caughtError);
+  const error =
+    caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+  return { message, error };
+}
+
 export function createTrialFromError(
   trialStart: Date,
   caughtError: unknown,
   wasStopped: boolean,
 ): Trial {
-  const errorMessage =
-    caughtError instanceof Error ? caughtError.message : String(caughtError);
-  const error =
-    caughtError instanceof Error ? caughtError : new Error(String(caughtError));
+  const { message: errorMessage, error } = normalizeError(caughtError);
   const minPipelineId = measurementState.currentTrialMinPipelineId ?? 0;
 
   const capturedExecutions: ExecutionResult[] = [
