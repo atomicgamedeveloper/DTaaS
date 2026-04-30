@@ -144,9 +144,13 @@ export async function startMeasurement(
   proxy.setIsRunning(true);
   saveOriginalSettings();
 
+  const disabledNames = new Set(
+    getStore().getState().settings.disabledTaskNames,
+  );
+
   proxy.setResults((previous) =>
     previous.map((task) =>
-      task.Status === 'NOT_STARTED'
+      task.Status === 'NOT_STARTED' && !disabledNames.has(task['Task Name'])
         ? { ...task, Status: 'PENDING' as Status }
         : task,
     ),
@@ -160,7 +164,9 @@ export async function startMeasurement(
       if (measurementState.shouldStopPipelines) {
         break;
       }
-      await executeTask(i, allTasks[i], proxy, updateTask);
+      if (!disabledNames.has(allTasks[i]['Task Name'])) {
+        await executeTask(i, allTasks[i], proxy, updateTask);
+      }
     }
     if (!measurementState.shouldStopPipelines) {
       getStore().showSnackbar('All measurements completed', 'info');

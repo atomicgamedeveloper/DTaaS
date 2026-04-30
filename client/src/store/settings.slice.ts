@@ -29,6 +29,7 @@ interface SettingsState {
   secondaryRunnerTag: string;
   primaryDTName: string;
   secondaryDTName: string;
+  disabledTaskNames: string[];
 }
 
 export const loadInitialSettings = (): SettingsState => {
@@ -74,6 +75,15 @@ export const settingsSlice = createSlice({
     setSecondaryDTName: (state, action: PayloadAction<string>) => {
       state.secondaryDTName = action.payload;
     },
+    toggleTaskEnabled: (state, action: PayloadAction<string>) => {
+      const name = action.payload;
+      const idx = state.disabledTaskNames.indexOf(name);
+      if (idx === -1) {
+        state.disabledTaskNames.push(name);
+      } else {
+        state.disabledTaskNames.splice(idx, 1);
+      }
+    },
     resetToDefaults: (state) => {
       Object.assign(state, DEFAULT_SETTINGS, DEFAULT_MEASUREMENT);
     },
@@ -90,6 +100,7 @@ export const {
   setSecondaryRunnerTag,
   setPrimaryDTName,
   setSecondaryDTName,
+  toggleTaskEnabled,
   resetToDefaults,
 } = settingsSlice.actions;
 

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Box,
+  Checkbox,
   Collapse,
   Paper,
   Table,
@@ -224,26 +225,57 @@ function ExpandedDescriptionRow({
   description,
   primaryDTName,
   secondaryDTName,
+  isDisabled,
+  isRunning,
+  onToggleEnabled,
 }: Readonly<{
   isExpanded: boolean;
   description: string;
   primaryDTName: string;
   secondaryDTName: string;
+  isDisabled: boolean;
+  isRunning: boolean;
+  onToggleEnabled: () => void;
 }>) {
   return (
     <TableRow>
       <TableCell
         colSpan={5}
         sx={{ py: 0, borderBottom: isExpanded ? undefined : 'none' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <Collapse in={isExpanded}>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: 'block', px: 1, py: 1 }}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              px: 1,
+              py: 1,
+              gap: 1,
+            }}
           >
-            {resolveDescription(description, primaryDTName, secondaryDTName)}
-          </Typography>
+            <Tooltip
+              title={
+                isRunning
+                  ? 'Stop the measurement to change task selection'
+                  : 'Include in measurement run'
+              }
+              arrow
+            >
+              <span>
+                <Checkbox
+                  checked={!isDisabled}
+                  onChange={onToggleEnabled}
+                  disabled={isRunning}
+                  size="small"
+                  sx={{ p: 0 }}
+                />
+              </span>
+            </Tooltip>
+            <Typography variant="caption" color="text.secondary">
+              {resolveDescription(description, primaryDTName, secondaryDTName)}
+            </Typography>
+          </Box>
         </Collapse>
       </TableCell>
     </TableRow>
@@ -263,6 +295,9 @@ function MeasurementTableRow({
   isExpanded,
   onToggle,
   rowRef,
+  isDisabled,
+  isRunning,
+  onToggleEnabled,
 }: Readonly<{
   task: TimedTask;
   index: number;
@@ -276,6 +311,9 @@ function MeasurementTableRow({
   isExpanded: boolean;
   onToggle: () => void;
   rowRef?: React.Ref<HTMLTableRowElement>;
+  isDisabled: boolean;
+  isRunning: boolean;
+  onToggleEnabled: () => void;
 }>) {
   const {
     primaryTag,
@@ -298,7 +336,7 @@ function MeasurementTableRow({
         ref={rowRef}
         hover
         onClick={onToggle}
-        sx={{ cursor: 'pointer' }}
+        sx={{ cursor: 'pointer', opacity: isDisabled ? 0.45 : 1 }}
       >
         <TaskNameCell
           index={index}
@@ -331,6 +369,9 @@ function MeasurementTableRow({
         description={task.Description ?? ''}
         primaryDTName={primaryDTName}
         secondaryDTName={secondaryDTName}
+        isDisabled={isDisabled}
+        isRunning={isRunning}
+        onToggleEnabled={onToggleEnabled}
       />
     </>
   );
@@ -367,6 +408,9 @@ export default function MeasurementTable({
   secondaryRunnerTag,
   primaryDTName,
   secondaryDTName,
+  isRunning,
+  disabledTaskNames,
+  onToggleTask,
 }: Readonly<{
   results: TimedTask[];
   currentTaskIndex: number | null;
@@ -376,6 +420,9 @@ export default function MeasurementTable({
   secondaryRunnerTag: string;
   primaryDTName: string;
   secondaryDTName: string;
+  isRunning: boolean;
+  disabledTaskNames: string[];
+  onToggleTask: (taskName: string) => void;
 }>) {
   const runningRowRef = useRef<HTMLTableRowElement | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -422,6 +469,9 @@ export default function MeasurementTable({
               isExpanded={expandedRows.has(task['Task Name'])}
               onToggle={() => toggleRow(task['Task Name'])}
               rowRef={index === lastRunningIndex ? runningRowRef : undefined}
+              isDisabled={disabledTaskNames.includes(task['Task Name'])}
+              isRunning={isRunning}
+              onToggleEnabled={() => onToggleTask(task['Task Name'])}
             />
           ))}
         </TableBody>

@@ -35,6 +35,7 @@ jest.mock('route/measurement/MeasurementComponents', () => ({
 
 describe('MeasurementTable', () => {
   const mockDownload = jest.fn();
+  const mockToggleTask = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -51,6 +52,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -77,6 +81,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -97,6 +104,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -125,6 +135,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -155,6 +168,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -186,6 +202,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={true}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 
@@ -213,6 +232,9 @@ describe('MeasurementTable', () => {
         secondaryRunnerTag="windows"
         primaryDTName="dt-primary"
         secondaryDTName="dt-secondary"
+        isRunning={false}
+        disabledTaskNames={[]}
+        onToggleTask={mockToggleTask}
       />,
     );
 

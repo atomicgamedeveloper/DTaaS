@@ -48,6 +48,7 @@ import {
   mergeExecutionStatus,
   downloadTaskResultJson,
 } from 'model/backend/gitlab/measure/measurement.utils';
+import { toggleTaskEnabled } from 'store/settings.slice';
 import MeasurementControls, {
   CompletionSummary,
 } from 'route/measurement/MeasurementControls';
@@ -119,6 +120,7 @@ function Measurement() {
     secondaryRunnerTag: alternateRunnerTag,
     primaryDTName,
     secondaryDTName,
+    disabledTaskNames,
   } = useSelector((state: RootState) => state.settings);
   const primaryRunnerTag = useSelector(
     (state: RootState) => state.settings.RUNNER_TAG,
@@ -239,8 +241,11 @@ function Measurement() {
     );
   };
 
-  const { hasStarted, completedTasks, completedTrials, totalTasks } =
+  const { hasStarted, completedTasks, completedTrials } =
     getMeasurementStatus(results);
+  const totalTasks = results.filter(
+    (t) => !disabledTaskNames.includes(t['Task Name']),
+  ).length;
   const effectivePrimaryTag = isRunning
     ? originalPrimaryRunnerTag.current
     : primaryRunnerTag;
@@ -296,6 +301,9 @@ function Measurement() {
             secondaryRunnerTag={effectiveSecondaryTag}
             primaryDTName={primaryDTName}
             secondaryDTName={secondaryDTName}
+            isRunning={isRunning}
+            disabledTaskNames={disabledTaskNames}
+            onToggleTask={(name) => dispatch(toggleTaskEnabled(name))}
           />
           <CompletionSummary
             results={results}

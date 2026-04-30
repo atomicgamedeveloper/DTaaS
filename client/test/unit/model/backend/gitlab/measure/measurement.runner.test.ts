@@ -77,7 +77,10 @@ describe('measurement.runner', () => {
     const { getStore } = jest.requireMock(
       'model/backend/gitlab/measure/measurement.execution',
     );
-    (getStore as jest.Mock).mockReturnValue({ showSnackbar: mockShowSnackbar });
+    (getStore as jest.Mock).mockReturnValue({
+      showSnackbar: mockShowSnackbar,
+      getState: jest.fn(() => ({ settings: { disabledTaskNames: [] } })),
+    });
 
     harness.mockMeasurementConfig.trials = 1;
     await startMeasurement(harness.setters, harness.isRunningRef);
@@ -93,7 +96,10 @@ describe('measurement.runner', () => {
     const { getStore } = jest.requireMock(
       'model/backend/gitlab/measure/measurement.execution',
     );
-    (getStore as jest.Mock).mockReturnValue({ showSnackbar: mockShowSnackbar });
+    (getStore as jest.Mock).mockReturnValue({
+      showSnackbar: mockShowSnackbar,
+      getState: jest.fn(() => ({ settings: { disabledTaskNames: [] } })),
+    });
 
     harness.mockMeasurementConfig.trials = 1;
     (runTrials as jest.Mock).mockImplementationOnce(async () => {

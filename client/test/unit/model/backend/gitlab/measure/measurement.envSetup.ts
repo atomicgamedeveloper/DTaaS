@@ -96,7 +96,10 @@ export function createMeasurementExecutionMock(
     DEFAULT_TASK: actual.DEFAULT_TASK,
     clearPersistedResults: jest.fn(),
     setMeasurementStore: jest.fn(),
-    getStore: jest.fn(() => ({ showSnackbar: jest.fn() })),
+    getStore: jest.fn(() => ({
+      showSnackbar: jest.fn(),
+      getState: jest.fn(() => ({ settings: { disabledTaskNames: [] } })),
+    })),
     ...extras,
   };
 }

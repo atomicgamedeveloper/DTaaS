@@ -19,9 +19,9 @@ export default defineConfig({
   webServer: useExtServer
     ? undefined
     : {
-        command: 'yarn start',
-        url: BASE_URI,
-      },
+      command: 'yarn start',
+      url: BASE_URI,
+    },
   retries: process.env.CI ? 0 : 1, // Disable retries on Github actions for now as setup always fails
   timeout: 90 * 1000, // 90 seconds per test
   globalTimeout: 10 * 60 * 1000,
@@ -68,7 +68,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
-      testIgnore: /ConcurrentExecution|DigitalTwins/,
+      testIgnore: /ConcurrentExecution|DigitalTwins|Measurement/,
       dependencies: ['setup'],
     },
     {
@@ -78,14 +78,14 @@ export default defineConfig({
         // Use prepared auth state.
         storageState: 'playwright/.auth/user.json',
       },
-      testIgnore: /ConcurrentExecution|DigitalTwins/,
+      testIgnore: /ConcurrentExecution|DigitalTwins|Measurement/,
       timeout: 2 * 60 * 1000,
       dependencies: ['setup'],
     },
     // Pipeline-dependent tests run sequentially to avoid GitLab runner contention
     {
-      name: 'chromium-serial',
-      testMatch: /ConcurrentExecution|DigitalTwins/,
+      name: 'chromium-sequential',
+      testMatch: /ConcurrentExecution|DigitalTwins|Measurement/,
       workers: 1,
       use: {
         ...devices['Desktop Chrome'],
@@ -94,15 +94,15 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     {
-      name: 'firefox-serial',
-      testMatch: /ConcurrentExecution|DigitalTwins/,
+      name: 'firefox-sequential',
+      testMatch: /ConcurrentExecution|DigitalTwins|Measurement/,
       workers: 1,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json',
       },
       timeout: 2 * 60 * 1000,
-      dependencies: ['chromium-serial'],
+      dependencies: ['chromium-sequential'],
     },
   ],
   globalSetup: 'test/e2e/setup/global.setup.ts',

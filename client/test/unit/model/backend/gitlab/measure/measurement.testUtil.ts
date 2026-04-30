@@ -120,6 +120,7 @@ export function createMockStoreState(settings: {
       secondaryRunnerTag: 'windows',
       primaryDTName: 'hello-world',
       secondaryDTName: 'mass-spring-damper',
+      disabledTaskNames: [],
     },
   };
 }

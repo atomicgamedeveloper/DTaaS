@@ -85,6 +85,7 @@ export default function MeasurementControls({
 
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false);
 
+  const noTasksEnabled = totalTasks === 0;
   const isComplete = completedTasks === totalTasks && totalTasks > 0;
   const hasAnyResults = results.some((t) => t.Trials.some(isTaskComplete));
 
@@ -106,7 +107,7 @@ export default function MeasurementControls({
             color="primary"
             onClick={onStart}
             size="small"
-            disabled={isComplete || hasStarted}
+            disabled={noTasksEnabled || isComplete || hasStarted}
           >
             Start
           </Button>
@@ -125,7 +126,7 @@ export default function MeasurementControls({
             variant="outlined"
             color="primary"
             onClick={onRestart}
-            disabled={!hasStarted || isRunning}
+            disabled={noTasksEnabled || !hasStarted || isRunning}
             size="small"
           >
             Restart

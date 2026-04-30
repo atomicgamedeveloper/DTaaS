@@ -3,6 +3,7 @@ const DEFAULT_MEASUREMENT = {
   secondaryRunnerTag: 'windows',
   primaryDTName: 'hello-world',
   secondaryDTName: 'mass-spring-damper',
+  disabledTaskNames: [] as string[],
 };
 
 export const BETWEEN_TRIAL_DELAY = 750;

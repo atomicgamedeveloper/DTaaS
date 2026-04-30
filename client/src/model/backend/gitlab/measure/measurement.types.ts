@@ -18,6 +18,7 @@ export type MeasurementStoreState = {
     secondaryRunnerTag: string;
     primaryDTName: string;
     secondaryDTName: string;
+    disabledTaskNames: string[];
   };
 };
 
