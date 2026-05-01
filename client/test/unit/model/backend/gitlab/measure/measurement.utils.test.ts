@@ -357,12 +357,11 @@ describe('measurement.utils', () => {
           executionIndex: 0,
         }),
       ];
-      const result = mergeExecutionStatus(
-        executions,
-        [],
-        completed,
-        DEFAULT_CONFIG,
-      );
+      const result = mergeExecutionStatus(executions, {
+        activePipelines: [],
+        completedResults: completed,
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe('success');
       expect(result[0].pipelineId).toBe(10);
@@ -380,19 +379,22 @@ describe('measurement.utils', () => {
       ];
       // Set executionIndex on the active pipeline
       (active[0] as unknown as { executionIndex: number }).executionIndex = 0;
-      const result = mergeExecutionStatus(
-        executions,
-        active,
-        [],
-        DEFAULT_CONFIG,
-      );
+      const result = mergeExecutionStatus(executions, {
+        activePipelines: active,
+        completedResults: [],
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe('Parent pipeline running');
     });
 
     it('should return placeholder when no completed or active match', () => {
       const executions = [{ dtName: 'dt1', config: { 'Runner tag': 'linux' } }];
-      const result = mergeExecutionStatus(executions, [], [], DEFAULT_CONFIG);
+      const result = mergeExecutionStatus(executions, {
+        activePipelines: [],
+        completedResults: [],
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].dtName).toBe('dt1');
       expect(result[0].pipelineId).toBeNull();
@@ -403,7 +405,11 @@ describe('measurement.utils', () => {
       const executions = [
         { dtName: 'dt1', config: { 'Runner tag': 'windows' } },
       ];
-      const result = mergeExecutionStatus(executions, [], [], DEFAULT_CONFIG);
+      const result = mergeExecutionStatus(executions, {
+        activePipelines: [],
+        completedResults: [],
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result[0].config).toEqual({
         ...DEFAULT_CONFIG,
         'Runner tag': 'windows',
@@ -421,12 +427,11 @@ describe('measurement.utils', () => {
           status: 'running',
         }),
       ];
-      const result = mergeExecutionStatus(
-        [],
-        active,
-        completed,
-        DEFAULT_CONFIG,
-      );
+      const result = mergeExecutionStatus([], {
+        activePipelines: active,
+        completedResults: completed,
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result).toHaveLength(2);
       expect(result[0].dtName).toBe('dt1');
       expect(result[1].dtName).toBe('dt2');
@@ -443,12 +448,11 @@ describe('measurement.utils', () => {
           status: 'success',
         }),
       ];
-      const result = mergeExecutionStatus(
-        [],
-        active,
-        completed,
-        DEFAULT_CONFIG,
-      );
+      const result = mergeExecutionStatus([], {
+        activePipelines: active,
+        completedResults: completed,
+        defaultConfig: DEFAULT_CONFIG,
+      });
       expect(result).toHaveLength(1);
       expect(result[0].pipelineId).toBe(10);
     });

@@ -30,11 +30,19 @@ function getDB(): IExecutionHistory {
   return dbService;
 }
 
+export interface ExecutionOverrides {
+  skipHistorySave?: boolean;
+  runnerTagOverride?: string;
+  branchNameOverride?: string;
+}
+
 export async function executeDT(
   self: DigitalTwin,
-  skipHistorySave: boolean = false,
-  runnerTagOverride?: string,
-  branchNameOverride?: string,
+  {
+    skipHistorySave = false,
+    runnerTagOverride,
+    branchNameOverride,
+  }: ExecutionOverrides = {},
 ): Promise<number | null> {
   const runnerTag = runnerTagOverride ?? getRunnerTag();
   if (!isValidInstance(self)) {

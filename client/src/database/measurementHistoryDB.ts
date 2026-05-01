@@ -17,8 +17,7 @@ class MeasurementDBService extends BaseIndexedDBService {
     };
 
     await this.withStore(
-      STORE,
-      'readwrite',
+      { storeName: STORE, mode: 'readwrite' },
       (store) => store.add(record),
       'Failed to add measurement record',
     );
@@ -27,8 +26,7 @@ class MeasurementDBService extends BaseIndexedDBService {
 
   public async getAll(): Promise<MeasurementRecord[]> {
     return this.withStore<MeasurementRecord[]>(
-      STORE,
-      'readonly',
+      { storeName: STORE, mode: 'readonly' },
       (store) => store.getAll(),
       'Failed to get all measurement records',
     );
@@ -36,8 +34,7 @@ class MeasurementDBService extends BaseIndexedDBService {
 
   public async getByTaskName(taskName: string): Promise<MeasurementRecord[]> {
     return this.withStore<MeasurementRecord[]>(
-      STORE,
-      'readonly',
+      { storeName: STORE, mode: 'readonly' },
       (store) => store.index('taskName').getAll(taskName),
       'Failed to get measurement records by task name',
     );
@@ -45,8 +42,7 @@ class MeasurementDBService extends BaseIndexedDBService {
 
   public async purge(): Promise<void> {
     await this.withStore<void>(
-      STORE,
-      'readwrite',
+      { storeName: STORE, mode: 'readwrite' },
       (store) => store.clear(),
       'Failed to purge measurement records',
     );
@@ -54,8 +50,7 @@ class MeasurementDBService extends BaseIndexedDBService {
 
   public async delete(id: string): Promise<void> {
     await this.withStore<void>(
-      STORE,
-      'readwrite',
+      { storeName: STORE, mode: 'readwrite' },
       (store) => store.delete(id),
       'Failed to delete measurement record',
     );

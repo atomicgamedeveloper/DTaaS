@@ -74,7 +74,10 @@ describe('fetchAssets', () => {
     const errorMessage = 'Failed to initialize Gitlab';
     (mockBackendInstance.init as jest.Mock).mockRejectedValue(errorMessage);
     const assetType = 'functions';
-    await fetchLibraryAssets(dispatch, setError, assetType, true);
+    await fetchLibraryAssets(dispatch, setError, {
+      type: assetType,
+      isPrivate: true,
+    });
     expect(setError).toHaveBeenCalledWith(
       `An error occurred while fetching assets: ${errorMessage}`,
     );
@@ -82,7 +85,10 @@ describe('fetchAssets', () => {
 
   it('should fetch library assets and set them', async () => {
     const assetType = 'models';
-    await fetchLibraryAssets(dispatch, setError, assetType, true);
+    await fetchLibraryAssets(dispatch, setError, {
+      type: assetType,
+      isPrivate: true,
+    });
 
     expect(createGitlabInstance).toHaveBeenCalledTimes(1);
     expect(getLibrarySubfolders).toHaveBeenCalledWith(

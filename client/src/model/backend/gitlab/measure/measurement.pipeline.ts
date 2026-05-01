@@ -110,9 +110,7 @@ async function executeDigitalTwinPipeline(
   });
 
   const parentGenerator = pollPipelineStatus(
-    backend,
-    pipelineId,
-    startTime,
+    { backend, pipelineId, startTime },
     abortOptions,
   );
 
@@ -123,9 +121,7 @@ async function executeDigitalTwinPipeline(
 
   const childPipelineId = getChildPipelineId(pipelineId);
   const childGenerator = pollPipelineStatus(
-    backend,
-    childPipelineId,
-    startTime,
+    { backend, pipelineId: childPipelineId, startTime },
     abortOptions,
   );
   const childStatus = await consumeStatusGenerator(
@@ -216,10 +212,14 @@ export function createTrialFromError(
   };
 }
 
+export interface TrialRunOptions {
+  targetTrials: number;
+  existingTrials: Trial[];
+}
+
 export async function runTrials(
   executions: Execution[],
-  targetTrials: number,
-  existingTrials: Trial[],
+  { targetTrials, existingTrials }: TrialRunOptions,
   updateTrials: (trials: Trial[]) => void,
 ): Promise<Trial[]> {
   const trials: Trial[] = [...existingTrials];

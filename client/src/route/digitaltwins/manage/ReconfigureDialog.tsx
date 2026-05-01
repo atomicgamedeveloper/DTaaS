@@ -179,7 +179,7 @@ const ReconfigureMainDialog = ({
     <DialogContent>
       <Editor
         DTName={name}
-        tab={'reconfigure'}
+        tab="reconfigure"
         fileName={fileName}
         setFileName={setFileName}
         fileContent={fileContent}

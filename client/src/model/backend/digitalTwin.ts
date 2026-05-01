@@ -121,7 +121,11 @@ class DigitalTwin implements DigitalTwinInterface {
     runnerTag?: string,
     branchName?: string,
   ): Promise<number | null> {
-    return executeDT(this, skipHistorySave, runnerTag, branchName);
+    return executeDT(this, {
+      skipHistorySave,
+      runnerTagOverride: runnerTag,
+      branchNameOverride: branchName,
+    });
   }
 
   /**

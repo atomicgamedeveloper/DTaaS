@@ -374,8 +374,7 @@ describe('runTrials', () => {
 
     const trials = await runTrials(
       [{ dtName: 'hello-world', config: {} }],
-      1,
-      [],
+      { targetTrials: 1, existingTrials: [] },
       updateTrials,
     );
 
@@ -389,8 +388,7 @@ describe('runTrials', () => {
 
     const trials = await runTrials(
       [{ dtName: 'hello-world', config: {} }],
-      3,
-      [],
+      { targetTrials: 3, existingTrials: [] },
       updateTrials,
     );
 
@@ -411,8 +409,7 @@ describe('runTrials', () => {
 
     const trials = await runTrials(
       [{ dtName: 'hello-world', config: {} }],
-      2,
-      existing,
+      { targetTrials: 2, existingTrials: existing },
       updateTrials,
     );
 

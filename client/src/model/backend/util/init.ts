@@ -11,11 +11,15 @@ import { getDTSubfolders } from 'model/backend/util/digitalTwinUtils';
 import { createGitlabInstance } from 'model/backend/gitlab/gitlabFactory';
 import LibraryManager from 'model/backend/libraryManager';
 
+export interface FetchOptions {
+  type: string;
+  isPrivate: boolean;
+}
+
 export const fetchLibraryAssets = async (
   dispatch: ReduxDispatch,
   setError: Dispatch<SetStateAction<string | null>>,
-  type: string,
-  isPrivate: boolean,
+  { type, isPrivate }: FetchOptions,
 ) => {
   try {
     const instance = createGitlabInstance(
@@ -67,7 +71,10 @@ export const fetchDigitalTwins = async (
       instance.api,
     );
 
-    await fetchLibraryAssets(dispatch, setError, 'Digital Twins', true);
+    await fetchLibraryAssets(dispatch, setError, {
+      type: 'Digital Twins',
+      isPrivate: true,
+    });
 
     const dtInstance = createGitlabInstance(
       sessionStorage.getItem('username') || '',

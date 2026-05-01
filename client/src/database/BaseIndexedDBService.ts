@@ -19,6 +19,11 @@ export interface CursorQuery {
   key: IDBValidKey;
 }
 
+export interface StoreOptions {
+  storeName: string;
+  mode: IDBTransactionMode;
+}
+
 export default abstract class BaseIndexedDBService {
   protected db: IDBDatabase | undefined;
 
@@ -65,8 +70,7 @@ export default abstract class BaseIndexedDBService {
   }
 
   protected async withStore<T>(
-    storeName: string,
-    mode: IDBTransactionMode,
+    { storeName, mode }: StoreOptions,
     operation: (store: IDBObjectStore) => IDBRequest,
     errorMessage: string,
   ): Promise<T> {

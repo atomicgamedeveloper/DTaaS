@@ -122,12 +122,11 @@ function initCurrentExecutions(): ExecutionResult[] {
   }
   const task = getTasks()[measurementState.currentTaskIndexUI];
   const executions = task?.Executions?.() ?? [];
-  return mergeExecutionStatus(
-    executions,
-    measurementState.activePipelines,
-    measurementState.executionResults,
-    getDefaultConfig(),
-  );
+  return mergeExecutionStatus(executions, {
+    activePipelines: measurementState.activePipelines,
+    completedResults: measurementState.executionResults,
+    defaultConfig: getDefaultConfig(),
+  });
 }
 
 function initInterruptedDialogOpen(): boolean {
@@ -149,12 +148,11 @@ function usePollingEffect(
       if (currentTaskIndex === null) return;
       const task = getTasks()[currentTaskIndex];
       const executions = task?.Executions?.() ?? [];
-      const merged = mergeExecutionStatus(
-        executions,
-        measurementState.activePipelines,
-        measurementState.executionResults,
-        getDefaultConfig(),
-      );
+      const merged = mergeExecutionStatus(executions, {
+        activePipelines: measurementState.activePipelines,
+        completedResults: measurementState.executionResults,
+        defaultConfig: getDefaultConfig(),
+      });
       setCurrentExecutions(merged);
     }, 500);
     return () => clearInterval(interval);

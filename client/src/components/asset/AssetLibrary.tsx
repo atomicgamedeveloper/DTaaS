@@ -33,7 +33,10 @@ function AssetLibrary({ pathToAssets, privateRepo }: AssetLibraryProps) {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      await fetchLibraryAssets(dispatch, setError, pathToAssets, privateRepo);
+      await fetchLibraryAssets(dispatch, setError, {
+        type: pathToAssets,
+        isPrivate: privateRepo,
+      });
       setLoading(false);
     };
     fetchData();

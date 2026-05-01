@@ -49,10 +49,15 @@ function createTaskUpdater(
   };
 }
 
+interface TaskRef {
+  taskIndex: number;
+  currentTask: TimedTask;
+}
+
 async function persistTaskResult(task: TimedTask): Promise<void> {
   if (!measurementDB) return;
   try {
-    await measurementDB.add({
+    const record: TimedTask = {
       'Task Name': task['Task Name'],
       Description: task.Description,
       Trials: task.Trials,
@@ -61,15 +66,15 @@ async function persistTaskResult(task: TimedTask): Promise<void> {
       'Average Time (s)': task['Average Time (s)'],
       Status: task.Status,
       ExpectedTrials: task.ExpectedTrials,
-    } as TimedTask);
+    };
+    await measurementDB.add(record);
   } catch {
     // ignore
   }
 }
 
 async function executeTask(
-  taskIndex: number,
-  currentTask: TimedTask,
+  { taskIndex, currentTask }: TaskRef,
   setters: MeasurementSetters,
   updateTask: TaskUpdater,
 ): Promise<void> {
@@ -92,8 +97,7 @@ async function executeTask(
   const previousTrialCount = { value: 0 };
   const trials = await runTrials(
     taskExecutions,
-    MeasurementConfig.trials,
-    [],
+    { targetTrials: MeasurementConfig.trials, existingTrials: [] },
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
       updateTask(taskIndex, { Trials: updatedTrials });
@@ -135,10 +139,11 @@ function markPendingTasks(
   proxy: ReturnType<typeof wrapSetters>,
   disabledNames: Set<string>,
 ): void {
+  const pendingStatus: Status = 'PENDING';
   proxy.setResults((previous) =>
     previous.map((task) =>
       task.Status === 'NOT_STARTED' && !disabledNames.has(task['Task Name'])
-        ? { ...task, Status: 'PENDING' as Status }
+        ? { ...task, Status: pendingStatus }
         : task,
     ),
   );
@@ -155,7 +160,11 @@ async function runEnabledTasks(
       break;
     }
     if (!disabledNames.has(allTasks[i]['Task Name'])) {
-      await executeTask(i, allTasks[i], proxy, updateTask);
+      await executeTask(
+        { taskIndex: i, currentTask: allTasks[i] },
+        proxy,
+        updateTask,
+      );
     }
   }
 }
@@ -200,10 +209,11 @@ export async function stopAllPipelines(): Promise<void> {
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
   await cancelActivePipelines();
+  const stoppedStatus: Status = 'STOPPED';
   proxy.setResults((previous) =>
     previous.map((task) =>
       task.Status === 'PENDING' || task.Status === 'RUNNING'
-        ? { ...task, Status: 'STOPPED' as Status }
+        ? { ...task, Status: stoppedStatus }
         : task,
     ),
   );
