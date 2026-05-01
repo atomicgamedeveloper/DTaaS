@@ -1,6 +1,6 @@
 // GitLab pipeline lifecycle (trigger, poll, cancel, collect results)
 /* eslint-disable no-await-in-loop */
-import { getAuthority } from 'util/envUtil';
+import getAuthority from 'model/backend/util/env';
 import DigitalTwin from 'model/backend/digitalTwin';
 import { BackendInterface } from 'model/backend/interfaces/backendInterfaces';
 import createGitlabInstance from 'model/backend/gitlab/gitlabFactory';

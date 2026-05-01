@@ -1,29 +1,29 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from 'store/storeTypes';
+import { ModelRootState } from 'model/store/modelRootState';
 
-export const selectExecutionHistoryEntries = (state: RootState) =>
+export const selectExecutionHistoryEntries = (state: ModelRootState) =>
   state.executionHistory.entries;
 
 export const selectExecutionHistoryByDTName = (dtName: string) =>
   createSelector(
-    [(state: RootState) => state.executionHistory.entries],
+    [(state: ModelRootState) => state.executionHistory.entries],
     (entries) => entries.filter((entry) => entry.dtName === dtName),
   );
 
 export const selectExecutionHistoryById = (id: string) =>
   createSelector(
-    [(state: RootState) => state.executionHistory.entries],
+    [(state: ModelRootState) => state.executionHistory.entries],
     (entries) => entries.find((entry) => entry.id === id),
   );
 
 // Gets selected execution ID
-export const selectSelectedExecutionId = (state: RootState) =>
+export const selectSelectedExecutionId = (state: ModelRootState) =>
   state.executionHistory.selectedExecutionId;
 
 export const selectSelectedExecution = createSelector(
   [
-    (state: RootState) => state.executionHistory.entries,
-    (state: RootState) => state.executionHistory.selectedExecutionId,
+    (state: ModelRootState) => state.executionHistory.entries,
+    (state: ModelRootState) => state.executionHistory.selectedExecutionId,
   ],
   (entries, selectedId) => {
     if (!selectedId) return null;
@@ -31,8 +31,8 @@ export const selectSelectedExecution = createSelector(
   },
 );
 
-export const selectExecutionHistoryLoading = (state: RootState) =>
+export const selectExecutionHistoryLoading = (state: ModelRootState) =>
   state.executionHistory.loading;
 
-export const selectExecutionHistoryError = (state: RootState) =>
+export const selectExecutionHistoryError = (state: ModelRootState) =>
   state.executionHistory.error;
