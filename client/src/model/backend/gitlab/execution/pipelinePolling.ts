@@ -14,12 +14,6 @@ export interface PollOptions {
   shouldAbort?: () => boolean;
 }
 
-export interface PipelineRef {
-  backend: BackendInterface;
-  pipelineId: number;
-  startTime: number;
-}
-
 function checkAbortConditions(
   pipelineId: number,
   startTime: number,
@@ -34,7 +28,9 @@ function checkAbortConditions(
 }
 
 export async function* pollPipelineStatus(
-  { backend, pipelineId, startTime }: PipelineRef,
+  backend: BackendInterface,
+  pipelineId: number,
+  startTime: number,
   options?: PollOptions,
 ): AsyncGenerator<string, string, unknown> {
   let status = 'pending';

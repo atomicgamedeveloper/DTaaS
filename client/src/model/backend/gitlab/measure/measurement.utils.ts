@@ -234,15 +234,11 @@ function mergeRunningOnly(
   ];
 }
 
-export interface MergeContext {
-  activePipelines: ActivePipeline[];
-  completedResults: ExecutionResult[];
-  defaultConfig: Configuration;
-}
-
 export function mergeExecutionStatus(
   executions: Execution[],
-  { activePipelines, completedResults, defaultConfig }: MergeContext,
+  activePipelines: ActivePipeline[],
+  completedResults: ExecutionResult[],
+  defaultConfig: Configuration,
 ): ExecutionResult[] {
   if (executions.length === 0) {
     return mergeRunningOnly(activePipelines, completedResults);

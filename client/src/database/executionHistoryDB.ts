@@ -12,7 +12,8 @@ class IndexedDBService
 {
   public async add(entry: DTExecutionResult): Promise<string> {
     await this.withStore(
-      { storeName: STORE, mode: 'readwrite' },
+      STORE,
+      'readwrite',
       (store) => store.add(entry),
       'Failed to add execution history',
     );
@@ -21,7 +22,8 @@ class IndexedDBService
 
   public async update(entry: DTExecutionResult): Promise<void> {
     await this.withStore<void>(
-      { storeName: STORE, mode: 'readwrite' },
+      STORE,
+      'readwrite',
       (store) => store.put(entry),
       'Failed to update execution history',
     );
@@ -29,7 +31,8 @@ class IndexedDBService
 
   public async getById(id: string): Promise<DTExecutionResult | null> {
     const result = await this.withStore<DTExecutionResult | undefined>(
-      { storeName: STORE, mode: 'readonly' },
+      STORE,
+      'readonly',
       (store) => store.get(id),
       'Failed to get execution history',
     );
@@ -38,7 +41,8 @@ class IndexedDBService
 
   public async getByDTName(dtName: string): Promise<DTExecutionResult[]> {
     return this.withStore<DTExecutionResult[]>(
-      { storeName: STORE, mode: 'readonly' },
+      STORE,
+      'readonly',
       (store) => store.index('dtName').getAll(dtName),
       'Failed to get execution history by DT name',
     );
@@ -46,7 +50,8 @@ class IndexedDBService
 
   public async getAll(): Promise<DTExecutionResult[]> {
     return this.withStore<DTExecutionResult[]>(
-      { storeName: STORE, mode: 'readonly' },
+      STORE,
+      'readonly',
       (store) => store.getAll(),
       'Failed to get all execution history',
     );
@@ -54,7 +59,8 @@ class IndexedDBService
 
   public async delete(id: string): Promise<void> {
     await this.withStore<void>(
-      { storeName: STORE, mode: 'readwrite' },
+      STORE,
+      'readwrite',
       (store) => store.delete(id),
       'Failed to delete execution history',
     );

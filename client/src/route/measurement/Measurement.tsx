@@ -122,11 +122,12 @@ function initCurrentExecutions(): ExecutionResult[] {
   }
   const task = getTasks()[measurementState.currentTaskIndexUI];
   const executions = task?.Executions?.() ?? [];
-  return mergeExecutionStatus(executions, {
-    activePipelines: measurementState.activePipelines,
-    completedResults: measurementState.executionResults,
-    defaultConfig: getDefaultConfig(),
-  });
+  return mergeExecutionStatus(
+    executions,
+    measurementState.activePipelines,
+    measurementState.executionResults,
+    getDefaultConfig(),
+  );
 }
 
 function initInterruptedDialogOpen(): boolean {
@@ -148,11 +149,12 @@ function usePollingEffect(
       if (currentTaskIndex === null) return;
       const task = getTasks()[currentTaskIndex];
       const executions = task?.Executions?.() ?? [];
-      const merged = mergeExecutionStatus(executions, {
-        activePipelines: measurementState.activePipelines,
-        completedResults: measurementState.executionResults,
-        defaultConfig: getDefaultConfig(),
-      });
+      const merged = mergeExecutionStatus(
+        executions,
+        measurementState.activePipelines,
+        measurementState.executionResults,
+        getDefaultConfig(),
+      );
       setCurrentExecutions(merged);
     }, 500);
     return () => clearInterval(interval);
@@ -212,11 +214,11 @@ function Measurement() {
       handleBeforeUnload(event, measurementState.isRunningRef);
     const onUnload = () => handleUnload(measurementState.isRunningRef);
 
-    window.addEventListener('beforeunload', onBeforeUnload);
-    window.addEventListener('unload', onUnload);
+    globalThis.addEventListener('beforeunload', onBeforeUnload);
+    globalThis.addEventListener('unload', onUnload);
     return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
-      window.removeEventListener('unload', onUnload);
+      globalThis.removeEventListener('beforeunload', onBeforeUnload);
+      globalThis.removeEventListener('unload', onUnload);
     };
   }, []);
 

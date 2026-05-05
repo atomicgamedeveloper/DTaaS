@@ -49,11 +49,6 @@ function createTaskUpdater(
   };
 }
 
-interface TaskRef {
-  taskIndex: number;
-  currentTask: TimedTask;
-}
-
 async function persistTaskResult(task: TimedTask): Promise<void> {
   if (!measurementDB) return;
   try {
@@ -74,7 +69,8 @@ async function persistTaskResult(task: TimedTask): Promise<void> {
 }
 
 async function executeTask(
-  { taskIndex, currentTask }: TaskRef,
+  taskIndex: number,
+  currentTask: TimedTask,
   setters: MeasurementSetters,
   updateTask: TaskUpdater,
 ): Promise<void> {
@@ -97,7 +93,8 @@ async function executeTask(
   const previousTrialCount = { value: 0 };
   const trials = await runTrials(
     taskExecutions,
-    { targetTrials: MeasurementConfig.trials, existingTrials: [] },
+    MeasurementConfig.trials,
+    [],
     (updatedTrials) => {
       setters.setCurrentExecutions([]);
       updateTask(taskIndex, { Trials: updatedTrials });
@@ -160,11 +157,7 @@ async function runEnabledTasks(
       break;
     }
     if (!disabledNames.has(allTasks[i]['Task Name'])) {
-      await executeTask(
-        { taskIndex: i, currentTask: allTasks[i] },
-        proxy,
-        updateTask,
-      );
+      await executeTask(i, allTasks[i], proxy, updateTask);
     }
   }
 }
