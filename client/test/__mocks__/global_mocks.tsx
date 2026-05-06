@@ -16,6 +16,8 @@ import {
   mockLogoutRedirectURI,
   mockGitLabScopes,
 } from 'test/__mocks__/mockEnvConstants';
+import { setEnvironmentStore } from 'model/backend/util/env';
+import type { ModelStoreState } from 'model/store/modelRootState';
 
 export {
   mockBackendAPI,
@@ -59,6 +61,13 @@ jest.mock('util/envUtil', () => ({
     { key: '3', link: 'link3' },
   ],
 }));
+
+setEnvironmentStore({
+  getState: () =>
+    ({
+      environment: { REACT_APP_AUTH_AUTHORITY: mockAuthority },
+    }) as ModelStoreState,
+});
 
 globalThis.env = {
   ...globalThis.env,

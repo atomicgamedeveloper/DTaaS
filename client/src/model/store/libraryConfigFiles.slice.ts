@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LibraryConfigFile } from 'model/backend/interfaces/sharedInterfaces';
-import { ModelRootState } from 'model/store/modelRootState';
+import type { ModelStoreState } from 'model/store/modelRootState';
 
 const initialState: LibraryConfigFile[] = [];
 
@@ -105,7 +105,7 @@ const libraryFilesSlice = createSlice({
 });
 
 export const selectModifiedLibraryFiles = createSelector(
-  (state: ModelRootState) => state.libraryConfigFiles,
+  (state: ModelStoreState) => state.libraryConfigFiles,
   (files) => files.filter((file) => !file.isNew),
 );
 

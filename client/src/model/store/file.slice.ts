@@ -1,25 +1,12 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
-import { ModelRootState } from 'model/store/modelRootState';
+import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import type { ModelStoreState } from 'model/store/modelRootState';
+import getFileTypeFromExtension from 'model/store/fileTypeUtils';
 
 const initialState: FileState[] = [];
 
 const findFileIndex = (state: FileState[], name: string, isNew: boolean) =>
   state.findIndex((file) => file.name === name && file.isNew === isNew);
-
-const FILE_TYPE_MAP: Record<string, FileType> = {
-  md: FileType.DESCRIPTION,
-  json: FileType.CONFIGURATION,
-  yaml: FileType.CONFIGURATION,
-  yml: FileType.CONFIGURATION,
-};
-
-const getFileTypeFromExtension = (fileName: string): FileType => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  return extension && FILE_TYPE_MAP[extension]
-    ? FILE_TYPE_MAP[extension]
-    : FileType.LIFECYCLE;
-};
 
 const upsertFile = (state: FileState[], index: number, payload: FileState) => {
   const { name, isNew, ...rest } = payload;
@@ -107,7 +94,7 @@ const filesSlice = createSlice({
 });
 
 export const selectModifiedFiles = createSelector(
-  (state: ModelRootState) => state.files,
+  (state: ModelStoreState) => state.files,
   (files) => files.filter((file) => !file.isNew),
 );
 

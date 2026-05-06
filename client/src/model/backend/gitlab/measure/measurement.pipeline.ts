@@ -8,7 +8,7 @@ import {
   delay,
   getChildPipelineId,
 } from 'model/backend/gitlab/execution/pipelineCore';
-import { pollPipelineStatus } from 'model/backend/gitlab/execution/pipelinePolling';
+import pollPipelineStatus from 'model/backend/gitlab/execution/pipelinePolling';
 import { isFailureStatus } from 'model/backend/gitlab/execution/statusChecking';
 import { BETWEEN_TRIAL_DELAY } from 'model/backend/gitlab/measure/constants';
 import {

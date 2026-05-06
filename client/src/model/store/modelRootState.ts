@@ -6,6 +6,7 @@ import type {
   LibraryConfigFile,
 } from 'model/backend/interfaces/sharedInterfaces';
 import type { CartState } from 'model/store/cart.slice';
+import type { EnvironmentState } from 'model/store/environment.slice';
 
 export interface ModelSettingsState {
   GROUP_NAME: string;
@@ -15,10 +16,11 @@ export interface ModelSettingsState {
   BRANCH_NAME: string;
 }
 
-export interface ModelRootState {
+export interface ModelStoreState {
   assets: { items: LibraryAsset[] };
   cart: CartState;
   digitalTwin: { digitalTwin: Record<string, DigitalTwinData> };
+  environment: EnvironmentState;
   executionHistory: ExecutionHistoryState;
   files: FileState[];
   libraryConfigFiles: LibraryConfigFile[];

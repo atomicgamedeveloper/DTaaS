@@ -56,7 +56,13 @@ jest.mock('model/backend/gitlab/measure/measurement.utils', () => ({
     activePipelines: unknown,
     completedResults: unknown,
     defaultConfig: unknown,
-  ) => mockMergeExecutionStatus(executions, activePipelines, completedResults, defaultConfig),
+  ) =>
+    mockMergeExecutionStatus(
+      executions,
+      activePipelines,
+      completedResults,
+      defaultConfig,
+    ),
   downloadTaskResultJson: jest.fn(),
 }));
 
