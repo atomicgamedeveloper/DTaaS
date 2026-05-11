@@ -7,24 +7,6 @@ import {
   setupMeasurementComponentTest,
 } from './measurement.testSetup';
 
-jest.mock('react-redux', () => ({
-  useSelector: jest.fn(),
-  useDispatch: jest.fn(),
-}));
-
-jest.mock('react-router-dom', () => ({
-  Link: ({ children, ...props }: { children: React.ReactNode; to: string }) => (
-    <a {...props}>{children}</a>
-  ),
-}));
-
-jest.mock('page/Layout', () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="mock-layout">{children}</div>
-  ),
-}));
-
 jest.mock('route/measurement/MeasurementControls', () => ({
   __esModule: true,
   default: () => <div data-testid="measurement-controls" />,

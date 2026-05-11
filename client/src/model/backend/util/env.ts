@@ -1,6 +1,6 @@
-import type { ModelStoreState } from 'model/store/modelRootState';
+import type { EnvironmentState } from 'model/store/environment.slice';
 
-type StoreReader = { getState: () => ModelStoreState };
+type StoreReader = { getState: () => { environment: EnvironmentState } };
 
 let _store: StoreReader | null = null;
 
@@ -14,5 +14,5 @@ export default function getAuthority(): string {
       'Environment store not initialized. Call setEnvironmentStore() first.',
     );
   }
-  return _store.getState().environment.REACT_APP_AUTH_AUTHORITY;
+  return _store.getState().environment.AUTH_AUTHORITY;
 }

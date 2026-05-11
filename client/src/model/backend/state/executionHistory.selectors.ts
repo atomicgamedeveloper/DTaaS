@@ -1,29 +1,31 @@
 import { createSelector } from '@reduxjs/toolkit';
-import type { ModelStoreState } from 'model/store/modelRootState';
+import type { ExecutionHistoryState } from 'model/backend/state/executionHistory.slice';
 
-export const selectExecutionHistoryEntries = (state: ModelStoreState) =>
+type ExecutionStoreSlice = { executionHistory: ExecutionHistoryState };
+
+export const selectExecutionHistoryEntries = (state: ExecutionStoreSlice) =>
   state.executionHistory.entries;
 
 export const selectExecutionHistoryByDTName = (dtName: string) =>
   createSelector(
-    [(state: ModelStoreState) => state.executionHistory.entries],
+    [(state: ExecutionStoreSlice) => state.executionHistory.entries],
     (entries) => entries.filter((entry) => entry.dtName === dtName),
   );
 
 export const selectExecutionHistoryById = (id: string) =>
   createSelector(
-    [(state: ModelStoreState) => state.executionHistory.entries],
+    [(state: ExecutionStoreSlice) => state.executionHistory.entries],
     (entries) => entries.find((entry) => entry.id === id),
   );
 
 // Gets selected execution ID
-export const selectSelectedExecutionId = (state: ModelStoreState) =>
+export const selectSelectedExecutionId = (state: ExecutionStoreSlice) =>
   state.executionHistory.selectedExecutionId;
 
 export const selectSelectedExecution = createSelector(
   [
-    (state: ModelStoreState) => state.executionHistory.entries,
-    (state: ModelStoreState) => state.executionHistory.selectedExecutionId,
+    (state: ExecutionStoreSlice) => state.executionHistory.entries,
+    (state: ExecutionStoreSlice) => state.executionHistory.selectedExecutionId,
   ],
   (entries, selectedId) => {
     if (!selectedId) return null;
@@ -31,8 +33,8 @@ export const selectSelectedExecution = createSelector(
   },
 );
 
-export const selectExecutionHistoryLoading = (state: ModelStoreState) =>
+export const selectExecutionHistoryLoading = (state: ExecutionStoreSlice) =>
   state.executionHistory.loading;
 
-export const selectExecutionHistoryError = (state: ModelStoreState) =>
+export const selectExecutionHistoryError = (state: ExecutionStoreSlice) =>
   state.executionHistory.error;

@@ -59,7 +59,8 @@ async function initializeBackend(): Promise<BackendInterface> {
     throw new Error('Not authenticated. Missing access_token or username.');
   }
 
-  const backend = createGitlabInstance(username, oauthToken, getAuthority());
+  const authority = getAuthority();
+  const backend = createGitlabInstance(username, oauthToken, authority);
   await backend.init();
   return backend;
 }
