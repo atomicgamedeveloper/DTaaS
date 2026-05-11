@@ -47,6 +47,7 @@ cli/
 │   ├── config/
 │   │   ├── services.env.template
 │   │   ├── credentials.csv.template
+│   │   ├── gitlab_oauth.json.template
 │   │   ├── mongod.conf.secure
 │   │   ├── influxdb/
 │   │   ├── rabbitmq/           # rabbitmq.conf + rabbitmq.enabled_plugins
@@ -312,6 +313,66 @@ default: `https`)
   must be set before any `gitlab/` module function is called
 * **`GITLAB_ROOT_NEW_PASSWORD`**: Strong password to apply to the GitLab `root`
   admin account during post-install setup
+
+#### GitLab OAuth Application Configuration
+
+OAuth 2.0 application settings are loaded from a JSON config file at
+`config/gitlab_oauth.json`. This file is generated automatically from
+`config/gitlab_oauth.json.template` by `dtaas-services generate-project`
+and can be edited to customise app registrations before running
+`dtaas-services install -s gitlab`.
+
+The filename can be overridden by setting the `OAUTH_APPS` environment
+variable to a different filename (looked up in `config/`).
+
+Each entry's `redirect_uri` is the **full callback URL** registered with GitLab
+
+| Field | Description |
+
+| --- | --- |
+| `name` | Display name shown in GitLab |
+| `redirect_uri` | Full callback URL (e.g. `https://into-cps.org/_oauth`) |
+| `confidential` | `true` for server-side apps, `false` for browser clients |
+| `scopes` | Space-separated OAuth scopes |
+| `trusted` | `true` to skip user authorisation dialogs |
+OAuth 2.0 applications are configured via a JSON file. The default file is
+`config/gitlab_oauth.json`, which defines two applications: Server Authorization
+(for Traefik Forward-Auth) and Client Authorization (for the React client).
+These are created during `dtaas-services install -s gitlab`.
+
+**To use custom OAuth settings:**
+
+1. Copy `config/gitlab_oauth.json` to a new file, e.g. `config/oauth_apps.json`
+2. Edit the redirect URIs and other settings in your custom file
+3. Set `OAUTH_APPS=oauth_apps.json` in `config/services.env`
+
+**JSON file format example:**
+
+```json
+[
+  {
+    "name": "DTaaS Server Authorization",
+    "redirect_uri": "https://your-domain.com/_oauth",
+    "confidential": true,
+    "scopes": "read_user",
+    "trusted": false
+  },
+  {
+    "name": "DTaaS Client Authorization",
+    "redirect_uri": "https://your-domain.com/Library",
+    "confidential": false,
+    "scopes": "api openid profile read_repository read_user",
+    "trusted": true
+  }
+]
+```
+
+Each app requires:
+* **`name`**: Display name shown in GitLab
+* **`redirect_uri`**: Full callback URL for your domain
+* **`confidential`**: `true` for server-side apps, `false` for browser clients
+* **`scopes`**: Space-separated OAuth scopes
+* **`trusted`**: `true` to skip user authorization dialogs
 
 #### ThingsBoard SSL Configuration
 

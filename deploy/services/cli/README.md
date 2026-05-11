@@ -92,6 +92,12 @@ structure:
    * `TB_TENANT_NEW_PASSWORD`: New password for the tenant admin
    * `SERVICES_UID`: User ID for service file ownership
    * `SERVICES_GID`: Group ID for service file ownership
+   * **OAuth Configuration** (optional: customise GitLab OAuth app registrations):
+        Edit `config/gitlab_oauth.json` to adjust app names, redirect URIs, scopes,
+        or confidentiality settings before running `dtaas-services install -s gitlab`.
+        The file is created automatically by `dtaas-services generate-project`.
+        To use a different filename, set `OAUTH_APPS=<filename>` in `config/services.env`
+        (the file is still looked up in `config/`).
 
 3. Update `config/credentials.csv` with user accounts (format: `username,password,email`)
 

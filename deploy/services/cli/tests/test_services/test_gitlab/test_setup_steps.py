@@ -52,10 +52,10 @@ def test_step_get_password_failure(mock_console, mocker):
 def test_step_create_pat_success(mock_console, mocker):
     """Test PAT creation step success."""
     mocker.patch(
-        "dtaas_services.pkg.services.gitlab.setup.create_personal_access_token",
+        "dtaas_services.pkg.services.gitlab.setup.create_pat",
         return_value=(True, TEST_TOKEN),
     )
-    success, token = setup._step_create_pat(mock_console)
+    success, token = setup._step_create_pat(mock_console, TEST_PASSWORD)
     assert success is True
     assert token == TEST_TOKEN
 
@@ -63,12 +63,12 @@ def test_step_create_pat_success(mock_console, mocker):
 def test_step_create_pat_failure(mock_console, mocker):
     """Test PAT creation step failure."""
     mocker.patch(
-        "dtaas_services.pkg.services.gitlab.setup.create_personal_access_token",
-        return_value=(False, "rails error"),
+        "dtaas_services.pkg.services.gitlab.setup.create_pat",
+        return_value=(False, "api error"),
     )
-    success, msg = setup._step_create_pat(mock_console)
+    success, msg = setup._step_create_pat(mock_console, TEST_PASSWORD)
     assert success is False
-    assert "rails error" in msg
+    assert "api error" in msg
 
 
 def test_step_create_oauth_apps_success(
