@@ -20,17 +20,24 @@ name: Lint Miscellaneous Scripts
       - '.yamllint'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   shellcheck:
     name: Lint Shell Scripts
     runs-on: ubuntu-latest
+    timeout-minutes: &job_timeout 30
     permissions:
       contents: read
     steps:
       - name: Checkout code
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          lfs: false
 
       - name: Run ShellCheck
         # v2.0.0
@@ -42,11 +49,14 @@ jobs:
   python-lint:
     name: Lint Python Scripts
     runs-on: ubuntu-latest
+    timeout-minutes: *job_timeout
     permissions:
       contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          lfs: false
 
       - name: Set up Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
@@ -80,12 +90,15 @@ jobs:
   yaml-lint:
     name: Lint YAML Files
     runs-on: ubuntu-latest
+    timeout-minutes: *job_timeout
     permissions:
       contents: read
     steps:
       - name: Checkout code
         # v6.0.1
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          lfs: false
 
       - name: Set up Python
         # v5.3.0

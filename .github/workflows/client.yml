@@ -11,6 +11,10 @@ name: React website
       - '.github/workflows/client.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   client:
     name: Test react website
@@ -21,6 +25,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: &job_timeout 30
     defaults:
       run:
         working-directory: client/
@@ -103,6 +108,7 @@ jobs:
     permissions:
       contents: read  # Required for checking out the code
     runs-on: ubuntu-latest
+    timeout-minutes: *job_timeout
     steps:
       - name: Checkout Repository
         # v6.0.1
