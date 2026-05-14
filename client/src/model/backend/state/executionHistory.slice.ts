@@ -10,7 +10,11 @@ import {
 } from 'model/backend/gitlab/types/executionHistory';
 import { DigitalTwinData } from 'model/backend/state/digitalTwin.slice';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
-import { IExecutionHistoryStorage } from 'model/backend/interfaces/sharedInterfaces';
+import {
+  ShowNotificationPayload,
+  IExecutionHistoryStorage,
+} from 'model/backend/interfaces/sharedInterfaces';
+import ExecutionStatusService from 'model/backend/state/ExecutionStatusService';
 
 const formatTimestamp = (timestamp: number): string => {
   const date = new Date(timestamp);
@@ -45,6 +49,23 @@ const initialState: ExecutionHistoryState = {
   loading: false,
   error: null,
 };
+
+function buildClearHistoryNotification(
+  dtName: string,
+  deletedCount: number,
+): ShowNotificationPayload {
+  if (deletedCount === 0) {
+    return {
+      message: 'Execution history is already empty or only has active entries',
+      severity: 'info',
+    };
+  }
+  return {
+    message: `Deleted all entries from ${formatName(dtName)} execution history`,
+    severity: 'warning',
+    icon: 'ClearIcon',
+  };
+}
 
 let storageService: IExecutionHistoryStorage;
 
@@ -224,8 +245,9 @@ export const removeExecution =
         type: 'snackbar/showSnackbar',
         payload: {
           message: `Deleted entry ${formatTimestamp(execution.timestamp)} from ${formatName(execution.dtName)} execution history`,
-          severity: 'success',
-        },
+          severity: 'warning',
+          icon: 'ClearIcon',
+        } as ShowNotificationPayload,
       });
     } catch (error) {
       if (execution) {
@@ -235,24 +257,34 @@ export const removeExecution =
     }
   };
 
+async function deleteDTEntries(entries: DTExecutionResult[]): Promise<void> {
+  await Promise.all(entries.map((entry) => storageService.delete(entry.id)));
+}
+
 export const clearExecutionHistoryForDT =
   (dtName: string): AppThunk =>
-  async (dispatch) => {
-    try {
-      await storageService.deleteByDTName(dtName);
+  async (dispatch, getState) => {
+    const state = getState();
+    const entriesToDelete = state.executionHistory.entries.filter(
+      (entry) =>
+        entry.dtName === dtName && entry.status !== ExecutionStatus.RUNNING,
+    );
 
-      dispatch(removeEntriesForDT(dtName));
-      dispatch(setError(null));
-      dispatch({
-        type: 'snackbar/showSnackbar',
-        payload: {
-          message: `Deleted all entries from ${formatName(dtName)} execution history`,
-          severity: 'success',
-        },
-      });
+    try {
+      await deleteDTEntries(entriesToDelete);
     } catch (error) {
       dispatch(setError(`Failed to clear execution history: ${error}`));
+      return;
     }
+
+    for (const entry of entriesToDelete) {
+      dispatch(removeExecutionHistoryEntry(entry.id));
+    }
+    dispatch(setError(null));
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: buildClearHistoryNotification(dtName, entriesToDelete.length),
+    });
   };
 
 export const checkRunningExecutions =
@@ -267,12 +299,12 @@ export const checkRunningExecutions =
     }
 
     try {
-      const module = await import('model/backend/state/ExecutionStatusService');
-      const updatedExecutions = await module.default.checkRunningExecutions(
-        runningExecutions,
-        state.digitalTwin.digitalTwin,
-        storageService,
-      );
+      const updatedExecutions =
+        await ExecutionStatusService.checkRunningExecutions(
+          runningExecutions,
+          state.digitalTwin.digitalTwin,
+          storageService,
+        );
 
       for (const updatedExecution of updatedExecutions) {
         dispatch(updateExecutionHistoryEntry(updatedExecution));

@@ -2,6 +2,7 @@
 
 import click
 from src.pkg import utils
+from typing import cast, Any
 
 
 class Config:
@@ -22,7 +23,7 @@ class Config:
     def get_from_config(self, key):
         """Gets the specific key from config"""
         conf, err = self.get_config()
-        if err is not None:
+        if err is not None or conf is None:
             return None, err
 
         if key not in conf:
@@ -37,7 +38,7 @@ class Config:
     def get_string_from_common(self, key):
         """Gets the specific string key from config.common"""
         conf_common, err = self.get_common()
-        if err is not None:
+        if err is not None or not isinstance(conf_common, dict):
             return None, err
 
         if key not in conf_common or conf_common[key] == "":
@@ -51,25 +52,24 @@ class Config:
         users, err = self.get_from_config("users")
         return users, err
 
-
     def get_string_list_from_users(self, key):
         """Gets the specific key as a list of strings from config.users"""
         err = None
         strings_list = None
 
         conf_users, err = self.get_users()
-        if err is not None:
+        if err is not None or not isinstance(conf_users, dict):
             return None, err
 
         try:
-            strings_list = [ str(x) for x in conf_users[key]]
+            strings_list = [str(x) for x in cast(list[Any], conf_users[key])]
             if len(strings_list) == 0:
                 strings_list = None
                 raise ValueError
         except KeyError:
             err = Exception(f"Config file error: No {key} list in 'users' tag")
         except ValueError:
-            err = Exception(f'Config file error: users.{key} list is empty')
+            err = Exception(f"Config file error: users.{key} list is empty")
 
         return strings_list, err
 
@@ -94,13 +94,23 @@ class Config:
         return delete_users_list, err
 
     def get_resource_limits(self):
-        """Gets the default resourse limits"""
+        """Gets the default resource limits"""
         conf_common, err = self.get_common()
-        if err is not None:
+        if err is not None or not isinstance(conf_common, dict):
             return None, err
-        # It's assumed that resources is given in dtaas.toml
         resources = conf_common.get("resources", None)
         if resources is None:
             err = Exception("Config file error: Missing default resources limits")
             return None, err
         return resources, None
+
+    def get_tls(self):
+        """Gets the TLS flag from config.common.security"""
+        conf_common, err = self.get_common()
+        if err is not None or not isinstance(conf_common, dict):
+            return False, err
+        security = conf_common.get("security", {})
+        if not isinstance(security, dict):
+            return False, Exception("Config file error: security section is not a dict")
+        tls = security.get("tls", False)
+        return bool(tls), None

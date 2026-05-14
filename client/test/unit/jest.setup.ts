@@ -11,5 +11,5 @@ globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder;
 
 beforeEach(() => {
-  jest.resetAllMocks();
+  jest.clearAllMocks();
 });

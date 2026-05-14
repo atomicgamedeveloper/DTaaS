@@ -40,7 +40,7 @@ InfluxDB, RabbitMQ, Grafana, ThingsBoard, and GitLab.
 * **Automated Setup:** One command setup of TLS certificates and permissions
 * **Service Management:** Start, stop, and check status of all services
 * **User Management:** Easy creation of user accounts in InfluxDB,
-RabbitMQ, ThingsBoard, and GitLab
+RabbitMQ, MongoDB, PostgreSQL, ThingsBoard, and GitLab
 * **Cross platform:** Works on Linux, macOS, and Windows
 * **Configuration-driven:** Reads settings from `config/services.env`
 
@@ -54,10 +54,10 @@ RabbitMQ, ThingsBoard, and GitLab
 
 ### Install from Wheel Package
 
-Install the standalone wheel package using pip:
+Install the package inside a Python virtual environment:
 
 ```bash
-pip install dtaas_services-0.3.0-py3-none-any.whl
+pip install dtaas-services
 ```
 
 This installs the `dtaas-services` command.
@@ -92,6 +92,12 @@ structure:
    * `TB_TENANT_NEW_PASSWORD`: New password for the tenant admin
    * `SERVICES_UID`: User ID for service file ownership
    * `SERVICES_GID`: Group ID for service file ownership
+   * **OAuth Configuration** (optional: customise GitLab OAuth app registrations):
+        Edit `config/gitlab_oauth.json` to adjust app names, redirect URIs, scopes,
+        or confidentiality settings before running `dtaas-services install -s gitlab`.
+        The file is created automatically by `dtaas-services generate-project`.
+        To use a different filename, set `OAUTH_APPS=<filename>` in `config/services.env`
+        (the file is still looked up in `config/`).
 
 3. Update `config/credentials.csv` with user accounts (format: `username,password,email`)
 
@@ -164,7 +170,8 @@ dtaas-services remove -v -s <service_name>
    dtaas-services user add
    ```
 
-   This creates user accounts in InfluxDB, RabbitMQ, ThingsBoard, and GitLab
+   This creates user accounts in InfluxDB, RabbitMQ, MongoDB, PostgreSQL,
+   ThingsBoard, and GitLab
    (each service is skipped gracefully if it is not running).
    For GitLab, a Personal Access Token is created for each new user and
    saved to `config/gitlab_user_tokens.json`.

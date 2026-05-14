@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import DigitalTwin, { formatName } from 'model/backend/digitalTwin';
 import { fetchExecutionHistory } from 'model/backend/state/executionHistory.slice';
-import { RootState } from 'store/store';
+import type { RootState } from 'store/store';
 import {
   startPipeline,
   updatePipelineState,
@@ -33,7 +33,7 @@ export const handleButtonClick = async (
   dispatch: PipelineHandlerDispatch,
 ) => {
   if (buttonText === 'Start') {
-    handleStart(
+    await handleStart(
       buttonText,
       setButtonText,
       digitalTwin,
@@ -41,7 +41,7 @@ export const handleButtonClick = async (
       dispatch,
     );
   } else {
-    handleStop(digitalTwin, setButtonText, dispatch);
+    await handleStop(digitalTwin, setButtonText, dispatch);
   }
 };
 
@@ -88,6 +88,14 @@ export const handleStart = async (
   } else {
     setButtonText('Start');
 
+    dispatch({
+      type: 'snackbar/showSnackbar',
+      payload: {
+        message: `Stopping execution for ${formatName(digitalTwin.DTName)}...`,
+        severity: 'warning',
+      } as ShowNotificationPayload,
+    });
+
     if (executionId) {
       await handleStop(digitalTwin, setButtonText, dispatch, executionId);
     } else {
@@ -118,8 +126,8 @@ export const handleStop = async (
         message: `Execution stopped successfully for ${formatName(
           digitalTwin.DTName,
         )}`,
-        severity: 'success',
-      },
+        severity: 'warning',
+      } as ShowNotificationPayload,
     });
   } else {
     dispatch({

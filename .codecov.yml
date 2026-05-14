@@ -1,5 +1,6 @@
 comment:
-  layout: "header, diff, files, components"  # show component info in the PR comment
+  # show component info in the PR comment
+  layout: "header, diff, files, components"
 
 coverage:
   status:
@@ -10,7 +11,6 @@ coverage:
     patch:
       default:
         informational: true
-
 codecov:
   require_ci_to_pass: false
   notify:
@@ -30,11 +30,21 @@ component_management:
       name: Lib Microservice
       paths:
         - servers/lib/**
-    - component_id: dtaas_services
-      name: dtaas-Services
+    # this is an identifier that should not be changed
+    - component_id: runner
+      # this is a display name, and can be changed freely
+      name: Execution Runner
       paths:
-        - deploy/services/cli/**
+        - servers/execution/**
+    # this is an identifier that should not be changed
     - component_id: dtaas_cli
-      name: dtaas-CLI
+      # this is a display name, and can be changed freely
+      name: DTaaS CLI
       paths:
         - cli/**
+    # this is an identifier that should not be changed
+    - component_id: dtaas_services_cli
+      # this is a display name, and can be changed freely
+      name: DTaaS Services CLI
+      paths:
+        - deploy/services/cli/**

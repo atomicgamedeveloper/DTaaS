@@ -13,10 +13,17 @@ can be executed on the DTaaS platform.
 with other users. It is also possible to share the services
 offered by one DT with other users.
 
-Here is an overview of the DTaaS platform available in the form of
-[slides](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/20250603_DTaaS-short-intro.pdf),
-[video](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/videos/20250603_DTaaS-short-intro_recorded_web.mp4),
-and [feature walkthrough](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/videos/dtaas-v0.7.mp4).
+Here is a feature overview of the DTaaS v1.0 interface and workflow,
+<!-- markdownlint-disable MD013 -->
+![DTaaS v1.0 user walkthrough](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/videos/v1.0/user/20260426_dtaas/dtaas-user_4x.gif)
+
+The full-resolution recording is also available as
+[MP4](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/videos/v1.0/user/20260426_dtaas/dtaas-user_4x.mp4).
+
+An overview of the DTaaS platform available in the form of
+[slides](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/20250603_DTaaS-short-intro.pdf)
+and a short
+[introduction video](https://odin.cps.digit.au.dk/into-cps/dtaas/assets/videos/20250603_DTaaS-short-intro_recorded_web.mp4).
 
 ## License
 

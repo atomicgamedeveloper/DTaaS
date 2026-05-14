@@ -2,13 +2,21 @@ name: Platform Services CLI
 
 'on':
   push:
+    branches:
+      - 'feature/distributed-demo'
     paths:
       - 'deploy/services/cli/**'
+      - '.github/workflows/platform-services-cli.yml'
+
   pull_request:
     paths:
       - 'deploy/services/cli/**'
+      - '.github/workflows/platform-services-cli.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-services-cli:
@@ -22,8 +30,29 @@ jobs:
       src-directory: dtaas_services
       tests-directory: tests
       coverage-file: deploy/services/cli/coverage.xml
-      artifact-name: dtaas-cli
-      artifact-path: |
-        deploy/services/cli/dist/*.whl
-        deploy/services/cli/dist/*.tar.gz
+      artifact-name: dtaas-services-cli
+      artifact-path: dist
       run-pyright: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [test-services-cli]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC trusted publisher
+    steps:
+      - name: Download dist artefacts
+        # v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: dtaas-services-cli
+          path: ./
+
+      - name: Publish to PyPI
+        # v1.12.4
+        # yamllint disable-line rule:line-length
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        with:
+          packages-dir: .

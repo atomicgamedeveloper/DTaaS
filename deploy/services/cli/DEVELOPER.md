@@ -47,6 +47,7 @@ cli/
 │   ├── config/
 │   │   ├── services.env.template
 │   │   ├── credentials.csv.template
+│   │   ├── gitlab_oauth.json.template
 │   │   ├── mongod.conf.secure
 │   │   ├── influxdb/
 │   │   ├── rabbitmq/           # rabbitmq.conf + rabbitmq.enabled_plugins
@@ -79,7 +80,8 @@ cli/
 │       ├── formatter.py    # Output formatting utilities
 │       ├── password_store.py # Tracks current service passwords in current.passwords.env
 │       ├── template.py     # Project structure and template file management
-│       ├── utils.py        # Shared utilities (Docker, file operations)
+│       ├── docker_utils.py # Docker command execution with retry logic
+│       ├── utils.py        # Shared utilities (credentials, container state)
 │       ├── lib/            # Core service management
 │       │   ├── __init__.py
 │       │   ├── manager.py  # Docker Compose service management
@@ -99,7 +101,8 @@ cli/
 │           ├── postgres/   # PostgreSQL service module
 │           │   ├── __init__.py
 │           │   ├── postgres.py     # Certificate setup and readiness waiting
-│           │   └── status.py       # Container health and state checking
+│           │   ├── status.py       # Container health and state checking
+│           │   └── user_management.py  # User and database creation
 │           └── thingsboard/
 │          │    ├── __init__.py
 │          │    ├── activation.py    # Shared user activation utilities
@@ -128,6 +131,7 @@ cli/
     ├── test_config.py
     ├── test_formatter.py
     ├── test_template.py
+    ├── test_docker_utils.py
     ├── test_utils.py
     ├── test_commands/
     │   ├── __init__.py
@@ -156,7 +160,8 @@ cli/
     │   ├── test_postgres/
     │   │   ├── __init__.py
     │   │   ├── test_postgres.py
-    │   │   └── test_status.py
+    │   │   ├── test_status.py
+    │   │   └── test_user_management.py
     │   ├── test_thingsboard/
     │   │   ├── __init__.py
     │   │   ├── test_permissions.py
@@ -213,7 +218,9 @@ The package uses a modular, three-layer architecture:
   tracks the last-known password for each service account so that
   `reset-password` can be run repeatedly
 * **`template.py`**: Project structure and template file management
-* **`utils.py`**: Shared utilities (Docker operations, credentials handling)
+* **`docker_utils.py`**: Docker command execution helpers `execute_docker_command`
+* **`utils.py`**: Shared utilities (credentials file handling, container state
+  helpers, root-check, CI detection)
 * **`lib/`**: Core service management modules
   * `manager.py`: Docker Compose service management
   * `docker_executor.py`: Docker command execution
@@ -237,6 +244,9 @@ The package uses a modular, three-layer architecture:
 * **`postgres/`**: PostgreSQL service module
   * `postgres.py`: Certificate setup and readiness waiting
   * `status.py`: Container health and state checking
+  * `user_management.py`: User and database creation via a direct psycopg3
+    connection; uses `psycopg.sql.Identifier` and `psycopg.sql.Literal` for
+    driver-level escaping of all user input, preventing SQL injection
 
 * **`thingsboard/`**: ThingsBoard modules
   * `activation.py`: Shared user activation utilities (token extraction,
@@ -304,6 +314,66 @@ default: `https`)
 * **`GITLAB_ROOT_NEW_PASSWORD`**: Strong password to apply to the GitLab `root`
   admin account during post-install setup
 
+#### GitLab OAuth Application Configuration
+
+OAuth 2.0 application settings are loaded from a JSON config file at
+`config/gitlab_oauth.json`. This file is generated automatically from
+`config/gitlab_oauth.json.template` by `dtaas-services generate-project`
+and can be edited to customise app registrations before running
+`dtaas-services install -s gitlab`.
+
+The filename can be overridden by setting the `OAUTH_APPS` environment
+variable to a different filename (looked up in `config/`).
+
+Each entry's `redirect_uri` is the **full callback URL** registered with GitLab
+
+| Field | Description |
+
+| --- | --- |
+| `name` | Display name shown in GitLab |
+| `redirect_uri` | Full callback URL (e.g. `https://into-cps.org/_oauth`) |
+| `confidential` | `true` for server-side apps, `false` for browser clients |
+| `scopes` | Space-separated OAuth scopes |
+| `trusted` | `true` to skip user authorisation dialogs |
+OAuth 2.0 applications are configured via a JSON file. The default file is
+`config/gitlab_oauth.json`, which defines two applications: Server Authorization
+(for Traefik Forward-Auth) and Client Authorization (for the React client).
+These are created during `dtaas-services install -s gitlab`.
+
+**To use custom OAuth settings:**
+
+1. Copy `config/gitlab_oauth.json` to a new file, e.g. `config/oauth_apps.json`
+2. Edit the redirect URIs and other settings in your custom file
+3. Set `OAUTH_APPS=oauth_apps.json` in `config/services.env`
+
+**JSON file format example:**
+
+```json
+[
+  {
+    "name": "DTaaS Server Authorization",
+    "redirect_uri": "https://your-domain.com/_oauth",
+    "confidential": true,
+    "scopes": "read_user",
+    "trusted": false
+  },
+  {
+    "name": "DTaaS Client Authorization",
+    "redirect_uri": "https://your-domain.com/Library",
+    "confidential": false,
+    "scopes": "api openid profile read_repository read_user",
+    "trusted": true
+  }
+]
+```
+
+Each app requires:
+* **`name`**: Display name shown in GitLab
+* **`redirect_uri`**: Full callback URL for your domain
+* **`confidential`**: `true` for server-side apps, `false` for browser clients
+* **`scopes`**: Space-separated OAuth scopes
+* **`trusted`**: `true` to skip user authorization dialogs
+
 #### ThingsBoard SSL Configuration
 
 ThingsBoard API calls use the `SSL_VERIFY` setting from `config/services.env`:
@@ -345,6 +415,21 @@ Stops and removes Docker containers:
   organisations using the `--owner` flag, giving them full administrative rights.
 * **User-specific Resources**: Each user gets their own organisation and bucket
   with the same name as their username.
+
+#### PostgreSQL Users
+
+* **Direct Connection**: User and database creation connects directly to PostgreSQL
+  over TCP via `psycopg.connect()` — no `docker exec` or shell
+  subprocess is involved, eliminating shell injection as an attack surface.
+* **Driver-level Escaping**: All usernames are wrapped in `psycopg.sql.Identifier`
+  and passwords in `psycopg.sql.Literal`. The psycopg3 driver escapes these at the
+  binary protocol level before any SQL reaches the database. Malicious input such
+  as`alice"; DROP TABLE users; --` or `$(curl ...)` is treated as a literal identifier
+  name and cannot break out of its context.
+* **Idempotent**: `DuplicateObject` (role already exists) and `DuplicateDatabase`
+  errors are caught and treated as success, so the command is safe to re-run.
+* **Config Keys Required**: `HOSTNAME`, `POSTGRES_PORT`, `POSTGRES_USER`,
+  `POSTGRES_PASSWORD` must be set in `config/services.env`.
 
 #### RabbitMQ Users
 

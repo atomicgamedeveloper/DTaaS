@@ -27,6 +27,8 @@ The CLI is coded in python, and uses the following important modules:
   _cli/pyproject.toml_. New source packages and dependencies need to be
   added here.
 
+- [Pyright](https://github.com/microsoft/pyright) : Used for static type checking.
+
 ## Code Structure
 
 The CLI has two layers of code:
@@ -57,7 +59,7 @@ This is divided into 3 sections:
 
 ```toml
 name = "Digital Twin as a Service (DTaaS)"
-version = "0.1.1"
+version = "0.2.2"
 owner = "The INTO-CPS-Association"
 git-repo = "https://github.com/into-cps-association/DTaaS.git"
 ```
@@ -71,14 +73,14 @@ of documentation and reference.
 ```toml
 [common]
 # absolute path to the DTaaS application directory
-# TODO : Update, we are now reusing hostname for this 
+# TODO : Update, we are now reusing hostname for this
 server-dns = "foo.com"
 # Specify the directory of DTaaS installation
 # Linux example
 path = "/Users/username/DTaaS"
 # Windows example
 #path = "C:\\Users\\XXX\\DTaaS"
-# Note: You have to either use / or \\ when specifying path, else you would get 
+# Note: You have to either use / or \\ when specifying path, else you would get
 # "Error while getting toml file: dtaas.toml, Invalid unicode value"
 ```
 
@@ -91,6 +93,17 @@ the DTaaS instance is a localhost instance or a server
 deploy instance. In the case of server deploy,
 it is used to define the routes of the server type
 docker compose services appropriately.
+
+- Tls
+
+Set the tls flag to false to use the insecure user.server.yml, it is True by default
+so the 'user.server.secure.yml' will be used
+
+```toml
+[common.security]
+# Enable HTTPS/TLS for secure server deployment
+tls = true
+```
 
 - Users variables
 
@@ -153,6 +166,18 @@ To perform linting checks on the code:
 ```bash
 pylint src --rcfile=../.pylintrc
 ```
+
+## Type Checking
+
+Make sure you are in the _cli_ directory.
+To perform static type checking on the code:
+
+```bash
+pyright src
+```
+
+Pyright is configured in `pyproject.toml` under `[tool.pyright]`.
+Pyright errors should be resolved before submitting a pull request.
 
 ## Testing
 
