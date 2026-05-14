@@ -7,6 +7,7 @@
  */
 import Layout from 'page/Layout';
 import {
+  Alert,
   Box,
   Button,
   Collapse,
@@ -296,6 +297,9 @@ function Measurement() {
         </Dialog>
         <MeasurementPageHeader />
         <Paper sx={{ p: 3 }}>
+          <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+            A minimum of one Digital Twin is required for measurements to work.
+          </Alert>
           <MeasurementControls
             isRunning={isRunning}
             hasStarted={hasStarted}
