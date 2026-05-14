@@ -16,7 +16,7 @@ async function clearDatabase() {
       entries.map((entry) => indexedDBService.delete(entry.id)),
     );
   } catch (error) {
-    // eslint-disable-next-line preserve-caught-error
+     
     throw new Error(`Failed to clear database: ${error}`);
   }
 }

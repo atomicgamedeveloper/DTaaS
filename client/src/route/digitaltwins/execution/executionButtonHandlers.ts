@@ -10,6 +10,7 @@ import {
 } from 'route/digitaltwins/execution/executionStatusHandlers';
 import { startPipelineStatusCheck } from 'route/digitaltwins/execution/executionStatusManager';
 import { stopPipelines } from 'model/backend/gitlab/execution/pipelineCore';
+import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 
 export type PipelineHandlerDispatch = ThunkDispatch<
   RootState,

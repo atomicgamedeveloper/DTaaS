@@ -15,6 +15,7 @@ import {
 import { ThunkDispatch, Action } from '@reduxjs/toolkit';
 import { RootState } from 'store/store';
 import { selectExecutionHistoryByDTName } from 'route/digitaltwins/execution';
+import { ShowNotificationPayload } from 'model/backend/interfaces/sharedInterfaces';
 import UnifiedDialog from 'components/logDialog/UnifiedDialog';
 import DeleteAllConfirmationDialog from 'components/logDialog/DeleteAllConfirmationDialog';
 

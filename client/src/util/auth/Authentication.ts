@@ -56,7 +56,7 @@ export function useSignOut() {
     try {
       await performSignOutFlow(auth, APP_URL);
     } catch (e) {
-      // eslint-disable-next-line preserve-caught-error
+       
       throw new Error(`Error occurred during logout: ${e}`);
     }
   };

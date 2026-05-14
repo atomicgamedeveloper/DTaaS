@@ -104,7 +104,7 @@ export async function initDigitalTwin(
     await digitalTwinGitlabInstance.init();
     return new DigitalTwin(newDigitalTwinName, digitalTwinGitlabInstance);
   } catch (error) {
-    // eslint-disable-next-line preserve-caught-error
+     
     throw new Error(
       `Failed to initialize DigitalTwin for ${newDigitalTwinName}: ${error}`,
     );
