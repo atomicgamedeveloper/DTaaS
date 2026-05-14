@@ -136,11 +136,10 @@ function markPendingTasks(
   proxy: ReturnType<typeof wrapSetters>,
   disabledNames: Set<string>,
 ): void {
-  const pendingStatus: Status = 'PENDING';
   proxy.setResults((previous) =>
     previous.map((task) =>
       task.Status === 'NOT_STARTED' && !disabledNames.has(task['Task Name'])
-        ? { ...task, Status: pendingStatus }
+        ? { ...task, Status: 'PENDING' satisfies Status }
         : task,
     ),
   );
@@ -202,11 +201,10 @@ export async function stopAllPipelines(): Promise<void> {
   const proxy = wrapSetters();
   proxy.setIsRunning(false);
   await cancelActivePipelines();
-  const stoppedStatus: Status = 'STOPPED';
   proxy.setResults((previous) =>
     previous.map((task) =>
       task.Status === 'PENDING' || task.Status === 'RUNNING'
-        ? { ...task, Status: stoppedStatus }
+        ? { ...task, Status: 'STOPPED' satisfies Status }
         : task,
     ),
   );

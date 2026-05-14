@@ -48,44 +48,21 @@ jest.mock('model/backend/gitlab/measure/measurement.utils', () => ({
   downloadTaskResultJson: jest.fn(),
 }));
 
-jest.mock('model/backend/gitlab/measure/measurement.runner', () => ({
-  startMeasurement: jest.fn(),
-  stopAllPipelines: jest.fn(),
-  restartMeasurement: jest.fn(),
-  handleBeforeUnload: jest.fn(),
-  handleUnload: jest.fn(),
-  purgeMeasurementData: jest.fn(),
-}));
+jest.mock('model/backend/gitlab/measure/measurement.runner', () => {
+  const setup = jest.requireActual('./measurement.testSetup');
+  return setup.createRunnerStubs();
+});
 
-jest.mock('model/backend/gitlab/measure/measurement.execution', () => ({
-  measurementState: {
-    activePipelines: [],
-    executionResults: [],
-    isRunning: false,
-    results: null,
-    currentTaskIndexUI: null,
-    componentSetters: null,
-  },
-  attachSetters: jest.fn(),
-  detachSetters: jest.fn(),
-  getDefaultConfig: jest.fn(() => ({ DTName: 'default-dt' })),
-  getTasks: () => [
-    {
-      'Task Name': 'Task 1',
-      Description: 'First task',
-      Trials: [],
-      Status: 'NOT_STARTED',
-      Executions: () => [{ dtName: 'hello-world', config: {} }],
-    },
-    {
-      'Task Name': 'Task 2',
-      Description: 'Second task',
-      Trials: [],
-      Status: 'NOT_STARTED',
-      Executions: () => [{ dtName: 'hello-world', config: {} }],
-    },
-  ],
-}));
+jest.mock('model/backend/gitlab/measure/measurement.execution', () => {
+  const setup = jest.requireActual('./measurement.testSetup');
+  return {
+    measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
+    attachSetters: jest.fn(),
+    detachSetters: jest.fn(),
+    getDefaultConfig: jest.fn(() => ({ DTName: 'default-dt' })),
+    getTasks: () => setup.MOCK_TASKS,
+  };
+});
 
 describe('Measurement initial executions', () => {
   beforeEach(() => {

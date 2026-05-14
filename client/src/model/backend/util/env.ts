@@ -8,6 +8,10 @@ export function setEnvironmentStore(store: StoreReader): void {
   _store = store;
 }
 
+export function resetEnvironmentStore(): void {
+  _store = null;
+}
+
 export default function getAuthority(): string {
   if (!_store) {
     throw new Error(

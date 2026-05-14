@@ -73,10 +73,7 @@ function MenuToolbar({
   };
   return (
     <AppBar position="fixed" open={open} drawerwidth={drawerwidth}>
-      <Toolbar
-        data-testid="toolbar"
-        sx={{ display: 'flex', justifyContent: 'space-between' }}
-      >
+      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <IconButton
           color="inherit"
           aria-label="open drawer"
