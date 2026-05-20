@@ -206,6 +206,9 @@ const SettingsForm: React.FC = () => {
 
     const branchChanged = formValues.branchName !== BRANCH_NAME;
     const directoryChanged = formValues.dtDirectory !== DT_DIRECTORY;
+    const groupChanged = formValues.groupName !== GROUP_NAME;
+    const commonLibraryChanged =
+      formValues.commonLibraryProjectName !== COMMON_LIBRARY_PROJECT_NAME;
 
     if (formValues.groupName !== GROUP_NAME) {
       dispatch(setGroupName(formValues.groupName));
@@ -256,7 +259,12 @@ const SettingsForm: React.FC = () => {
     setNotificationSeverity('success');
     setShowNotification(true);
 
-    if (branchChanged || directoryChanged) {
+    if (
+      branchChanged ||
+      directoryChanged ||
+      groupChanged ||
+      commonLibraryChanged
+    ) {
       dispatch(clearDigitalTwins());
       setTwinsLoading(true);
       fetchDigitalTwins(dispatch, () => {}).finally(() =>
