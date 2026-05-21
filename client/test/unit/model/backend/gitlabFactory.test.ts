@@ -23,4 +23,10 @@ describe('gitlabFactory', () => {
     expect(gitlabInstance.projectName).toBe('username');
     expect(GitlabAPI).toHaveBeenCalledWith('auth', 'token');
   });
+
+  it('should strip multiple trailing slashes from authority', () => {
+    createGitlabInstance('username', 'token', 'https://foo.com///');
+
+    expect(GitlabAPI).toHaveBeenCalledWith('https://foo.com', 'token');
+  });
 });
