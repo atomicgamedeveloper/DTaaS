@@ -217,7 +217,14 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" p={2}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 2,
+        }}
+      >
         <div data-testid="circular-progress">
           <CircularProgress data-testid="progress-indicator" />
         </div>
@@ -249,7 +256,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
         onConfirm={handleDeleteConfirm}
       />
       <Paper elevation={2} sx={{ mt: 2 }}>
-        <Box p={2}>
+        <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Execution History
           </Typography>
@@ -274,8 +281,8 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                   },
                 }}
               >
-                <Box display="flex" alignItems="center">
-                  <Box mr={2}>{getStatusIcon(execution.status)}</Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ mr: 2 }}>{getStatusIcon(execution.status)}</Box>
                   <Box>
                     <Typography>
                       {formatTimestamp(execution.timestamp)}
@@ -286,8 +293,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                   </Box>
                 </Box>
                 <Box
-                  display="flex"
-                  alignItems="center"
+                  sx={{ display: 'flex', alignItems: 'center' }}
                   onClick={(e) => e.stopPropagation()}
                   data-testid="action-buttons-container"
                 >
@@ -326,7 +332,9 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                     selectedExecution.id !== execution.id
                   ) {
                     return (
-                      <Box display="flex" justifyContent="center" p={2}>
+                      <Box
+                        sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
+                      >
                         <CircularProgress size={24} />
                       </Box>
                     );
