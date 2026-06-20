@@ -3,22 +3,11 @@
 This is a command-line tool for the
 INTO-CPS-Association Digital Twin as a Service platform.
 
-## 📋 Prerequisite
-
-The DTaaS application with base users and essential
-containers must be running before using the CLI.
-
 ## 📦 Installation
 
 Installation in a virtual environment is recommended.
 
 Steps to install:
-
-- Change the working folder:
-
-```bash
-cd <DTaaS-directory>/cli
-```
 
 - Create and activate a virtual environment.
 
@@ -66,8 +55,7 @@ This creates three configuration files and the workspace directory structure:
 |------|---------|
 | `dtaas.toml` | Main CLI configuration (server DNS, paths, resources, users) |
 | `users.server.yml` | Docker Compose user-workspace template for HTTP deployments|
-| `users.server.secure.yml` | Docker Compose user-workspace template for
-HTTPS/TLS deployments |
+| `users.server.secure.yml` | Docker Compose user-workspace template for HTTPS/TLS deployments |
 | `files/template/` | Template directory for user workspace initialization |
 
 The `files/template/` directory is created if it does not exist.
@@ -82,74 +70,8 @@ the project evolves.
 **You should verify and update the Docker image tag** in these templates to use
 a current, stable version before deploying user workspaces.
 Check the available tags in the
-[INTO-CPS workspace repository](https://github.com/into-cps-association/DTaaS)
+[INTO-CPS workspace repository](https://hub.docker.com/r/intocps/workspace/tags)
 or your Docker registry to ensure you are using an up-to-date image version.
-
-### Configure
-
-The CLI uses _dtaas.toml_ as configuration file. A sample
-configuration file is given here.
-
-```toml
-# This is the config for DTaaS CLI
-
-name = "Digital Twin as a Service (DTaaS)"
-version = "0.2.2"
-owner = "The INTO-CPS-Association"
-git-repo = "https://github.com/into-cps-association/DTaaS.git"
-
-[common]
-# Server hostname either localhost or a valid hostname, ex: intocps.org
-# TODO : Update, we are now reusing hostname for this
-server-dns = "localhost"
-# absolute path to the DTaaS application directory
-# Specify the directory of DTaaS installation
-# Linux example
-path = "/Users/username/DTaaS"
-# Windows example
-#path = "C:\\Users\\XXX\\DTaaS"
-# Note: You have to either use / or \\ when specifying path, else you would get
-# "Error while getting toml file: dtaas.toml, Invalid unicode value"
-
-[common.security]
-# Enable HTTPS/TLS for secure server deployment
-# Set the tls flag to false to use the insecure user.server.yml, it is True by default
-# so the 'user.server.secure.yml' will be used
-tls = true
-
-[common.resources]
-# Default resource limits applied when creating user workspace containers.
-# Keys:
-# - cpus: integer count of virtual CPUs to allocate to the container
-# - mem_limit: memory limit string accepted by Docker (e.g. "4G", "512M")
-# - pids_limit: maximum number of processes the container may create
-# - shm_size: size for /dev/shm (shared memory), e.g. "512m"
-#
-# Adjust these values to match your host capacity and tenancy policy.
-cpus = 4
-mem_limit = "4G"
-pids_limit = 4960
-shm_size = "512m"
-
-# Example: Increase memory and lower CPU for heavier-memory workloads
-# cpus = 2
-# mem_limit = "8G"
-
-
-[users]
-# matching user info must present in this config file
-add = ["username1","username2", "username3"]
-delete = ["username2", "username3"]
-...
-```
-
-#### Notes
-
-- Edits to `dtaas.toml` affect new user containers created after the change.
-- To apply updated limits to existing containers, recreate or restart
-  the user container(s) (for example by removing and re-adding the user
-  workspace via the CLI or by restarting the container in Docker Compose).
-- Use units (`M`, `G`) for memory and shared memory values.
 
 ### Generate Deployment Project
 
@@ -205,6 +127,32 @@ dtaas generate-deployment --type insecure-server --output-dir /path/to/project -
 Each type copies the relevant `docker-compose.yml`, configuration examples,
 and supporting files into the target directory, ready to be customised.
 
+#### Configuration substitution
+
+When `dtaas.toml` is present, `generate-deployment` reads deployment-specific
+values from it and substitutes them into the generated files, so you do not
+have to edit every placeholder by hand. The CLI looks for `dtaas.toml` in
+`--output-dir` first; if not found there, it falls back to the current
+working directory.
+
+Each `--type` reads from its matching top-level section in `dtaas.toml`.
+Values are written into the generated config files by key: dotenv files
+(`config/.env`, `config/conf.server`) line by line, and client website
+config files (`config/client.js`) via the object assigned to `window.env`.
+
+The `[frontend]` section holds the OAuth application for the DTaaS client
+website (React frontend): `react-app-client-id` and `react-app-oauth-url`
+are substituted as `REACT_APP_CLIENT_ID` and `REACT_APP_AUTH_AUTHORITY` in
+`config/client.js`. This is a separate OAuth application from the server
+one (traefik-forward-auth) configured by `oauth-client-id` and friends in
+the `[insecure-server]` and `[secure-server]` sections.
+
+The `[common]` section (`server-dns`) and the `[users]` section (usernames,
+paths, and emails) are substituted across all types where they appear.
+
+If `dtaas.toml` is not found in either location, a note is printed and the
+files keep their default placeholder values.
+
 ### 📁 Select Template
 
 The _cli_ uses YAML templates provided in this directory to create
@@ -245,41 +193,20 @@ have the expected ownership rights, the command fails.
 
 This brings up the containers, without the AuthMS authentication.
 
-- Currently the _email_ fields for each user in
-  _dtaas.toml_ are not in use, and are not necessary
-  to fill in. These emails must be configured manually
-  for each user in the
-  deploy/docker/conf.server files and the _traefik-forward-auth_
-  container must be restarted. This is done as follows:
-
-- Go to the _docker_ directory
-
-```bash
-cd <DTaaS>/deploy/docker
-```
-
-- Add three lines to the `conf.server` file
-
-```txt
-rule.onlyu3.action=auth
-rule.onlyu3.rule=PathPrefix(`/user3`)
-rule.onlyu3.whitelist = user3@emailservice.com
-```
-
-- Run the command for these changes to take effect:
+When an `email` is provided for a user in `dtaas.toml`, the CLI automatically
+adds the traefik-forward-auth routing rule to `config/conf.server`. For the
+change to take effect, restart the `traefik-forward-auth` container:
 
 ```bash
 docker compose -f compose.server.yml --env-file .env up -d --force-recreate traefik-forward-auth
 ```
 
-The new users are now added to the DTaaS
-instance, with authorization enabled.
+The new users are now added to the DTaaS instance, with authorization enabled.
 
 ### ➖ Delete Users
 
-- To delete existing users, fill in the _users.delete_ list in
-  _dtaas.toml_ with the Gitlab instance
-  usernames of the users to be deleted.
+To delete users, add their GitLab instance usernames to the _users.delete_
+list in _dtaas.toml_ file.
 
 ```toml
 [users]
@@ -287,7 +214,7 @@ instance, with authorization enabled.
 delete = ["username1","username2", "username3"]
 ```
 
-- Ensure the working directory is _cli_.
+- Ensure you are in the working directory where the _dtaas.toml_ file is.
 
 Then run:
 
@@ -295,8 +222,13 @@ Then run:
 dtaas admin user delete
 ```
 
-- Remember to remove the rules for deleted users
-  in _conf.server_.
+The CLI automatically removes the traefik-forward-auth routing rules for
+deleted users from `config/conf.server`. Restart `traefik-forward-auth`
+for the change to take effect:
+
+```bash
+docker compose -f compose.server.yml --env-file .env up -d --force-recreate traefik-forward-auth
+```
 
 ### 📌 Additional Points
 
@@ -315,3 +247,72 @@ dtaas admin user delete
 - '.' is a special character. Currently, usernames which have
   '.'s in them cannot be added properly through the CLI.
   This is an active issue that will be resolved in future releases.
+
+## ⚙️ Configure
+
+After running `dtaas generate-project`, open `dtaas.toml` and fill in the
+values below. The `[users]`, `[frontend]`, and config-substitution behaviour
+are described in the command sections above.
+
+### `[common]`
+
+Set `server-dns` to your server's public hostname (`localhost` for a local
+deployment) and `path` to the absolute path of your DTaaS installation.
+Set `[common.security] tls = true` for HTTPS deployments.
+
+Adjust `[common.resources]` to match your hardware:
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `cpus` | `4` | Virtual CPUs per user container |
+| `mem_limit` | `"4G"` | Memory limit per container |
+| `pids_limit` | `4960` | Process limit per container |
+| `shm_size` | `"512m"` | Shared memory per container |
+
+### Deployment-specific credentials
+
+Each section name matches a `--type` value for `dtaas generate-deployment`.
+
+**`[insecure-server]` and `[secure-server]`** GitLab OAuth app for
+traefik-forward-auth (Redirect URI `https://<server-dns>/_oauth`,
+Confidential ticked, scopes `openid profile read_user`):
+
+| Key | Description |
+| --- | --- |
+| `oauth-url` | Base URL of your GitLab instance |
+| `oauth-client-id` | Application ID |
+| `oauth-client-secret` | Application secret |
+| `oauth-secret` | Random string for signing session cookies |
+
+**`[secure-server-gitlab]`** same keys as above, without `oauth-url`
+(derived from the bundled GitLab service).
+
+**`[localhost]`** single-machine deployment with an external OIDC provider:
+
+| Key | Description |
+| --- | --- |
+| `default-user` | Username shown in the UI |
+| `client-id` | OAuth client ID |
+| `auth-authority` | OIDC provider URL |
+
+**`[workspace-localhost]`** workspace service with Dex on localhost:
+
+| Key | Description |
+| --- | --- |
+| `default-user` | Default workspace username |
+| `client-id` | Dex client ID |
+| `auth-authority` | Dex OIDC provider URL |
+
+**`[workspace-secure-server]`** workspace service with Keycloak in production:
+
+| Key | Description |
+| --- | --- |
+| `keycloak-admin` | Keycloak admin username |
+| `keycloak-admin-password` | Keycloak admin password |
+| `keycloak-realm` | Realm name (e.g. `dtaas`) |
+| `keycloak-issuer-url` | OIDC issuer URL of the realm |
+| `keycloak-client-id` | Client ID for the workspace service |
+| `keycloak-client-secret` | Client secret |
+| `oauth-secret` | Random string for signing session cookies |
+| `client-id` | Frontend OAuth client ID |
+| `auth-authority` | Keycloak OIDC authority URL |

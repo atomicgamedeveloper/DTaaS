@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch, MagicMock
 import pytest
-from src.pkg import users
+from src.pkg import users, users_utils
 # pylint: disable=redefined-outer-name,unused-argument
 
 
@@ -21,6 +21,7 @@ def mock_config():
         None,
     )
     mock.get_tls.return_value = (False, None)
+    mock.get_users.return_value = ({"add": ["user1"], "user1": {}}, None)
     return mock
 
 
@@ -189,3 +190,40 @@ def test_delete_user_skips_nonexistent(
     captured = capsys.readouterr()
     assert "'ghost' does not exist, skipping deletion" in captured.out
     mock_user_operations["stop"].assert_called_once_with(["user1"])
+
+
+CONF_SERVER_CONTENT = (
+    "rule.libms.action=auth\n"
+    "rule.libms.rule=PathPrefix(`/lib`)\n"
+    "\n"
+    "rule.onlyu1.action=auth\n"
+    "rule.onlyu1.rule=PathPrefix(`/user1`)\n"
+    "rule.onlyu1.whitelist=user1@example.com\n"
+    "\n"
+    "rule.onlyu2.action=auth\n"
+    "rule.onlyu2.rule=PathPrefix(`/user2`)\n"
+    "rule.onlyu2.whitelist=user2@example.com\n"
+)
+
+
+def test_delete_user_removes_conf_server_rules(
+    mock_config, mock_utils, mock_user_operations, tmp_path, monkeypatch
+):
+    """delete_user removes conf.server rules for each deleted user"""
+    conf = tmp_path / "config" / "conf.server"
+    conf.parent.mkdir()
+    conf.write_text(CONF_SERVER_CONTENT, encoding="utf-8")
+    monkeypatch.setattr(users_utils, "CONF_SERVER_PATH", conf)
+
+    compose = {"version": "3", "services": {"user1": {}, "user2": {}}}
+    mock_config.get_delete_users_list.return_value = (["user1"], None)
+    mock_utils["import"].return_value = (compose, None)
+    mock_utils["export"].return_value = None
+
+    err = users.delete_user(mock_config)
+
+    assert err is None
+    result = conf.read_text(encoding="utf-8")
+    assert "rule.onlyu1" not in result
+    assert "user1@example.com" not in result
+    assert "rule.onlyu2.action=auth" in result

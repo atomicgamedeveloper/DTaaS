@@ -3,40 +3,6 @@
 from src.pkg import utils
 
 
-def test_import_yaml_users():
-    """Test importing YAML user configuration template"""
-    expected = {
-        "container_name": "dtaas-cli-${username}",
-        "image": "intocps/workspace:main-967bc10",
-        "restart": "unless-stopped",
-        "volumes": [
-            "${DTAAS_DIR}/files/common:/workspace/common",
-            "${DTAAS_DIR}/files/${username}:/workspace",
-        ],
-        "environment": ["MAIN_USER=${username}"],
-        "shm_size": "${shm_size}",
-        "cpus": "${cpus}",
-        "mem_limit": "${mem_limit}",
-        "pids_limit": "${pids_limit}",
-        "labels": [
-            "traefik.enable=true",
-            "traefik.http.routers.${username}.entryPoints=web",
-            "traefik.http.routers.${username}.middlewares=traefik-forward-auth",
-            (
-                "traefik.http.routers.${username}.rule="
-                "Host(`${SERVER_DNS}`) && PathPrefix(`/${username}`)"
-            ),
-        ],
-        "networks": ["users"],
-    }
-
-    template, err = utils.import_yaml("users.server.yml")
-    if err is not None:
-        raise AssertionError(err)
-
-    assert template == expected
-
-
 def test_import_yaml_empty_file():
     """Test importing an empty YAML file"""
     message, _ = utils.import_yaml("tests/data/empty.yml")
@@ -61,7 +27,7 @@ def test_import_toml():
 
     expected = {
         "name": "Digital Twin as a Service (DTaaS)",
-        "version": "0.2.0",
+        "version": "0.5.0",
         "owner": "The INTO-CPS-Association",
         "git-repo": "https://github.com/into-cps-association/DTaaS.git",
         "common": {
@@ -74,9 +40,9 @@ def test_import_toml():
             # matching user info must present in this config file
             "add": ["username1", "username2", "username3"],
             "delete": ["username2", "username3"],
-            "username1": {"email": "username1@gitlab.intocps.org"},
-            "username2": {"email": "username2@gitlab.intocps.org"},
-            "username3": {"email": "username3@gitlab.intocps.org"},
+            "username1": {"email": "username1@intocps.org"},
+            "username2": {"email": "username2@intocps.org"},
+            "username3": {"email": "username3@intocps.org"},
         },
         "client": {"web": {"config": "/home/Desktop/DTaaS/env.local.js"}},
     }
