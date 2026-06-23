@@ -162,6 +162,70 @@ It reads the source location from `[common.security].certs-src` in
 `dtaas.toml` and copies the latest `fullchain.pem` and `privkey.pem` into
 `<output-dir>/certs/`.
 
+### 🚀 Install Deployment
+
+Once a deployment has been generated (and `dtaas.toml` configured), bring it up
+with a single command:
+
+```bash
+dtaas admin install
+```
+
+This runs `docker compose up -d` against the generated `docker-compose.yml` in
+the installation directory.
+
+**Options:**
+
+- `--output-dir` (default: `.`): Installation directory containing the
+  generated deployment.
+
+The `docker-compose.yml` must live in `--output-dir`. The CLI looks for
+`dtaas.toml` in `--output-dir` first and, if not found there, falls back to the
+current working directory, so a single top-level `dtaas.toml` can serve a
+deployment generated into a subdirectory (e.g.
+`dtaas admin install --output-dir insecure`).
+
+The command fails with a clear error if the deployment has not been generated
+(`docker-compose.yml` missing), if `dtaas.toml` is missing from both locations,
+or if the Docker daemon is not reachable.
+
+### 🧹 Uninstall Deployment
+
+To tear the deployment down:
+
+```bash
+dtaas admin uninstall
+```
+
+This runs `docker compose down`, stopping and removing the deployment's
+containers and networks. **Per-user workspace files are preserved by default.**
+
+To additionally delete the per-user workspace files (the `files/` directory
+created by `generate-deployment` and `admin user add`), pass
+`--remove-user-files`:
+
+```bash
+dtaas admin uninstall --remove-user-files
+```
+
+Because this is destructive, the command prompts for confirmation. Supply
+`--yes` (or `-y`) to skip the prompt in non-interactive scripts:
+
+```bash
+dtaas admin uninstall --remove-user-files --yes
+```
+
+**Options:**
+
+- `--output-dir` (default: `.`): Installation directory containing the
+  generated deployment.
+- `--remove-user-files`: Also delete per-user workspace files. Opt-in to avoid
+  accidental data loss: it requires a generated deployment in `--output-dir`,
+  prompts for confirmation, deletes only `<output-dir>/files`, and refuses to
+  follow a symlinked `files/`. It does not protect against pointing
+  `--output-dir` at the wrong directory, so double-check the path.
+- `--yes` / `-y`: Skip the confirmation prompt for `--remove-user-files`.
+
 ### 📁 Select Template
 
 The _cli_ uses YAML templates provided in this directory to create
