@@ -5,13 +5,18 @@ from python_on_whales.exceptions import DockerException
 from .pkg import users as userPkg
 from .pkg import project as projectPkg
 from .pkg import deploy as deployPkg
+from .pkg import cert_update as certUpdatePkg
+from .pkg.cert_validate import CertValidationError
 from .pkg.project import DEPLOY_TYPES
 from .cmd_utils import (
     VerticalChoicesCommand,
     apply_deploy_config,
+    provision_user_files,
     run_user_command,
     confirm_remove_user_files,
 )
+
+NO_INSTALLATION_MESSAGE = "There is no existing DTaaS / Workspace installation"
 
 
 ### Groups
@@ -119,6 +124,7 @@ def delete():
 def install(output_dir):
     """Bring the generated deployment up with 'docker compose up -d'."""
     try:
+        provision_user_files(output_dir)
         deployPkg.install(output_dir)
     except (OSError, DockerException) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -145,11 +151,41 @@ def install(output_dir):
 )
 def uninstall(output_dir, remove_user_files, yes):
     """Tear the deployment down with 'docker compose down'."""
-    confirm_remove_user_files(remove_user_files, yes)
     try:
+        if not deployPkg.installation_present(output_dir):
+            click.echo(NO_INSTALLATION_MESSAGE)
+            return
+        confirm_remove_user_files(remove_user_files, yes)
         message = deployPkg.uninstall(output_dir, remove_user_files)
     except (OSError, DockerException) as exc:
         raise click.ClickException(str(exc)) from exc
     if message:
         click.echo(message)
     click.echo("Deployment uninstalled successfully")
+
+
+@admin.command(name="update")
+@click.option(
+    "--certs",
+    is_flag=True,
+    help="Refresh the deployment's TLS certificates in place.",
+)
+@click.option(
+    "--output-dir",
+    default=".",
+    show_default=True,
+    help="Installation directory containing the generated deployment.",
+)
+def update(certs, output_dir):
+    """Update deployment assets in place.
+
+    Currently supports --certs, which validates the newest certificate pair
+    from certs-src and swaps it in before reloading traefik.
+    """
+    if not certs:
+        raise click.ClickException("Nothing to update; pass --certs.")
+    try:
+        message = certUpdatePkg.update_certs(output_dir)
+    except (CertValidationError, OSError, DockerException, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(message)

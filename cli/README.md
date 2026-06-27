@@ -174,6 +174,12 @@ dtaas admin install
 This runs `docker compose up -d` against the generated `docker-compose.yml` in
 the installation directory.
 
+Before starting the stack, the command ensures the per-user workspace
+directories listed in `[users].add` exist — recreating each from
+`files/template` if missing — and sets their ownership to `1000:100`. This
+means a fresh install, or a reinstall after `uninstall --remove-user-files`,
+does not leave Docker to auto-create empty, root-owned mount directories.
+
 **Options:**
 
 - `--output-dir` (default: `.`): Installation directory containing the
@@ -198,10 +204,13 @@ dtaas admin uninstall
 ```
 
 This runs `docker compose down`, stopping and removing the deployment's
-containers and networks. **Per-user workspace files are preserved by default.**
+containers and networks. Containers added with `admin user add` run as a
+separate Compose project, so they are torn down first; otherwise they would
+survive and hold the shared network open. If nothing is currently installed,
+the command reports that there is no existing installation rather than claiming
+a successful teardown. **Per-user workspace files are preserved by default.**
 
-To additionally delete the per-user workspace files (the `files/` directory
-created by `generate-deployment` and `admin user add`), pass
+To additionally delete the generated per-user workspace directories, pass
 `--remove-user-files`:
 
 ```bash
@@ -219,12 +228,61 @@ dtaas admin uninstall --remove-user-files --yes
 
 - `--output-dir` (default: `.`): Installation directory containing the
   generated deployment.
-- `--remove-user-files`: Also delete per-user workspace files. Opt-in to avoid
-  accidental data loss: it requires a generated deployment in `--output-dir`,
-  prompts for confirmation, deletes only `<output-dir>/files`, and refuses to
-  follow a symlinked `files/`. It does not protect against pointing
-  `--output-dir` at the wrong directory, so double-check the path.
+- `--remove-user-files`: Also delete the generated per-user workspace
+  directories. Opt-in to avoid accidental data loss: it requires a generated
+  deployment in `--output-dir`, prompts for confirmation, and refuses to follow
+  a symlinked `files/`. It removes only the per-user directories inside
+  `<output-dir>/files`, keeping the shared `files/common` and the
+  `files/template` skeleton so a later `admin install` can recreate the user
+  directories. It does not protect against pointing `--output-dir` at the wrong
+  directory, so double-check the path.
 - `--yes` / `-y`: Skip the confirmation prompt for `--remove-user-files`.
+
+### 🔁 Update TLS Certificates
+
+To rotate the TLS certificates of a running deployment in place, without
+regenerating the project or copying files by hand:
+
+```bash
+dtaas admin update --certs
+```
+
+This reads the certificate source from `[common.security].certs-src` in
+`dtaas.toml` (the same key used to seed `certs/` during
+`generate-deployment`), picks the newest `fullchain.pem` and `privkey.pem`
+there, and then:
+
+1. **Validates** the new pair before anything is replaced — it must be
+   parseable, the private key must match the certificate, and neither the leaf
+   nor any intermediate in the chain may already be expired.
+2. **Stops** the `traefik` service so nothing holds the certificate files open
+   while they are replaced.
+3. **Swaps** the validated files into `<output-dir>/certs/`, backing up the
+   live pair first and restoring it on any failure, so the deployment is never
+   left with a half-updated (mismatched) pair.
+4. **Restricts** the private key to `0600` on POSIX hosts; on Windows it prints
+   a warning instead, because file permissions cannot be enforced there.
+5. **Restarts** `traefik` and waits for it to come back up, so certificates the
+   proxy rejects are reported as a failure rather than a false success.
+
+If validation fails, the live certificates are left untouched and a clear
+error is raised. The command is safe to run repeatedly.
+
+**Options:**
+
+- `--certs`: Refresh the deployment's TLS certificates. Required; it is the
+  only update target today, and the `update` group leaves room for future ones.
+- `--output-dir` (default: `.`): Installation directory containing the
+  generated deployment (the `docker-compose.yml` and `certs/`). The CLI looks
+  for `dtaas.toml` here first, then in the current directory. Keep
+  `dtaas.toml` inside `--output-dir`: if it is absent there, `certs-src` is read
+  from the `dtaas.toml` in the directory you run the command from, which may
+  belong to a different deployment.
+
+The command fails with a clear error if the deployment has not been generated
+(`docker-compose.yml` missing), if `certs-src` is unset or missing, if either
+certificate is absent from `certs-src`, if the Docker daemon is not reachable,
+or if `traefik` does not come back up after the swap.
 
 ### 📁 Select Template
 

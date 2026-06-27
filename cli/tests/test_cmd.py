@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 from python_on_whales.exceptions import DockerException
 from src.cmd import dtaas
+from src.pkg.cert_validate import CertValidationError
 # pylint: disable=redefined-outer-name
 
 
@@ -234,8 +235,15 @@ def mock_deploy_pkg():
     """Mock the deploy package handlers used by install/uninstall."""
     with patch("src.cmd.deployPkg.install") as mock_install, patch(
         "src.cmd.deployPkg.uninstall"
-    ) as mock_uninstall:
-        yield {"install": mock_install, "uninstall": mock_uninstall}
+    ) as mock_uninstall, patch(
+        "src.cmd.deployPkg.installation_present", return_value=True
+    ) as mock_present, patch("src.cmd.provision_user_files") as mock_provision:
+        yield {
+            "install": mock_install,
+            "uninstall": mock_uninstall,
+            "present": mock_present,
+            "provision": mock_provision,
+        }
 
 
 def test_admin_install_success(runner, mock_deploy_pkg):
@@ -245,6 +253,7 @@ def test_admin_install_success(runner, mock_deploy_pkg):
     assert result.exit_code == 0
     assert "Deployment installed successfully" in result.output
     mock_deploy_pkg["install"].assert_called_once_with(".")
+    mock_deploy_pkg["provision"].assert_called_once_with(".")
 
 
 def test_admin_install_error(runner, mock_deploy_pkg):
@@ -311,3 +320,59 @@ def test_admin_uninstall_error(runner, mock_deploy_pkg):
 
     assert result.exit_code != 0
     assert "daemon down" in result.output
+
+
+def test_admin_uninstall_no_existing_installation(runner, mock_deploy_pkg):
+    """A repeated uninstall reports there is nothing installed, not success."""
+    mock_deploy_pkg["present"].return_value = False
+
+    result = runner.invoke(dtaas, ["admin", "uninstall"])
+
+    assert result.exit_code == 0
+    assert "no existing DTaaS / Workspace installation" in result.output
+    assert "uninstalled successfully" not in result.output
+    mock_deploy_pkg["uninstall"].assert_not_called()
+
+
+def test_admin_update_certs_success(runner):
+    """update --certs forwards the output dir and echoes the result message."""
+    with patch(
+        "src.cmd.certUpdatePkg.update_certs", return_value="certs updated"
+    ) as mock_update:
+        result = runner.invoke(dtaas, ["admin", "update", "--certs"])
+
+    assert result.exit_code == 0
+    assert "certs updated" in result.output
+    mock_update.assert_called_once_with(".")
+
+
+def test_admin_update_requires_a_target(runner):
+    """update without a target flag fails with a helpful message."""
+    result = runner.invoke(dtaas, ["admin", "update"])
+
+    assert result.exit_code != 0
+    assert "Nothing to update" in result.output
+
+
+def test_admin_update_validation_error(runner):
+    """A CertValidationError surfaces as a ClickException with its message."""
+    with patch(
+        "src.cmd.certUpdatePkg.update_certs",
+        side_effect=CertValidationError("Certificate expired on 2024-01-01."),
+    ):
+        result = runner.invoke(dtaas, ["admin", "update", "--certs"])
+
+    assert result.exit_code != 0
+    assert "expired" in result.output
+
+
+def test_admin_update_os_error(runner):
+    """An OSError (e.g. missing certs-src) surfaces as a ClickException."""
+    with patch(
+        "src.cmd.certUpdatePkg.update_certs",
+        side_effect=OSError("certs-src directory not found"),
+    ):
+        result = runner.invoke(dtaas, ["admin", "update", "--certs"])
+
+    assert result.exit_code != 0
+    assert "certs-src" in result.output
