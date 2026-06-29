@@ -272,8 +272,8 @@ error is raised. The command is safe to run repeatedly.
 
 **Options:**
 
-- `--certs`: Refresh the deployment's TLS certificates. Required; it is the
-  only update target today, and the `update` group leaves room for future ones.
+- `--certs`: Refresh the deployment's TLS certificates. Pass at least one of
+  `--certs` or `--config` (see below).
 - `--output-dir` (default: `.`): Installation directory containing the
   generated deployment (the `docker-compose.yml` and `certs/`). The CLI looks
   for `dtaas.toml` here first, then in the current directory. Keep
@@ -285,6 +285,50 @@ The command fails with a clear error if the deployment has not been generated
 (`docker-compose.yml` missing), if `certs-src` is unset or missing, if either
 certificate is absent from `certs-src`, if the Docker daemon is not reachable,
 or if `traefik` does not come back up after the swap.
+
+### 🧩 Update Service Configuration
+
+To re-apply the values in `dtaas.toml` to an already-installed deployment's
+service config files — without regenerating the project — use:
+
+```bash
+dtaas admin update --config
+```
+
+This treats `dtaas.toml` as the single source of truth, re-runs the same
+substitution as `generate-deployment` against the installed config files, and
+if anything changed, recreates **all** the deployment's services with
+`docker compose up -d --force-recreate`. Because a config change can affect any
+service (the shared `.env`, routing, or a mounted config file), the whole stack
+is restarted rather than guessing which services are impacted. The deployment
+type is **auto-detected** from the services in `docker-compose.yml`, so you do
+not pass `--type`. Examples:
+
+```bash
+# Preview what would change (no writes, no restart):
+dtaas admin update --config --dry-run
+
+# Apply the changes and restart all services:
+dtaas admin update --config
+
+# Update a deployment generated elsewhere:
+dtaas admin update --config --output-dir ./my-server
+```
+
+`--config` first **validates** `dtaas.toml` with the same checks as
+`dtaas admin config validate` and refuses to apply anything if it finds
+problems, reporting each field-level issue. It is **idempotent**: a second run
+with no `dtaas.toml` changes reports `No configuration changes` and restarts
+nothing. It fails with a clear error if the deployment has not been generated,
+if `dtaas.toml` is missing or invalid, or if the restart fails.
+
+**Options:**
+
+- `--config`: Re-apply `dtaas.toml` to the installed services' config files.
+- `--dry-run`: With `--config`, report what would change without writing files
+  or restarting anything.
+
+`--certs` and `--config` may be combined in a single invocation.
 
 ### 📁 Select Template
 
@@ -381,6 +425,60 @@ docker compose -f compose.server.yml --env-file .env up -d --force-recreate trae
   '.'s in them cannot be added properly through the CLI.
   This is an active issue that will be resolved in future releases.
 
+### 🛠️ Configuration File
+
+`dtaas.toml` can be generated and checked on its own, without the other project
+files produced by `generate-project`.
+
+To write a fresh `dtaas.toml` template to fill in:
+
+```bash
+dtaas admin config generate
+```
+
+Then, after editing it with your own values, check those values:
+
+```bash
+dtaas admin config validate
+```
+
+`validate` reads `dtaas.toml` (from `--output-dir` first, then the current
+directory) and reports every problem it finds at once. It checks:
+
+| Value | Rule |
+| --- | --- |
+| `git-repo` | must be an `http(s)` URL |
+| `[common].server-dns` | must be `localhost`, an IP, or a dotted (fully qualified) hostname |
+| `[common].path` | must be an absolute path to a directory that exists |
+| `[common.security].certs-src` | when present, must be an absolute path to a directory that exists |
+| `[common.resources].cpus` | must be a positive number of CPU cores (e.g. `4` or `0.5`) |
+| `[common.resources].pids_limit` | must be an integer |
+| `[common.resources].mem_limit`, `shm_size` | must be a byte size with a required unit (e.g. `4G`, `512m`) |
+| `[users].add`, `[users].delete` | when present, must be lists of strings |
+| `[users.<name>].email` | must be a valid email address (RFC 5321/5322, no DNS lookup) |
+| deployment-section URLs | when present, must be `http(s)` URLs |
+| deployment-section `default-user` | when present, must be a valid username |
+
+The deployment-section URLs are `react-app-oauth-url`, `oauth-url`,
+`auth-authority`, and `keycloak-issuer-url` across the `[frontend]`,
+`[localhost]`, `[insecure-server]`, `[secure-server]`, `[workspace-localhost]`,
+and `[workspace-secure-server]` sections; each is checked only when its section
+is present.
+
+`path` and `certs-src` are checked against the local filesystem, so run
+`validate` on the deployment host. A bare single-label `server-dns` (e.g.
+`myhost`) is rejected; use `localhost` or a fully qualified name. URL checking
+is strict, so unreplaced placeholders such as `https://your_server_dns/...`
+(an underscore is not a valid hostname) are reported until you fill them in.
+
+**Options (both commands):**
+
+- `--output-dir` (default: `.`): for `generate`, the target directory for the
+  new `dtaas.toml` (it is created if it does not exist); for `validate`, the
+  directory to look in first.
+- `--force` (`generate` only): overwrite an existing `dtaas.toml`. Without it,
+  an existing file is left untouched and a message is printed.
+
 ## ⚙️ Configure
 
 After running `dtaas generate-project`, open `dtaas.toml` and fill in the
@@ -400,10 +498,10 @@ Adjust `[common.resources]` to match your hardware:
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `cpus` | `4` | Virtual CPUs per user container |
-| `mem_limit` | `"4G"` | Memory limit per container |
-| `pids_limit` | `4960` | Process limit per container |
-| `shm_size` | `"512m"` | Shared memory per container |
+| `cpus` | `4` | CPU cores per user container; may be fractional (e.g. `0.5`) |
+| `mem_limit` | `"4G"` | Memory limit per container; a byte size with a required unit |
+| `pids_limit` | `4960` | Process limit per container (integer) |
+| `shm_size` | `"512m"` | Shared memory per container; a byte size with a required unit |
 
 ### Deployment-specific credentials
 

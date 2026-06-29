@@ -78,6 +78,19 @@ def generate_project(dest_dir=".", force=False):
     _create_workspace_dirs(dest_dir)
 
 
+def generate_config(dest_dir=".", force=False):
+    """Copy only the dtaas.toml template into dest_dir for the user to fill in.
+
+    Returns True if an existing dtaas.toml was kept (skipped), False if it was
+    written. Raises OSError on copy failure.
+    """
+    _validate_project_inputs(dest_dir)
+    skipped = _copy_template("dtaas.toml", dest_dir, force)
+    if skipped:
+        click.echo("'dtaas.toml' already exists, skipping")
+    return skipped
+
+
 def _copy_file(item, target, force):
     """Copy item to target, returning an error string or None."""
     if target.exists() and not force:
