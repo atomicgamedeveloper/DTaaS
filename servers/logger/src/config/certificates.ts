@@ -32,28 +32,27 @@ export async function ensureCertificates(
 ): Promise<CertificatePaths> {
   await mkdir(certsDirectory, { recursive: true, mode: 0o700 });
   const paths = requiredCertificatePaths(certsDirectory);
-  if (hasUsableCertificates(paths)) {
-    return paths;
+  if (!hasUsableCertificates(paths)) {
+    await execFileAsync('openssl', [
+      'req',
+      '-x509',
+      '-newkey',
+      `rsa:${DEFAULT_KEY_BITS}`,
+      '-sha256',
+      '-days',
+      DEFAULT_DAYS,
+      '-nodes',
+      '-keyout',
+      paths.keyFile,
+      '-out',
+      paths.certFile,
+      '-subj',
+      '/CN=localhost',
+    ]);
+    await Promise.all([
+      chmod(paths.keyFile, 0o600),
+      chmod(paths.certFile, 0o644),
+    ]);
   }
-  await execFileAsync('openssl', [
-    'req',
-    '-x509',
-    '-newkey',
-    `rsa:${DEFAULT_KEY_BITS}`,
-    '-sha256',
-    '-days',
-    DEFAULT_DAYS,
-    '-nodes',
-    '-keyout',
-    paths.keyFile,
-    '-out',
-    paths.certFile,
-    '-subj',
-    '/CN=localhost',
-  ]);
-  await Promise.all([
-    chmod(paths.keyFile, 0o600),
-    chmod(paths.certFile, 0o644),
-  ]);
   return paths;
 }

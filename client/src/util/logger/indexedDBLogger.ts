@@ -11,7 +11,7 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 let changeChannel: BroadcastChannel | null = null;
 
 function emitLocalLogChange(): void {
-  window.dispatchEvent(new Event(LOGS_CHANGED_EVENT));
+  globalThis.dispatchEvent(new Event(LOGS_CHANGED_EVENT));
 }
 
 function getChangeChannel(): BroadcastChannel | null {
@@ -127,9 +127,10 @@ export async function clearLogs(): Promise<void> {
 
 export function subscribeToLogChanges(listener: () => void): () => void {
   const handleLogChange = () => listener();
-  window.addEventListener(LOGS_CHANGED_EVENT, handleLogChange);
+  globalThis.addEventListener(LOGS_CHANGED_EVENT, handleLogChange);
   getChangeChannel();
-  return () => window.removeEventListener(LOGS_CHANGED_EVENT, handleLogChange);
+  return () =>
+    globalThis.removeEventListener(LOGS_CHANGED_EVENT, handleLogChange);
 }
 
 export function resetDBConnection(): void {

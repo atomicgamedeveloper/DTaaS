@@ -63,8 +63,8 @@ export function matchesFilter(event: LogEvent, query: string): boolean {
 }
 
 export function scheduleLogLoad(loadLogs: () => Promise<void>): () => void {
-  const timer = window.setTimeout(() => {
+  const timer = globalThis.setTimeout(() => {
     loadLogs().catch(() => {});
   }, 0);
-  return () => window.clearTimeout(timer);
+  return () => globalThis.clearTimeout(timer);
 }

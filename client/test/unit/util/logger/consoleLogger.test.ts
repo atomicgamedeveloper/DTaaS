@@ -49,14 +49,15 @@ describe('consoleLogger', () => {
     logToConsole(mockEvent);
 
     const mockClick = jest.fn();
+    const mockRemove = jest.fn();
     const mockAppendChild = jest.spyOn(document.body, 'appendChild');
-    const mockRemoveChild = jest.spyOn(document.body, 'removeChild');
 
     const origCreateElement = document.createElement.bind(document);
     jest.spyOn(document, 'createElement').mockImplementation((tag) => {
       const el = origCreateElement(tag);
       if (tag === 'a') {
         el.click = mockClick;
+        el.remove = mockRemove;
       }
       return el;
     });
@@ -65,7 +66,7 @@ describe('consoleLogger', () => {
 
     expect(mockAppendChild).toHaveBeenCalled();
     expect(mockClick).toHaveBeenCalled();
-    expect(mockRemoveChild).toHaveBeenCalled();
+    expect(mockRemove).toHaveBeenCalled();
 
     jest.restoreAllMocks();
   });

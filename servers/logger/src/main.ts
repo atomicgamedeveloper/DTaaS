@@ -49,4 +49,4 @@ async function bootstrap() {
   await app.listen(config.getPort(), config.getHostname());
 }
 
-bootstrap();
+await bootstrap();

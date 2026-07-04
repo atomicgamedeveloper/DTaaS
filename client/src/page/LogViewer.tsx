@@ -88,7 +88,7 @@ function LogViewer() {
       a.download = `dtaas-workflow-log-${new Date().toISOString().slice(0, 10)}.jsonl`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
     } finally {
       if (url) URL.revokeObjectURL(url);
     }

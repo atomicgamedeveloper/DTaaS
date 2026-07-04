@@ -101,26 +101,28 @@ describe('Logger service e2e', () => {
   it('POST /logger rejects invalid payload fixtures from api/', async () => {
     for (const fileName of INVALID_PAYLOAD_FIXTURES) {
       const payload = await readPayloadFixture(fileName);
-      await supertest(app.getHttpServer())
+      const response = await supertest(app.getHttpServer())
         .post('/logger')
         .send(payload)
-        .set('Content-Type', 'application/json')
-        .expect(HttpStatus.BAD_REQUEST)
-        .expect({
-          message: 'Validation Failed',
-          error: 'Bad Request',
-          statusCode: 400,
-        });
+        .set('Content-Type', 'application/json');
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(response.body).toEqual({
+        message: 'Validation Failed',
+        error: 'Bad Request',
+        statusCode: 400,
+      });
     }
   });
 
   it('OPTIONS /logger exposes CORS headers', async () => {
-    await supertest(app.getHttpServer())
+    const response = await supertest(app.getHttpServer())
       .options('/logger')
       .set('Origin', 'http://localhost:3000')
-      .set('Access-Control-Request-Method', 'POST')
-      .expect(HttpStatus.NO_CONTENT)
-      .expect('Access-Control-Allow-Origin', 'http://localhost:3000')
-      .expect('Access-Control-Allow-Credentials', 'true');
+      .set('Access-Control-Request-Method', 'POST');
+    expect(response.status).toBe(HttpStatus.NO_CONTENT);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:3000',
+    );
+    expect(response.headers['access-control-allow-credentials']).toBe('true');
   });
 });

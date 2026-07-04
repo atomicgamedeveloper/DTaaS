@@ -22,7 +22,7 @@ export interface LogInput {
 export async function initLogger(username: string): Promise<void> {
   sessionId = getSessionId();
   userHash = await hashUsername(username);
-  loggerUrl = window.env?.LOGGER_URL ?? '';
+  loggerUrl = globalThis.env?.LOGGER_URL ?? '';
   initialized = true;
 }
 

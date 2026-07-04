@@ -68,7 +68,7 @@ function logDomEvent(event: Event): void {
   const element = el.dataset.loggerElement ?? '';
   const label = el.dataset.loggerLabel ?? el.textContent?.trim() ?? '';
   const context = parseContext(el.dataset.loggerContext);
-  const page = window.location.pathname;
+  const page = globalThis.location.pathname;
 
   log({ event: event.type as LogEventType, page, element, label, context });
 }
