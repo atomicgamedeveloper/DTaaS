@@ -12,6 +12,7 @@ jest.mock('react-redux', () => ({
 
 jest.mock('util/logger/logger', () => ({
   log: jest.fn(),
+  logDismiss: jest.fn(),
 }));
 
 jest.mock('store/snackbar.slice', () => ({
@@ -230,14 +231,12 @@ describe('CustomSnackbar', () => {
       page: expect.any(String),
       element: 'snackbar',
       label: 'Pipeline started',
-      context: { severity: 'success' },
     });
     expect(log).toHaveBeenCalledWith({
       event: 'notification',
       page: expect.any(String),
       element: 'snackbar',
       label: 'Pipeline failed',
-      context: { severity: 'error' },
     });
   });
 

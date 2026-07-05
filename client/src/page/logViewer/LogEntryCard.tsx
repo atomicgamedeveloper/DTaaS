@@ -4,12 +4,13 @@ import { formatTimestamp } from 'page/logViewer/logViewerUtils';
 
 const EVENT_CHIP_COLOR: Record<
   LogEventType,
-  'primary' | 'secondary' | 'info' | 'warning'
+  'primary' | 'secondary' | 'info' | 'warning' | 'default'
 > = {
   click: 'primary',
   change: 'secondary',
   navigation: 'info',
   notification: 'warning',
+  dismiss: 'default',
 };
 
 function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {

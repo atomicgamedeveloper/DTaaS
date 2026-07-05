@@ -74,6 +74,20 @@ export function logNavigation(page: string): LogEvent | null {
   return logEvent;
 }
 
+export function logDismiss(
+  element: string,
+  label: string,
+  reason?: string,
+): LogEvent | null {
+  return log({
+    event: 'dismiss',
+    page: globalThis.location.pathname,
+    element,
+    label,
+    context: reason ? { reason } : {},
+  });
+}
+
 export function resetLogger(): void {
   userHash = '';
   sessionId = '';

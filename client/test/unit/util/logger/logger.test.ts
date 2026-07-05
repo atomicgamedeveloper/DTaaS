@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   initLogger,
   log,
+  logDismiss,
   logNavigation,
   resetLogger,
   isLoggerInitialized,
@@ -143,6 +144,31 @@ describe('logger', () => {
     expect(logNavigation('/library')).toBeNull();
     expect(logNavigation('/digitaltwins')).not.toBeNull();
     expect(logNavigation('/library')).not.toBeNull();
+  });
+
+  it('returns null when logging a dismissal before init', () => {
+    expect(logDismiss('dialog', 'Confirm Clear')).toBeNull();
+  });
+
+  it('logs a dismiss event with the dismissal reason', async () => {
+    await initLogger('testuser');
+    const event = logDismiss('dialog', 'Confirm Clear', 'backdropClick');
+
+    expect(event).not.toBeNull();
+    expect(event!.event).toBe('dismiss');
+    expect(event!.element).toBe('dialog');
+    expect(event!.label).toBe('Confirm Clear');
+    expect(event!.context).toEqual({ reason: 'backdropClick' });
+  });
+
+  it('logs a dismiss event without a reason', async () => {
+    await initLogger('testuser');
+    const event = logDismiss('snackbar', 'Saved settings');
+
+    expect(event).not.toBeNull();
+    expect(event!.event).toBe('dismiss');
+    expect(event!.element).toBe('snackbar');
+    expect(event!.context).toEqual({});
   });
 
   it('clears the last navigation page on reset', async () => {

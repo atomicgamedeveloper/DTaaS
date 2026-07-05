@@ -45,6 +45,7 @@ import { RootState } from 'store/store';
 import { ExecutionStatus } from 'model/backend/interfaces/execution';
 import { showSnackbar } from 'store/snackbar.slice';
 import { formatName } from 'model/backend/digitalTwin';
+import { logDismiss } from 'util/logger/logger';
 
 interface ExecutionHistoryListProps {
   dtName: string;
@@ -103,7 +104,13 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   onClose,
   onConfirm,
 }) => (
-  <Dialog open={open} onClose={onClose}>
+  <Dialog
+    open={open}
+    onClose={(_event, reason) => {
+      logDismiss('dialog', 'Confirm Deletion', reason);
+      onClose();
+    }}
+  >
     <DialogTitle>Confirm Deletion</DialogTitle>
     <DialogContent>
       <Typography>
@@ -281,6 +288,11 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`execution-${execution.id}-content`}
                 id={`execution-${execution.id}-header`}
+                data-logger-element="accordion"
+                data-logger-label="Toggle Execution Details"
+                data-logger-context={JSON.stringify({
+                  executionId: execution.id,
+                })}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',

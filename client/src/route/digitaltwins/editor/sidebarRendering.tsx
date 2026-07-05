@@ -49,6 +49,8 @@ export const renderFileTreeItems = (
       key={`${baseLabel}-${context.label}`}
       itemId={`${baseLabel}-${context.label}`}
       label={context.label as TreeItemProps['label']}
+      data-logger-element="treeitem-section"
+      data-logger-label={context.label}
     >
       {context.filesToRender.map((item, index) => {
         const itemLabel = getItemLabel(item, context.asset);
@@ -91,6 +93,8 @@ export const renderFileSection = (
       key={`${baseLabel}-${context.label}`}
       itemId={`${baseLabel}-${context.label}`}
       label={context.label}
+      data-logger-element="treeitem-section"
+      data-logger-label={context.label}
     >
       {context.filesToRender.map((item, index) => (
         <TreeItem

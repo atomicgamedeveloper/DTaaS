@@ -6,6 +6,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
+import { logDismiss } from 'util/logger/logger';
 
 interface InterruptedSessionDialogProps {
   open: boolean;
@@ -17,7 +18,13 @@ function InterruptedSessionDialog({
   onClose,
 }: Readonly<InterruptedSessionDialogProps>) {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={(_event, reason) => {
+        logDismiss('dialog', 'Previous Session Interrupted', reason);
+        onClose();
+      }}
+    >
       <DialogTitle>Previous session interrupted</DialogTitle>
       <DialogContent>
         <DialogContentText>

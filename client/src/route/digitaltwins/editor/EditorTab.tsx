@@ -1,8 +1,11 @@
-import { useState, Dispatch, SetStateAction } from 'react';
+import { useEffect, useRef, useState, Dispatch, SetStateAction } from 'react';
 import Editor from '@monaco-editor/react';
 import { useDispatch } from 'react-redux';
 import { addOrUpdateLibraryFile } from 'model/store/libraryConfigFiles.slice';
 import { addOrUpdateFile } from 'model/store/file.slice';
+import { log } from 'util/logger/logger';
+
+const EDIT_LOG_DEBOUNCE_MS = 2000;
 
 interface EditorTabProps {
   readonly tab: string;
@@ -84,6 +87,37 @@ export const handleEditorChange = (
   handlers.dispatch(action);
 };
 
+// Monaco does not emit native DOM change events, so the global DOM logger
+// cannot see edits; log them directly, debounced per burst of typing.
+function useEditLogger(): (file: string) => void {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFileRef = useRef<string | null>(null);
+
+  const flush = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    if (pendingFileRef.current) {
+      log({
+        event: 'change',
+        page: globalThis.location.pathname,
+        element: 'editor',
+        label: `Edited ${pendingFileRef.current}`,
+        context: { file: pendingFileRef.current },
+      });
+      pendingFileRef.current = null;
+    }
+  };
+
+  useEffect(() => flush, []);
+
+  return (file: string) => {
+    if (pendingFileRef.current && pendingFileRef.current !== file) flush();
+    pendingFileRef.current = file;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(flush, EDIT_LOG_DEBOUNCE_MS);
+  };
+}
+
 function EditorTab({
   tab,
   fileName,
@@ -96,6 +130,7 @@ function EditorTab({
   const [editorValue, setEditorValue] = useState(fileContent);
   const [prevFileContent, setPrevFileContent] = useState(fileContent);
   const dispatch = useDispatch();
+  const logEdit = useEditLogger();
 
   // Adjusting state when a prop changes (preferred over useEffect in React docs)
   if (prevFileContent !== fileContent) {
@@ -125,13 +160,14 @@ function EditorTab({
           height="400px"
           defaultLanguage="markdown"
           value={editorValue}
-          onChange={(value) =>
+          onChange={(value) => {
+            logEdit(fileName);
             handleEditorChange(
               { tab, fileName, filePrivacy, isLibraryFile, libraryAssetPath },
               value,
               { setEditorValue, setFileContent, dispatch },
-            )
-          }
+            );
+          }}
         />
       )}
     </div>

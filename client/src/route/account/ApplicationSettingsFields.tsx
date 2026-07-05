@@ -71,6 +71,12 @@ const ApplicationSettingsFields: React.FC<SettingsFieldProps> = ({
             onChange={handleInputChange}
             error={fieldErrors[id]}
             helperText={fieldErrors[id] ? errorMsg : helpMsg}
+            slotProps={{
+              htmlInput: {
+                'data-logger-element': 'input',
+                'data-logger-label': label,
+              },
+            }}
           />
         </Grid>
       ))}

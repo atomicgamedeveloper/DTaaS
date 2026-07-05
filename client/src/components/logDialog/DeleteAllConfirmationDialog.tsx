@@ -6,6 +6,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+import { logDismiss } from 'util/logger/logger';
 
 interface DeleteAllConfirmationDialogProps {
   open: boolean;
@@ -17,7 +18,13 @@ interface DeleteAllConfirmationDialogProps {
 const DeleteAllConfirmationDialog: React.FC<
   DeleteAllConfirmationDialogProps
 > = ({ open, dtName, onClose, onConfirm }) => (
-  <Dialog open={open} onClose={onClose}>
+  <Dialog
+    open={open}
+    onClose={(_event, reason) => {
+      logDismiss('dialog', 'Confirm Clear All', reason);
+      onClose();
+    }}
+  >
     <DialogTitle>Confirm Clear All</DialogTitle>
     <DialogContent>
       <Typography>

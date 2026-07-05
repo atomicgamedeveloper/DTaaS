@@ -19,6 +19,7 @@ import {
 } from 'model/store/file.slice';
 import { formatName } from 'model/backend/digitalTwin';
 import Editor from 'route/digitaltwins/editor/Editor';
+import { logDismiss } from 'util/logger/logger';
 
 export {
   saveChanges,
@@ -225,7 +226,13 @@ const ConfirmationDialog = ({
   readonly onConfirm: () => void;
   readonly content: string;
 }) => (
-  <Dialog open={open} onClose={onClose}>
+  <Dialog
+    open={open}
+    onClose={(_event, reason) => {
+      logDismiss('dialog', 'Reconfigure Confirmation', reason);
+      onClose();
+    }}
+  >
     <DialogContent>{content}</DialogContent>
     <DialogActions>
       <Button

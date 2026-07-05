@@ -6,7 +6,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { RootState } from 'store/store';
 import { hideSnackbar, SnackbarItem } from 'store/snackbar.slice';
-import { log } from 'util/logger/logger';
+import { log, logDismiss } from 'util/logger/logger';
 
 const ICONS: Record<string, React.ElementType> = {
   ClearIcon,
@@ -38,6 +38,8 @@ const CustomSnackbar: React.FC = () => {
       clearTimeout(timeout);
       timeouts.delete(id);
     }
+    const item = items.find((entry) => entry.id === id);
+    if (item) logDismiss('snackbar', item.message);
     dispatch(hideSnackbar(id));
   };
 
@@ -60,7 +62,6 @@ const CustomSnackbar: React.FC = () => {
           page: globalThis.location.pathname,
           element: 'snackbar',
           label: item.message,
-          context: { severity: item.severity },
         });
       }
     }

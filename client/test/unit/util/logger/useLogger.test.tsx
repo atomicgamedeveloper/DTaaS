@@ -175,6 +175,74 @@ describe('useLogger', () => {
       page: expect.any(String),
       element: 'input',
       label: 'TestInput',
+      context: { value: 'abc' },
+    });
+  });
+
+  it('records the checked state for checkbox change events', async () => {
+    const store = createTestStore('alice');
+
+    function TestWithCheckbox() {
+      useLogger();
+      return (
+        <input
+          type="checkbox"
+          data-logger-element="checkbox"
+          data-logger-label="TestCheckbox"
+        />
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithCheckbox />, store);
+      container = result.container;
+    });
+
+    const checkbox = container!.querySelector('input')!;
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'checkbox',
+      label: 'TestCheckbox',
+      context: { value: 'true' },
+    });
+  });
+
+  it('does not record values from password inputs', async () => {
+    const store = createTestStore('alice');
+
+    function TestWithPassword() {
+      useLogger();
+      return (
+        <input
+          type="password"
+          data-logger-element="input"
+          data-logger-label="TestPassword"
+        />
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithPassword />, store);
+      container = result.container;
+    });
+
+    const input = container!.querySelector('input')!;
+    act(() => {
+      fireEvent.change(input, { target: { value: 'secret' } });
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'input',
+      label: 'TestPassword',
       context: {},
     });
   });

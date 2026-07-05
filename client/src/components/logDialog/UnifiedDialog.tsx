@@ -6,6 +6,7 @@ import {
   Button,
 } from '@mui/material';
 import ExecutionHistoryList from 'components/execution/ExecutionHistoryList';
+import { logDismiss } from 'util/logger/logger';
 
 interface UnifiedDialogProps {
   readonly open: boolean;
@@ -27,7 +28,15 @@ function UnifiedDialog({
   deleteAllDialog,
 }: UnifiedDialogProps) {
   return (
-    <Dialog open={open} maxWidth="md" fullWidth onClose={onClose}>
+    <Dialog
+      open={open}
+      maxWidth="md"
+      fullWidth
+      onClose={(_event, reason) => {
+        logDismiss('dialog', title, reason);
+        onClose();
+      }}
+    >
       {deleteAllDialog}
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>

@@ -1,4 +1,5 @@
-export type LogEventType = 'click' | 'change' | 'navigation' | 'notification';
+export type LogEventType =
+  'click' | 'change' | 'navigation' | 'notification' | 'dismiss';
 
 export interface LogEvent {
   readonly sessionId: string;

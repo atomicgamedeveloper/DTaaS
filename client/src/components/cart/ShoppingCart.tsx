@@ -13,6 +13,7 @@ import useCart from 'model/store/CartAccess';
 import { removeAllFiles } from 'model/store/libraryConfigFiles.slice';
 import { useDispatch } from 'react-redux';
 import CartList from 'components/cart/CartList';
+import { logDismiss } from 'util/logger/logger';
 
 function ShoppingCart() {
   const { actions } = useCart();
@@ -75,7 +76,13 @@ function ShoppingCart() {
         </Button>
       </Box>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+      <Dialog
+        open={openDialog}
+        onClose={(_event, reason) => {
+          logDismiss('dialog', 'Confirm Clear Cart', reason);
+          setOpenDialog(false);
+        }}
+      >
         <DialogTitle>Confirm Clear</DialogTitle>
         <DialogContent>
           <DialogContentText>Are you sure you want to clear?</DialogContentText>

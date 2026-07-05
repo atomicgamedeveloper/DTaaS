@@ -57,7 +57,12 @@ function MeasurementPageHeader() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           You can change the number of trials, runner tags, and Digital Twin
           names in the{' '}
-          <Link to="/account" style={{ color: 'inherit' }}>
+          <Link
+            to="/account"
+            style={{ color: 'inherit' }}
+            data-logger-element="link"
+            data-logger-label="Measurement Settings Link"
+          >
             settings
           </Link>
           .

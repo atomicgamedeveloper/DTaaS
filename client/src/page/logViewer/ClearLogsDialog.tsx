@@ -6,6 +6,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
+import { logDismiss } from 'util/logger/logger';
 
 interface ClearLogsDialogProps {
   open: boolean;
@@ -21,7 +22,13 @@ function ClearLogsDialog({
   onConfirm,
 }: Readonly<ClearLogsDialogProps>) {
   return (
-    <Dialog open={open} onClose={onCancel}>
+    <Dialog
+      open={open}
+      onClose={(_event, reason) => {
+        logDismiss('dialog', 'Clear All Logs', reason);
+        onCancel();
+      }}
+    >
       <DialogTitle>Clear all logs?</DialogTitle>
       <DialogContent>
         <DialogContentText>

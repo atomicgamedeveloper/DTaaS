@@ -16,6 +16,7 @@ import {
   downloadResultsJson,
   isTaskComplete,
 } from 'model/backend/gitlab/measure/measurement.utils';
+import { logDismiss } from 'util/logger/logger';
 
 interface MeasurementControlsProps {
   isRunning: boolean;
@@ -53,7 +54,13 @@ function ConfirmDialog({
   confirmLabel: string;
 }>) {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={(_event, reason) => {
+        logDismiss('dialog', title, reason);
+        onClose();
+      }}
+    >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>{description}</DialogContentText>

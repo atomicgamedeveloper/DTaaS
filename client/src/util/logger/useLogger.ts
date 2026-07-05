@@ -59,6 +59,24 @@ function isFormControl(target: EventTarget | null): boolean {
   );
 }
 
+function getChangedValue(target: EventTarget | null): string | null {
+  if (target instanceof HTMLInputElement) {
+    // Never record secret values, even if a password field gets tagged.
+    if (target.type === 'password') return null;
+    if (target.type === 'checkbox' || target.type === 'radio') {
+      return String(target.checked);
+    }
+    return target.value;
+  }
+  if (
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  ) {
+    return target.value;
+  }
+  return null;
+}
+
 function logDomEvent(event: Event): void {
   if (!isLoggerInitialized()) return;
   if (event.type === 'click' && isFormControl(event.target)) return;
@@ -69,6 +87,11 @@ function logDomEvent(event: Event): void {
   const label = el.dataset.loggerLabel ?? el.textContent?.trim() ?? '';
   const context = parseContext(el.dataset.loggerContext);
   const page = globalThis.location.pathname;
+
+  if (event.type === 'change') {
+    const value = getChangedValue(event.target);
+    if (value !== null) context.value = value;
+  }
 
   log({ event: event.type as LogEventType, page, element, label, context });
 }
