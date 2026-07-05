@@ -29,7 +29,8 @@ export default function resolveConfigPath(
   argv: ReadonlyArray<string>,
 ): string | undefined {
   const fromCli = parseConfigFromArgs(argv);
-  const fromEnv = process.env.LOGGER_CONFIG_PATH;
+  const fromEnvRaw = process.env.LOGGER_CONFIG_PATH;
+  const fromEnv = fromEnvRaw !== undefined && fromEnvRaw.trim() !== '' ? fromEnvRaw : undefined;
   const selected = fromCli ?? fromEnv ?? DEFAULT_CONFIG_FILE;
   const resolvedPath = resolveFile(selected);
 

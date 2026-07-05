@@ -37,15 +37,21 @@ export function TaskControls({
   return (
     <Tooltip title="Download task results as JSON" arrow>
       <Typography
+        component="button"
+        type="button"
         variant="caption"
         sx={{
           color: 'primary.main',
           cursor: 'pointer',
           textDecoration: 'underline',
           fontSize: '0.7rem',
+          background: 'none',
+          border: 'none',
+          p: 0,
+          fontFamily: 'inherit',
         }}
         onClick={() => onDownloadTask(task)}
-        data-logger-element="link"
+        data-logger-element="button"
         data-logger-label="Download Task Results"
         data-logger-context={JSON.stringify({ task: task['Task Name'] })}
       >

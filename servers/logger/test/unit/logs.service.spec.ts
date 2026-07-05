@@ -233,6 +233,37 @@ describe('LogsService', () => {
     await expect(service.onModuleDestroy()).resolves.toBeUndefined();
   });
 
+  it('still persists later events after a prior append failed', async () => {
+    const errorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
+    const service = new LogsService(new Config());
+    const nextEvent = { ...baseEvent, label: 'Next action' };
+    const writtenLines: string[] = [];
+    let failNextWrite = true;
+    installFakeStream(service, {
+      on: noListener,
+      off: noListener,
+      write: (line, _encoding, callback) => {
+        if (failNextWrite) {
+          failNextWrite = false;
+          callback(new Error('disk full'));
+          return;
+        }
+        writtenLines.push(line);
+        callback(undefined);
+      },
+      end: (callback) => callback(null),
+    });
+
+    await expect(service.appendEvent(baseEvent)).rejects.toThrow('disk full');
+    await service.appendEvent(nextEvent);
+
+    expect(writtenLines).toHaveLength(1);
+    expect(JSON.parse(writtenLines[0]) as LogEventDto).toEqual(nextEvent);
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
   it('rejects append when the stream is missing after initialization', async () => {
     const service = new LogsService(new Config());
     const internals = service as unknown as { initialized: boolean };

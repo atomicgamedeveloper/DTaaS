@@ -58,7 +58,9 @@ export default class LogsService implements OnModuleDestroy {
   async appendEvent(event: LogEventDto): Promise<void> {
     await this.ensureReady();
     const line = `${JSON.stringify(event)}\n`;
-    this.writeQueue = this.writeQueue.then(() => this.writeLine(line));
+    this.writeQueue = this.writeQueue
+      .catch(() => undefined)
+      .then(() => this.writeLine(line));
     return this.writeQueue;
   }
 
