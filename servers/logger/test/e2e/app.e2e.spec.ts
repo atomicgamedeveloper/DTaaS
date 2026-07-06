@@ -163,31 +163,31 @@ describe('Logger service e2e with jwt configured', () => {
 
   it('rejects POST /logger without a bearer token', async () => {
     const payload = await readPayloadFixture('sample.json');
-    await supertest(app.getHttpServer())
+    const response = await supertest(app.getHttpServer())
       .post('/logger')
       .send(payload)
-      .set('Content-Type', 'application/json')
-      .expect(HttpStatus.UNAUTHORIZED);
+      .set('Content-Type', 'application/json');
+    expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
   });
 
   it('rejects POST /logger with the wrong bearer token', async () => {
     const payload = await readPayloadFixture('sample.json');
-    await supertest(app.getHttpServer())
+    const response = await supertest(app.getHttpServer())
       .post('/logger')
       .send(payload)
       .set('Content-Type', 'application/json')
-      .set('Authorization', 'Bearer wrong-token')
-      .expect(HttpStatus.UNAUTHORIZED);
+      .set('Authorization', 'Bearer wrong-token');
+    expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
   });
 
   it('accepts POST /logger with the configured bearer token', async () => {
     const payload = await readPayloadFixture('sample.json');
-    await supertest(app.getHttpServer())
+    const response = await supertest(app.getHttpServer())
       .post('/logger')
       .send(payload)
       .set('Content-Type', 'application/json')
-      .set('Authorization', 'Bearer test-secret-token')
-      .expect(HttpStatus.NO_CONTENT);
+      .set('Authorization', 'Bearer test-secret-token');
+    expect(response.status).toBe(HttpStatus.NO_CONTENT);
   });
 
   it('GET /logger/health does not require a bearer token', async () => {
