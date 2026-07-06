@@ -92,4 +92,61 @@ describe('indexedDBLogger', () => {
 
     expect(listener).not.toHaveBeenCalled();
   });
+
+  describe('cross-tab change notifications', () => {
+    class FakeBroadcastChannel {
+      static instances: FakeBroadcastChannel[] = [];
+
+      onmessage: ((event: MessageEvent) => void) | null = null;
+
+      postMessage = jest.fn();
+
+      close = jest.fn();
+
+      constructor(readonly name: string) {
+        FakeBroadcastChannel.instances.push(this);
+      }
+    }
+
+    beforeEach(() => {
+      FakeBroadcastChannel.instances = [];
+      (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel =
+        FakeBroadcastChannel;
+    });
+
+    afterEach(() => {
+      resetDBConnection();
+      delete (globalThis as { BroadcastChannel?: unknown }).BroadcastChannel;
+    });
+
+    it('broadcasts log changes to other tabs', async () => {
+      await addLog(mockEvent);
+
+      expect(FakeBroadcastChannel.instances).toHaveLength(1);
+      const channel = FakeBroadcastChannel.instances[0];
+      expect(channel.name).toBe('dtaas-workflow-logs');
+      expect(channel.postMessage).toHaveBeenCalledWith('dtaas:logs-changed');
+    });
+
+    it('notifies local subscribers when another tab reports a change', () => {
+      const listener = jest.fn();
+      const unsubscribe = subscribeToLogChanges(listener);
+
+      const channel = FakeBroadcastChannel.instances[0];
+      expect(channel).toBeDefined();
+      channel.onmessage?.({} as MessageEvent);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      unsubscribe();
+    });
+
+    it('closes the channel when the connection is reset', async () => {
+      await addLog(mockEvent);
+      const channel = FakeBroadcastChannel.instances[0];
+
+      resetDBConnection();
+
+      expect(channel.close).toHaveBeenCalled();
+    });
+  });
 });

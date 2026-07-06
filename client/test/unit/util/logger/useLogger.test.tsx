@@ -111,6 +111,26 @@ describe('useLogger', () => {
     expect(logger.initLogger).not.toHaveBeenCalled();
   });
 
+  it('warns when logger initialization fails', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (logger.initLogger as jest.Mock).mockRejectedValue(
+      new Error('hashing unavailable'),
+    );
+    const store = createTestStore('alice');
+
+    await act(async () => {
+      renderWithProviders(<TestComponent />, store);
+    });
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Logger: init failed, will retry on next render',
+        expect.any(Error),
+      );
+    });
+    warnSpy.mockRestore();
+  });
+
   it('initializes from sessionStorage username when Redux username is missing', async () => {
     const store = createTestStore(undefined);
     sessionStorage.setItem('username', 'session-user');
@@ -177,6 +197,101 @@ describe('useLogger', () => {
       element: 'input',
       label: 'TestInput',
       context: { value: 'abc' },
+    });
+  });
+
+  it('records values from textarea and select form controls', async () => {
+    const store = createTestStore('alice');
+
+    function TestWithTextareaAndSelect() {
+      useLogger();
+      return (
+        <>
+          <textarea
+            data-logger-element="textarea"
+            data-logger-label="TestArea"
+            data-logger-capture-value="true"
+            defaultValue=""
+          />
+          <select
+            data-logger-element="select"
+            data-logger-label="TestSelect"
+            data-logger-capture-value="true"
+            defaultValue="alpha"
+          >
+            <option value="alpha">alpha</option>
+            <option value="beta">beta</option>
+          </select>
+        </>
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithTextareaAndSelect />, store);
+      container = result.container;
+    });
+
+    const textarea = container!.querySelector('textarea')!;
+    act(() => {
+      fireEvent.change(textarea, { target: { value: 'some notes' } });
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'textarea',
+      label: 'TestArea',
+      context: { value: 'some notes' },
+    });
+
+    const select = container!.querySelector('select')!;
+    act(() => {
+      fireEvent.change(select, { target: { value: 'beta' } });
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'select',
+      label: 'TestSelect',
+      context: { value: 'beta' },
+    });
+  });
+
+  it('does not record a value for change events on non-form elements', async () => {
+    const store = createTestStore('alice');
+
+    function TestWithDiv() {
+      useLogger();
+      return (
+        <div
+          data-logger-element="widget"
+          data-logger-label="TestWidget"
+          data-logger-capture-value="true"
+        >
+          content
+        </div>
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithDiv />, store);
+      container = result.container;
+    });
+
+    const widget = container!.querySelector('div[data-logger-element]')!;
+    act(() => {
+      fireEvent.change(widget);
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'widget',
+      label: 'TestWidget',
+      context: {},
     });
   });
 

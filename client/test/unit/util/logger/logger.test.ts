@@ -95,6 +95,25 @@ describe('logger', () => {
     expect(indexedDBLogger.addLog).toHaveBeenCalledWith(event);
   });
 
+  it('warns when persisting the event to IndexedDB fails', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexedDBLogger.addLog as jest.Mock).mockRejectedValue(
+      new Error('quota exceeded'),
+    );
+
+    await initLogger('testuser');
+    log({ event: 'click', page: '/library', element: 'tab', label: 'Data' });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Logger: failed to persist event to IndexedDB',
+      expect.any(Error),
+    );
+    warnSpy.mockRestore();
+  });
+
   it('sends beacon when logger URL is configured', async () => {
     const origEnv = globalThis.env;
     globalThis.env = {

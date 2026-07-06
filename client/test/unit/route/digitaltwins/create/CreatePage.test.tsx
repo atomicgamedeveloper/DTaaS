@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useSelector } from 'react-redux';
 import CreatePage from 'route/digitaltwins/create/CreatePage';
+import { FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 jest.mock('route/digitaltwins/editor/Editor', () => ({
   __esModule: true,
@@ -61,5 +63,43 @@ describe('CreatePage', () => {
     fireEvent.change(inputElement, { target: { value: 'UpdatedDTName' } });
 
     expect(setNewDigitalTwinName).toHaveBeenCalledWith('UpdatedDTName');
+  });
+});
+
+describe('CreatePage asset log context', () => {
+  it('includes the names of new asset files in the action button log context', () => {
+    (useSelector as unknown as jest.Mock).mockReturnValue([
+      {
+        name: 'model-description.md',
+        content: '',
+        isNew: true,
+        isModified: false,
+        type: FileType.DESCRIPTION,
+      },
+      {
+        name: 'existing.md',
+        content: '',
+        isNew: false,
+        isModified: false,
+        type: FileType.DESCRIPTION,
+      },
+    ]);
+
+    render(
+      <CreatePage
+        newDigitalTwinName={'DTName'}
+        setNewDigitalTwinName={jest.fn()}
+      />,
+    );
+
+    const cancelButton = screen.getByText('Cancel');
+    expect(cancelButton).toHaveAttribute(
+      'data-logger-context',
+      expect.stringContaining('model-description.md'),
+    );
+    expect(cancelButton).not.toHaveAttribute(
+      'data-logger-context',
+      expect.stringContaining('existing.md'),
+    );
   });
 });
