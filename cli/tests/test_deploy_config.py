@@ -50,7 +50,7 @@ def test_build_file_specs_insecure_server():
     """insecure-server splits server and frontend OAuth apps per file"""
     toml = {
         "common": {"server-dns": "myserver.com"},
-        "users": {"starting": ["alice"], "alice": {"email": "alice@example.com"}},
+        "users": [{"username": "alice", "email": "alice@example.com"}],
         "insecure-server": {
             "oauth-client-id": "server_id",
             "oauth-client-secret": "server_secret",
@@ -92,7 +92,7 @@ def test_build_file_specs_secure_server_uses_https():
     """secure-server uses https:// for REACT_APP_URL and friends"""
     toml = {
         "common": {"server-dns": "myserver.com"},
-        "users": {"starting": ["alice"]},
+        "users": [{"username": "alice"}],
         "secure-server": {
             "oauth-client-id": "id",
             "oauth-client-secret": "secret",
@@ -110,6 +110,29 @@ def test_build_file_specs_secure_server_uses_https():
     assert js_values["REACT_APP_URL"] == "https://myserver.com"
     assert js_values["REACT_APP_REDIRECT_URI"] == "https://myserver.com/Library"
     assert js_values["REACT_APP_LOGOUT_REDIRECT_URI"] == "https://myserver.com/"
+
+
+def test_build_file_specs_secure_server_gitlab_includes_oauth_url():
+    """secure-server-gitlab substitutes OAUTH_URL like the other server types"""
+    toml = {
+        "common": {"server-dns": "myserver.com"},
+        "users": [],
+        "secure-server-gitlab": {
+            "oauth-url": "https://gitlab.example.com",
+            "oauth-client-id": "id",
+            "oauth-client-secret": "secret",
+        },
+        "frontend": {
+            "react-app-client-id": "client_id",
+            "react-app-oauth-url": "https://gitlab.example.com",
+        },
+    }
+    specs = {
+        path: (fmt, values)
+        for path, fmt, values in build_file_specs("secure-server-gitlab", toml)
+    }
+    env_values = specs["config/.env"][1]
+    assert env_values["OAUTH_URL"] == "https://gitlab.example.com"
 
 
 def test_apply_config_edits_files_by_key(tmp_path):
@@ -198,10 +221,31 @@ def test_apply_config_skips_binary_file(tmp_path):
     assert binary.read_bytes() == original
 
 
-def test_toml_lookup_user_collision_reserved_key():
-    """email lookup is safe when a username collides with the 'starting' key"""
-    toml = {"users": {"starting": ["starting"]}}
+def test_toml_lookup_returns_empty_for_out_of_range_index():
+    """username/email lookups are safe when fewer [[users]] exist than the index"""
+    toml = {"users": [{"username": "alice", "email": "a@x.io"}]}
+    assert _toml_lookup(toml, "users.username2") == ""
+    assert _toml_lookup(toml, "users.email2") == ""
+
+
+def test_toml_lookup_returns_empty_when_field_missing():
+    """A [[users]] record without an email yields '' rather than raising"""
+    toml = {"users": [{"username": "alice"}]}
     assert _toml_lookup(toml, "users.email1") == ""
+
+
+def test_toml_lookup_returns_empty_when_users_not_a_list():
+    """A malformed (old dict-based) 'users' value degrades to '' instead of raising"""
+    toml = {"users": {"starting": ["alice"], "alice": {"email": "a@x.io"}}}
+    assert _toml_lookup(toml, "users.username1") == ""
+    assert _toml_lookup(toml, "users.email1") == ""
+
+
+def test_toml_lookup_rejects_zero_index_pseudo_key():
+    """A '<field>0' pseudo-key (index -1) resolves to '' rather than the last user"""
+    toml = {"users": [{"username": "alice", "email": "a@x.io"}]}
+    assert _toml_lookup(toml, "users.username0") == ""
+    assert _toml_lookup(toml, "users.email0") == ""
 
 
 def test_diff_specs_reports_only_changed_files(tmp_path):
