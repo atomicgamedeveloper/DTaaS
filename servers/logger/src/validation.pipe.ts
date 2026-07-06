@@ -11,7 +11,7 @@ export default class ZodValidationPipe implements PipeTransform {
       const parsedValue: LogEventDto = this.schema.parse(value);
       return parsedValue;
     } catch (error) {
-      throw new BadRequestException('Validation Failed', { cause: error });
+      throw new BadRequestException('Validation Failed', { cause: error, description: 'Bad Request' });
     }
   }
 }
