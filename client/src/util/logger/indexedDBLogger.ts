@@ -1,13 +1,13 @@
 import { LogEvent } from 'util/logger/logEvent';
-import { DB_CONFIG } from 'database/types';
-import { setupObjectStores } from 'database/BaseIndexedDBService';
+import {
+  openDB,
+  resetDBConnection as resetSharedDBConnection,
+} from 'database/dbConnection';
 
 const STORE_NAME = 'logs';
 const LOGS_CHANGED_EVENT = 'dtaas:logs-changed';
 const LOGS_CHANGED_CHANNEL = 'dtaas-workflow-logs';
 
-let cachedDB: IDBDatabase | null = null;
-let dbPromise: Promise<IDBDatabase> | null = null;
 let changeChannel: BroadcastChannel | null = null;
 
 function emitLocalLogChange(): void {
@@ -26,61 +26,6 @@ function getChangeChannel(): BroadcastChannel | null {
 function notifyLogChange(): void {
   emitLocalLogChange();
   getChangeChannel()?.postMessage(LOGS_CHANGED_EVENT);
-}
-
-function clearDBCache(): void {
-  cachedDB = null;
-  dbPromise = null;
-}
-
-function handleVersionChange(): void {
-  cachedDB?.close();
-  clearDBCache();
-}
-
-function cacheDBConnection(db: IDBDatabase): IDBDatabase {
-  cachedDB = db;
-  cachedDB.onclose = clearDBCache;
-  cachedDB.onversionchange = handleVersionChange;
-  dbPromise = null;
-  return cachedDB;
-}
-
-function rejectOpen(reject: (reason?: unknown) => void, message: string): void {
-  dbPromise = null;
-  reject(new Error(message));
-}
-
-function createOpenDBPromise(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
-
-    request.onerror = () => {
-      rejectOpen(reject, 'Failed to open IndexedDB for logs');
-    };
-
-    request.onblocked = () => {
-      rejectOpen(reject, 'IndexedDB open blocked by another tab');
-    };
-
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      resolve(cacheDBConnection(db));
-    };
-
-    request.onupgradeneeded = (event) => {
-      setupObjectStores((event.target as IDBOpenDBRequest).result);
-    };
-  });
-}
-
-function openDB(): Promise<IDBDatabase> {
-  if (cachedDB) return Promise.resolve(cachedDB);
-  if (dbPromise) return dbPromise;
-
-  dbPromise = createOpenDBPromise();
-
-  return dbPromise;
 }
 
 export async function addLog(event: LogEvent): Promise<void> {
@@ -134,10 +79,7 @@ export function subscribeToLogChanges(listener: () => void): () => void {
 }
 
 export function resetDBConnection(): void {
-  if (cachedDB) {
-    cachedDB.close();
-  }
+  resetSharedDBConnection();
   changeChannel?.close();
   changeChannel = null;
-  clearDBCache();
 }

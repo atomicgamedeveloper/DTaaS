@@ -27,6 +27,7 @@ const LoggingSettingsFields: React.FC<SettingsFieldProps> = ({
               onChange={handleInputChange}
               data-logger-element="checkbox"
               data-logger-label="Toggle Logging"
+              data-logger-capture-value="true"
             />
           }
           label="Enable logging"

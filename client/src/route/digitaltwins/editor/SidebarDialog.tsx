@@ -50,6 +50,7 @@ const SidebarDialog = ({
           htmlInput: {
             'data-logger-element': 'input',
             'data-logger-label': 'Sidebar File Name Input',
+            'data-logger-capture-value': 'true',
           },
         }}
       />

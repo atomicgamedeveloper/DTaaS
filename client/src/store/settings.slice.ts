@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { z } from 'zod';
 import {
   GROUP_NAME,
   DT_DIRECTORY,
@@ -34,13 +35,34 @@ interface SettingsState {
   loggingEnabled: boolean;
 }
 
+const SettingsSchema = z
+  .object({
+    GROUP_NAME: z.string(),
+    DT_DIRECTORY: z.string(),
+    COMMON_LIBRARY_PROJECT_NAME: z.string(),
+    RUNNER_TAG: z.string(),
+    BRANCH_NAME: z.string(),
+    trials: z.number(),
+    secondaryRunnerTag: z.string(),
+    primaryDTName: z.string(),
+    secondaryDTName: z.string(),
+    disabledTaskNames: z.array(z.string()),
+    loggingEnabled: z.boolean(),
+  })
+  .partial();
+
 export const loadInitialSettings = (): SettingsState => {
   const base = { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT };
   const settings = localStorage.getItem('settings');
   if (settings) {
-    const parsed = JSON.parse(settings);
-    if (parsed && typeof parsed === 'object') {
-      return { ...base, ...parsed };
+    try {
+      const result = SettingsSchema.safeParse(JSON.parse(settings));
+      if (result.success) {
+        return { ...base, ...result.data };
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('Settings: failed to parse persisted settings', err);
     }
   }
   return base;

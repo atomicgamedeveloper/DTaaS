@@ -1,21 +1,4 @@
-import { DB_CONFIG } from 'database/types';
-
-export function setupObjectStores(db: IDBDatabase): void {
-  for (const [storeName, storeConfig] of Object.entries(DB_CONFIG.stores)) {
-    if (!db.objectStoreNames.contains(storeName)) {
-      const options: IDBObjectStoreParameters = {
-        keyPath: storeConfig.keyPath,
-      };
-      if ('autoIncrement' in storeConfig) {
-        options.autoIncrement = storeConfig.autoIncrement;
-      }
-      const store = db.createObjectStore(storeName, options);
-      for (const index of storeConfig.indexes) {
-        store.createIndex(index.name, index.keyPath);
-      }
-    }
-  }
-}
+import { openDB } from 'database/dbConnection';
 
 export interface CursorQuery {
   storeName: string;
@@ -26,46 +9,8 @@ export interface CursorQuery {
 export default abstract class BaseIndexedDBService {
   protected db: IDBDatabase | undefined;
 
-  private readonly dbName: string;
-
-  private readonly dbVersion: number;
-
-  private initPromise: Promise<void> | undefined;
-
-  constructor() {
-    this.dbName = DB_CONFIG.name;
-    this.dbVersion = DB_CONFIG.version;
-  }
-
   public async init(): Promise<void> {
-    if (this.db) {
-      return;
-    }
-
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-
-      request.onerror = () => {
-        this.initPromise = undefined;
-        reject(new Error('Failed to open IndexedDB'));
-      };
-
-      request.onsuccess = (event) => {
-        this.db = (event.target as IDBOpenDBRequest).result;
-        this.initPromise = undefined;
-        resolve();
-      };
-
-      request.onupgradeneeded = (event) => {
-        setupObjectStores((event.target as IDBOpenDBRequest).result);
-      };
-    });
-
-    return this.initPromise;
+    this.db = await openDB();
   }
 
   protected async withStore<T>(

@@ -6,11 +6,23 @@ import { sendBeacon } from 'util/logger/beaconLogger';
 import { addLog } from 'util/logger/indexedDBLogger';
 import { getLoggingEnabled } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
+const MAX_CONTEXT_VALUE_LENGTH = 1024;
+
 let userHash = '';
 let sessionId = '';
 let loggerUrl = '';
 let initialized = false;
 let lastNavigationPage = '';
+
+function truncateContext(
+  context: Record<string, string>,
+): Record<string, string> {
+  const truncated: Record<string, string> = {};
+  Object.entries(context).forEach(([key, value]) => {
+    truncated[key] = value.slice(0, MAX_CONTEXT_VALUE_LENGTH);
+  });
+  return truncated;
+}
 
 export interface LogInput {
   readonly event: LogEventType;
@@ -47,15 +59,16 @@ export function log({
     page,
     element,
     label,
-    context,
+    context: truncateContext(context),
   });
   logToConsole(logEvent);
   addLog(logEvent).catch((err) => {
     // eslint-disable-next-line no-console
     console.warn('Logger: failed to persist event to IndexedDB', err);
   });
-  if (loggerUrl) {
-    sendBeacon(loggerUrl, logEvent);
+  if (loggerUrl && !sendBeacon(loggerUrl, logEvent)) {
+    // eslint-disable-next-line no-console
+    console.warn('Logger: failed to send beacon');
   }
   return logEvent;
 }

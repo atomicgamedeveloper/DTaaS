@@ -61,6 +61,7 @@ function DTSelectField({
         htmlInput: {
           'data-logger-element': 'select',
           'data-logger-label': label,
+          'data-logger-capture-value': 'true',
         },
       }}
       fullWidth
@@ -154,6 +155,7 @@ const MeasurementSettingsFields: React.FC<MeasurementSettingsFieldsProps> = ({
                 min: 1,
                 'data-logger-element': 'input',
                 'data-logger-label': 'Trial Number',
+                'data-logger-capture-value': 'true',
               },
             }}
           />
@@ -177,6 +179,7 @@ const MeasurementSettingsFields: React.FC<MeasurementSettingsFieldsProps> = ({
               htmlInput: {
                 'data-logger-element': 'input',
                 'data-logger-label': 'Measurement Secondary Runner Tag',
+                'data-logger-capture-value': 'true',
               },
             }}
           />

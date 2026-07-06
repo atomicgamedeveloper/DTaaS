@@ -75,6 +75,7 @@ const ApplicationSettingsFields: React.FC<SettingsFieldProps> = ({
               htmlInput: {
                 'data-logger-element': 'input',
                 'data-logger-label': label,
+                'data-logger-capture-value': 'true',
               },
             }}
           />

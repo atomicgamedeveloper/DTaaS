@@ -154,6 +154,7 @@ describe('useLogger', () => {
         <input
           data-logger-element="input"
           data-logger-label="TestInput"
+          data-logger-capture-value="true"
           defaultValue=""
         />
       );
@@ -179,6 +180,40 @@ describe('useLogger', () => {
     });
   });
 
+  it('does not record a value when capture-value opt-in is absent', async () => {
+    const store = createTestStore('alice');
+
+    function TestWithInput() {
+      useLogger();
+      return (
+        <input
+          data-logger-element="input"
+          data-logger-label="TestInput"
+          defaultValue=""
+        />
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithInput />, store);
+      container = result.container;
+    });
+
+    const input = container!.querySelector('input')!;
+    act(() => {
+      fireEvent.change(input, { target: { value: 'abc' } });
+    });
+
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'change',
+      page: expect.any(String),
+      element: 'input',
+      label: 'TestInput',
+      context: {},
+    });
+  });
+
   it('records the checked state for checkbox change events', async () => {
     const store = createTestStore('alice');
 
@@ -189,6 +224,7 @@ describe('useLogger', () => {
           type="checkbox"
           data-logger-element="checkbox"
           data-logger-label="TestCheckbox"
+          data-logger-capture-value="true"
         />
       );
     }
@@ -223,6 +259,7 @@ describe('useLogger', () => {
           type="password"
           data-logger-element="input"
           data-logger-label="TestPassword"
+          data-logger-capture-value="true"
         />
       );
     }
@@ -245,6 +282,50 @@ describe('useLogger', () => {
       label: 'TestPassword',
       context: {},
     });
+  });
+
+  it('warns and falls back to an empty context when data-logger-context is malformed', async () => {
+    const store = createTestStore('alice');
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    function TestWithBadContext() {
+      useLogger();
+      return (
+        <button
+          data-logger-element="button"
+          data-logger-label="TestBtn"
+          data-logger-context="{not valid json"
+        >
+          Click me
+        </button>
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithBadContext />, store);
+      container = result.container;
+    });
+
+    const button = container!.querySelector('button')!;
+    act(() => {
+      fireEvent.click(button);
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Logger: failed to parse data-logger-context',
+      '{not valid json',
+      expect.any(Error),
+    );
+    expect(logger.log).toHaveBeenCalledWith({
+      event: 'click',
+      page: expect.any(String),
+      element: 'button',
+      label: 'TestBtn',
+      context: {},
+    });
+
+    warnSpy.mockRestore();
   });
 
   it('does not log clicks on form controls', async () => {

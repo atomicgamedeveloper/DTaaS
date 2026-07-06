@@ -55,6 +55,7 @@ function DigitalTwinNameInput({
           htmlInput: {
             'data-logger-element': 'input',
             'data-logger-label': 'Digital twin name input',
+            'data-logger-capture-value': 'true',
           },
         }}
       />

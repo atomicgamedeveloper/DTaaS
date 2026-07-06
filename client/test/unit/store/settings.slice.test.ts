@@ -89,4 +89,37 @@ describe('settingsSlice', () => {
       ...DEFAULT_MEASUREMENT,
     });
   });
+
+  it('falls back to defaults when a persisted field has the wrong type', () => {
+    const tampered = { GROUP_NAME: 123, trials: 'not-a-number' };
+    jest
+      .spyOn(Storage.prototype, 'getItem')
+      .mockReturnValue(JSON.stringify(tampered));
+
+    expect(loadInitialSettings()).toEqual({
+      ...DEFAULT_SETTINGS,
+      ...DEFAULT_MEASUREMENT,
+    });
+  });
+
+  it('falls back to defaults when persisted settings is not an object', () => {
+    jest
+      .spyOn(Storage.prototype, 'getItem')
+      .mockReturnValue(JSON.stringify(['tampered', 'array']));
+
+    expect(loadInitialSettings()).toEqual({
+      ...DEFAULT_SETTINGS,
+      ...DEFAULT_MEASUREMENT,
+    });
+  });
+
+  it('falls back to defaults when persisted settings is not valid JSON', () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue('{not-json');
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(loadInitialSettings()).toEqual({
+      ...DEFAULT_SETTINGS,
+      ...DEFAULT_MEASUREMENT,
+    });
+  });
 });

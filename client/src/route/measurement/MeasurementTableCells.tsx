@@ -214,6 +214,7 @@ export function ExpandedDescriptionRow({
                   sx={{ p: 0 }}
                   data-logger-element="checkbox"
                   data-logger-label="Toggle Task Enabled"
+                  data-logger-capture-value="true"
                   data-logger-context={JSON.stringify({ task: taskName })}
                 />
               </span>

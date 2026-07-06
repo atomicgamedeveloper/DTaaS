@@ -25,7 +25,9 @@ function parseContext(raw: string | undefined): Record<string, string> {
   if (!raw) return {};
   try {
     return JSON.parse(raw) as Record<string, string>;
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('Logger: failed to parse data-logger-context', raw, err);
     return {};
   }
 }
@@ -59,7 +61,14 @@ function isFormControl(target: EventTarget | null): boolean {
   );
 }
 
-function getChangedValue(target: EventTarget | null): string | null {
+function getChangedValue(
+  el: HTMLElement,
+  target: EventTarget | null,
+): string | null {
+  // Value capture is opt-in: an element must explicitly request it, since
+  // any future tagged field (e.g. a token/API-key input) would otherwise
+  // have its value logged by default.
+  if (el.dataset.loggerCaptureValue !== 'true') return null;
   if (target instanceof HTMLInputElement) {
     // Never record secret values, even if a password field gets tagged.
     if (target.type === 'password') return null;
@@ -89,7 +98,7 @@ function logDomEvent(event: Event): void {
   const page = globalThis.location.pathname;
 
   if (event.type === 'change') {
-    const value = getChangedValue(event.target);
+    const value = getChangedValue(el, event.target);
     if (value !== null) context.value = value;
   }
 

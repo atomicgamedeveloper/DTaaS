@@ -62,6 +62,7 @@ const ChangeFileNameDialog: React.FC<ChangeFileNameDialogProps> = ({
             htmlInput: {
               'data-logger-element': 'input',
               'data-logger-label': 'Rename File Input',
+              'data-logger-capture-value': 'true',
             },
           }}
         />

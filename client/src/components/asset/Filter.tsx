@@ -32,6 +32,7 @@ const Filter: React.FC<FilterProps> = ({
           htmlInput: {
             'data-logger-element': 'input',
             'data-logger-label': loggerLabel,
+            'data-logger-capture-value': 'true',
           },
         }}
       />

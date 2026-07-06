@@ -4,6 +4,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 function LogViewerHeader() {
   const [expanded, setExpanded] = useState(false);
+  const remoteLoggingConfigured = Boolean(globalThis.env?.LOGGER_URL);
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -36,8 +37,11 @@ function LogViewerHeader() {
       <Collapse in={expanded}>
         <Typography variant="body2" color="text.secondary">
           Analytics events captured as you interact with the workbench. Logs are
-          stored locally in your browser and never leave this device. Use{' '}
-          <strong>Download</strong> to export the entries as JSONL,{' '}
+          stored locally in your browser
+          {remoteLoggingConfigured
+            ? " and are also sent to your organization's configured logging server"
+            : ' and never leave this device'}
+          . Use <strong>Download</strong> to export the entries as JSONL,{' '}
           <strong>Clear Logs</strong> to permanently remove them, or{' '}
           <strong>Refresh</strong> to reload from storage.
         </Typography>
