@@ -57,6 +57,18 @@ export const formatTimestamp = (timestamp: number): string => {
   return date.toLocaleString();
 };
 
+const buildStopLogContext = (
+  dtName: string,
+  executions: { timestamp: number }[] | undefined,
+) =>
+  JSON.stringify({
+    'dt.name': dtName,
+    'dt.button': 'stop',
+    'dt.history': (executions ?? [])
+      .map((execution) => new Date(execution.timestamp).toISOString())
+      .join(','),
+  });
+
 const getStatusIcon = (status: ExecutionStatus) => {
   switch (status) {
     case ExecutionStatus.COMPLETED:
@@ -329,6 +341,10 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                         size="small"
                         data-logger-element="button"
                         data-logger-label="Stop Execution"
+                        data-logger-context={buildStopLogContext(
+                          dtName,
+                          executions,
+                        )}
                       >
                         <StopIcon />
                       </IconButton>

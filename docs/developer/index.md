@@ -202,6 +202,27 @@ the appropriate suggestions from Qlty. In exceptional cases,
 an ignore flag may be added, though this approach should be
 employed sparingly.
 
+### SonarQube
+
+The upstream repository uses
+[SonarQube Cloud](https://docs.sonarsource.com/sonarqube-cloud/)
+automatic analysis for code quality and security checks. On GitHub,
+this appears as the `SonarCloud Code Analysis` check and decorates
+pull requests from forks.
+
+Forks can run their own SonarQube Cloud analysis through
+`.github/workflows/sonarqube-cloud.yml`. To enable it, import the fork
+into SonarQube Cloud and configure these GitHub Actions values in the fork:
+
+- Secret: `SONAR_TOKEN`
+- Variable: `SONAR_PROJECT_KEY`
+- Variable: `SONAR_ORGANIZATION`
+
+The workflow is disabled in `INTO-CPS-Association/DTaaS` so it does not
+duplicate the upstream automatic-analysis integration. Keep automatic
+analysis settings in `.sonarcloud.properties` and CI scanner settings in
+`sonar-project.properties`.
+
 ### Codecov
 
 Codecov maintains test coverage metrics for the entire project.

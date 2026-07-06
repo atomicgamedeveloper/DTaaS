@@ -31,6 +31,18 @@ const shouldShowLoading = (
   isPipelineLoading: boolean | undefined,
 ) => hasRunningExecutions || (!hasAnyExecutions && isPipelineLoading);
 
+const buildStartLogContext = (
+  assetName: string,
+  executions: DTExecutionResult[],
+) =>
+  JSON.stringify({
+    'dt.name': assetName,
+    'dt.button': 'start',
+    'dt.history': executions
+      .map((execution) => new Date(execution.timestamp).toISOString())
+      .join(','),
+  });
+
 function StartButton({
   assetName,
   setHistoryButtonDisabled,
@@ -112,7 +124,7 @@ function StartButton({
         onClick={handleDebouncedClick}
         data-logger-element="button"
         data-logger-label="Start"
-        data-logger-context={JSON.stringify({ asset: assetName })}
+        data-logger-context={buildStartLogContext(assetName, executions)}
       >
         Start
       </Button>

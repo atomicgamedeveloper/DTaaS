@@ -1,12 +1,33 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { Box, Button, TextField, Tooltip } from '@mui/material';
+import { useSelector } from 'react-redux';
 import Editor from 'route/digitaltwins/editor/Editor';
 import CreateDialogs from 'route/digitaltwins/create/CreateDialogs';
+import { RootState } from 'store/store';
+import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 
 interface CreatePageProps {
   readonly newDigitalTwinName: string;
   readonly setNewDigitalTwinName: Dispatch<SetStateAction<string>>;
 }
+
+const buildAssetsLogContext = (
+  newDigitalTwinName: string,
+  files: FileState[],
+): Record<string, string> => {
+  const namesByType = (type: FileType) =>
+    files
+      .filter((file) => file.isNew && file.type === type)
+      .map((file) => file.name)
+      .join(',');
+
+  return {
+    'dt.name': newDigitalTwinName,
+    'dt.assets.description': namesByType(FileType.DESCRIPTION),
+    'dt.assets.configuration': namesByType(FileType.CONFIGURATION),
+    'dt.assets.lifecycle': namesByType(FileType.LIFECYCLE),
+  };
+};
 
 function DigitalTwinNameInput({
   value,
@@ -45,10 +66,12 @@ function ActionButtons({
   onCancel,
   onSave,
   isSaveDisabled,
+  logContext,
 }: {
   readonly onCancel: () => void;
   readonly onSave: () => void;
   readonly isSaveDisabled: boolean;
+  readonly logContext: Record<string, string>;
 }) {
   return (
     <Box
@@ -71,6 +94,10 @@ function ActionButtons({
         onClick={onCancel}
         data-logger-element="button"
         data-logger-label="Cancel"
+        data-logger-context={JSON.stringify({
+          ...logContext,
+          'dt.button': 'cancel',
+        })}
       >
         Cancel
       </Button>
@@ -89,6 +116,10 @@ function ActionButtons({
             disabled={isSaveDisabled}
             data-logger-element="button"
             data-logger-label="Save"
+            data-logger-context={JSON.stringify({
+              ...logContext,
+              'dt.button': 'save',
+            })}
           >
             Save
           </Button>
@@ -114,6 +145,8 @@ function CreatePage({
   const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState(false);
   const [openCreateDTDialog, setOpenCreateDTDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const files = useSelector((state: RootState) => state.files) ?? [];
+  const logContext = buildAssetsLogContext(newDigitalTwinName, files);
 
   const confirmCancel = () => {
     setOpenConfirmDeleteDialog(true);
@@ -165,6 +198,7 @@ function CreatePage({
         onCancel={confirmCancel}
         onSave={confirmSave}
         isSaveDisabled={!newDigitalTwinName}
+        logContext={logContext}
       />
 
       <CreateDialogs
