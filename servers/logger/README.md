@@ -25,7 +25,13 @@ Environment variables always override YAML values.
 - `hostname` (default: `0.0.0.0`)
 - `port` (default: `4003`)
 - `cors-allow-origin` (default: `0.0.0.0:<port>`, e.g. `0.0.0.0:4003`)
-- `jwt` (default: empty string)
+- `jwt` (default: empty string) — when set, `POST /logger` requires an
+  `Authorization: Bearer <jwt>` header matching this value; requests without
+  it are rejected with `401 Unauthorized`. Leave empty to accept unauthenticated
+  requests (the default). **Note:** the bundled DTaaS client posts events via
+  `navigator.sendBeacon`, which cannot set custom headers, so enabling this
+  setting will block ingestion from that client. It is intended for
+  authenticating other producers of `POST /logger`, not the shipped client.
 - `tls` (default: `false`)
 - `certs` (default: `./certs`)
 - `log-file-path` (default: `./logs/workflow-logs.jsonl`)

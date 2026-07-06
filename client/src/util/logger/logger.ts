@@ -4,6 +4,7 @@ import { getSessionId } from 'util/logger/sessionManager';
 import { logToConsole } from 'util/logger/consoleLogger';
 import { sendBeacon } from 'util/logger/beaconLogger';
 import { addLog } from 'util/logger/indexedDBLogger';
+import { getLoggingEnabled } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 
 let userHash = '';
 let sessionId = '';
@@ -37,7 +38,7 @@ export function log({
   label,
   context = {},
 }: LogInput): LogEvent | null {
-  if (!initialized) return null;
+  if (!initialized || !getLoggingEnabled()) return null;
 
   const logEvent = createLogEvent({
     sessionId,

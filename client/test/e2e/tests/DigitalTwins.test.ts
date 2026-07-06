@@ -27,7 +27,6 @@ test.describe('Digital Twin Log Cleaning', () => {
 
     // Wait for the page to load
     await page.waitForLoadState('load');
-    await page.waitForTimeout(1000);
   });
 
   // @slow - This test requires waiting for actual GitLab pipeline execution
@@ -47,13 +46,10 @@ test.describe('Digital Twin Log Cleaning', () => {
     await expect(startButton).toBeVisible({ timeout: 10000 });
 
     // Enforce debounce between requests to avoid overwhelming GitLab
-    await page.waitForTimeout(DEBOUNCE_TIME);
+    await page.waitForTimeout(DEBOUNCE_TIME); // NOSONAR
     await startButton.click();
 
-    // Wait for debounce period plus a bit for execution to start
-    await page.waitForTimeout(500);
-
-    // Click the History button
+    // Click the History button (enabled-wait below covers the execution starting)
     const historyButton = helloWorldCard
       .getByRole('button', { name: 'History' })
       .first();

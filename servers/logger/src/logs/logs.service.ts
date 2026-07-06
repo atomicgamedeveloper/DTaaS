@@ -33,7 +33,8 @@ function writeToStream(
     stream.write(line, 'utf8', (error) => {
       stream.off('error', onError);
       if (error !== null && error !== undefined) {
-        logger.error('Failed to persist workflow log event', error);
+        const trace = error instanceof Error ? error.stack : String(error);
+        logger.error('Failed to persist workflow log event', trace);
         reject(error);
         return;
       }

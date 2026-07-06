@@ -8,6 +8,8 @@ import {
   resetLogger,
   isLoggerInitialized,
 } from 'util/logger/logger';
+import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { DEFAULT_SETTINGS } from 'store/settings.slice';
 import * as beaconLogger from 'util/logger/beaconLogger';
 import * as indexedDBLogger from 'util/logger/indexedDBLogger';
 
@@ -35,6 +37,12 @@ describe('logger', () => {
     jest.clearAllMocks();
     (uuidv4 as jest.Mock).mockReturnValue('test-uuid-1234');
     (indexedDBLogger.addLog as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    setSettingsStore({
+      getState: () => ({ settings: { ...DEFAULT_SETTINGS } }),
+    });
   });
 
   it('is not initialized by default', () => {
@@ -169,6 +177,22 @@ describe('logger', () => {
     expect(event!.event).toBe('dismiss');
     expect(event!.element).toBe('snackbar');
     expect(event!.context).toEqual({});
+  });
+
+  it('does not log, navigate, or dismiss when logging is disabled after init', async () => {
+    await initLogger('testuser');
+    setSettingsStore({
+      getState: () => ({
+        settings: { ...DEFAULT_SETTINGS, loggingEnabled: false },
+      }),
+    });
+
+    expect(
+      log({ event: 'click', page: '/library', element: 'tab', label: 'Data' }),
+    ).toBeNull();
+    expect(logNavigation('/library')).toBeNull();
+    expect(logDismiss('dialog', 'Confirm Clear')).toBeNull();
+    expect(isLoggerInitialized()).toBe(true);
   });
 
   it('clears the last navigation page on reset', async () => {

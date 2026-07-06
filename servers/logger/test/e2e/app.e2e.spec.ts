@@ -126,3 +126,73 @@ describe('Logger service e2e', () => {
     expect(response.headers['access-control-allow-credentials']).toBe('true');
   });
 });
+
+describe('Logger service e2e with jwt configured', () => {
+  let app: INestApplication;
+  let tempDir = '';
+
+  beforeAll(async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), 'dtaas-logger-e2e-jwt-'));
+    process.env.LOGGER_CONFIG_PATH = '';
+    process.env.LOGGER_TLS = 'false';
+    process.env.LOGGER_CERTS_DIR = '';
+    process.env.LOGGER_CORS_ALLOW_ORIGIN = '*';
+    process.env.LOGGER_LOG_FILE_PATH = path.join(tempDir, 'events.jsonl');
+    process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
+    process.env.LOGGER_JWT = 'test-secret-token';
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+    delete process.env.LOGGER_CONFIG_PATH;
+    delete process.env.LOGGER_TLS;
+    delete process.env.LOGGER_CERTS_DIR;
+    delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
+    delete process.env.LOGGER_LOG_FILE_PATH;
+    delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
+    delete process.env.LOGGER_JWT;
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it('rejects POST /logger without a bearer token', async () => {
+    const payload = await readPayloadFixture('sample.json');
+    await supertest(app.getHttpServer())
+      .post('/logger')
+      .send(payload)
+      .set('Content-Type', 'application/json')
+      .expect(HttpStatus.UNAUTHORIZED);
+  });
+
+  it('rejects POST /logger with the wrong bearer token', async () => {
+    const payload = await readPayloadFixture('sample.json');
+    await supertest(app.getHttpServer())
+      .post('/logger')
+      .send(payload)
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer wrong-token')
+      .expect(HttpStatus.UNAUTHORIZED);
+  });
+
+  it('accepts POST /logger with the configured bearer token', async () => {
+    const payload = await readPayloadFixture('sample.json');
+    await supertest(app.getHttpServer())
+      .post('/logger')
+      .send(payload)
+      .set('Content-Type', 'application/json')
+      .set('Authorization', 'Bearer test-secret-token')
+      .expect(HttpStatus.NO_CONTENT);
+  });
+
+  it('GET /logger/health does not require a bearer token', async () => {
+    await supertest(app.getHttpServer())
+      .get('/logger/health')
+      .expect(HttpStatus.OK);
+  });
+});

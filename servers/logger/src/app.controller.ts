@@ -4,12 +4,14 @@ import {
   Get,
   HttpStatus,
   Post,
+  UseGuards,
   UsePipes,
   HttpCode,
 } from '@nestjs/common';
 import LogsService from './logs/logs.service.js';
 import { LogEventDto } from './dto/log-event.dto.js';
 import LogEventValidationPipe from './log-event-validation.pipe.js';
+import LoggerAuthGuard from './logger-auth.guard.js';
 
 type HealthResponse = {
   status: 'ok';
@@ -28,6 +30,7 @@ export default class AppController {
 
   @Post()
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(LoggerAuthGuard)
   @UsePipes(LogEventValidationPipe)
   async ingestEvent(@Body() logEventDto: LogEventDto): Promise<void> {
     await this.logsService.appendEvent(logEventDto);

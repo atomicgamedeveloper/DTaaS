@@ -369,10 +369,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
               </AccordionSummary>
               <AccordionDetails>
                 {(() => {
-                  if (
-                    !selectedExecution ||
-                    selectedExecution.id !== execution.id
-                  ) {
+                  if (selectedExecution?.id !== execution.id) {
                     return (
                       <Box
                         sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
