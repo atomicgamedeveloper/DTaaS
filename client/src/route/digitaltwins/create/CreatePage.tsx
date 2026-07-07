@@ -5,6 +5,7 @@ import Editor from 'route/digitaltwins/editor/Editor';
 import CreateDialogs from 'route/digitaltwins/create/CreateDialogs';
 import { RootState } from 'store/store';
 import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
+import type { LogContext } from 'util/logger/logEvent';
 
 interface CreatePageProps {
   readonly newDigitalTwinName: string;
@@ -14,20 +15,31 @@ interface CreatePageProps {
 const buildAssetsLogContext = (
   newDigitalTwinName: string,
   files: FileState[],
-): Record<string, string> => {
+): LogContext => {
   const namesByType = (type: FileType) =>
     files
       .filter((file) => file.isNew && file.type === type)
-      .map((file) => file.name)
-      .join(',');
+      .map((file) => file.name);
 
   return {
-    'dt.name': newDigitalTwinName,
-    'dt.assets.description': namesByType(FileType.DESCRIPTION),
-    'dt.assets.configuration': namesByType(FileType.CONFIGURATION),
-    'dt.assets.lifecycle': namesByType(FileType.LIFECYCLE),
+    dt: {
+      name: newDigitalTwinName,
+      assets: {
+        description: namesByType(FileType.DESCRIPTION),
+        configuration: namesByType(FileType.CONFIGURATION),
+        lifecycle: namesByType(FileType.LIFECYCLE),
+      },
+    },
   };
 };
+
+const buildActionLogContext = (
+  logContext: LogContext,
+  button: string,
+): LogContext => ({
+  ...logContext,
+  dt: { ...(logContext.dt as LogContext), button },
+});
 
 function DigitalTwinNameInput({
   value,
@@ -72,7 +84,7 @@ function ActionButtons({
   readonly onCancel: () => void;
   readonly onSave: () => void;
   readonly isSaveDisabled: boolean;
-  readonly logContext: Record<string, string>;
+  readonly logContext: LogContext;
 }) {
   return (
     <Box
@@ -95,10 +107,9 @@ function ActionButtons({
         onClick={onCancel}
         data-logger-element="button"
         data-logger-label="Cancel"
-        data-logger-context={JSON.stringify({
-          ...logContext,
-          'dt.button': 'cancel',
-        })}
+        data-logger-context={JSON.stringify(
+          buildActionLogContext(logContext, 'cancel'),
+        )}
       >
         Cancel
       </Button>
@@ -117,10 +128,9 @@ function ActionButtons({
             disabled={isSaveDisabled}
             data-logger-element="button"
             data-logger-label="Save"
-            data-logger-context={JSON.stringify({
-              ...logContext,
-              'dt.button': 'save',
-            })}
+            data-logger-context={JSON.stringify(
+              buildActionLogContext(logContext, 'save'),
+            )}
           >
             Save
           </Button>

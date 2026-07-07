@@ -29,6 +29,9 @@ function renderScopeTabList(
             key={tab.label}
             data-logger-element="subtab"
             data-logger-label={tab.label}
+            data-logger-context={
+              tab.loggerContext ? JSON.stringify(tab.loggerContext) : undefined
+            }
           >
             {tab.label}
           </Tab>
@@ -66,6 +69,9 @@ export function TabComponent(props: {
             key={tab.label}
             data-logger-element="tab"
             data-logger-label={tab.label}
+            data-logger-context={
+              tab.loggerContext ? JSON.stringify(tab.loggerContext) : undefined
+            }
           >
             {tab.label}
           </Tab>

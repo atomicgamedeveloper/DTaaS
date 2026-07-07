@@ -93,13 +93,20 @@ describe('CreatePage asset log context', () => {
     );
 
     const cancelButton = screen.getByText('Cancel');
-    expect(cancelButton).toHaveAttribute(
-      'data-logger-context',
-      expect.stringContaining('model-description.md'),
+    const context = JSON.parse(
+      cancelButton.getAttribute('data-logger-context') ?? '{}',
     );
-    expect(cancelButton).not.toHaveAttribute(
-      'data-logger-context',
-      expect.stringContaining('existing.md'),
-    );
+
+    expect(context).toEqual({
+      dt: {
+        name: 'DTName',
+        button: 'cancel',
+        assets: {
+          description: ['model-description.md'],
+          configuration: [],
+          lifecycle: [],
+        },
+      },
+    });
   });
 });

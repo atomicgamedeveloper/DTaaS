@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, Dispatch, SetStateAction } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  Dispatch,
+  MutableRefObject,
+  SetStateAction,
+} from 'react';
 import Editor from '@monaco-editor/react';
 import { useDispatch } from 'react-redux';
 import { addOrUpdateLibraryFile } from 'model/store/libraryConfigFiles.slice';
@@ -87,35 +94,59 @@ export const handleEditorChange = (
   handlers.dispatch(action);
 };
 
+type EditLogTimerRef = MutableRefObject<ReturnType<typeof setTimeout> | null>;
+type EditLogFileRef = MutableRefObject<string | null>;
+
 // Monaco does not emit native DOM change events, so the global DOM logger
 // cannot see edits; log them directly, debounced per burst of typing.
+const flushEditLog = (
+  timerRef: EditLogTimerRef,
+  pendingFileRef: EditLogFileRef,
+) => {
+  if (timerRef.current) clearTimeout(timerRef.current);
+  timerRef.current = null;
+  const file = pendingFileRef.current;
+  if (!file) return;
+  pendingFileRef.current = null;
+  log({
+    event: 'change',
+    page: globalThis.location.pathname,
+    element: 'editor',
+    label: `Edited ${file}`,
+    context: { file },
+  });
+};
+
+const restartEditLogTimer = (
+  timerRef: EditLogTimerRef,
+  pendingFileRef: EditLogFileRef,
+) => {
+  if (timerRef.current) clearTimeout(timerRef.current);
+  timerRef.current = setTimeout(
+    () => flushEditLog(timerRef, pendingFileRef),
+    EDIT_LOG_DEBOUNCE_MS,
+  );
+};
+
+const scheduleEditLog = (
+  timerRef: EditLogTimerRef,
+  pendingFileRef: EditLogFileRef,
+  file: string,
+) => {
+  if (pendingFileRef.current && pendingFileRef.current !== file) {
+    flushEditLog(timerRef, pendingFileRef);
+  }
+  pendingFileRef.current = file;
+  restartEditLogTimer(timerRef, pendingFileRef);
+};
+
 function useEditLogger(): (file: string) => void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFileRef = useRef<string | null>(null);
 
-  const flush = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = null;
-    if (pendingFileRef.current) {
-      log({
-        event: 'change',
-        page: globalThis.location.pathname,
-        element: 'editor',
-        label: `Edited ${pendingFileRef.current}`,
-        context: { file: pendingFileRef.current },
-      });
-      pendingFileRef.current = null;
-    }
-  };
+  useEffect(() => () => flushEditLog(timerRef, pendingFileRef), []);
 
-  useEffect(() => flush, []);
-
-  return (file: string) => {
-    if (pendingFileRef.current && pendingFileRef.current !== file) flush();
-    pendingFileRef.current = file;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(flush, EDIT_LOG_DEBOUNCE_MS);
-  };
+  return (file: string) => scheduleEditLog(timerRef, pendingFileRef, file);
 }
 
 function EditorTab({

@@ -66,8 +66,11 @@ export default class LogsService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.writeQueue;
-    await this.closeWriteStream();
+    try {
+      await this.writeQueue;
+    } finally {
+      await this.closeWriteStream();
+    }
   }
 
   private async closeWriteStream(): Promise<void> {

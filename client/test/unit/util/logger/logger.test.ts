@@ -83,6 +83,31 @@ describe('logger', () => {
     expect(event!.sessionId).toBeDefined();
   });
 
+  it('keeps nested context values and arrays in log events', async () => {
+    await initLogger('testuser');
+    const event = log({
+      event: 'click',
+      page: '/preview/digitaltwins',
+      element: 'button',
+      label: 'Start',
+      context: {
+        dt: {
+          name: 'mass-spring-damper',
+          button: 'start',
+          history: ['2026-07-07T12:30:00.000Z'],
+        },
+      },
+    });
+
+    expect(event!.context).toEqual({
+      dt: {
+        name: 'mass-spring-damper',
+        button: 'start',
+        history: ['2026-07-07T12:30:00.000Z'],
+      },
+    });
+  });
+
   it('persists log event to IndexedDB', async () => {
     await initLogger('testuser');
     const event = log({
@@ -162,6 +187,18 @@ describe('logger', () => {
     expect(event!.page).toBe('/library');
     expect(event!.element).toBe('page');
     expect(event!.label).toBe('/library');
+  });
+
+  it('adds page transition data between navigation events', async () => {
+    await initLogger('testuser');
+    expect(logNavigation('/workbench')!.page_transition).toBeUndefined();
+
+    const event = logNavigation('/preview/digitaltwins');
+
+    expect(event!.page_transition).toEqual({
+      src: '/workbench',
+      target: '/preview/digitaltwins',
+    });
   });
 
   it('skips consecutive navigation events for the same page', async () => {

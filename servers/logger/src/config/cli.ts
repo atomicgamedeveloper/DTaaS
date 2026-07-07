@@ -19,7 +19,11 @@ function parseConfigFromArgs(argv: ReadonlyArray<string>): string | undefined {
       continue;
     }
     if (arg.startsWith(`${CONFIG_FLAG}=`)) {
-      configPath = arg.slice(`${CONFIG_FLAG}=`.length);
+      const value = arg.slice(`${CONFIG_FLAG}=`.length);
+      if (value.trim() === '') {
+        throw new Error(`${CONFIG_FLAG} requires a file path`);
+      }
+      configPath = value;
     }
   }
   return configPath;
@@ -30,7 +34,10 @@ export default function resolveConfigPath(
 ): string | undefined {
   const fromCli = parseConfigFromArgs(argv);
   const fromEnvRaw = process.env.LOGGER_CONFIG_PATH;
-  const fromEnv = fromEnvRaw !== undefined && fromEnvRaw.trim() !== '' ? fromEnvRaw : undefined;
+  const fromEnv =
+    fromEnvRaw !== undefined && fromEnvRaw.trim() !== ''
+      ? fromEnvRaw.trim()
+      : undefined;
   const selected = fromCli ?? fromEnv ?? DEFAULT_CONFIG_FILE;
   const resolvedPath = resolveFile(selected);
 

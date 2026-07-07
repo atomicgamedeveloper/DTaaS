@@ -8,7 +8,7 @@ import {
   log,
   logNavigation,
 } from 'util/logger/logger';
-import { LogEventType } from 'util/logger/logEvent';
+import type { LogContext, LogEventType } from 'util/logger/logEvent';
 
 const LOGGED_EVENT_TYPES: readonly LogEventType[] = ['click', 'change'];
 
@@ -21,10 +21,15 @@ function findLoggerElement(target: EventTarget | null): HTMLElement | null {
   return null;
 }
 
-function parseContext(raw: string | undefined): Record<string, string> {
+function isLogContext(value: unknown): value is LogContext {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseContext(raw: string | undefined): LogContext {
   if (!raw) return {};
   try {
-    return JSON.parse(raw) as Record<string, string>;
+    const parsed = JSON.parse(raw) as unknown;
+    return isLogContext(parsed) ? parsed : {};
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('Logger: failed to parse data-logger-context', raw, err);
@@ -115,26 +120,27 @@ function registerDomEventLogger(handleEvent: (event: Event) => void) {
     );
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export function useLogger(): void {
-  const stateUsername = useSelector((state: RootState) => state.auth.userName);
-  const loggingEnabled = useSelector(
-    (state: RootState) => state.settings.loggingEnabled,
-  );
-  const username = getLoggerUsername(stateUsername);
+function useLoggerReady(loggingEnabled: boolean, username: string): boolean {
   const initRef = useRef(false);
   const [ready, setReady] = useState(isLoggerInitialized());
-  const { pathname } = useLocation();
 
   useEffect(() => {
     if (!loggingEnabled) return;
     startLogger(username, initRef, () => setReady(true));
   }, [loggingEnabled, username]);
 
+  return ready;
+}
+
+function useLoggerNavigation(loggingEnabled: boolean, ready: boolean): void {
+  const { pathname } = useLocation();
+
   useEffect(() => {
     if (loggingEnabled && ready) logNavigation(pathname);
   }, [loggingEnabled, ready, pathname]);
+}
 
+function useLoggerDomEvents(loggingEnabled: boolean): void {
   const handleEvent = useCallback(
     (event: Event) => {
       if (!loggingEnabled) return;
@@ -147,4 +153,17 @@ export function useLogger(): void {
     if (!loggingEnabled) return undefined;
     return registerDomEventLogger(handleEvent);
   }, [handleEvent, loggingEnabled]);
+}
+
+// eslint-disable-next-line import/prefer-default-export
+export function useLogger(): void {
+  const stateUsername = useSelector((state: RootState) => state.auth.userName);
+  const loggingEnabled = useSelector(
+    (state: RootState) => state.settings.loggingEnabled,
+  );
+  const username = getLoggerUsername(stateUsername);
+
+  const ready = useLoggerReady(loggingEnabled, username);
+  useLoggerNavigation(loggingEnabled, ready);
+  useLoggerDomEvents(loggingEnabled);
 }

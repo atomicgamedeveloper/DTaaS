@@ -36,11 +36,13 @@ const buildStartLogContext = (
   executions: DTExecutionResult[],
 ) =>
   JSON.stringify({
-    'dt.name': assetName,
-    'dt.button': 'start',
-    'dt.history': executions
-      .map((execution) => new Date(execution.timestamp).toISOString())
-      .join(','),
+    dt: {
+      name: assetName,
+      button: 'start',
+      history: executions.map((execution) =>
+        new Date(execution.timestamp).toISOString(),
+      ),
+    },
   });
 
 function StartButton({

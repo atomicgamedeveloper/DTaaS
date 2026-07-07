@@ -1,4 +1,11 @@
-import { LogEvent, LogEventType, createLogEvent } from 'util/logger/logEvent';
+import { createLogEvent } from 'util/logger/logEvent';
+import type {
+  LogContext,
+  LogContextValue,
+  LogEvent,
+  LogEventType,
+  PageTransition,
+} from 'util/logger/logEvent';
 import { hashUsername } from 'util/logger/hashUtils';
 import { getSessionId } from 'util/logger/sessionManager';
 import { logToConsole } from 'util/logger/consoleLogger';
@@ -14,12 +21,18 @@ let loggerUrl = '';
 let initialized = false;
 let lastNavigationPage = '';
 
-function truncateContext(
-  context: Record<string, string>,
-): Record<string, string> {
-  const truncated: Record<string, string> = {};
+function truncateContextValue(value: LogContextValue): LogContextValue {
+  if (typeof value === 'string')
+    return value.slice(0, MAX_CONTEXT_VALUE_LENGTH);
+  if (Array.isArray(value)) return value.map(truncateContextValue);
+  if (value && typeof value === 'object') return truncateContext(value);
+  return value;
+}
+
+function truncateContext(context: LogContext): LogContext {
+  const truncated: LogContext = {};
   Object.entries(context).forEach(([key, value]) => {
-    truncated[key] = value.slice(0, MAX_CONTEXT_VALUE_LENGTH);
+    truncated[key] = truncateContextValue(value);
   });
   return truncated;
 }
@@ -27,9 +40,10 @@ function truncateContext(
 export interface LogInput {
   readonly event: LogEventType;
   readonly page: string;
+  readonly pageTransition?: PageTransition;
   readonly element: string;
   readonly label: string;
-  readonly context?: Record<string, string>;
+  readonly context?: LogContext;
 }
 
 export async function initLogger(username: string): Promise<void> {
@@ -46,6 +60,7 @@ export function isLoggerInitialized(): boolean {
 export function log({
   event,
   page,
+  pageTransition,
   element,
   label,
   context = {},
@@ -57,6 +72,7 @@ export function log({
     userHash,
     event,
     page,
+    pageTransition,
     element,
     label,
     context: truncateContext(context),
@@ -75,10 +91,15 @@ export function log({
 
 export function logNavigation(page: string): LogEvent | null {
   if (page === lastNavigationPage) return null;
+  const pageTransition =
+    lastNavigationPage && lastNavigationPage !== page
+      ? { src: lastNavigationPage, target: page }
+      : undefined;
 
   const logEvent = log({
     event: 'navigation',
     page,
+    pageTransition,
     element: 'page',
     label: page,
   });

@@ -68,3 +68,34 @@ export function scheduleLogLoad(loadLogs: () => Promise<void>): () => void {
   }, 0);
   return () => globalThis.clearTimeout(timer);
 }
+
+export function getCountText(
+  displayedCount: number,
+  totalCount: number,
+  filtered: boolean,
+): string {
+  return filtered
+    ? `${displayedCount} of ${totalCount} log entries`
+    : `${totalCount} log entries`;
+}
+
+export function getDownloadLabel(filtered: boolean): string {
+  return filtered ? 'Download Filtered JSONL' : 'Download All JSONL';
+}
+
+export function downloadJsonLines(entries: LogEvent[]): void {
+  const jsonl = toJsonLines(entries);
+  const blob = new Blob([jsonl], { type: 'application/x-ndjson' });
+  let url = '';
+  try {
+    url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dtaas-workflow-log-${new Date().toISOString().slice(0, 10)}.jsonl`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+  }
+}

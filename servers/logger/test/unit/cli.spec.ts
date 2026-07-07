@@ -96,6 +96,12 @@ describe('logger config CLI resolution', () => {
     ).toThrow('--config requires a file path');
   });
 
+  it('throws when --config=path syntax has an empty value', () => {
+    expect(() =>
+      resolveConfigPath(['node', 'dist/src/main.js', '--config=']),
+    ).toThrow('--config requires a file path');
+  });
+
   it('throws when the --config file does not exist', () => {
     const missingPath = path.join(tempDir, 'missing.yaml');
 

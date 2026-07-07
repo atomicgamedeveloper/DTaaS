@@ -266,9 +266,9 @@ describe('LogDialog', () => {
     const confirmDialog = screen
       .getAllByRole('dialog')
       .find((dialog) => within(dialog).queryByText('Confirm Clear All'));
-    expect(confirmDialog).toBeDefined();
+    if (!confirmDialog) throw new Error('Confirm Clear All dialog not found');
 
-    fireEvent.keyDown(confirmDialog!, { key: 'Escape' });
+    fireEvent.keyDown(confirmDialog, { key: 'Escape' });
 
     expect(logDismiss).toHaveBeenCalledWith(
       'dialog',

@@ -25,8 +25,10 @@ function ReconfigureButton({
       data-logger-element="button"
       data-logger-label="Reconfigure"
       data-logger-context={JSON.stringify({
-        'dt.name': assetName,
-        'dt.button': 'reconfigure',
+        dt: {
+          name: assetName,
+          button: 'reconfigure',
+        },
       })}
     >
       Reconfigure

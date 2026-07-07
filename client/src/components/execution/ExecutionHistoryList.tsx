@@ -62,11 +62,13 @@ const buildStopLogContext = (
   executions: { timestamp: number }[] | undefined,
 ) =>
   JSON.stringify({
-    'dt.name': dtName,
-    'dt.button': 'stop',
-    'dt.history': (executions ?? [])
-      .map((execution) => new Date(execution.timestamp).toISOString())
-      .join(','),
+    dt: {
+      name: dtName,
+      button: 'stop',
+      history: (executions ?? []).map((execution) =>
+        new Date(execution.timestamp).toISOString(),
+      ),
+    },
   });
 
 const getStatusIcon = (status: ExecutionStatus) => {
