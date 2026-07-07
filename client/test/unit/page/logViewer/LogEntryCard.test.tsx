@@ -35,7 +35,9 @@ describe('LogEntryCard', () => {
       <LogEntryCard
         entry={{
           ...baseEntry,
-          context: { dt: { name: 'hello', history: ['2026-07-07T00:00:00.000Z'] } },
+          context: {
+            dt: { name: 'hello', history: ['2026-07-07T00:00:00.000Z'] },
+          },
         }}
       />,
     );
@@ -47,9 +49,7 @@ describe('LogEntryCard', () => {
 
   it('renders flat primitive context values unchanged', () => {
     render(
-      <LogEntryCard
-        entry={{ ...baseEntry, context: { value: 'enabled' } }}
-      />,
+      <LogEntryCard entry={{ ...baseEntry, context: { value: 'enabled' } }} />,
     );
 
     expect(screen.getByText('value: enabled')).toBeInTheDocument();

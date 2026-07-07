@@ -166,7 +166,10 @@ const MeasurementSettingsFields: React.FC<MeasurementSettingsFieldsProps> = ({
                 'data-logger-label': 'Trial Number',
                 'data-logger-capture-value': 'true',
                 'data-logger-context': JSON.stringify({
-                  settings: { section: 'measurement', field: 'measurementTrials' },
+                  settings: {
+                    section: 'measurement',
+                    field: 'measurementTrials',
+                  },
                 }),
               },
             }}

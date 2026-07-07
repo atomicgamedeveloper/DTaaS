@@ -11,7 +11,12 @@ function flattenContext(
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       return flattenContext(value, path);
     }
-    return [{ key: path, value: Array.isArray(value) ? JSON.stringify(value) : String(value) }];
+    return [
+      {
+        key: path,
+        value: Array.isArray(value) ? JSON.stringify(value) : String(value),
+      },
+    ];
   });
 }
 
