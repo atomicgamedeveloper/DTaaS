@@ -62,6 +62,9 @@ function DTSelectField({
           'data-logger-element': 'select',
           'data-logger-label': label,
           'data-logger-capture-value': 'true',
+          'data-logger-context': JSON.stringify({
+            settings: { section: 'measurement', field: id },
+          }),
         },
       }}
       fullWidth
@@ -102,6 +105,12 @@ function DTSelectField({
                 sx={{ mt: 1 }}
                 data-logger-element="button"
                 data-logger-label="Refresh Digital Twins"
+                data-logger-context={JSON.stringify({
+                  settings: {
+                    section: 'measurement',
+                    button: 'refresh-digital-twins',
+                  },
+                })}
               >
                 <RefreshIcon />
               </IconButton>
@@ -156,6 +165,9 @@ const MeasurementSettingsFields: React.FC<MeasurementSettingsFieldsProps> = ({
                 'data-logger-element': 'input',
                 'data-logger-label': 'Trial Number',
                 'data-logger-capture-value': 'true',
+                'data-logger-context': JSON.stringify({
+                  settings: { section: 'measurement', field: 'measurementTrials' },
+                }),
               },
             }}
           />
@@ -180,6 +192,12 @@ const MeasurementSettingsFields: React.FC<MeasurementSettingsFieldsProps> = ({
                 'data-logger-element': 'input',
                 'data-logger-label': 'Measurement Secondary Runner Tag',
                 'data-logger-capture-value': 'true',
+                'data-logger-context': JSON.stringify({
+                  settings: {
+                    section: 'measurement',
+                    field: 'measurementSecondaryRunnerTag',
+                  },
+                }),
               },
             }}
           />

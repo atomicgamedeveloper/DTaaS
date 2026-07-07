@@ -39,6 +39,9 @@ const DeleteFileDialog: React.FC<DeleteFileDialogProps> = ({
           color="primary"
           data-logger-element="button"
           data-logger-label="Delete File No"
+          data-logger-context={JSON.stringify({
+            file: { name: fileName, button: 'delete-cancel' },
+          })}
         >
           No
         </Button>
@@ -47,6 +50,9 @@ const DeleteFileDialog: React.FC<DeleteFileDialogProps> = ({
           color="secondary"
           data-logger-element="button"
           data-logger-label="Delete File Yes"
+          data-logger-context={JSON.stringify({
+            file: { name: fileName, button: 'delete-confirm' },
+          })}
         >
           Yes
         </Button>

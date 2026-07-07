@@ -27,6 +27,11 @@ interface EditorProps {
   >;
 }
 
+const buildPaneLogContext = (DTName: string | undefined, fileName: string) => ({
+  ...(DTName ? { dt: { name: DTName } } : {}),
+  file: { name: fileName },
+});
+
 function Editor({
   DTName,
   tab,
@@ -97,13 +102,17 @@ function Editor({
                 label="Editor"
                 data-logger-element="tab"
                 data-logger-label="Editor"
-                data-logger-context={JSON.stringify({ section: 'editor-pane' })}
+                data-logger-context={JSON.stringify(
+                  buildPaneLogContext(DTName, fileName),
+                )}
               />
               <Tab
                 label="Preview"
                 data-logger-element="tab"
                 data-logger-label="Preview"
-                data-logger-context={JSON.stringify({ section: 'editor-pane' })}
+                data-logger-context={JSON.stringify(
+                  buildPaneLogContext(DTName, fileName),
+                )}
               />
             </Tabs>
           </Box>

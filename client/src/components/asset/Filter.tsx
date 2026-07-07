@@ -1,12 +1,14 @@
 import { TextField, Box, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+import type { LogContext } from 'util/logger/logEvent';
 
 interface FilterProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
   loggerLabel?: string;
+  loggerContext?: LogContext;
 }
 
 const Filter: React.FC<FilterProps> = ({
@@ -14,8 +16,10 @@ const Filter: React.FC<FilterProps> = ({
   value,
   onChange,
   loggerLabel = 'Asset filter',
+  loggerContext = {},
 }) => {
   const handleClear = () => onChange('');
+  const context = JSON.stringify(loggerContext);
 
   return (
     <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -32,6 +36,7 @@ const Filter: React.FC<FilterProps> = ({
           htmlInput: {
             'data-logger-element': 'input',
             'data-logger-label': loggerLabel,
+            'data-logger-context': context,
             'data-logger-capture-value': 'true',
           },
         }}
@@ -42,6 +47,7 @@ const Filter: React.FC<FilterProps> = ({
           aria-label="Clear search"
           data-logger-element="button"
           data-logger-label="Clear search"
+          data-logger-context={context}
         >
           <ClearIcon />
         </IconButton>

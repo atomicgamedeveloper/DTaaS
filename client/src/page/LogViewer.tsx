@@ -63,6 +63,7 @@ function LogViewer() {
             value={filterText}
             onChange={setFilterText}
             loggerLabel="Log filter"
+            loggerContext={{ log: { count: logs.length } }}
           />
           <Box
             sx={{

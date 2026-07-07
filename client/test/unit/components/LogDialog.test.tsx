@@ -254,6 +254,7 @@ describe('LogDialog', () => {
       'dialog',
       'TestDT Execution History',
       'escapeKeyDown',
+      { dt: { name: 'testDT' } },
     );
     expect(setShowLog).toHaveBeenCalledWith(false);
   });
@@ -274,6 +275,7 @@ describe('LogDialog', () => {
       'dialog',
       'Confirm Clear All',
       'escapeKeyDown',
+      { dt: { name: 'TestDT' } },
     );
     expect(setShowLog).not.toHaveBeenCalled();
     await waitFor(() => {

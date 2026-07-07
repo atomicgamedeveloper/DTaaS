@@ -65,6 +65,11 @@ function DetailsDialog({
           color="primary"
           data-logger-element="button"
           data-logger-label="Details Dialog Close"
+          data-logger-context={JSON.stringify(
+            library
+              ? { library: { path, button: 'details-close' } }
+              : { dt: { name, button: 'details-close' } },
+          )}
         >
           Close
         </Button>

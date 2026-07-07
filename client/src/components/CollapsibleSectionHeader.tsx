@@ -14,7 +14,7 @@ function CollapsibleSectionHeader({
   toggleAriaLabel,
   toggleLoggerLabel,
   children,
-}: CollapsibleSectionHeaderProps) {
+}: Readonly<CollapsibleSectionHeaderProps>) {
   const [expanded, setExpanded] = useState(false);
 
   return (

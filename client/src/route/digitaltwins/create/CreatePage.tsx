@@ -12,7 +12,7 @@ interface CreatePageProps {
   readonly setNewDigitalTwinName: Dispatch<SetStateAction<string>>;
 }
 
-const buildAssetsLogContext = (
+export const buildAssetsLogContext = (
   newDigitalTwinName: string,
   files: FileState[],
 ): LogContext => {
@@ -33,7 +33,7 @@ const buildAssetsLogContext = (
   };
 };
 
-const buildActionLogContext = (
+export const buildActionLogContext = (
   logContext: LogContext,
   button: string,
 ): LogContext => ({

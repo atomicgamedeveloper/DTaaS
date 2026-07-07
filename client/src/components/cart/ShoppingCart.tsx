@@ -16,10 +16,15 @@ import CartList from 'components/cart/CartList';
 import { logDismiss } from 'util/logger/logger';
 
 function ShoppingCart() {
-  const { actions } = useCart();
+  const { state, actions } = useCart();
   const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
   const dispatch = useDispatch();
+
+  const cartLogContext = (button: string) =>
+    JSON.stringify({
+      cart: { count: state.assets.length, button },
+    });
 
   const handleClearCart = () => {
     actions.clear();
@@ -63,6 +68,7 @@ function ShoppingCart() {
           onClick={() => setOpenDialog(true)}
           data-logger-element="button"
           data-logger-label="Clear Cart"
+          data-logger-context={cartLogContext('clear')}
         >
           Clear
         </Button>
@@ -71,6 +77,7 @@ function ShoppingCart() {
           onClick={() => navigate('/preview/digitaltwins')}
           data-logger-element="button"
           data-logger-label="Proceed"
+          data-logger-context={cartLogContext('proceed')}
         >
           Proceed
         </Button>
@@ -79,7 +86,9 @@ function ShoppingCart() {
       <Dialog
         open={openDialog}
         onClose={(_event, reason) => {
-          logDismiss('dialog', 'Confirm Clear Cart', reason);
+          logDismiss('dialog', 'Confirm Clear Cart', reason, {
+            cart: { count: state.assets.length },
+          });
           setOpenDialog(false);
         }}
       >
@@ -93,6 +102,7 @@ function ShoppingCart() {
             color="primary"
             data-logger-element="button"
             data-logger-label="Clear Cart No"
+            data-logger-context={cartLogContext('clear-cancel')}
           >
             No
           </Button>
@@ -102,6 +112,7 @@ function ShoppingCart() {
             autoFocus
             data-logger-element="button"
             data-logger-label="Clear Cart Yes"
+            data-logger-context={cartLogContext('clear-confirm')}
           >
             Yes
           </Button>

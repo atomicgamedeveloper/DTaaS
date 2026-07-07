@@ -28,6 +28,9 @@ const LoggingSettingsFields: React.FC<SettingsFieldProps> = ({
               data-logger-element="checkbox"
               data-logger-label="Toggle Logging"
               data-logger-capture-value="true"
+              data-logger-context={JSON.stringify({
+                settings: { section: 'logging', field: 'loggingEnabled' },
+              })}
             />
           }
           label="Enable logging"

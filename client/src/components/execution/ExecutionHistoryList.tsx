@@ -107,6 +107,7 @@ const getStatusText = (status: ExecutionStatus): string => {
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
+  dtName: string;
   executionId: string | null;
   onClose: () => void;
   onConfirm: () => void;
@@ -114,6 +115,7 @@ interface DeleteConfirmationDialogProps {
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   open,
+  dtName,
   executionId,
   onClose,
   onConfirm,
@@ -121,7 +123,9 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Confirm Deletion', reason);
+      logDismiss('dialog', 'Confirm Deletion', reason, {
+        dt: { name: dtName, executionId },
+      });
       onClose();
     }}
   >
@@ -145,6 +149,9 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         color="primary"
         data-logger-element="button"
         data-logger-label="Cancel"
+        data-logger-context={JSON.stringify({
+          dt: { name: dtName, executionId, button: 'delete-execution-cancel' },
+        })}
       >
         Cancel
       </Button>
@@ -153,6 +160,13 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         color="error"
         data-logger-element="button"
         data-logger-label="Delete Execution"
+        data-logger-context={JSON.stringify({
+          dt: {
+            name: dtName,
+            executionId,
+            button: 'delete-execution-confirm',
+          },
+        })}
       >
         Delete
       </Button>
@@ -282,6 +296,7 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
       {/* Delete confirmation dialog */}
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
+        dtName={dtName}
         executionId={executionToDelete}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
@@ -305,7 +320,11 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                 data-logger-element="accordion"
                 data-logger-label="Toggle Execution Details"
                 data-logger-context={JSON.stringify({
-                  executionId: execution.id,
+                  dt: {
+                    name: dtName,
+                    executionId: execution.id,
+                    button: 'toggle-execution-details',
+                  },
                 })}
                 sx={{
                   display: 'flex',
@@ -362,6 +381,13 @@ const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                         size="small"
                         data-logger-element="button"
                         data-logger-label="Delete Execution"
+                        data-logger-context={JSON.stringify({
+                          dt: {
+                            name: dtName,
+                            executionId: execution.id,
+                            button: 'delete-execution',
+                          },
+                        })}
                       >
                         <DeleteIcon />
                       </IconButton>

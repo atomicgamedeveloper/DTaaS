@@ -76,6 +76,9 @@ const ApplicationSettingsFields: React.FC<SettingsFieldProps> = ({
                 'data-logger-element': 'input',
                 'data-logger-label': label,
                 'data-logger-capture-value': 'true',
+                'data-logger-context': JSON.stringify({
+                  settings: { section: 'application', field: id },
+                }),
               },
             }}
           />

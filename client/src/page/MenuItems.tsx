@@ -48,6 +48,9 @@ function MenuItem({
         style={isActive ? { backgroundColor: 'lightgray' } : undefined}
         data-logger-element="nav-link"
         data-logger-label={item.name}
+        data-logger-context={JSON.stringify({
+          nav: { link: item.link, active: isActive },
+        })}
       >
         <ListItemIcon
           sx={{

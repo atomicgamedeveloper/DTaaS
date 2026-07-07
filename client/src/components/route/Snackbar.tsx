@@ -39,7 +39,10 @@ const CustomSnackbar: React.FC = () => {
       timeouts.delete(id);
     }
     const item = items.find((entry) => entry.id === id);
-    if (item) logDismiss('snackbar', item.message);
+    if (item)
+      logDismiss('snackbar', item.message, undefined, {
+        notification: { severity: item.severity },
+      });
     dispatch(hideSnackbar(id));
   };
 
@@ -62,6 +65,7 @@ const CustomSnackbar: React.FC = () => {
           page: globalThis.location.pathname,
           element: 'snackbar',
           label: item.message,
+          context: { notification: { severity: item.severity } },
         });
       }
     }

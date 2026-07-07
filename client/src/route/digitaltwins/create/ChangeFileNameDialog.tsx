@@ -74,6 +74,9 @@ const ChangeFileNameDialog: React.FC<ChangeFileNameDialogProps> = ({
           color="primary"
           data-logger-element="button"
           data-logger-label="Rename File Cancel"
+          data-logger-context={JSON.stringify({
+            file: { name: fileName, button: 'rename-cancel' },
+          })}
         >
           Cancel
         </Button>
@@ -93,6 +96,13 @@ const ChangeFileNameDialog: React.FC<ChangeFileNameDialogProps> = ({
           color="secondary"
           data-logger-element="button"
           data-logger-label="Rename File Confirm"
+          data-logger-context={JSON.stringify({
+            file: {
+              name: fileName,
+              renameTo: modifiedFileName,
+              button: 'rename-confirm',
+            },
+          })}
         >
           Change
         </Button>

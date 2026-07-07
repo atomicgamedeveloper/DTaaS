@@ -47,6 +47,9 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
           data-testid="copy-logs"
           data-logger-element="button"
           data-logger-label="Copy Logs"
+          data-logger-context={JSON.stringify({
+            log: { count: entries.length, button: 'copy' },
+          })}
         >
           {copied ? 'Copied' : 'Copy to clipboard'}
         </Button>

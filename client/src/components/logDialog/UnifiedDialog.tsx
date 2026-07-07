@@ -33,7 +33,7 @@ function UnifiedDialog({
       maxWidth="md"
       fullWidth
       onClose={(_event, reason) => {
-        logDismiss('dialog', title, reason);
+        logDismiss('dialog', title, reason, { dt: { name: dtName } });
         onClose();
       }}
     >
@@ -48,6 +48,9 @@ function UnifiedDialog({
           color="error"
           data-logger-element="button"
           data-logger-label="Clear All"
+          data-logger-context={JSON.stringify({
+            dt: { name: dtName, button: 'clear-all-executions' },
+          })}
         >
           Clear All
         </Button>
@@ -56,6 +59,9 @@ function UnifiedDialog({
           color="primary"
           data-logger-element="button"
           data-logger-label="Close"
+          data-logger-context={JSON.stringify({
+            dt: { name: dtName, button: 'close-history' },
+          })}
         >
           Close
         </Button>

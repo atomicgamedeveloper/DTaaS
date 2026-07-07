@@ -28,6 +28,10 @@ import {
   setDigitalTwin,
   setShouldFetchDigitalTwins,
 } from 'model/backend/state/digitalTwin.slice';
+import {
+  buildAssetsLogContext,
+  buildActionLogContext,
+} from 'route/digitaltwins/create/CreatePage';
 
 interface CreateDTDialogProps {
   readonly open: boolean;
@@ -181,6 +185,7 @@ const CreateDTDialog: React.FC<CreateDTDialogProps> = ({
   const { actions } = useCart();
 
   const [isLoading, setIsLoading] = useState(false);
+  const logContext = buildAssetsLogContext(newDigitalTwinName, files);
 
   return (
     <Dialog open={open} onClose={setOpenCreateDTDialog}>
@@ -209,6 +214,9 @@ const CreateDTDialog: React.FC<CreateDTDialogProps> = ({
             }
             data-logger-element="button"
             data-logger-label="Create DT Cancel"
+            data-logger-context={JSON.stringify(
+              buildActionLogContext(logContext, 'create-cancel'),
+            )}
           >
             Cancel
           </Button>
@@ -236,6 +244,9 @@ const CreateDTDialog: React.FC<CreateDTDialogProps> = ({
           disabled={isLoading}
           data-logger-element="button"
           data-logger-label="Create DT Confirm"
+          data-logger-context={JSON.stringify(
+            buildActionLogContext(logContext, 'create-confirm'),
+          )}
         >
           {isLoading ? 'Creating...' : 'Confirm'}
         </Button>

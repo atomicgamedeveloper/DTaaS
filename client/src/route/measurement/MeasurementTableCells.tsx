@@ -53,7 +53,9 @@ export function TaskControls({
         onClick={() => onDownloadTask(task)}
         data-logger-element="button"
         data-logger-label="Download Task Results"
-        data-logger-context={JSON.stringify({ task: task['Task Name'] })}
+        data-logger-context={JSON.stringify({
+          measurement: { task: task['Task Name'], button: 'download-task' },
+        })}
       >
         Download Task Results
       </Typography>
@@ -215,7 +217,9 @@ export function ExpandedDescriptionRow({
                   data-logger-element="checkbox"
                   data-logger-label="Toggle Task Enabled"
                   data-logger-capture-value="true"
-                  data-logger-context={JSON.stringify({ task: taskName })}
+                  data-logger-context={JSON.stringify({
+                    measurement: { task: taskName, button: 'toggle-enabled' },
+                  })}
                 />
               </span>
             </Tooltip>

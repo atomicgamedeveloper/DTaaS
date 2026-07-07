@@ -21,7 +21,9 @@ const DeleteAllConfirmationDialog: React.FC<
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Confirm Clear All', reason);
+      logDismiss('dialog', 'Confirm Clear All', reason, {
+        dt: { name: dtName },
+      });
       onClose();
     }}
   >
@@ -40,6 +42,9 @@ const DeleteAllConfirmationDialog: React.FC<
         color="primary"
         data-logger-element="button"
         data-logger-label="Cancel"
+        data-logger-context={JSON.stringify({
+          dt: { name: dtName, button: 'clear-all-cancel' },
+        })}
       >
         Cancel
       </Button>
@@ -48,6 +53,9 @@ const DeleteAllConfirmationDialog: React.FC<
         color="error"
         data-logger-element="button"
         data-logger-label="Delete All"
+        data-logger-context={JSON.stringify({
+          dt: { name: dtName, button: 'clear-all-confirm' },
+        })}
       >
         Delete All
       </Button>

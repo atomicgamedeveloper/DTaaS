@@ -201,6 +201,7 @@ describe('ExecutionHistoryList - details and dialogs', () => {
       'dialog',
       'Confirm Deletion',
       'escapeKeyDown',
+      { dt: { name: dtName, executionId: 'exec1' } },
     );
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

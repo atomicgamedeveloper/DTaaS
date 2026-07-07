@@ -113,13 +113,14 @@ export function logDismiss(
   element: string,
   label: string,
   reason?: string,
+  context: LogContext = {},
 ): LogEvent | null {
   return log({
     event: 'dismiss',
     page: globalThis.location.pathname,
     element,
     label,
-    context: reason ? { reason } : {},
+    context: reason ? { ...context, reason } : context,
   });
 }
 

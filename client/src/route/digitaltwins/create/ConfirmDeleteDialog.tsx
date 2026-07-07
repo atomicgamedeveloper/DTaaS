@@ -8,10 +8,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
 import { defaultFiles } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import {
+  buildAssetsLogContext,
+  buildActionLogContext,
+} from 'route/digitaltwins/create/CreatePage';
 
 interface ConfirmDeleteDialogProps {
   readonly open: boolean;
   readonly setOpenConfirmDeleteDialog: Dispatch<SetStateAction<boolean>>;
+  readonly newDigitalTwinName: string;
   readonly setFileName: Dispatch<SetStateAction<string>>;
   readonly setFileContent: Dispatch<SetStateAction<string>>;
   readonly setFileType: Dispatch<SetStateAction<string>>;
@@ -56,6 +61,7 @@ const addMissingDefaultFiles = (
 const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
   open,
   setOpenConfirmDeleteDialog,
+  newDigitalTwinName,
   setFileName,
   setFileContent,
   setFileType,
@@ -63,6 +69,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
 }) => {
   const dispatch = useDispatch();
   const files = useSelector((state: RootState) => state.files);
+  const logContext = buildAssetsLogContext(newDigitalTwinName, files);
 
   const handleConfirmCancel = () => {
     resetFormState(
@@ -86,6 +93,9 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
           onClick={() => setOpenConfirmDeleteDialog(false)}
           data-logger-element="button"
           data-logger-label="Confirm Delete Cancel"
+          data-logger-context={JSON.stringify(
+            buildActionLogContext(logContext, 'discard-cancel'),
+          )}
         >
           Cancel
         </Button>
@@ -93,6 +103,9 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
           onClick={handleConfirmCancel}
           data-logger-element="button"
           data-logger-label="Confirm Delete Yes"
+          data-logger-context={JSON.stringify(
+            buildActionLogContext(logContext, 'discard-confirm'),
+          )}
         >
           Yes
         </Button>

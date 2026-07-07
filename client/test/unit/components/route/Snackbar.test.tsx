@@ -231,12 +231,14 @@ describe('CustomSnackbar', () => {
       page: expect.any(String),
       element: 'snackbar',
       label: 'Pipeline started',
+      context: { notification: { severity: 'success' } },
     });
     expect(log).toHaveBeenCalledWith({
       event: 'notification',
       page: expect.any(String),
       element: 'snackbar',
       label: 'Pipeline failed',
+      context: { notification: { severity: 'error' } },
     });
   });
 

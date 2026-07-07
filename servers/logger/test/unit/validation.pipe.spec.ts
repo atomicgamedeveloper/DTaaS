@@ -23,6 +23,47 @@ describe('Log event validation pipe', () => {
     expect((validator.transform(payload) as LogEventDto).page).toBe('/library');
   });
 
+  it('validates a nested context payload', () => {
+    const payload: LogEventDto = {
+      sessionId: '4a4f6d5f-818d-4c86-b5dc-0d4f8a38dc02',
+      userHash:
+        'a3f2b8c1d4e5f67890abcdef1234567890abcdef1234567890abcdef12345678',
+      timestamp: '2026-03-24T20:00:00.000Z',
+      event: 'click',
+      page: '/preview/digitaltwins',
+      element: 'button',
+      label: 'Start',
+      context: {
+        dt: {
+          name: 'hello',
+          button: 'start',
+          history: ['2026-03-24T19:00:00.000Z'],
+        },
+      },
+    };
+
+    const validator = new ZodValidationPipe(logEventSchema);
+    expect((validator.transform(payload) as LogEventDto).context).toEqual(
+      payload.context,
+    );
+  });
+
+  it('rejects a context string value over the length limit', () => {
+    const payload = {
+      sessionId: '4a4f6d5f-818d-4c86-b5dc-0d4f8a38dc02',
+      userHash:
+        'a3f2b8c1d4e5f67890abcdef1234567890abcdef1234567890abcdef12345678',
+      timestamp: '2026-03-24T20:00:00.000Z',
+      event: 'click',
+      page: '/library',
+      element: 'tab',
+      label: 'Functions',
+      context: { bad: 'a'.repeat(1025) },
+    };
+
+    expect(() => logEventSchema.parse(payload)).toThrow(ZodError);
+  });
+
   it('schema rejects invalid payload', () => {
     const invalidPayload = {
       sessionId: 'not-a-uuid',

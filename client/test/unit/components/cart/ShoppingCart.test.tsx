@@ -50,6 +50,7 @@ describe('ShoppingCart', () => {
       'dialog',
       'Confirm Clear Cart',
       'escapeKeyDown',
+      { cart: { count: 0 } },
     );
     await waitFor(() => {
       expect(screen.queryByText('Confirm Clear')).not.toBeInTheDocument();

@@ -25,7 +25,9 @@ function ClearLogsDialog({
     <Dialog
       open={open}
       onClose={(_event, reason) => {
-        logDismiss('dialog', 'Clear All Logs', reason);
+        logDismiss('dialog', 'Clear All Logs', reason, {
+          log: { count: logCount },
+        });
         onCancel();
       }}
     >
@@ -43,6 +45,9 @@ function ClearLogsDialog({
           data-testid="cancel-clear-logs"
           data-logger-element="button"
           data-logger-label="Cancel Clear Logs"
+          data-logger-context={JSON.stringify({
+            log: { count: logCount, button: 'clear-cancel' },
+          })}
         >
           Cancel
         </Button>
@@ -53,6 +58,9 @@ function ClearLogsDialog({
           data-testid="confirm-clear-logs"
           data-logger-element="button"
           data-logger-label="Confirm Clear Logs"
+          data-logger-context={JSON.stringify({
+            log: { count: logCount, button: 'clear-confirm' },
+          })}
         >
           Clear Logs
         </Button>

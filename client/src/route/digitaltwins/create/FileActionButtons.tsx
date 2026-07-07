@@ -49,6 +49,9 @@ function FileActionButtons({
             disabled={deleteFileDisabled}
             data-logger-element="button"
             data-logger-label="Delete File"
+            data-logger-context={JSON.stringify({
+              file: { name: fileName, button: 'delete' },
+            })}
           >
             Delete File
           </Button>
@@ -68,6 +71,9 @@ function FileActionButtons({
             disabled={changeFileNameDisabled}
             data-logger-element="button"
             data-logger-label="Rename File"
+            data-logger-context={JSON.stringify({
+              file: { name: fileName, button: 'rename' },
+            })}
           >
             Rename File
           </Button>

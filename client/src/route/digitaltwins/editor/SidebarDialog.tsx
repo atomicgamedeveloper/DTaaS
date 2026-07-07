@@ -67,6 +67,9 @@ const SidebarDialog = ({
         }
         data-logger-element="button"
         data-logger-label="Sidebar Dialog Cancel"
+        data-logger-context={JSON.stringify({
+          file: { name: newFileName, button: 'new-cancel' },
+        })}
       >
         Cancel
       </Button>
@@ -82,6 +85,9 @@ const SidebarDialog = ({
         color="primary"
         data-logger-element="button"
         data-logger-label="Sidebar Dialog Add"
+        data-logger-context={JSON.stringify({
+          file: { name: newFileName, button: 'new-confirm' },
+        })}
       >
         Add
       </Button>

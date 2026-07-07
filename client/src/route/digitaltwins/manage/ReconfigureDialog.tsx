@@ -113,6 +113,8 @@ function ReconfigureDialog({
         onClose={handleCloseSaveDialog}
         onConfirm={handleConfirmSave}
         content="Are you sure you want to apply the changes?"
+        name={name}
+        action="save"
       />
 
       <ConfirmationDialog
@@ -120,6 +122,8 @@ function ReconfigureDialog({
         onClose={handleCloseCancelDialog}
         onConfirm={handleConfirmCancel}
         content="Are you sure you want to cancel? Changes will not be applied."
+        name={name}
+        action="cancel"
       />
     </>
   );
@@ -200,6 +204,9 @@ const ReconfigureMainDialog = ({
         onClick={handleCancel}
         data-logger-element="button"
         data-logger-label="Cancel"
+        data-logger-context={JSON.stringify({
+          dt: { name, button: 'cancel' },
+        })}
       >
         Cancel
       </Button>
@@ -208,6 +215,7 @@ const ReconfigureMainDialog = ({
         onClick={handleSave}
         data-logger-element="button"
         data-logger-label="Save"
+        data-logger-context={JSON.stringify({ dt: { name, button: 'save' } })}
       >
         Save
       </Button>
@@ -220,16 +228,22 @@ const ConfirmationDialog = ({
   onClose,
   onConfirm,
   content,
+  name,
+  action,
 }: {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly onConfirm: () => void;
   readonly content: string;
+  readonly name: string;
+  readonly action: 'save' | 'cancel';
 }) => (
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Reconfigure Confirmation', reason);
+      logDismiss('dialog', 'Reconfigure Confirmation', reason, {
+        dt: { name, action },
+      });
       onClose();
     }}
   >
@@ -239,6 +253,9 @@ const ConfirmationDialog = ({
         onClick={onClose}
         data-logger-element="button"
         data-logger-label="Reconfigure Confirm No"
+        data-logger-context={JSON.stringify({
+          dt: { name, button: `${action}-confirm-no` },
+        })}
       >
         No
       </Button>
@@ -247,6 +264,9 @@ const ConfirmationDialog = ({
         onClick={onConfirm}
         data-logger-element="button"
         data-logger-label="Reconfigure Confirm Yes"
+        data-logger-context={JSON.stringify({
+          dt: { name, button: `${action}-confirm-yes` },
+        })}
       >
         Yes
       </Button>

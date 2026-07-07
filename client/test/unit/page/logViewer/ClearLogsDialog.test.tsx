@@ -27,6 +27,7 @@ describe('ClearLogsDialog', () => {
       'dialog',
       'Clear All Logs',
       'escapeKeyDown',
+      { log: { count: 3 } },
     );
     expect(onCancel).toHaveBeenCalled();
     expect(onConfirm).not.toHaveBeenCalled();

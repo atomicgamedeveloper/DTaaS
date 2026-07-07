@@ -61,6 +61,9 @@ export const renderFileTreeItems = (
             label={itemLabel}
             data-logger-element="treeitem"
             data-logger-label={itemLabel}
+            data-logger-context={JSON.stringify({
+              file: { name: item, section: context.label },
+            })}
             onClick={() => {
               handleFileClick(
                 { fileName: item, asset: context.asset, files: context.files },
@@ -103,6 +106,9 @@ export const renderFileSection = (
           label={item}
           data-logger-element="treeitem"
           data-logger-label={item}
+          data-logger-context={JSON.stringify({
+            file: { name: item, section: context.label },
+          })}
           onClick={() => {
             handleFileClick(
               { fileName: item, asset: context.asset, files: context.files },

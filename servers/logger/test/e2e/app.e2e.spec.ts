@@ -14,6 +14,7 @@ const VALID_PAYLOAD_FIXTURES = [
   'valid-3.json',
   'valid-4.json',
   'valid-5.json',
+  'valid-6.json',
 ] as const;
 
 const INVALID_PAYLOAD_FIXTURES = [

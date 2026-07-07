@@ -47,6 +47,9 @@ function LogViewerControls({
           data-testid="download-logs"
           data-logger-element="button"
           data-logger-label="Download Logs"
+          data-logger-context={JSON.stringify({
+            log: { button: 'download', label: downloadLabel },
+          })}
         >
           {downloadLabel}
         </Button>
@@ -83,6 +86,9 @@ function LogViewerControls({
           data-testid="raw-view-toggle"
           data-logger-element="button"
           data-logger-label="Toggle Raw Logs"
+          data-logger-context={JSON.stringify({
+            log: { button: 'toggle-raw-view', rawView: !rawView },
+          })}
         >
           Raw view
         </Button>
@@ -97,6 +103,9 @@ function LogViewerControls({
             data-testid="live-update-logs"
             data-logger-element="switch"
             data-logger-label="Live Update Logs"
+            data-logger-context={JSON.stringify({
+              log: { button: 'toggle-live-update', liveUpdate: !liveUpdate },
+            })}
           />
         }
         label="Live update"

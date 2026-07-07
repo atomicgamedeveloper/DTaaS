@@ -114,7 +114,12 @@ function MeasurementTableRow({
         sx={{ cursor: 'pointer', opacity: isDisabled ? 0.45 : 1 }}
         data-logger-element="table-row"
         data-logger-label="Toggle Task Details"
-        data-logger-context={JSON.stringify({ task: task['Task Name'] })}
+        data-logger-context={JSON.stringify({
+          measurement: {
+            task: task['Task Name'],
+            button: 'toggle-task-details',
+          },
+        })}
       >
         <TaskNameCell
           index={index}

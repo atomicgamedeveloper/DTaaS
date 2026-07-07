@@ -55,7 +55,13 @@ function AddToCartButton({ assetPath, assetPrivacy }: AddToCartButtonProps) {
       onClick={handleClick}
       data-logger-element="button"
       data-logger-label={actionLabel}
-      data-logger-context={JSON.stringify({ asset: assetPath })}
+      data-logger-context={JSON.stringify({
+        library: {
+          path: assetPath,
+          scope: assetPrivacy ? 'Private' : 'Common',
+          button: actionLabel.toLowerCase(),
+        },
+      })}
     >
       {actionLabel}
     </Button>

@@ -1,6 +1,19 @@
 import { Box, Chip, Paper, Typography } from '@mui/material';
-import { LogEvent, LogEventType } from 'util/logger/logEvent';
+import { LogContext, LogEvent, LogEventType } from 'util/logger/logEvent';
 import { formatTimestamp } from 'page/logViewer/logViewerUtils';
+
+function flattenContext(
+  context: LogContext,
+  prefix = '',
+): { key: string; value: string }[] {
+  return Object.entries(context).flatMap(([key, value]) => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      return flattenContext(value, path);
+    }
+    return [{ key: path, value: Array.isArray(value) ? JSON.stringify(value) : String(value) }];
+  });
+}
 
 const EVENT_CHIP_COLOR: Record<
   LogEventType,
@@ -14,7 +27,7 @@ const EVENT_CHIP_COLOR: Record<
 };
 
 function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
-  const contextEntries = Object.entries(entry.context ?? {});
+  const contextEntries = flattenContext(entry.context ?? {});
 
   return (
     <Paper
@@ -64,7 +77,7 @@ function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
       </Typography>
       {contextEntries.length > 0 && (
         <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-          {contextEntries.map(([key, value]) => (
+          {contextEntries.map(({ key, value }) => (
             <Chip
               key={key}
               label={`${key}: ${value}`}
