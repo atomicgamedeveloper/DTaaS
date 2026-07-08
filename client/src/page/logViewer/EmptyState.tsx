@@ -18,11 +18,6 @@ function EmptyState({ filtered }: Readonly<{ filtered: boolean }>) {
           ? 'No entries match the current filter.'
           : 'No log entries found.'}
       </Typography>
-      {!filtered && (
-        <Typography variant="caption">
-          Interact with the workbench to record events.
-        </Typography>
-      )}
     </Box>
   );
 }

@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Box, Collapse, IconButton, Tooltip, Typography } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface CollapsibleSectionHeaderProps {
   title: string;
@@ -22,8 +22,8 @@ function CollapsibleSectionHeader({
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
+          gap: 0.5,
           mb: 1,
         }}
       >
@@ -35,13 +35,9 @@ function CollapsibleSectionHeader({
             aria-label={toggleAriaLabel}
             data-logger-element="button"
             data-logger-label={toggleLoggerLabel}
-            sx={{
-              color: 'text.secondary',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s',
-            }}
+            sx={{ color: 'text.secondary' }}
           >
-            <ExpandMoreIcon />
+            <InfoOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>

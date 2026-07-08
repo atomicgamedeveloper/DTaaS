@@ -5,7 +5,10 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { showSnackbar } from 'store/snackbar.slice';
 import { LogEvent } from 'util/logger/logEvent';
-import { toDisplayJsonLines } from 'page/logViewer/logViewerUtils';
+import {
+  toDisplayJsonLines,
+  toWrappableJsonLines,
+} from 'page/logViewer/logViewerUtils';
 
 function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
   const dispatch = useDispatch();
@@ -62,10 +65,10 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
           fontFamily: 'monospace',
           fontSize: '0.8125rem',
           whiteSpace: 'pre-wrap',
-          overflowWrap: 'anywhere',
+          wordBreak: 'break-all',
         }}
       >
-        {rawText}
+        {toWrappableJsonLines(entries)}
       </Box>
     </>
   );
