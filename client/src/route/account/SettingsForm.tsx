@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from 'store/store';
 import {
@@ -23,6 +23,7 @@ import SettingsFormButtons from 'route/account/SettingsFormButtons';
 import { fetchDigitalTwins } from 'model/backend/util/init';
 import { clearDigitalTwins } from 'model/backend/state/digitalTwin.slice';
 import { updateFrozenSettings } from 'model/backend/gitlab/measure/measurement.settings';
+import useAvailableHeight from 'util/useAvailableHeight';
 
 export interface SettingsFieldProps {
   formValues: FormValues;
@@ -31,6 +32,8 @@ export interface SettingsFieldProps {
 }
 
 const SettingsForm: React.FC = () => {
+  const paperRef = useRef<HTMLDivElement>(null);
+  const paperMaxHeight = useAvailableHeight(paperRef, { minHeight: 0 });
   const dispatch = useDispatch();
   const digitalTwins = useSelector(
     (state: RootState) => state.digitalTwin.digitalTwin,
@@ -217,8 +220,9 @@ const SettingsForm: React.FC = () => {
   return (
     <Box sx={{ width: '100%', mt: 2 }}>
       <Paper
+        ref={paperRef}
         elevation={2}
-        sx={{ p: 3, maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}
+        sx={{ p: 3, maxHeight: paperMaxHeight, overflowY: 'auto' }}
       >
         <ApplicationSettingsFields {...fieldProps} />
         <MeasurementSettingsFields

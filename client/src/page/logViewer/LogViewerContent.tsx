@@ -1,9 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import LogEntryCard from 'page/logViewer/LogEntryCard';
 import RawLogView from 'page/logViewer/RawLogView';
 import EmptyState from 'page/logViewer/EmptyState';
 import { LogEvent } from 'util/logger/logEvent';
+import useAvailableHeight from 'util/useAvailableHeight';
 
 interface LogViewerContentProps {
   loading: boolean;
@@ -11,6 +12,8 @@ interface LogViewerContentProps {
   rawView: boolean;
   filtered: boolean;
 }
+
+const LOG_CONTENT_MIN_HEIGHT_PX = 320;
 
 function renderEntries(
   entries: LogEvent[],
@@ -30,15 +33,22 @@ function LogViewerContent({
   rawView,
   filtered,
 }: Readonly<LogViewerContentProps>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentHeight = useAvailableHeight(containerRef, {
+    minHeight: LOG_CONTENT_MIN_HEIGHT_PX,
+    deps: [loading],
+  });
+
   if (loading) {
     return (
       <Box
+        ref={containerRef}
         sx={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '60vh',
-          minHeight: 320,
+          maxHeight: contentHeight,
+          minHeight: LOG_CONTENT_MIN_HEIGHT_PX,
         }}
       >
         <CircularProgress />
@@ -48,6 +58,7 @@ function LogViewerContent({
 
   return (
     <Box
+      ref={containerRef}
       data-testid="log-content"
       sx={{
         backgroundColor: 'action.hover',
@@ -55,8 +66,8 @@ function LogViewerContent({
         borderColor: 'divider',
         p: 2,
         borderRadius: 1,
-        height: '60vh',
-        minHeight: 320,
+        maxHeight: contentHeight,
+        minHeight: LOG_CONTENT_MIN_HEIGHT_PX,
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
