@@ -1,4 +1,5 @@
-import { TextField, Box, IconButton } from '@mui/material';
+import { TextField, Box, IconButton, InputAdornment } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import type { LogContext } from 'util/logger/logEvent';
@@ -9,6 +10,7 @@ interface FilterProps {
   onChange: (value: string) => void;
   loggerLabel?: string;
   loggerContext?: LogContext;
+  sx?: SxProps<Theme>;
 }
 
 const Filter: React.FC<FilterProps> = ({
@@ -17,13 +19,18 @@ const Filter: React.FC<FilterProps> = ({
   onChange,
   loggerLabel = 'Asset filter',
   loggerContext = {},
+  sx,
 }) => {
   const handleClear = () => onChange('');
   const context = JSON.stringify(loggerContext);
 
   return (
-    <Box sx={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-      <SearchIcon />
+    <Box
+      sx={[
+        { marginTop: 2, display: 'flex', alignItems: 'center', gap: 1 },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
       <TextField
         fullWidth
         variant="outlined"
@@ -33,6 +40,13 @@ const Filter: React.FC<FilterProps> = ({
         onChange={(e) => onChange(e.target.value)}
         sx={{ maxWidth: 300 }}
         slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          },
           htmlInput: {
             'data-logger-element': 'input',
             'data-logger-label': loggerLabel,

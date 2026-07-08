@@ -44,6 +44,12 @@ export function toDisplayJsonLines(entries: LogEvent[]): string {
     .join('\n');
 }
 
+const NON_BREAKING_HYPHEN = '‑';
+
+export function toWrappableJsonLines(entries: LogEvent[]): string {
+  return toDisplayJsonLines(entries).replace(/-/g, NON_BREAKING_HYPHEN);
+}
+
 export function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString();

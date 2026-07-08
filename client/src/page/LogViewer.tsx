@@ -46,25 +46,36 @@ function LogViewer() {
         />
         <LogViewerHeader />
         <Paper sx={{ p: 3 }}>
-          <LogViewerControls
-            downloadLabel={getDownloadLabel(filtered)}
-            onDownload={() => downloadJsonLines(displayedLogs)}
-            downloadDisabled={displayedLogs.length === 0}
-            onClearClick={() => setClearConfirmOpen(true)}
-            clearDisabled={logs.length === 0}
-            onRefresh={loadLogs}
-            rawView={rawView}
-            onToggleRawView={() => setRawView((prev) => !prev)}
-            liveUpdate={liveUpdate}
-            onLiveUpdateChange={setLiveUpdate}
-          />
-          <Filter
-            placeholder="Filter logs"
-            value={filterText}
-            onChange={setFilterText}
-            loggerLabel="Log filter"
-            loggerContext={{ log: { count: logs.length } }}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              columnGap: 1.5,
+              rowGap: 1,
+            }}
+          >
+            <Filter
+              placeholder="Filter logs"
+              value={filterText}
+              onChange={setFilterText}
+              loggerLabel="Log filter"
+              loggerContext={{ log: { count: logs.length } }}
+              sx={{ marginTop: 0 }}
+            />
+            <LogViewerControls
+              downloadLabel={getDownloadLabel(filtered)}
+              onDownload={() => downloadJsonLines(displayedLogs)}
+              downloadDisabled={displayedLogs.length === 0}
+              onClearClick={() => setClearConfirmOpen(true)}
+              clearDisabled={logs.length === 0}
+              onRefresh={loadLogs}
+              rawView={rawView}
+              onToggleRawView={() => setRawView((prev) => !prev)}
+              liveUpdate={liveUpdate}
+              onLiveUpdateChange={setLiveUpdate}
+            />
+          </Box>
           <Box
             sx={{
               mt: 1.5,

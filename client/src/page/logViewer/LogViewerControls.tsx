@@ -1,4 +1,12 @@
-import { Box, Button, Divider, FormControlLabel, Switch } from '@mui/material';
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  IconButton,
+  Switch,
+  ToggleButton,
+  Tooltip,
+} from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -33,56 +41,30 @@ function LogViewerControls({
     <Box
       sx={{
         display: 'flex',
-        gap: 1.5,
+        gap: 1,
         flexWrap: 'wrap',
         alignItems: 'center',
+        marginLeft: 'auto',
       }}
     >
-      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          startIcon={<DownloadIcon />}
-          onClick={onDownload}
-          disabled={downloadDisabled}
-          data-testid="download-logs"
-          data-logger-element="button"
-          data-logger-label="Download Logs"
-          data-logger-context={JSON.stringify({
-            log: { button: 'download', label: downloadLabel },
-          })}
-        >
-          {downloadLabel}
-        </Button>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<DeleteOutlinedIcon />}
-          onClick={onClearClick}
-          disabled={clearDisabled}
-          data-testid="clear-logs"
-          data-logger-element="button"
-          data-logger-label="Clear Logs"
-        >
-          Clear Logs
-        </Button>
-      </Box>
-      <Divider orientation="vertical" flexItem />
-      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
+      <Tooltip title="Refresh">
+        <IconButton
           onClick={onRefresh}
+          aria-label="Refresh logs"
           data-testid="refresh-logs"
           data-logger-element="button"
           data-logger-label="Refresh Logs"
         >
-          Refresh
-        </Button>
-        <Button
-          variant={rawView ? 'contained' : 'outlined'}
-          startIcon={<DataObjectIcon />}
-          onClick={onToggleRawView}
-          aria-pressed={rawView}
+          <RefreshIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={rawView ? 'Card view' : 'Raw view'}>
+        <ToggleButton
+          value="raw"
+          size="small"
+          selected={rawView}
+          onChange={onToggleRawView}
+          aria-label="Toggle raw view"
           data-testid="raw-view-toggle"
           data-logger-element="button"
           data-logger-label="Toggle Raw Logs"
@@ -90,11 +72,40 @@ function LogViewerControls({
             log: { button: 'toggle-raw-view', rawView: !rawView },
           })}
         >
-          Raw view
-        </Button>
-      </Box>
+          <DataObjectIcon fontSize="small" />
+        </ToggleButton>
+      </Tooltip>
+      <Tooltip title="Clear logs">
+        <span>
+          <IconButton
+            onClick={onClearClick}
+            disabled={clearDisabled}
+            aria-label="Clear logs"
+            data-testid="clear-logs"
+            data-logger-element="button"
+            data-logger-label="Clear Logs"
+            sx={{ '&:hover': { color: 'error.main' } }}
+          >
+            <DeleteOutlinedIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Button
+        variant="contained"
+        startIcon={<DownloadIcon />}
+        onClick={onDownload}
+        disabled={downloadDisabled}
+        data-testid="download-logs"
+        data-logger-element="button"
+        data-logger-label="Download Logs"
+        data-logger-context={JSON.stringify({
+          log: { button: 'download', label: downloadLabel },
+        })}
+      >
+        {downloadLabel}
+      </Button>
       <FormControlLabel
-        sx={{ marginLeft: 'auto', marginRight: 0 }}
+        sx={{ marginLeft: 0.5, marginRight: 0 }}
         control={
           <Switch
             checked={liveUpdate}
