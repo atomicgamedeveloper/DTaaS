@@ -45,7 +45,12 @@ async function bootstrap() {
   app.enableCors(
     buildCorsOptions(config.getCorsAllowOrigin(), config.getPort()),
   );
-  app.use(json({ limit: `${config.getMaxPayloadBytes()}b` }));
+  app.use(
+    json({
+      limit: `${config.getMaxPayloadBytes()}b`,
+      type: ['application/json', 'text/plain'],
+    }),
+  );
   await app.listen(config.getPort(), config.getHostname());
 }
 

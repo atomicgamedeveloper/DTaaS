@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
+import { json } from 'express';
 import supertest from 'supertest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -195,5 +196,55 @@ describe('Logger service e2e with jwt configured', () => {
     await supertest(app.getHttpServer())
       .get('/logger/health')
       .expect(HttpStatus.OK);
+  });
+});
+
+describe('Logger service e2e with production body-parser config', () => {
+  let app: INestApplication;
+  let logFilePath = '';
+  let tempDir = '';
+
+  beforeAll(async () => {
+    tempDir = await mkdtemp(
+      path.join(os.tmpdir(), 'dtaas-logger-e2e-textplain-'),
+    );
+    logFilePath = path.join(tempDir, 'events.jsonl');
+    process.env.LOGGER_CONFIG_PATH = '';
+    process.env.LOGGER_TLS = 'false';
+    process.env.LOGGER_CERTS_DIR = '';
+    process.env.LOGGER_CORS_ALLOW_ORIGIN = '*';
+    process.env.LOGGER_LOG_FILE_PATH = logFilePath;
+    process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.use(json({ limit: '65536b', type: ['application/json', 'text/plain'] }));
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+    delete process.env.LOGGER_CONFIG_PATH;
+    delete process.env.LOGGER_TLS;
+    delete process.env.LOGGER_CERTS_DIR;
+    delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
+    delete process.env.LOGGER_LOG_FILE_PATH;
+    delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it('accepts a JSON body sent with Content-Type: text/plain, as navigator.sendBeacon sends it', async () => {
+    const payload = await readPayloadFixture('sample.json');
+    const response = await supertest(app.getHttpServer())
+      .post('/logger')
+      .send(JSON.stringify(payload))
+      .set('Content-Type', 'text/plain;charset=UTF-8');
+    expect(response.status).toBe(HttpStatus.NO_CONTENT);
+
+    const content = await readFile(logFilePath, 'utf8');
+    expect(JSON.parse(content.trim())).toEqual(payload);
   });
 });

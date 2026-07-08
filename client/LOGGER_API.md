@@ -21,7 +21,9 @@ Ingest a single log event.
 #### Request
 
 - **Method**: `POST`
-- **Content-Type**: `application/json`
+- **Content-Type**: `text/plain;charset=UTF-8` (sent by `navigator.sendBeacon`
+  to avoid a CORS preflight for cross-origin logger deployments; the backend
+  parses the body as JSON regardless of this label)
 - **Body**: A single JSON log event object.
 
 ```json
@@ -83,7 +85,10 @@ The client uses the
 
 - Guarantees delivery even during page unload
 - Does not block the UI thread
-- Sends as HTTP POST with `Content-Type: application/json`
+- Sends as HTTP POST with `Content-Type: text/plain;charset=UTF-8` — this
+  avoids a CORS preflight for cross-origin logger backends, so if the
+  backend is unreachable the request fails without blocking or console
+  errors; the body is still JSON-encoded text
 - Payload is a single JSON object (not batched)
 
 ## Backend Candidates
@@ -105,7 +110,9 @@ import express from 'express';
 import { appendFileSync } from 'fs';
 
 const app = express();
-app.use(express.json());
+// type must include 'text/plain' — navigator.sendBeacon sends the JSON
+// body labeled as text/plain to avoid a CORS preflight.
+app.use(express.json({ type: ['application/json', 'text/plain'] }));
 
 app.post('/logger', (req, res) => {
   appendFileSync('workflow-logs.jsonl', JSON.stringify(req.body) + '\n');

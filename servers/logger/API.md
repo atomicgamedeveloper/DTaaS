@@ -16,7 +16,9 @@ Ingest a single log event.
 #### POST Request
 
 - **Method**: `POST`
-- **Content-Type**: `application/json`
+- **Content-Type**: `application/json` or `text/plain` (the bundled client
+  sends `text/plain` via `navigator.sendBeacon` to avoid a CORS preflight;
+  both are parsed as JSON)
 - **Body**: A single JSON log event object.
 
 ```json
