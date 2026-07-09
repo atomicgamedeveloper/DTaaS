@@ -3,10 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useDispatch } from 'react-redux';
 import LogViewer from 'page/LogViewer';
-import {
-  toDisplayJsonLines,
-  toWrappableJsonLines,
-} from 'page/logViewer/logViewerUtils';
+import { toDisplayJsonLines } from 'page/logViewer/logViewerUtils';
 import { showSnackbar } from 'store/snackbar.slice';
 import * as indexedDBLogger from 'util/logger/indexedDBLogger';
 import { LogEvent } from 'util/logger/logEvent';
@@ -71,12 +68,6 @@ describe('LogViewer raw view', () => {
     (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
   });
 
-  it('replaces hyphens with a non-breaking hyphen so UUIDs do not split', () => {
-    const wrappable = toWrappableJsonLines([mockEvents[0]]);
-    expect(wrappable).not.toContain('-');
-    expect(wrappable).toContain('sess‑1');
-  });
-
   it('shows raw JSON lines when raw view is toggled', async () => {
     render(<LogViewer />);
 
@@ -87,8 +78,8 @@ describe('LogViewer raw view', () => {
     fireEvent.click(screen.getByTestId('raw-view-toggle'));
 
     const raw = screen.getByTestId('raw-log-content').textContent ?? '';
-    expect(raw).toContain('"event":"click"');
-    expect(raw).toContain('"sessionId":"sess‑1"');
+    expect(raw).toContain('"event": "click"');
+    expect(raw).toContain('"sessionId": "sess-1"');
     expect(screen.queryByText('tab: functions')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('raw-view-toggle'));

@@ -18,7 +18,7 @@ import {
 import { Pipeline } from 'model/backend/interfaces/execution';
 
 const normalizeProjectKey = (value: string | undefined): string =>
-  value?.toLocaleLowerCase() ?? '';
+  value?.toLowerCase() ?? '';
 
 function getNamespaceProjectPath(project: ProjectSummary): string | undefined {
   return project.path_with_namespace?.split('/').pop();
