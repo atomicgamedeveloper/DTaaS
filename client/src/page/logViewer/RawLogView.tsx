@@ -7,7 +7,7 @@ import { showSnackbar } from 'store/snackbar.slice';
 import { LogEvent } from 'util/logger/logEvent';
 import {
   toDisplayJsonLines,
-  toWrappableJsonLines,
+  toPrettyDisplayJson,
 } from 'page/logViewer/logViewerUtils';
 
 function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
@@ -68,7 +68,7 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
           wordBreak: 'break-all',
         }}
       >
-        {toWrappableJsonLines(entries)}
+        {toPrettyDisplayJson(entries)}
       </Box>
     </>
   );

@@ -59,16 +59,16 @@ Ingest a single log event.
 
 ## Log Event Schema
 
-| Field       | Type                 | Required | Description                                              |
-| ----------- | -------------------- | -------- | -------------------------------------------------------- |
-| `sessionId` | string (UUID v4)     | Yes      | Unique browser session identifier                        |
-| `userHash`  | string (SHA-256 hex) | Yes      | Anonymized username hash                                 |
-| `timestamp` | string (ISO 8601)    | Yes      | UTC timestamp of the event                               |
-| `event`     | string               | Yes      | Event type (currently always `"click"`)                  |
-| `page`      | string               | Yes      | URL path of the current page                             |
-| `element`   | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`) |
-| `label`     | string               | Yes      | Human-readable label of the element                      |
-| `context`   | object               | No       | Additional key-value metadata                            |
+| Field       | Type                 | Required | Description                                                                             |
+| ----------- | -------------------- | -------- | --------------------------------------------------------------------------------------- |
+| `sessionId` | string (UUID v4)     | Yes      | Unique browser session identifier                                                       |
+| `userHash`  | string (SHA-256 hex) | Yes      | Anonymized username hash                                                                |
+| `timestamp` | string (ISO 8601)    | Yes      | UTC timestamp of the event                                                              |
+| `event`     | string               | Yes      | Event type (e.g., `"click"`, `"change"`, `"navigation"`, `"notification"`, `"dismiss"`) |
+| `page`      | string               | Yes      | URL path of the current page                                                            |
+| `element`   | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`)                                |
+| `label`     | string               | Yes      | Human-readable label of the element                                                     |
+| `context`   | object               | No       | Additional key-value metadata                                                           |
 
 ## Privacy
 
@@ -133,5 +133,5 @@ window.env = {
 };
 ```
 
-When `LOGGER_URL` is empty or undefined, backend streaming
-is disabled and logs are only written to the browser console.
+When `LOGGER_URL` is empty or undefined, backend streaming is
+disabled and logs remain stored locally in the browser (IndexedDB).

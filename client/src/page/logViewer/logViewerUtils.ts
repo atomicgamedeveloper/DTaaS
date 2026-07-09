@@ -1,4 +1,4 @@
-import { LogEvent } from 'util/logger/logEvent';
+import { LogContextValue, LogEvent } from 'util/logger/logEvent';
 
 function timestampValue(event: LogEvent): number {
   const parsed = Date.parse(event.timestamp);
@@ -44,15 +44,27 @@ export function toDisplayJsonLines(entries: LogEvent[]): string {
     .join('\n');
 }
 
-const NON_BREAKING_HYPHEN = '‑';
-
-export function toWrappableJsonLines(entries: LogEvent[]): string {
-  return toDisplayJsonLines(entries).replace(/-/g, NON_BREAKING_HYPHEN);
+export function toPrettyDisplayJson(entries: LogEvent[]): string {
+  return entries
+    .map((event) => JSON.stringify(toDisplayOrder(event), null, 2))
+    .join('\n\n');
 }
 
 export function formatTimestamp(timestamp: string): string {
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString();
+}
+
+function collectContextText(value: LogContextValue): string[] {
+  if (value === null) return [];
+  if (Array.isArray(value)) return value.flatMap(collectContextText);
+  if (typeof value === 'object') {
+    return Object.entries(value).flatMap(([key, nested]) => [
+      key,
+      ...collectContextText(nested),
+    ]);
+  }
+  return [String(value)];
 }
 
 export function matchesFilter(event: LogEvent, query: string): boolean {
@@ -61,7 +73,7 @@ export function matchesFilter(event: LogEvent, query: string): boolean {
     event.label,
     event.element,
     event.page,
-    ...Object.entries(event.context ?? {}).flat(),
+    ...collectContextText(event.context ?? {}),
   ]
     .join(' ')
     .toLowerCase()
