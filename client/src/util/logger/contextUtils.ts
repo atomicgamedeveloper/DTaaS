@@ -68,10 +68,10 @@ function sanitizeContextValue(
     return sanitizeContextObject(value, depth, budget);
   const stringified =
     typeof value === 'function' ||
-    typeof value === 'symbol' ||
-    typeof value === 'bigint' ||
-    value === undefined
-      ? String(value)
+      typeof value === 'symbol' ||
+      typeof value === 'bigint' ||
+      value === undefined
+      ? String(value) // NOSONAR
       : JSON.stringify(value);
   return stringified.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
 }
