@@ -6,7 +6,6 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
-import { logDismiss } from 'util/logger/logger';
 
 interface ClearLogsDialogProps {
   open: boolean;
@@ -22,15 +21,7 @@ function ClearLogsDialog({
   onConfirm,
 }: Readonly<ClearLogsDialogProps>) {
   return (
-    <Dialog
-      open={open}
-      onClose={(_event, reason) => {
-        logDismiss('dialog', 'Clear All Logs', reason, {
-          log: { count: logCount },
-        });
-        onCancel();
-      }}
-    >
+    <Dialog open={open} onClose={onCancel}>
       <DialogTitle>Clear all logs?</DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -40,15 +31,7 @@ function ClearLogsDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          onClick={onCancel}
-          data-testid="cancel-clear-logs"
-          data-logger-element="button"
-          data-logger-label="Cancel Clear Logs"
-          data-logger-context={JSON.stringify({
-            log: { count: logCount, button: 'clear-cancel' },
-          })}
-        >
+        <Button onClick={onCancel} data-testid="cancel-clear-logs">
           Cancel
         </Button>
         <Button
@@ -56,11 +39,6 @@ function ClearLogsDialog({
           color="error"
           variant="contained"
           data-testid="confirm-clear-logs"
-          data-logger-element="button"
-          data-logger-label="Confirm Clear Logs"
-          data-logger-context={JSON.stringify({
-            log: { count: logCount, button: 'clear-confirm' },
-          })}
         >
           Clear Logs
         </Button>

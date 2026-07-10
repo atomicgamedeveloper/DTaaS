@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LogEntryCard from 'page/logViewer/LogEntryCard';
-import { LogEvent } from 'util/logger/logEvent';
+import {
+  MAX_LOG_CONTEXT_DEPTH,
+  MAX_LOG_CONTEXT_ENTRIES,
+} from 'util/logger/contextUtils';
+import { LogContext, LogEvent } from 'util/logger/logEvent';
 
 const baseEntry: LogEvent = {
   sessionId: 'session-1',
@@ -53,5 +57,37 @@ describe('LogEntryCard', () => {
     );
 
     expect(screen.getByText('value: enabled')).toBeInTheDocument();
+  });
+
+  it('bounds nested context rendering', () => {
+    let context: LogContext = { value: 'hidden' };
+    for (let index = 0; index < MAX_LOG_CONTEXT_DEPTH + 3; index += 1) {
+      context = { child: context };
+    }
+
+    render(<LogEntryCard entry={{ ...baseEntry, context }} />);
+
+    expect(
+      screen.getByText(
+        'child.child.child.child.child.child: [context depth limit reached]',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/hidden/)).not.toBeInTheDocument();
+  });
+
+  it('bounds wide context rendering', () => {
+    const wideContext = Object.fromEntries(
+      Array.from({ length: MAX_LOG_CONTEXT_ENTRIES + 5 }, (_, index) => [
+        `key${index}`,
+        index,
+      ]),
+    );
+
+    render(<LogEntryCard entry={{ ...baseEntry, context: wideContext }} />);
+
+    expect(screen.getByText('key0: 0')).toBeInTheDocument();
+    expect(screen.queryByText(`key${MAX_LOG_CONTEXT_ENTRIES + 4}: 104`)).toBe(
+      null,
+    );
   });
 });

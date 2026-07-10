@@ -1,17 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ClearLogsDialog from 'page/logViewer/ClearLogsDialog';
-import { logDismiss } from 'util/logger/logger';
-
-jest.mock('util/logger/logger', () => ({
-  logDismiss: jest.fn(),
-}));
 
 describe('ClearLogsDialog', () => {
   const onCancel = jest.fn();
   const onConfirm = jest.fn();
 
-  it('logs the dismissal and cancels when dismissed via Escape', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('cancels without logging when dismissed via Escape', () => {
     render(
       <ClearLogsDialog
         open
@@ -23,13 +22,29 @@ describe('ClearLogsDialog', () => {
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'Clear All Logs',
-      'escapeKeyDown',
-      { log: { count: 3 } },
-    );
     expect(onCancel).toHaveBeenCalled();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('does not render logger data attributes on its buttons', () => {
+    render(
+      <ClearLogsDialog
+        open
+        logCount={3}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    expect(
+      screen
+        .getByTestId('cancel-clear-logs')
+        .hasAttribute('data-logger-element'),
+    ).toBe(false);
+    expect(
+      screen
+        .getByTestId('confirm-clear-logs')
+        .hasAttribute('data-logger-element'),
+    ).toBe(false);
   });
 });

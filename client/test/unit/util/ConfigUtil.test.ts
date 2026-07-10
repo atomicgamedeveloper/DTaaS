@@ -124,6 +124,30 @@ describe('configUtil', () => {
       expect(results.LOGGER_URL.status).toBe(200);
       expect(results.LOGGER_URL.value).toEqual('https://logger.example.com');
     });
+
+    test('getValidationResult omits LOGGER_URL when it is not configured', async () => {
+      delete globalThis.env.LOGGER_URL;
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL).toBeUndefined();
+    });
+
+    test('getValidationResult reports missing required URLs', async () => {
+      const envWithoutRedirect: Partial<NodeJS.ProcessEnv> = {
+        ...globalThis.env,
+      };
+      delete envWithoutRedirect.REACT_APP_REDIRECT_URI;
+      globalThis.env = envWithoutRedirect as NodeJS.ProcessEnv;
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.REACT_APP_REDIRECT_URI.error).toEqual(
+        'Required URL is missing.',
+      );
+      expect(results.REACT_APP_REDIRECT_URI.status).toBeUndefined();
+      expect(results.REACT_APP_REDIRECT_URI.value).toBeUndefined();
+    });
   });
 
   describe('urlIsReachable', () => {

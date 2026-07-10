@@ -9,6 +9,7 @@ function LogViewerHeader() {
       title="Workflow Logs"
       toggleAriaLabel="Toggle logs description"
       toggleLoggerLabel="Toggle Logs Description"
+      disableLogging
     >
       <Typography variant="body2" color="text.secondary">
         Analytics events captured as you interact with the workbench. Logs are

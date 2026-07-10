@@ -7,6 +7,11 @@ import settingsSlice, {
   DEFAULT_MEASUREMENT,
   DEFAULT_SETTINGS,
 } from 'store/settings.slice';
+import {
+  MAX_LOG_CONTEXT_DEPTH,
+  MAX_LOG_CONTEXT_ENTRIES,
+} from 'util/logger/contextUtils';
+import type { LogContext } from 'util/logger/logEvent';
 
 let capturedInitCall: string | null = null;
 
@@ -127,6 +132,36 @@ describe('useLogger', () => {
         'Logger: init failed, will retry on next render',
         expect.any(Error),
       );
+    });
+    warnSpy.mockRestore();
+  });
+
+  it('retries initialization on a later render after failure', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (logger.initLogger as jest.Mock)
+      .mockRejectedValueOnce(new Error('hashing unavailable'))
+      .mockResolvedValueOnce(undefined);
+    const store = createTestStore('alice');
+
+    const { rerender } = renderWithProviders(<TestComponent />, store);
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Logger: init failed, will retry on next render',
+        expect.any(Error),
+      );
+    });
+
+    rerender(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/']}>
+          <TestComponent />
+        </MemoryRouter>
+      </Provider>,
+    );
+
+    await waitFor(() => {
+      expect(logger.initLogger).toHaveBeenCalledTimes(2);
     });
     warnSpy.mockRestore();
   });
@@ -441,6 +476,68 @@ describe('useLogger', () => {
     });
 
     warnSpy.mockRestore();
+  });
+
+  it('bounds context parsed from data-logger-context attributes', async () => {
+    const store = createTestStore('alice');
+    const wideContext = Object.fromEntries(
+      Array.from({ length: MAX_LOG_CONTEXT_ENTRIES + 5 }, (_, index) => [
+        `key${index}`,
+        index,
+      ]),
+    );
+    let deepContext: LogContext = { value: 'hidden' };
+    for (let index = 0; index < MAX_LOG_CONTEXT_DEPTH + 3; index += 1) {
+      deepContext = { child: deepContext };
+    }
+
+    function TestWithLargeContext() {
+      useLogger();
+      return (
+        <>
+          <button
+            data-logger-element="button"
+            data-logger-label="Wide"
+            data-logger-context={JSON.stringify(wideContext)}
+          >
+            Wide
+          </button>
+          <button
+            data-logger-element="button"
+            data-logger-label="Deep"
+            data-logger-context={JSON.stringify(deepContext)}
+          >
+            Deep
+          </button>
+        </>
+      );
+    }
+
+    let container: HTMLElement;
+    await act(async () => {
+      const result = renderWithProviders(<TestWithLargeContext />, store);
+      container = result.container;
+    });
+
+    const [wideButton, deepButton] = Array.from(
+      container!.querySelectorAll('button'),
+    );
+    act(() => {
+      fireEvent.click(wideButton);
+      fireEvent.click(deepButton);
+    });
+
+    const mockLog = logger.log as jest.MockedFunction<typeof logger.log>;
+
+    expect(Object.keys(mockLog.mock.calls[0][0].context ?? {})).toHaveLength(
+      MAX_LOG_CONTEXT_ENTRIES,
+    );
+    expect(JSON.stringify(mockLog.mock.calls[1][0].context)).toContain(
+      '[context depth limit reached]',
+    );
+    expect(JSON.stringify(mockLog.mock.calls[1][0].context)).not.toContain(
+      'hidden',
+    );
   });
 
   it('does not log clicks on form controls', async () => {

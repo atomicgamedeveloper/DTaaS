@@ -13,9 +13,12 @@ interface IFrameProps {
 function useIframeFocusLogger(title: string): void {
   useEffect(() => {
     let focusLogged = false;
-    const handleWindowBlur = () => {
+    const pendingChecks = new Set<ReturnType<typeof globalThis.setTimeout>>();
+    const logFocusedIframe = () => {
       const active = document.activeElement;
       if (
+        document.visibilityState === 'visible' &&
+        document.hasFocus() &&
         active instanceof HTMLIFrameElement &&
         active.title === title &&
         !focusLogged
@@ -29,6 +32,13 @@ function useIframeFocusLogger(title: string): void {
         });
       }
     };
+    const handleWindowBlur = () => {
+      const timer = globalThis.setTimeout(() => {
+        pendingChecks.delete(timer);
+        logFocusedIframe();
+      }, 0);
+      pendingChecks.add(timer);
+    };
     // A click on the parent page means focus left the iframe; the next
     // focus into it is a new interaction.
     const handleParentClick = () => {
@@ -39,6 +49,8 @@ function useIframeFocusLogger(title: string): void {
     return () => {
       globalThis.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('click', handleParentClick, true);
+      pendingChecks.forEach((timer) => globalThis.clearTimeout(timer));
+      pendingChecks.clear();
     };
   }, [title]);
 }

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Iframe from 'components/Iframe';
 import { log } from 'util/logger/logger';
 
@@ -36,18 +36,41 @@ describe('Iframe', () => {
         get: () => element,
       });
     };
+    const setDocumentFocus = (hasFocus: boolean) => {
+      Object.defineProperty(document, 'hasFocus', {
+        configurable: true,
+        value: () => hasFocus,
+      });
+    };
+    const setVisibility = (visibilityState: DocumentVisibilityState) => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => visibilityState,
+      });
+    };
+    const waitForBlurCheck = () =>
+      new Promise((resolve) => {
+        globalThis.setTimeout(resolve, 0);
+      });
+
+    beforeEach(() => {
+      setDocumentFocus(true);
+      setVisibility('visible');
+    });
 
     afterEach(() => {
       Reflect.deleteProperty(document, 'activeElement');
+      Reflect.deleteProperty(document, 'hasFocus');
+      Reflect.deleteProperty(document, 'visibilityState');
     });
 
-    it('logs a single click when focus moves into the iframe', () => {
+    it('logs a single click when focus moves into the iframe', async () => {
       setActiveElement(iframe);
 
       fireEvent.blur(globalThis.window);
       fireEvent.blur(globalThis.window);
 
-      expect(log).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(log).toHaveBeenCalledTimes(1));
       expect(log).toHaveBeenCalledWith({
         event: 'click',
         page: globalThis.location.pathname,
@@ -56,14 +79,35 @@ describe('Iframe', () => {
       });
     });
 
-    it('logs again after a click on the parent page', () => {
+    it('logs again after a click on the parent page', async () => {
       setActiveElement(iframe);
 
       fireEvent.blur(globalThis.window);
+      await waitFor(() => expect(log).toHaveBeenCalledTimes(1));
       fireEvent.click(document);
       fireEvent.blur(globalThis.window);
 
-      expect(log).toHaveBeenCalledTimes(2);
+      await waitFor(() => expect(log).toHaveBeenCalledTimes(2));
+    });
+
+    it('does not log when the page is hidden during blur', async () => {
+      setActiveElement(iframe);
+      setVisibility('hidden');
+
+      fireEvent.blur(globalThis.window);
+
+      await waitForBlurCheck();
+      expect(log).not.toHaveBeenCalled();
+    });
+
+    it('does not log when the document has lost focus', async () => {
+      setActiveElement(iframe);
+      setDocumentFocus(false);
+
+      fireEvent.blur(globalThis.window);
+
+      await waitForBlurCheck();
+      expect(log).not.toHaveBeenCalled();
     });
   });
 });

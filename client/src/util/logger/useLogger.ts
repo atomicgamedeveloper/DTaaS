@@ -8,7 +8,8 @@ import {
   log,
   logNavigation,
 } from 'util/logger/logger';
-import type { LogContext, LogEventType } from 'util/logger/logEvent';
+import type { LogEventType } from 'util/logger/logEvent';
+import { sanitizeLogContext } from 'util/logger/contextUtils';
 
 const LOGGED_EVENT_TYPES: readonly LogEventType[] = ['click', 'change'];
 
@@ -21,15 +22,11 @@ function findLoggerElement(target: EventTarget | null): HTMLElement | null {
   return null;
 }
 
-function isLogContext(value: unknown): value is LogContext {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function parseContext(raw: string | undefined): LogContext {
+function parseContext(raw: string | undefined) {
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw) as unknown;
-    return isLogContext(parsed) ? parsed : {};
+    return sanitizeLogContext(parsed);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('Logger: failed to parse data-logger-context', raw, err);
@@ -47,12 +44,13 @@ function startLogger(
   onReady: () => void,
 ): void {
   if (!username || initRef.current) return;
+  initRef.current = true;
   initLogger(username)
     .then(() => {
-      initRef.current = true;
       onReady();
     })
     .catch((err) => {
+      initRef.current = false;
       // eslint-disable-next-line no-console
       console.warn('Logger: init failed, will retry on next render', err);
     });
@@ -127,7 +125,7 @@ function useLoggerReady(loggingEnabled: boolean, username: string): boolean {
   useEffect(() => {
     if (!loggingEnabled) return;
     startLogger(username, initRef, () => setReady(true));
-  }, [loggingEnabled, username]);
+  });
 
   return ready;
 }

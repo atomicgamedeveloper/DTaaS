@@ -240,6 +240,39 @@ describe('LogViewer', () => {
     ).toBeInTheDocument();
   });
 
+  it('does not instrument its own controls for logging', async () => {
+    render(<LogViewer />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('log-content')).toBeInTheDocument();
+    });
+
+    const instrumentableTestIds = [
+      'refresh-logs',
+      'raw-view-toggle',
+      'clear-logs',
+      'download-logs',
+      'live-update-logs',
+    ];
+    instrumentableTestIds.forEach((testId) => {
+      expect(
+        screen.getByTestId(testId).hasAttribute('data-logger-element'),
+      ).toBe(false);
+    });
+    expect(
+      screen
+        .getByPlaceholderText('Filter logs')
+        .hasAttribute('data-logger-element'),
+    ).toBe(false);
+
+    fireEvent.change(screen.getByPlaceholderText('Filter logs'), {
+      target: { value: 'subtab' },
+    });
+    expect(
+      screen.getByLabelText('Clear search').hasAttribute('data-logger-element'),
+    ).toBe(false);
+  });
+
   it('refreshes logs after a subscribed database change', async () => {
     let listener: () => void | Promise<void> = () => {};
     mockSubscribeToLogChanges.mockImplementation((callback) => {
@@ -247,7 +280,6 @@ describe('LogViewer', () => {
       return jest.fn();
     });
     mockGetAllLogs
-      .mockResolvedValueOnce(mockEvents)
       .mockResolvedValueOnce(mockEvents)
       .mockResolvedValueOnce([mockEvents[0]]);
 

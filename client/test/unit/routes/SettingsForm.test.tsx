@@ -40,6 +40,7 @@ describe('SettingsForm', () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    localStorage.removeItem('remoteLoggingConsentNoticeDismissed');
     ({ mockDispatch } = setupSettingsFormTest());
     renderWithRouter(<SettingsForm />, { route: '/private' });
   });
@@ -151,6 +152,33 @@ describe('SettingsForm', () => {
     });
 
     expect(mockDispatch).toHaveBeenCalledWith(setLoggingEnabled(false));
+  });
+
+  it('shows the one-time remote logging consent notice', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      cleanup();
+      setupSettingsFormTest();
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+
+      expect(screen.getByText(/participant consent/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
+
+      expect(localStorage.getItem('remoteLoggingConsentNoticeDismissed')).toBe(
+        'true',
+      );
+      expect(
+        screen.queryByText(/participant consent/i),
+      ).not.toBeInTheDocument();
+    } finally {
+      globalThis.env = originalEnv;
+    }
   });
 
   it('shows "Settings reset to defaults" message when reset is clicked', async () => {

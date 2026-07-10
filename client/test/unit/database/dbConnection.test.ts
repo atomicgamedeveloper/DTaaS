@@ -48,4 +48,42 @@ describe('dbConnection', () => {
       indexedDB.open = originalOpen;
     }
   });
+
+  it('ignores late success after a blocked open rejects', async () => {
+    const blockedDb = { close: jest.fn() } as unknown as IDBDatabase;
+    const nextDb = {
+      close: jest.fn(),
+      onclose: null,
+      onversionchange: null,
+    } as unknown as IDBDatabase;
+    const blockedRequest = { result: blockedDb } as IDBOpenDBRequest;
+    const nextRequest = { result: nextDb } as IDBOpenDBRequest;
+    const originalOpen = indexedDB.open.bind(indexedDB);
+    indexedDB.open = jest
+      .fn()
+      .mockReturnValueOnce(blockedRequest)
+      .mockReturnValueOnce(nextRequest);
+
+    try {
+      const blockedOpening = openDB();
+      blockedRequest.onblocked?.(
+        new Event('blocked') as unknown as IDBVersionChangeEvent,
+      );
+      await expect(blockedOpening).rejects.toThrow(
+        'IndexedDB open blocked by another connection',
+      );
+
+      blockedRequest.onsuccess?.({
+        target: blockedRequest,
+      } as unknown as Event);
+      expect(blockedDb.close).toHaveBeenCalled();
+
+      const nextOpening = openDB();
+      expect(indexedDB.open).toHaveBeenCalledTimes(2);
+      nextRequest.onsuccess?.({ target: nextRequest } as unknown as Event);
+      await expect(nextOpening).resolves.toBe(nextDb);
+    } finally {
+      indexedDB.open = originalOpen;
+    }
+  });
 });

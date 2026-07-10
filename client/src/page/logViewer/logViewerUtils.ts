@@ -1,4 +1,5 @@
-import { LogContextValue, LogEvent } from 'util/logger/logEvent';
+import { LogEvent } from 'util/logger/logEvent';
+import { collectLogContextText } from 'util/logger/contextUtils';
 
 function timestampValue(event: LogEvent): number {
   const parsed = Date.parse(event.timestamp);
@@ -12,6 +13,7 @@ function toDisplayOrder(event: LogEvent) {
     label,
     element,
     page,
+    page_transition: pageTransition,
     context,
     sessionId,
     userHash,
@@ -22,6 +24,7 @@ function toDisplayOrder(event: LogEvent) {
     label,
     element,
     page,
+    ...(pageTransition ? { page_transition: pageTransition } : {}),
     context,
     sessionId,
     userHash,
@@ -55,25 +58,13 @@ export function formatTimestamp(timestamp: string): string {
   return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString();
 }
 
-function collectContextText(value: LogContextValue): string[] {
-  if (value === null) return [];
-  if (Array.isArray(value)) return value.flatMap(collectContextText);
-  if (typeof value === 'object') {
-    return Object.entries(value).flatMap(([key, nested]) => [
-      key,
-      ...collectContextText(nested),
-    ]);
-  }
-  return [String(value)];
-}
-
 export function matchesFilter(event: LogEvent, query: string): boolean {
   return [
     event.event,
     event.label,
     event.element,
     event.page,
-    ...collectContextText(event.context ?? {}),
+    ...collectLogContextText(event.context ?? {}),
   ]
     .join(' ')
     .toLowerCase()

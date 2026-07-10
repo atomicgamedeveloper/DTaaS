@@ -1,5 +1,9 @@
 import { matchesFilter } from 'page/logViewer/logViewerUtils';
-import { LogEvent } from 'util/logger/logEvent';
+import {
+  MAX_LOG_CONTEXT_DEPTH,
+  MAX_LOG_CONTEXT_ENTRIES,
+} from 'util/logger/contextUtils';
+import { LogContext, LogEvent } from 'util/logger/logEvent';
 
 function buildEvent(context: LogEvent['context']): LogEvent {
   return {
@@ -36,5 +40,27 @@ describe('matchesFilter', () => {
     const event = buildEvent({ dt: { name: 'my-digital-twin' } });
 
     expect(matchesFilter(event, 'unrelated')).toBe(false);
+  });
+
+  it('does not search beyond the context depth cap', () => {
+    let context: LogContext = { value: 'hidden' };
+    for (let index = 0; index < MAX_LOG_CONTEXT_DEPTH + 3; index += 1) {
+      context = { child: context };
+    }
+
+    expect(matchesFilter(buildEvent(context), 'hidden')).toBe(false);
+  });
+
+  it('does not search beyond the context entry cap', () => {
+    const context = {
+      values: Array.from(
+        { length: MAX_LOG_CONTEXT_ENTRIES + 5 },
+        (_, index) => `value${index}`,
+      ),
+    };
+
+    expect(
+      matchesFilter(buildEvent(context), `value${MAX_LOG_CONTEXT_ENTRIES + 4}`),
+    ).toBe(false);
   });
 });

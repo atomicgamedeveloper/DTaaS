@@ -9,6 +9,12 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import DEFAULT_MEASUREMENT from 'model/backend/gitlab/measure/constants';
 
+export const isRemoteLoggerConfigured = (): boolean =>
+  Boolean(globalThis.env?.LOGGER_URL?.trim());
+
+export const getDefaultLoggingEnabled = (): boolean =>
+  !isRemoteLoggerConfigured();
+
 // Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
   GROUP_NAME,
@@ -16,7 +22,7 @@ export const DEFAULT_SETTINGS = {
   COMMON_LIBRARY_PROJECT_NAME,
   RUNNER_TAG,
   BRANCH_NAME,
-  loggingEnabled: true,
+  loggingEnabled: getDefaultLoggingEnabled(),
 };
 
 export { DEFAULT_MEASUREMENT };

@@ -25,12 +25,8 @@ function useLogs(liveUpdate: boolean): UseLogsResult {
   useEffect(() => {
     if (!liveUpdate) return undefined;
 
-    const cancelInitialLoad = scheduleLogLoad(loadLogs);
     const unsubscribe = subscribeToLogChanges(loadLogs);
-    return () => {
-      cancelInitialLoad();
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [liveUpdate, loadLogs]);
 
   return { logs, loading, loadLogs, setLogs };

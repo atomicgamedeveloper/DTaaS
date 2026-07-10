@@ -54,26 +54,30 @@ Ingest a single log event.
 | 500 Internal Server Error | Server failure                            |
 
 > **Note:** Because the client uses the Beacon API (fire-and-forget),
-> response status codes are not consumed by the client. The backend
-> should still return appropriate codes for monitoring and debugging.
+> response status codes are not consumed by the client. A rate-limited or
+> failing logger cannot trigger client backoff, so events may be silently
+> dropped until the backend recovers.
 
 ## Log Event Schema
 
-| Field       | Type                 | Required | Description                                                                             |
-| ----------- | -------------------- | -------- | --------------------------------------------------------------------------------------- |
-| `sessionId` | string (UUID v4)     | Yes      | Unique browser session identifier                                                       |
-| `userHash`  | string (SHA-256 hex) | Yes      | Anonymized username hash                                                                |
-| `timestamp` | string (ISO 8601)    | Yes      | UTC timestamp of the event                                                              |
-| `event`     | string               | Yes      | Event type (e.g., `"click"`, `"change"`, `"navigation"`, `"notification"`, `"dismiss"`) |
-| `page`      | string               | Yes      | URL path of the current page                                                            |
-| `element`   | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`)                                |
-| `label`     | string               | Yes      | Human-readable label of the element                                                     |
-| `context`   | object               | No       | Additional key-value metadata                                                           |
+| Field             | Type                 | Required | Description                                                                                  |
+| ----------------- | -------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `sessionId`       | string (UUID v4)     | Yes      | Unique browser session identifier                                                            |
+| `userHash`        | string (SHA-256 hex) | Yes      | Pseudonymous username hash                                                                   |
+| `timestamp`       | string (ISO 8601)    | Yes      | UTC timestamp of the event                                                                   |
+| `event`           | string               | Yes      | Event type (e.g., `"click"`, `"change"`, `"navigation"`, `"notification"`, `"dismiss"`)      |
+| `page_transition` | object               | No       | Navigation transition metadata, when present (for example `{ "src": "/a", "target": "/b" }`) |
+| `page`            | string               | Yes      | URL path of the current page                                                                 |
+| `element`         | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`)                                     |
+| `label`           | string               | Yes      | Human-readable label of the element                                                          |
+| `context`         | object               | No       | Additional key-value metadata                                                                |
 
 ## Privacy
 
-- **Usernames** are anonymized client-side using SHA-256 before
-  transmission. The backend never receives plaintext usernames.
+- **Usernames** are hashed client-side using SHA-256 before transmission. This
+  is pseudonymization, not anonymization: the same username produces the same
+  hash, so events for one user can still be linked together. The backend never
+  receives plaintext usernames from this client.
 - **Session IDs** are random UUID v4 values with no link to user identity.
 - No cookies or IP-based tracking is performed by the client.
 

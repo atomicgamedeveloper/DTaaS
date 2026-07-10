@@ -104,6 +104,20 @@ describe('LogViewer raw view', () => {
     expect(raw).not.toContain('Functions');
   });
 
+  it('does not instrument the copy button for logging', async () => {
+    render(<LogViewer />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('log-content')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('raw-view-toggle'));
+
+    expect(
+      screen.getByTestId('copy-logs').hasAttribute('data-logger-element'),
+    ).toBe(false);
+  });
+
   it('copies raw logs to the clipboard', async () => {
     const writeText = jest.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {

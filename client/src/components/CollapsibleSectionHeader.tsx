@@ -6,6 +6,7 @@ interface CollapsibleSectionHeaderProps {
   title: string;
   toggleAriaLabel: string;
   toggleLoggerLabel: string;
+  disableLogging?: boolean;
   children: ReactNode;
 }
 
@@ -13,9 +14,16 @@ function CollapsibleSectionHeader({
   title,
   toggleAriaLabel,
   toggleLoggerLabel,
+  disableLogging = false,
   children,
 }: Readonly<CollapsibleSectionHeaderProps>) {
   const [expanded, setExpanded] = useState(false);
+  const toggleLoggerProps = disableLogging
+    ? {}
+    : {
+        'data-logger-element': 'button',
+        'data-logger-label': toggleLoggerLabel,
+      };
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -33,8 +41,7 @@ function CollapsibleSectionHeader({
             size="small"
             onClick={() => setExpanded((prev) => !prev)}
             aria-label={toggleAriaLabel}
-            data-logger-element="button"
-            data-logger-label={toggleLoggerLabel}
+            {...toggleLoggerProps}
             sx={{ color: 'text.secondary' }}
           >
             <InfoOutlinedIcon fontSize="small" />

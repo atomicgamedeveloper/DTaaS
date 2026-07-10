@@ -1,7 +1,7 @@
+import { AlertColor } from '@mui/material';
 import { createLogEvent } from 'util/logger/logEvent';
 import type {
   LogContext,
-  LogContextValue,
   LogEvent,
   LogEventType,
   PageTransition,
@@ -12,29 +12,35 @@ import { logToConsole } from 'util/logger/consoleLogger';
 import { sendBeacon } from 'util/logger/beaconLogger';
 import { addLog } from 'util/logger/indexedDBLogger';
 import { getLoggingEnabled } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import { sanitizeLogContext } from 'util/logger/contextUtils';
 
-const MAX_CONTEXT_VALUE_LENGTH = 1024;
+const PERSISTENCE_FAILURE_MESSAGE =
+  'Logging has stopped working for this session.';
+
+interface LoggerStore {
+  showSnackbar: (message: string, severity: AlertColor) => void;
+}
 
 let userHash = '';
 let sessionId = '';
 let loggerUrl = '';
 let initialized = false;
 let lastNavigationPage = '';
+let loggerStore: LoggerStore | null = null;
+let persistenceFailureWarned = false;
 
-function truncateContextValue(value: LogContextValue): LogContextValue {
-  if (typeof value === 'string')
-    return value.slice(0, MAX_CONTEXT_VALUE_LENGTH);
-  if (Array.isArray(value)) return value.map(truncateContextValue);
-  if (value && typeof value === 'object') return truncateContext(value);
-  return value;
+export function setLoggerStore(store: LoggerStore): void {
+  loggerStore = store;
 }
 
-function truncateContext(context: LogContext): LogContext {
-  const truncated: LogContext = {};
-  Object.entries(context).forEach(([key, value]) => {
-    truncated[key] = truncateContextValue(value);
-  });
-  return truncated;
+export function resetLoggerStore(): void {
+  loggerStore = null;
+}
+
+function warnPersistenceFailureOnce(): void {
+  if (persistenceFailureWarned) return;
+  persistenceFailureWarned = true;
+  loggerStore?.showSnackbar(PERSISTENCE_FAILURE_MESSAGE, 'warning');
 }
 
 export interface LogInput {
@@ -75,12 +81,13 @@ export function log({
     pageTransition,
     element,
     label,
-    context: truncateContext(context),
+    context: sanitizeLogContext(context),
   });
   logToConsole(logEvent);
   addLog(logEvent).catch((err) => {
     // eslint-disable-next-line no-console
     console.warn('Logger: failed to persist event to IndexedDB', err);
+    warnPersistenceFailureOnce();
   });
   if (loggerUrl && !sendBeacon(loggerUrl, logEvent)) {
     // eslint-disable-next-line no-console
@@ -130,4 +137,5 @@ export function resetLogger(): void {
   loggerUrl = '';
   initialized = false;
   lastNavigationPage = '';
+  persistenceFailureWarned = false;
 }

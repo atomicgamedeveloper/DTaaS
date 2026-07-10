@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import Layout from 'page/Layout';
 import Filter from 'components/asset/Filter';
@@ -25,8 +25,12 @@ function LogViewer() {
 
   const query = filterText.trim().toLowerCase();
   const filtered = query.length > 0;
-  const displayedLogs = sortLogsNewestFirst(
-    filtered ? logs.filter((event) => matchesFilter(event, query)) : logs,
+  const displayedLogs = useMemo(
+    () =>
+      sortLogsNewestFirst(
+        filtered ? logs.filter((event) => matchesFilter(event, query)) : logs,
+      ),
+    [logs, filtered, query],
   );
 
   const handleClear = async () => {
@@ -59,8 +63,7 @@ function LogViewer() {
               placeholder="Filter logs"
               value={filterText}
               onChange={setFilterText}
-              loggerLabel="Log filter"
-              loggerContext={{ log: { count: logs.length } }}
+              disableLogging
               sx={{ marginTop: 0 }}
             />
             <LogViewerControls

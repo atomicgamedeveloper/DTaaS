@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import {
+  Alert,
+  Button,
   Checkbox,
   Divider,
   FormControlLabel,
@@ -6,6 +9,43 @@ import {
   Typography,
 } from '@mui/material';
 import { SettingsFieldProps } from 'route/account/SettingsForm';
+import { isRemoteLoggerConfigured } from 'store/settings.slice';
+
+const NOTICE_KEY = 'remoteLoggingConsentNoticeDismissed';
+
+const hasDismissedNotice = (): boolean =>
+  localStorage.getItem(NOTICE_KEY) === 'true';
+
+const RemoteLoggingNotice: React.FC<{ loggingEnabled: boolean }> = ({
+  loggingEnabled,
+}) => {
+  const [visible, setVisible] = useState(
+    isRemoteLoggerConfigured() && !hasDismissedNotice(),
+  );
+
+  const dismissNotice = () => {
+    localStorage.setItem(NOTICE_KEY, 'true');
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Alert
+      severity="info"
+      sx={{ mb: 3 }}
+      action={
+        <Button color="inherit" size="small" onClick={dismissNotice}>
+          Dismiss
+        </Button>
+      }
+    >
+      {loggingEnabled
+        ? 'Remote logging sends workflow events to the configured logger. Keep it enabled only with participant consent.'
+        : 'Remote logging is available but remains disabled until enabled with participant consent.'}
+    </Alert>
+  );
+};
 
 const LoggingSettingsFields: React.FC<SettingsFieldProps> = ({
   formValues,
@@ -16,6 +56,7 @@ const LoggingSettingsFields: React.FC<SettingsFieldProps> = ({
       Logging Settings
     </Typography>
     <Divider sx={{ mb: 3 }} />
+    <RemoteLoggingNotice loggingEnabled={Boolean(formValues.loggingEnabled)} />
 
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 6 }}>

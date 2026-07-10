@@ -10,6 +10,8 @@ interface FilterProps {
   onChange: (value: string) => void;
   loggerLabel?: string;
   loggerContext?: LogContext;
+  captureValue?: boolean;
+  disableLogging?: boolean;
   sx?: SxProps<Theme>;
 }
 
@@ -19,10 +21,27 @@ const Filter: React.FC<FilterProps> = ({
   onChange,
   loggerLabel = 'Asset filter',
   loggerContext = {},
+  captureValue = false,
+  disableLogging = false,
   sx,
 }) => {
   const handleClear = () => onChange('');
   const context = JSON.stringify(loggerContext);
+  const inputLoggerProps = disableLogging
+    ? {}
+    : {
+        'data-logger-element': 'input',
+        'data-logger-label': loggerLabel,
+        'data-logger-context': context,
+        'data-logger-capture-value': captureValue ? 'true' : 'false',
+      };
+  const clearButtonLoggerProps = disableLogging
+    ? {}
+    : {
+        'data-logger-element': 'button',
+        'data-logger-label': 'Clear search',
+        'data-logger-context': context,
+      };
 
   return (
     <Box
@@ -47,21 +66,14 @@ const Filter: React.FC<FilterProps> = ({
               </InputAdornment>
             ),
           },
-          htmlInput: {
-            'data-logger-element': 'input',
-            'data-logger-label': loggerLabel,
-            'data-logger-context': context,
-            'data-logger-capture-value': 'true',
-          },
+          htmlInput: inputLoggerProps,
         }}
       />
       {value && (
         <IconButton
           onClick={handleClear}
           aria-label="Clear search"
-          data-logger-element="button"
-          data-logger-label="Clear search"
-          data-logger-context={context}
+          {...clearButtonLoggerProps}
         >
           <ClearIcon />
         </IconButton>

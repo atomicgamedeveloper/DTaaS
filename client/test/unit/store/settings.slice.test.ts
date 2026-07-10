@@ -7,6 +7,7 @@ import settingsReducer, {
   resetToDefaults,
   DEFAULT_SETTINGS,
   DEFAULT_MEASUREMENT,
+  getDefaultLoggingEnabled,
   loadInitialSettings,
 } from 'store/settings.slice';
 
@@ -49,6 +50,32 @@ describe('settingsSlice', () => {
   it('should handle setLoggingEnabled', () => {
     const state = settingsReducer(initialState, setLoggingEnabled(false));
     expect(state.loggingEnabled).toBe(false);
+  });
+
+  it('defaults logging on when no remote logger is configured', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = { ...originalEnv };
+    delete globalThis.env.LOGGER_URL;
+
+    try {
+      expect(getDefaultLoggingEnabled()).toBe(true);
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('defaults logging off when a remote logger is configured', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      expect(getDefaultLoggingEnabled()).toBe(false);
+    } finally {
+      globalThis.env = originalEnv;
+    }
   });
 
   it('should handle resetToDefaults', () => {

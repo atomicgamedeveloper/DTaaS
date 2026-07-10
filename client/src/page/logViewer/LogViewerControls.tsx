@@ -52,8 +52,6 @@ function LogViewerControls({
           onClick={onRefresh}
           aria-label="Refresh logs"
           data-testid="refresh-logs"
-          data-logger-element="button"
-          data-logger-label="Refresh Logs"
         >
           <RefreshIcon />
         </IconButton>
@@ -66,11 +64,6 @@ function LogViewerControls({
           onChange={onToggleRawView}
           aria-label="Toggle raw view"
           data-testid="raw-view-toggle"
-          data-logger-element="button"
-          data-logger-label="Toggle Raw Logs"
-          data-logger-context={JSON.stringify({
-            log: { button: 'toggle-raw-view', rawView: !rawView },
-          })}
         >
           <DataObjectIcon fontSize="small" />
         </ToggleButton>
@@ -82,8 +75,6 @@ function LogViewerControls({
             disabled={clearDisabled}
             aria-label="Clear logs"
             data-testid="clear-logs"
-            data-logger-element="button"
-            data-logger-label="Clear Logs"
             sx={{ '&:hover': { color: 'error.main' } }}
           >
             <DeleteOutlinedIcon />
@@ -96,11 +87,6 @@ function LogViewerControls({
         onClick={onDownload}
         disabled={downloadDisabled}
         data-testid="download-logs"
-        data-logger-element="button"
-        data-logger-label="Download Logs"
-        data-logger-context={JSON.stringify({
-          log: { button: 'download', label: downloadLabel },
-        })}
       >
         {downloadLabel}
       </Button>
@@ -112,11 +98,6 @@ function LogViewerControls({
             onChange={(event) => onLiveUpdateChange(event.target.checked)}
             slotProps={{ input: { 'aria-label': 'Live update logs' } }}
             data-testid="live-update-logs"
-            data-logger-element="switch"
-            data-logger-label="Live Update Logs"
-            data-logger-context={JSON.stringify({
-              log: { button: 'toggle-live-update', liveUpdate: !liveUpdate },
-            })}
           />
         }
         label="Live update"

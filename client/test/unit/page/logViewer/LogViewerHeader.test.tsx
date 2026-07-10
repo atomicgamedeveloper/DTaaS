@@ -33,4 +33,14 @@ describe('LogViewerHeader', () => {
       "and are also sent to your organization's configured logging server",
     );
   });
+
+  it('does not instrument the description toggle for logging', () => {
+    render(<LogViewerHeader />);
+
+    expect(
+      screen
+        .getByLabelText('Toggle logs description')
+        .hasAttribute('data-logger-element'),
+    ).toBe(false);
+  });
 });

@@ -5,6 +5,7 @@ import {
   clearLogs,
   subscribeToLogChanges,
   resetDBConnection,
+  MAX_LOG_BYTES,
 } from 'util/logger/indexedDBLogger';
 import { LogEvent } from 'util/logger/logEvent';
 
@@ -71,6 +72,32 @@ describe('indexedDBLogger', () => {
     const logs = await getAllLogs();
     expect(logs).toHaveLength(0);
   });
+
+  it('prunes the oldest entries once the store exceeds the byte budget', async () => {
+    const paddingSize = 4 * 1024 * 1024;
+    const padding = 'x'.repeat(paddingSize);
+    const entryCount = Math.ceil(MAX_LOG_BYTES / paddingSize) + 2;
+
+    for (let i = 0; i < entryCount; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await addLog({
+        ...mockEvent,
+        timestamp: new Date(2026, 0, 1, 0, 0, i).toISOString(),
+        label: `entry-${i}`,
+        context: { padding },
+      });
+    }
+
+    const logs = await getAllLogs();
+    const totalBytes = logs.reduce(
+      (sum, entry) => sum + new Blob([JSON.stringify(entry)]).size,
+      0,
+    );
+    expect(totalBytes).toBeLessThanOrEqual(MAX_LOG_BYTES);
+    const labels = logs.map((entry) => entry.label);
+    expect(labels).not.toContain('entry-0');
+    expect(labels).toContain(`entry-${entryCount - 1}`);
+  }, 30000);
 
   it('notifies subscribers when logs change', async () => {
     const listener = jest.fn();

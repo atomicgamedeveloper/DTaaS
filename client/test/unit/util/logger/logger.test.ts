@@ -7,8 +7,18 @@ import {
   logNavigation,
   resetLogger,
   isLoggerInitialized,
+  setLoggerStore,
+  resetLoggerStore,
 } from 'util/logger/logger';
-import { setSettingsStore } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  MAX_LOG_CONTEXT_DEPTH,
+  MAX_LOG_CONTEXT_ENTRIES,
+} from 'util/logger/contextUtils';
+import type { LogContext } from 'util/logger/logEvent';
+import {
+  resetSettingsStore,
+  setSettingsStore,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { DEFAULT_SETTINGS } from 'store/settings.slice';
 import * as beaconLogger from 'util/logger/beaconLogger';
 import * as indexedDBLogger from 'util/logger/indexedDBLogger';
@@ -31,18 +41,22 @@ jest.mock('util/logger/indexedDBLogger', () => ({
 }));
 
 describe('logger', () => {
+  const showSnackbar = jest.fn();
+
   beforeEach(() => {
     resetLogger();
     sessionStorage.clear();
     jest.clearAllMocks();
     (uuidv4 as jest.Mock).mockReturnValue('test-uuid-1234');
     (indexedDBLogger.addLog as jest.Mock).mockResolvedValue(undefined);
+    setLoggerStore({ showSnackbar });
   });
 
   afterEach(() => {
     setSettingsStore({
       getState: () => ({ settings: { ...DEFAULT_SETTINGS } }),
     });
+    resetLoggerStore();
   });
 
   it('is not initialized by default', () => {
@@ -83,6 +97,23 @@ describe('logger', () => {
     expect(event!.sessionId).toBeDefined();
   });
 
+  it('returns null instead of throwing when settings store is not wired', async () => {
+    resetSettingsStore();
+    await initLogger('testuser');
+
+    const input = {
+      event: 'click' as const,
+      page: '/library',
+      element: 'tab',
+      label: 'Data',
+    };
+
+    expect(() => log(input)).not.toThrow();
+    expect(log(input)).toBeNull();
+    expect(indexedDBLogger.addLog).not.toHaveBeenCalled();
+    expect(beaconLogger.sendBeacon).not.toHaveBeenCalled();
+  });
+
   it('keeps nested context values and arrays in log events', async () => {
     await initLogger('testuser');
     const event = log({
@@ -106,6 +137,43 @@ describe('logger', () => {
         history: ['2026-07-07T12:30:00.000Z'],
       },
     });
+  });
+
+  it('bounds deep and wide context before logging', async () => {
+    const wideContext = Object.fromEntries(
+      Array.from({ length: MAX_LOG_CONTEXT_ENTRIES + 5 }, (_, index) => [
+        `key${index}`,
+        index,
+      ]),
+    );
+    let deepContext: LogContext = { value: 'hidden' };
+    for (let index = 0; index < MAX_LOG_CONTEXT_DEPTH + 3; index += 1) {
+      deepContext = { child: deepContext };
+    }
+
+    await initLogger('testuser');
+    const wideEvent = log({
+      event: 'click',
+      page: '/library',
+      element: 'button',
+      label: 'Wide',
+      context: wideContext,
+    });
+    const deepEvent = log({
+      event: 'click',
+      page: '/library',
+      element: 'button',
+      label: 'Deep',
+      context: deepContext,
+    });
+
+    expect(Object.keys(wideEvent!.context)).toHaveLength(
+      MAX_LOG_CONTEXT_ENTRIES,
+    );
+    expect(JSON.stringify(deepEvent!.context)).toContain(
+      '[context depth limit reached]',
+    );
+    expect(JSON.stringify(deepEvent!.context)).not.toContain('hidden');
   });
 
   it('persists log event to IndexedDB', async () => {
@@ -136,6 +204,27 @@ describe('logger', () => {
       'Logger: failed to persist event to IndexedDB',
       expect.any(Error),
     );
+    expect(showSnackbar).toHaveBeenCalledWith(
+      'Logging has stopped working for this session.',
+      'warning',
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('only shows the persistence-failure snackbar once per session', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    (indexedDBLogger.addLog as jest.Mock).mockRejectedValue(
+      new Error('quota exceeded'),
+    );
+
+    await initLogger('testuser');
+    log({ event: 'click', page: '/library', element: 'tab', label: 'One' });
+    log({ event: 'click', page: '/library', element: 'tab', label: 'Two' });
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    expect(showSnackbar).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });
 

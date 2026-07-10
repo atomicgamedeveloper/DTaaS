@@ -31,6 +31,7 @@ function projectMatches(project: ProjectSummary, projectName: string): boolean {
     getNamespaceProjectPath(project),
     project.name,
   ];
+
   return candidates.some(
     (candidate) => normalizeProjectKey(candidate) === expected,
   );

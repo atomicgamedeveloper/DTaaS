@@ -16,6 +16,7 @@ import { setMeasurementStore } from 'model/backend/gitlab/measure/measurement.ex
 import { setExecutionHistoryDB } from 'model/backend/util/digitalTwinExecutionHistory';
 import { setPipelineExecutionDB } from 'model/backend/util/digitalTwinPipelineExecution';
 import { setMeasurementDB } from 'model/backend/gitlab/measure/measurement.runner';
+import { setLoggerStore } from 'util/logger/logger';
 
 setStorageService(indexedDBService);
 
@@ -65,6 +66,10 @@ setMeasurementStore({
 setExecutionHistoryDB(indexedDBService);
 setPipelineExecutionDB(indexedDBService);
 setMeasurementDB(measurementDBService);
+setLoggerStore({
+  showSnackbar: (message, severity) =>
+    store.dispatch(showSnackbar({ message, severity })),
+});
 
 export type { RootState } from 'store/storeTypes';
 export type AppDispatch = typeof store.dispatch;

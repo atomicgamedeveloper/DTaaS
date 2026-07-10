@@ -23,6 +23,10 @@ export function setSettingsStore(store: StoreReader): void {
   _store = store;
 }
 
+export function resetSettingsStore(): void {
+  _store = null;
+}
+
 function getStore(): StoreReader {
   if (!_store)
     throw new Error(
@@ -41,5 +45,12 @@ export const getRunnerTag = (): string =>
   getStore().getState().settings.RUNNER_TAG;
 export const getBranchName = (): string =>
   getStore().getState().settings.BRANCH_NAME;
-export const getLoggingEnabled = (): boolean =>
-  getStore().getState().settings.loggingEnabled;
+export const getLoggingEnabled = (): boolean => {
+  if (!_store) return false;
+
+  try {
+    return _store.getState().settings.loggingEnabled;
+  } catch (_error) {
+    return false;
+  }
+};

@@ -45,18 +45,28 @@ function rejectOpen(reject: (reason?: unknown) => void, message: string): void {
 
 function createOpenDBPromise(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    let settled = false;
     const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
 
     request.onerror = () => {
+      if (settled) return;
+      settled = true;
       rejectOpen(reject, 'Failed to open IndexedDB');
     };
 
     request.onblocked = () => {
+      if (settled) return;
+      settled = true;
       rejectOpen(reject, 'IndexedDB open blocked by another connection');
     };
 
     request.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      if (settled) {
+        db.close();
+        return;
+      }
+      settled = true;
       resolve(cacheDBConnection(db));
     };
 

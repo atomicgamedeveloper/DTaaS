@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Box, Button } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -20,7 +20,8 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
     return () => clearTimeout(timer);
   }, [copied]);
 
-  const rawText = toDisplayJsonLines(entries);
+  const rawText = useMemo(() => toDisplayJsonLines(entries), [entries]);
+  const prettyText = useMemo(() => toPrettyDisplayJson(entries), [entries]);
 
   const handleCopy = async () => {
     try {
@@ -48,11 +49,6 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
           onClick={handleCopy}
           sx={{ backgroundColor: 'background.paper' }}
           data-testid="copy-logs"
-          data-logger-element="button"
-          data-logger-label="Copy Logs"
-          data-logger-context={JSON.stringify({
-            log: { count: entries.length, button: 'copy' },
-          })}
         >
           {copied ? 'Copied' : 'Copy to clipboard'}
         </Button>
@@ -68,7 +64,7 @@ function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
           wordBreak: 'break-all',
         }}
       >
-        {toPrettyDisplayJson(entries)}
+        {prettyText}
       </Box>
     </>
   );

@@ -31,7 +31,7 @@ const urlKeys = [
 ];
 
 const configuredKeys = (keys: string[]) =>
-  keys.filter((key) => key in globalThis.env);
+  keys.filter((key) => (key === 'LOGGER_URL' ? key in globalThis.env : true));
 
 function getValidationPromises(): Record<string, Promise<ValidationType>> {
   return {
@@ -137,6 +137,14 @@ async function opaqueRequest(url: string): Promise<ValidationType | null> {
 }
 
 export async function urlIsReachable(url: string): Promise<ValidationType> {
+  if (!url.trim()) {
+    return {
+      value: undefined,
+      status: undefined,
+      error: 'Required URL is missing.',
+    };
+  }
+
   let reachability: ValidationType = {
     value: undefined,
     status: undefined,
