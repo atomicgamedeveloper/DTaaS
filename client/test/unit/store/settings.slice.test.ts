@@ -142,7 +142,6 @@ describe('settingsSlice', () => {
 
   it('falls back to defaults when persisted settings is not valid JSON', () => {
     jest.spyOn(Storage.prototype, 'getItem').mockReturnValue('{not-json');
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     expect(loadInitialSettings()).toEqual({
       ...DEFAULT_SETTINGS,

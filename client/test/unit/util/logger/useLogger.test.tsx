@@ -116,28 +116,7 @@ describe('useLogger', () => {
     expect(logger.initLogger).not.toHaveBeenCalled();
   });
 
-  it('warns when logger initialization fails', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    (logger.initLogger as jest.Mock).mockRejectedValue(
-      new Error('hashing unavailable'),
-    );
-    const store = createTestStore('alice');
-
-    await act(async () => {
-      renderWithProviders(<TestComponent />, store);
-    });
-
-    await waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Logger: init failed, will retry on next render',
-        expect.any(Error),
-      );
-    });
-    warnSpy.mockRestore();
-  });
-
   it('retries initialization on a later render after failure', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     (logger.initLogger as jest.Mock)
       .mockRejectedValueOnce(new Error('hashing unavailable'))
       .mockResolvedValueOnce(undefined);
@@ -145,11 +124,10 @@ describe('useLogger', () => {
 
     const { rerender } = renderWithProviders(<TestComponent />, store);
 
-    await waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Logger: init failed, will retry on next render',
-        expect.any(Error),
-      );
+    await act(async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
     });
 
     rerender(
@@ -163,7 +141,6 @@ describe('useLogger', () => {
     await waitFor(() => {
       expect(logger.initLogger).toHaveBeenCalledTimes(2);
     });
-    warnSpy.mockRestore();
   });
 
   it('initializes from sessionStorage username when Redux username is missing', async () => {
@@ -434,9 +411,8 @@ describe('useLogger', () => {
     });
   });
 
-  it('warns and falls back to an empty context when data-logger-context is malformed', async () => {
+  it('falls back to an empty context when data-logger-context is malformed', async () => {
     const store = createTestStore('alice');
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     function TestWithBadContext() {
       useLogger();
@@ -462,11 +438,6 @@ describe('useLogger', () => {
       fireEvent.click(button);
     });
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Logger: failed to parse data-logger-context',
-      '{not valid json',
-      expect.any(Error),
-    );
     expect(logger.log).toHaveBeenCalledWith({
       event: 'click',
       page: expect.any(String),
@@ -474,8 +445,6 @@ describe('useLogger', () => {
       label: 'TestBtn',
       context: {},
     });
-
-    warnSpy.mockRestore();
   });
 
   it('bounds context parsed from data-logger-context attributes', async () => {

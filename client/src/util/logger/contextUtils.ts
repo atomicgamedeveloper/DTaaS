@@ -66,7 +66,9 @@ function sanitizeContextValue(
   if (Array.isArray(value)) return sanitizeContextArray(value, depth, budget);
   if (isContextObject(value))
     return sanitizeContextObject(value, depth, budget);
-  return String(value).slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
+  const stringified =
+    typeof value === 'object' ? JSON.stringify(value) : String(value);
+  return stringified.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
 }
 
 export function sanitizeLogContext(value: unknown): LogContext {
@@ -77,7 +79,9 @@ export function sanitizeLogContext(value: unknown): LogContext {
 }
 
 function formatContextValue(value: LogContextValue): string {
-  return Array.isArray(value) ? JSON.stringify(value) : String(value);
+  return typeof value === 'object' && value !== null
+    ? JSON.stringify(value)
+    : String(value);
 }
 
 function flattenContextValue(

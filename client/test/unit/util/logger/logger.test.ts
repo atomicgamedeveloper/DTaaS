@@ -188,8 +188,7 @@ describe('logger', () => {
     expect(indexedDBLogger.addLog).toHaveBeenCalledWith(event);
   });
 
-  it('warns when persisting the event to IndexedDB fails', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  it('shows a snackbar when persisting the event to IndexedDB fails', async () => {
     (indexedDBLogger.addLog as jest.Mock).mockRejectedValue(
       new Error('quota exceeded'),
     );
@@ -200,19 +199,13 @@ describe('logger', () => {
     await new Promise((resolve) => {
       setTimeout(resolve, 0);
     });
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Logger: failed to persist event to IndexedDB',
-      expect.any(Error),
-    );
     expect(showSnackbar).toHaveBeenCalledWith(
       'Logging has stopped working for this session.',
       'warning',
     );
-    warnSpy.mockRestore();
   });
 
   it('only shows the persistence-failure snackbar once per session', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     (indexedDBLogger.addLog as jest.Mock).mockRejectedValue(
       new Error('quota exceeded'),
     );
@@ -225,7 +218,6 @@ describe('logger', () => {
       setTimeout(resolve, 0);
     });
     expect(showSnackbar).toHaveBeenCalledTimes(1);
-    warnSpy.mockRestore();
   });
 
   it('sends beacon when logger URL is configured', async () => {

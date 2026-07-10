@@ -29,11 +29,9 @@ function notifyLogChange(): void {
   getChangeChannel()?.postMessage(LOGS_CHANGED_EVENT);
 }
 
-function swallowRequestError(request: IDBRequest, message: string): void {
+function swallowRequestError(request: IDBRequest): void {
   request.onerror = (event) => {
     event.preventDefault();
-    // eslint-disable-next-line no-console
-    console.warn(message, request.error);
   };
 }
 
@@ -52,7 +50,7 @@ function pruneToByteBudget(store: IDBObjectStore, totalBytes: number): void {
 
   let remaining = totalBytes;
   const cursorReq = store.index('timestamp').openCursor();
-  swallowRequestError(cursorReq, 'Logger: failed to prune old log entries');
+  swallowRequestError(cursorReq);
   cursorReq.onsuccess = () => {
     const cursor = cursorReq.result;
     if (!cursor || remaining <= MAX_LOG_BYTES) {
@@ -75,7 +73,7 @@ function withCurrentTotalBytes(
     return;
   }
   const request = store.getAll();
-  swallowRequestError(request, 'Logger: failed to compute log store size');
+  swallowRequestError(request);
   request.onsuccess = () => {
     const scanned = (request.result as LogEvent[]) || [];
     const total = scanned.reduce(

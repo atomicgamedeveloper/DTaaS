@@ -86,8 +86,8 @@ describe('LogEntryCard', () => {
     render(<LogEntryCard entry={{ ...baseEntry, context: wideContext }} />);
 
     expect(screen.getByText('key0: 0')).toBeInTheDocument();
-    expect(screen.queryByText(`key${MAX_LOG_CONTEXT_ENTRIES + 4}: 104`)).toBe(
-      null,
-    );
+    expect(
+      screen.queryByText(`key${MAX_LOG_CONTEXT_ENTRIES + 4}: 104`),
+    ).toBeNull();
   });
 });

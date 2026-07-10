@@ -47,10 +47,5 @@ export const getBranchName = (): string =>
   getStore().getState().settings.BRANCH_NAME;
 export const getLoggingEnabled = (): boolean => {
   if (!_store) return false;
-
-  try {
-    return _store.getState().settings.loggingEnabled;
-  } catch (_error) {
-    return false;
-  }
+  return _store.getState().settings.loggingEnabled;
 };

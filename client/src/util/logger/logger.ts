@@ -84,14 +84,11 @@ export function log({
     context: sanitizeLogContext(context),
   });
   logToConsole(logEvent);
-  addLog(logEvent).catch((err) => {
-    // eslint-disable-next-line no-console
-    console.warn('Logger: failed to persist event to IndexedDB', err);
+  addLog(logEvent).catch(() => {
     warnPersistenceFailureOnce();
   });
-  if (loggerUrl && !sendBeacon(loggerUrl, logEvent)) {
-    // eslint-disable-next-line no-console
-    console.warn('Logger: failed to send beacon');
+  if (loggerUrl) {
+    sendBeacon(loggerUrl, logEvent);
   }
   return logEvent;
 }

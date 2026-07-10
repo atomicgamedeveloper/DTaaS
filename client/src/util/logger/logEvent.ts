@@ -1,8 +1,17 @@
 export type LogEventType =
-  'click' | 'change' | 'navigation' | 'notification' | 'dismiss';
+  | 'click'
+  | 'change'
+  | 'navigation'
+  | 'notification'
+  | 'dismiss';
 
 export type LogContextValue =
-  string | number | boolean | null | LogContextValue[] | LogContext;
+  | string
+  | number
+  | boolean
+  | null
+  | LogContextValue[]
+  | LogContext;
 
 export interface LogContext {
   [key: string]: LogContextValue;

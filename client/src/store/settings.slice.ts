@@ -66,9 +66,8 @@ export const loadInitialSettings = (): SettingsState => {
       if (result.success) {
         return { ...base, ...result.data };
       }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('Settings: failed to parse persisted settings', err);
+    } catch {
+      // Malformed persisted settings; fall back to defaults.
     }
   }
   return base;

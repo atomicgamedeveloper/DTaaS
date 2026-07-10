@@ -27,9 +27,7 @@ function parseContext(raw: string | undefined) {
   try {
     const parsed = JSON.parse(raw) as unknown;
     return sanitizeLogContext(parsed);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('Logger: failed to parse data-logger-context', raw, err);
+  } catch {
     return {};
   }
 }
@@ -49,10 +47,8 @@ function startLogger(
     .then(() => {
       onReady();
     })
-    .catch((err) => {
+    .catch(() => {
       initRef.current = false;
-      // eslint-disable-next-line no-console
-      console.warn('Logger: init failed, will retry on next render', err);
     });
 }
 
