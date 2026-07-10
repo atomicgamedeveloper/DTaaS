@@ -19,6 +19,17 @@ function isContextObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isNativelyStringifiable(
+  value: unknown,
+): value is symbol | bigint | undefined | ((...args: never[]) => unknown) {
+  return (
+    typeof value === 'symbol' ||
+    typeof value === 'bigint' ||
+    typeof value === 'undefined' ||
+    typeof value === 'function'
+  );
+}
+
 function useContextEntry(budget: WalkBudget): boolean {
   if (budget.remainingEntries <= 0) return false;
   budget.remainingEntries -= 1;
@@ -66,8 +77,9 @@ function sanitizeContextValue(
   if (Array.isArray(value)) return sanitizeContextArray(value, depth, budget);
   if (isContextObject(value))
     return sanitizeContextObject(value, depth, budget);
-  const stringified =
-    typeof value === 'object' ? JSON.stringify(value) : String(value);
+  const stringified = isNativelyStringifiable(value)
+    ? String(value)
+    : JSON.stringify(value);
   return stringified.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
 }
 
