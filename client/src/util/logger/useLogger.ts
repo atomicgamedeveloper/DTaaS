@@ -9,6 +9,7 @@ import {
   logNavigation,
 } from 'util/logger/logger';
 import type { LogEventType } from 'util/logger/logEvent';
+import type { LogInput } from 'util/logger/logger';
 import { sanitizeLogContext } from 'util/logger/contextUtils';
 
 const LOGGED_EVENT_TYPES: readonly LogEventType[] = ['click', 'change'];
@@ -60,42 +61,54 @@ function isFormControl(target: EventTarget | null): boolean {
   );
 }
 
+function getInputChangedValue(input: HTMLInputElement): string | null {
+  if (input.type === 'password') return null;
+  if (input.type === 'checkbox' || input.type === 'radio') {
+    return String(input.checked);
+  }
+  return input.value;
+}
+
+type ControlExtractor = {
+  matches: (target: EventTarget) => boolean;
+  read: (target: EventTarget) => string | null;
+};
+
+const controlExtractors: ControlExtractor[] = [
+  {
+    matches: (target) => target instanceof HTMLInputElement,
+    read: (target) => getInputChangedValue(target as HTMLInputElement),
+  },
+  {
+    matches: (target) =>
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement,
+    read: (target) => (target as HTMLTextAreaElement | HTMLSelectElement).value,
+  },
+];
+
+function getControlChangedValue(target: EventTarget | null): string | null {
+  const extractor = target
+    ? controlExtractors.find(({ matches }) => matches(target))
+    : undefined;
+  return extractor && target ? extractor.read(target) : null;
+}
+
 function getChangedValue(
   el: HTMLElement,
   target: EventTarget | null,
 ): string | null {
-  // Value capture is opt-in: an element must explicitly request it, since
-  // any future tagged field (e.g. a token/API-key input) would otherwise
-  // have its value logged by default.
-  let value: string | null = null;
-  if (el.dataset.loggerCaptureValue === 'true') {
-    if (target instanceof HTMLInputElement) {
-      // Never record secret values, even if a password field gets tagged.
-      if (target.type !== 'password') {
-        value =
-          target.type === 'checkbox' || target.type === 'radio'
-            ? String(target.checked)
-            : target.value;
-      }
-    } else if (
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement
-    ) {
-      value = target.value;
-    }
-  }
-  return value;
+  // Value capture is opt-in: tagged fields explicitly request it.
+  return el.dataset.loggerCaptureValue === 'true'
+    ? getControlChangedValue(target)
+    : null;
 }
 
-function shouldSkipDomEvent(event: Event): boolean {
-  if (!isLoggerInitialized()) return true;
-  return event.type === 'click' && isFormControl(event.target);
-}
-
-function logDomEvent(event: Event): void {
-  if (shouldSkipDomEvent(event)) return;
+function buildDomEventPayload(event: Event): LogInput | null {
+  if (!isLoggerInitialized()) return null;
+  if (event.type === 'click' && isFormControl(event.target)) return null;
   const el = findLoggerElement(event.target);
-  if (!el) return;
+  if (!el) return null;
 
   const element = el.dataset.loggerElement ?? '';
   const label = el.dataset.loggerLabel ?? el.textContent?.trim() ?? '';
@@ -107,7 +120,12 @@ function logDomEvent(event: Event): void {
     if (value !== null) context.value = value;
   }
 
-  log({ event: event.type as LogEventType, page, element, label, context });
+  return { event: event.type as LogEventType, page, element, label, context };
+}
+
+function logDomEvent(event: Event): void {
+  const payload = buildDomEventPayload(event);
+  if (payload) log(payload);
 }
 
 function registerDomEventLogger(handleEvent: (event: Event) => void) {

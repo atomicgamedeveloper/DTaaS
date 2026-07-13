@@ -23,6 +23,20 @@ function updateAvailableHeight(
   setHeight(candidate);
 }
 
+function setupHeightMeasurement(
+  ref: RefObject<HTMLElement | null>,
+  minHeight: number,
+  setHeight: (height: number) => void,
+): (() => void) | undefined {
+  const element = ref.current;
+  if (!element) return undefined;
+  const updateHeight = () =>
+    updateAvailableHeight(element, minHeight, setHeight);
+  updateHeight();
+  window.addEventListener('resize', updateHeight);
+  return () => window.removeEventListener('resize', updateHeight);
+}
+
 /**
  * Sizes an element to fill the viewport space below its current position,
  * without pushing the page's total height past the viewport. Rather than
@@ -37,18 +51,11 @@ function useAvailableHeight(
 ): number | undefined {
   const [height, setHeight] = useState<number>();
 
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return undefined;
-
-    const updateHeight = () =>
-      updateAvailableHeight(element, minHeight, setHeight);
-
-    updateHeight();
-    window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
+  useLayoutEffect(
+    () => setupHeightMeasurement(ref, minHeight, setHeight),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+    deps,
+  );
 
   return height;
 }

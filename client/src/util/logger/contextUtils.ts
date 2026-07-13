@@ -88,16 +88,40 @@ function sanitizeStructuredValue(
   return stringifyLeafValue(value);
 }
 
+interface PrimitiveResult {
+  handled: boolean;
+  value: LogContextValue;
+}
+
+function sanitizePrimitiveValue(value: unknown): PrimitiveResult {
+  if (typeof value === 'string') {
+    return {
+      handled: true,
+      value: value.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH),
+    };
+  }
+  if (isPassthroughPrimitive(value)) return { handled: true, value };
+  return { handled: false, value: MAX_DEPTH_VALUE };
+}
+
+function sanitizeComplexValue(
+  value: unknown,
+  depth: number,
+  budget: WalkBudget,
+): LogContextValue {
+  if (depth <= 0) return MAX_DEPTH_VALUE;
+  return sanitizeStructuredValue(value, depth, budget);
+}
+
 function sanitizeContextValue(
   value: unknown,
   depth: number,
   budget: WalkBudget,
 ): LogContextValue {
-  if (typeof value === 'string')
-    return value.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
-  if (isPassthroughPrimitive(value)) return value;
-  if (depth <= 0) return MAX_DEPTH_VALUE;
-  return sanitizeStructuredValue(value, depth, budget);
+  const primitive = sanitizePrimitiveValue(value);
+  return primitive.handled
+    ? primitive.value
+    : sanitizeComplexValue(value, depth, budget);
 }
 
 export function sanitizeLogContext(value: unknown): LogContext {
@@ -160,13 +184,19 @@ function collectStructuredText(
   return [String(value)];
 }
 
+function canCollectText(value: LogContextValue, depth: number): boolean {
+  if (value === null) return false;
+  return depth > 0;
+}
+
 function collectTextValue(
   value: LogContextValue,
   depth: number,
   budget: WalkBudget,
 ): string[] {
-  if (value === null || depth <= 0) return [];
-  return collectStructuredText(value, depth, budget);
+  return canCollectText(value, depth)
+    ? collectStructuredText(value, depth, budget)
+    : [];
 }
 
 function collectTextArray(
