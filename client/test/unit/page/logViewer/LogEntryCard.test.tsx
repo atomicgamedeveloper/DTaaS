@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import LogEntryCard from 'page/logViewer/LogEntryCard';
 import {
@@ -49,6 +50,45 @@ describe('LogEntryCard', () => {
     expect(
       screen.getByText('dt.history: ["2026-07-07T00:00:00.000Z"]'),
     ).toBeInTheDocument();
+  });
+
+  it('shows the full context value in a tooltip when hovering a truncated chip', async () => {
+    render(
+      <LogEntryCard
+        entry={{
+          ...baseEntry,
+          context: {
+            dt: { history: ['2026-07-07T00:00:00.000Z'] },
+          },
+        }}
+      />,
+    );
+
+    const chipText = 'dt.history: ["2026-07-07T00:00:00.000Z"]';
+    const chipLabel = screen.getByText(chipText);
+    Object.defineProperty(chipLabel, 'scrollWidth', {
+      configurable: true,
+      value: 200,
+    });
+    Object.defineProperty(chipLabel, 'clientWidth', {
+      configurable: true,
+      value: 100,
+    });
+    await userEvent.hover(chipLabel);
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(chipText);
+  });
+
+  it('does not show a tooltip when the chip text is fully visible', async () => {
+    render(
+      <LogEntryCard entry={{ ...baseEntry, context: { value: 'enabled' } }} />,
+    );
+
+    await userEvent.hover(screen.getByText('value: enabled'));
+
+    await expect(
+      screen.findByRole('tooltip', {}, { timeout: 300 }),
+    ).rejects.toThrow();
   });
 
   it('renders flat primitive context values unchanged', () => {

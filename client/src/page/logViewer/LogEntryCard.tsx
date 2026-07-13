@@ -1,4 +1,11 @@
-import { Box, Chip, Paper, Typography } from '@mui/material';
+import {
+  cloneElement,
+  MouseEvent,
+  MouseEventHandler,
+  ReactElement,
+  useState,
+} from 'react';
+import { Box, Chip, Paper, Tooltip, Typography } from '@mui/material';
 import { LogEvent, LogEventType } from 'util/logger/logEvent';
 import { formatTimestamp } from 'page/logViewer/logViewerUtils';
 import { flattenLogContext } from 'util/logger/contextUtils';
@@ -13,6 +20,29 @@ const EVENT_CHIP_COLOR: Record<
   notification: 'warning',
   dismiss: 'default',
 };
+
+function OverflowTooltip({
+  text,
+  children,
+}: Readonly<{
+  text: string;
+  children: ReactElement<{ onMouseEnter?: MouseEventHandler<HTMLElement> }>;
+}>) {
+  const [truncated, setTruncated] = useState(false);
+
+  const measureTruncation = (event: MouseEvent<HTMLElement>) => {
+    const label =
+      event.currentTarget.querySelector('.MuiChip-label') ??
+      event.currentTarget;
+    setTruncated(label.scrollWidth > label.clientWidth);
+  };
+
+  return (
+    <Tooltip title={truncated ? text : ''}>
+      {cloneElement(children, { onMouseEnter: measureTruncation })}
+    </Tooltip>
+  );
+}
 
 function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
   const contextEntries = flattenLogContext(entry.context ?? {});
@@ -43,9 +73,11 @@ function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
             size="small"
             color={EVENT_CHIP_COLOR[entry.event]}
           />
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
-            {entry.label}
-          </Typography>
+          <OverflowTooltip text={entry.label}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
+              {entry.label}
+            </Typography>
+          </OverflowTooltip>
         </Box>
         <Typography
           variant="caption"
@@ -66,12 +98,13 @@ function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
       {contextEntries.length > 0 && (
         <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
           {contextEntries.map(({ key, value }) => (
-            <Chip
-              key={key}
-              label={`${key}: ${value}`}
-              size="small"
-              variant="outlined"
-            />
+            <OverflowTooltip key={key} text={`${key}: ${value}`}>
+              <Chip
+                label={`${key}: ${value}`}
+                size="small"
+                variant="outlined"
+              />
+            </OverflowTooltip>
           ))}
         </Box>
       )}
