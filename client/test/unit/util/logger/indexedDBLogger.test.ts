@@ -183,7 +183,7 @@ describe('indexedDBLogger', () => {
       await addLog(mockEvent);
       const scansBefore = getAllSpy.mock.calls.length;
       await addLog(mockEvent);
-      expect(getAllSpy.mock.calls.length).toBe(scansBefore);
+      expect(getAllSpy.mock.calls).toHaveLength(scansBefore);
 
       // A change in another tab must invalidate the cached total; otherwise
       // a stale over-budget estimate would prune every subsequent write.
@@ -191,7 +191,7 @@ describe('indexedDBLogger', () => {
       channel.onmessage?.({} as MessageEvent);
       await addLog(mockEvent);
 
-      expect(getAllSpy.mock.calls.length).toBe(scansBefore + 1);
+      expect(getAllSpy.mock.calls).toHaveLength(scansBefore + 1);
       expect(await getAllLogs()).toHaveLength(3);
       getAllSpy.mockRestore();
     });

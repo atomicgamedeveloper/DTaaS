@@ -51,6 +51,16 @@ interface PruneState {
   remaining: number;
 }
 
+function cacheAfterCursorExhausted(state: PruneState): void {
+  cachedTotalBytes = state.remaining > MAX_LOG_BYTES ? null : state.remaining;
+}
+
+function pruneCursorEntry(cursor: IDBCursorWithValue, state: PruneState): void {
+  state.remaining -= estimateEventBytes(cursor.value as LogEvent);
+  cursor.delete();
+  cursor.continue();
+}
+
 function pruneCursor(
   request: IDBRequest<IDBCursorWithValue | null>,
   state: PruneState,
@@ -60,16 +70,14 @@ function pruneCursor(
     // The store ran out of records while the estimate still exceeds the
     // budget: the running total was stale (for example another tab pruned
     // or cleared), so drop it and rescan on the next write.
-    cachedTotalBytes = state.remaining > MAX_LOG_BYTES ? null : state.remaining;
+    cacheAfterCursorExhausted(state);
     return;
   }
   if (state.remaining <= MAX_LOG_BYTES) {
     cachedTotalBytes = state.remaining;
     return;
   }
-  state.remaining -= estimateEventBytes(cursor.value as LogEvent);
-  cursor.delete();
-  cursor.continue();
+  pruneCursorEntry(cursor, state);
 }
 
 function pruneToByteBudget(store: IDBObjectStore, totalBytes: number): void {
