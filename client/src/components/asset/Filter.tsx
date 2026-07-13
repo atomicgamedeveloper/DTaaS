@@ -73,7 +73,7 @@ function sxValues(sx?: SxProps<Theme>) {
 }
 
 function defaultValue<T>(value: T | undefined, fallback: T): T {
-  return value === undefined ? fallback : value;
+  return value ?? fallback;
 }
 
 function FilterContent({

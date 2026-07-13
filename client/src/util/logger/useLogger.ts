@@ -104,12 +104,13 @@ function getChangedValue(
     : null;
 }
 
-function buildDomEventPayload(event: Event): LogInput | null {
+function findEligibleLoggerElement(event: Event): HTMLElement | null {
   if (!isLoggerInitialized()) return null;
   if (event.type === 'click' && isFormControl(event.target)) return null;
-  const el = findLoggerElement(event.target);
-  if (!el) return null;
+  return findLoggerElement(event.target);
+}
 
+function createDomEventPayload(event: Event, el: HTMLElement): LogInput {
   const element = el.dataset.loggerElement ?? '';
   const label = el.dataset.loggerLabel ?? el.textContent?.trim() ?? '';
   const context = parseContext(el.dataset.loggerContext);
@@ -121,6 +122,11 @@ function buildDomEventPayload(event: Event): LogInput | null {
   }
 
   return { event: event.type as LogEventType, page, element, label, context };
+}
+
+function buildDomEventPayload(event: Event): LogInput | null {
+  const el = findEligibleLoggerElement(event);
+  return el ? createDomEventPayload(event, el) : null;
 }
 
 function logDomEvent(event: Event): void {

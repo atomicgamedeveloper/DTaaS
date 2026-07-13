@@ -27,13 +27,16 @@ function handleCursorResult(
   cursor.continue();
 }
 
-function attachCursorHandlers(
-  request: IDBRequest<IDBCursorWithValue | null>,
-  cursorAction: (cursor: IDBCursorWithValue) => void,
-  resolve: () => void,
-  reject: (reason?: unknown) => void,
-  errorMessage: string,
-): void {
+interface CursorHandlerOptions {
+  request: IDBRequest<IDBCursorWithValue | null>;
+  cursorAction: (cursor: IDBCursorWithValue) => void;
+  resolve: () => void;
+  reject: (reason?: unknown) => void;
+  errorMessage: string;
+}
+
+function attachCursorHandlers(options: CursorHandlerOptions): void {
+  const { request, cursorAction, resolve, reject, errorMessage } = options;
   request.onerror = () => reject(new Error(errorMessage));
   request.onsuccess = () => handleCursorResult(request, cursorAction, resolve);
 }
@@ -93,13 +96,13 @@ export default abstract class BaseIndexedDBService {
       const transaction = this.db.transaction([query.storeName], 'readwrite');
       const store = transaction.objectStore(query.storeName);
       const request = openCursorRequest(store, query);
-      attachCursorHandlers(
+      attachCursorHandlers({
         request,
         cursorAction,
         resolve,
         reject,
         errorMessage,
-      );
+      });
     });
   }
 }

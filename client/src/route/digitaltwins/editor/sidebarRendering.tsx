@@ -26,15 +26,18 @@ export interface RenderOptions {
   readonly assetPath?: string;
 }
 
+const isPublicLibraryAsset = (asset: AssetOrNull): boolean =>
+  asset instanceof LibraryAsset && !asset.isPrivate;
+
+const prefixLibraryLabel = (label: string, isPublic: boolean): string => {
+  const prefix = isPublic && !label.startsWith('common/') ? 'common/' : '';
+  return `${prefix}${label}`;
+};
+
 const normalizeLibraryAssetLabel = (
   label: string,
   asset: AssetOrNull,
-): string => {
-  if (asset instanceof LibraryAsset && !asset.isPrivate) {
-    return label.startsWith('common/') ? label : `common/${label}`;
-  }
-  return label;
-};
+): string => prefixLibraryLabel(label, isPublicLibraryAsset(asset));
 
 const getBaseLabel = (label: string, asset: AssetOrNull): string =>
   normalizeLibraryAssetLabel(label.toLowerCase(), asset);

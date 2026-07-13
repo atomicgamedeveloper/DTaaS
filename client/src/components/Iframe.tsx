@@ -10,17 +10,28 @@ interface IFrameProps {
 // Clicks inside an iframe never reach the parent document, so the DOM
 // logger cannot see them. Clicking into an iframe moves focus to it and
 // blurs the parent window; log that transition once per entry.
-function useIframeFocusLogger(title: string): void {
-  useEffect(() => {
-    let focusLogged = false;
-    const pendingChecks = new Set<ReturnType<typeof globalThis.setTimeout>>();
-    const logFocusedIframe = () => {
-      const active = document.activeElement;
-      if (document.visibilityState !== 'visible') return;
-      if (!document.hasFocus()) return;
-      if (!(active instanceof HTMLIFrameElement)) return;
-      if (active.title !== title) return;
-      if (focusLogged) return;
+function isFocusedIframe(active: Element | null, title: string): boolean {
+  return (
+    document.visibilityState === 'visible' &&
+    document.hasFocus() &&
+    active instanceof HTMLIFrameElement &&
+    active.title === title
+  );
+}
+
+function isTargetIframeFocused(
+  active: Element | null,
+  title: string,
+  focusLogged: boolean,
+): boolean {
+  return !focusLogged && isFocusedIframe(active, title);
+}
+
+function registerIframeFocusLogger(title: string): () => void {
+  let focusLogged = false;
+  const pendingChecks = new Set<ReturnType<typeof globalThis.setTimeout>>();
+  const logFocusedIframe = () => {
+    if (isTargetIframeFocused(document.activeElement, title, focusLogged)) {
       focusLogged = true;
       log({
         event: 'click',
@@ -28,28 +39,32 @@ function useIframeFocusLogger(title: string): void {
         element: 'iframe',
         label: title,
       });
-    };
-    const handleWindowBlur = () => {
-      const timer = globalThis.setTimeout(() => {
-        pendingChecks.delete(timer);
-        logFocusedIframe();
-      }, 0);
-      pendingChecks.add(timer);
-    };
-    // A click on the parent page means focus left the iframe; the next
-    // focus into it is a new interaction.
-    const handleParentClick = () => {
-      focusLogged = false;
-    };
-    globalThis.addEventListener('blur', handleWindowBlur);
-    document.addEventListener('click', handleParentClick, true);
-    return () => {
-      globalThis.removeEventListener('blur', handleWindowBlur);
-      document.removeEventListener('click', handleParentClick, true);
-      pendingChecks.forEach((timer) => globalThis.clearTimeout(timer));
-      pendingChecks.clear();
-    };
-  }, [title]);
+    }
+  };
+  const handleWindowBlur = () => {
+    const timer = globalThis.setTimeout(() => {
+      pendingChecks.delete(timer);
+      logFocusedIframe();
+    }, 0);
+    pendingChecks.add(timer);
+  };
+  // A click on the parent page means focus left the iframe; the next
+  // focus into it is a new interaction.
+  const handleParentClick = () => {
+    focusLogged = false;
+  };
+  globalThis.addEventListener('blur', handleWindowBlur);
+  document.addEventListener('click', handleParentClick, true);
+  return () => {
+    globalThis.removeEventListener('blur', handleWindowBlur);
+    document.removeEventListener('click', handleParentClick, true);
+    pendingChecks.forEach((timer) => globalThis.clearTimeout(timer));
+    pendingChecks.clear();
+  };
+}
+
+function useIframeFocusLogger(title: string): void {
+  useEffect(() => registerIframeFocusLogger(title), [title]);
 }
 
 function Iframe({ url, title }: IFrameProps) {
