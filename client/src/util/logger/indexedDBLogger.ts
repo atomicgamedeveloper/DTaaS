@@ -11,6 +11,9 @@ export const MAX_LOG_BYTES = 25 * 1024 * 1024;
 
 let changeChannel: BroadcastChannel | null = null;
 
+// Cached running total of the logs store's approximate byte size
+let cachedTotalBytes: number | null = null;
+
 function emitLocalLogChange(): void {
   globalThis.dispatchEvent(new Event(LOGS_CHANGED_EVENT));
 }
@@ -20,7 +23,12 @@ function getChangeChannel(): BroadcastChannel | null {
   if (changeChannel) return changeChannel;
 
   changeChannel = new BroadcastChannel(LOGS_CHANGED_CHANNEL);
-  changeChannel.onmessage = emitLocalLogChange;
+  changeChannel.onmessage = () => {
+    // Another tab wrote, pruned, or cleared the store, so this tab's
+    // running byte total no longer reflects it; rescan on the next write.
+    cachedTotalBytes = null;
+    emitLocalLogChange();
+  };
   return changeChannel;
 }
 
@@ -39,9 +47,6 @@ function estimateEventBytes(event: LogEvent): number {
   return new Blob([JSON.stringify(event)]).size;
 }
 
-// Cached running total of the logs store's approximate byte size
-let cachedTotalBytes: number | null = null;
-
 interface PruneState {
   remaining: number;
 }
@@ -51,7 +56,14 @@ function pruneCursor(
   state: PruneState,
 ): void {
   const cursor = request.result;
-  if (!cursor || state.remaining <= MAX_LOG_BYTES) {
+  if (!cursor) {
+    // The store ran out of records while the estimate still exceeds the
+    // budget: the running total was stale (for example another tab pruned
+    // or cleared), so drop it and rescan on the next write.
+    cachedTotalBytes = state.remaining > MAX_LOG_BYTES ? null : state.remaining;
+    return;
+  }
+  if (state.remaining <= MAX_LOG_BYTES) {
     cachedTotalBytes = state.remaining;
     return;
   }

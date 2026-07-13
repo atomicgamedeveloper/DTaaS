@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import useLogs from 'page/logViewer/useLogs';
 import * as indexedDBLogger from 'util/logger/indexedDBLogger';
 import { LogEvent } from 'util/logger/logEvent';
@@ -33,6 +33,10 @@ describe('useLogs', () => {
     mockSubscribeToLogChanges.mockReturnValue(jest.fn());
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('schedules only one initial load when live update starts enabled', async () => {
     renderHook(() => useLogs(true));
 
@@ -40,5 +44,31 @@ describe('useLogs', () => {
       expect(mockGetAllLogs).toHaveBeenCalledTimes(1);
     });
     expect(mockSubscribeToLogChanges).toHaveBeenCalledTimes(1);
+  });
+
+  it('coalesces bursts of change notifications into a single reload', async () => {
+    jest.useFakeTimers();
+    let notifyChange: (() => void) | undefined;
+    mockSubscribeToLogChanges.mockImplementation((listener) => {
+      notifyChange = listener;
+      return jest.fn();
+    });
+
+    renderHook(() => useLogs(true));
+    await act(async () => {
+      jest.runOnlyPendingTimers();
+    });
+    expect(mockGetAllLogs).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      notifyChange?.();
+      notifyChange?.();
+      notifyChange?.();
+    });
+    await act(async () => {
+      jest.runOnlyPendingTimers();
+    });
+
+    expect(mockGetAllLogs).toHaveBeenCalledTimes(2);
   });
 });

@@ -4,42 +4,16 @@ import { useSelector } from 'react-redux';
 import Editor from 'route/digitaltwins/editor/Editor';
 import CreateDialogs from 'route/digitaltwins/create/CreateDialogs';
 import { RootState } from 'store/store';
-import { FileState, FileType } from 'model/backend/interfaces/sharedInterfaces';
 import type { LogContext } from 'util/logger/logEvent';
+import {
+  buildAssetsLogContext,
+  buildActionLogContext,
+} from 'route/digitaltwins/create/createPageLogContext';
 
 interface CreatePageProps {
   readonly newDigitalTwinName: string;
   readonly setNewDigitalTwinName: Dispatch<SetStateAction<string>>;
 }
-
-export const buildAssetsLogContext = (
-  newDigitalTwinName: string,
-  files: FileState[],
-): LogContext => {
-  const namesByType = (type: FileType) =>
-    files
-      .filter((file) => file.isNew && file.type === type)
-      .map((file) => file.name);
-
-  return {
-    dt: {
-      name: newDigitalTwinName,
-      assets: {
-        description: namesByType(FileType.DESCRIPTION),
-        configuration: namesByType(FileType.CONFIGURATION),
-        lifecycle: namesByType(FileType.LIFECYCLE),
-      },
-    },
-  };
-};
-
-export const buildActionLogContext = (
-  logContext: LogContext,
-  button: string,
-): LogContext => ({
-  ...logContext,
-  dt: { ...(logContext.dt as LogContext), button },
-});
 
 function DigitalTwinNameInput({
   value,

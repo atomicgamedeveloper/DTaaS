@@ -8,7 +8,6 @@ import type {
 } from 'util/logger/logEvent';
 import { hashUsername } from 'util/logger/hashUtils';
 import { getSessionId } from 'util/logger/sessionManager';
-import { logToConsole } from 'util/logger/consoleLogger';
 import { sendBeacon } from 'util/logger/beaconLogger';
 import { addLog } from 'util/logger/indexedDBLogger';
 import { getLoggingEnabled } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
@@ -83,7 +82,6 @@ export function log({
     label,
     context: sanitizeLogContext(context),
   });
-  logToConsole(logEvent);
   addLog(logEvent).catch(() => {
     warnPersistenceFailureOnce();
   });
@@ -95,10 +93,9 @@ export function log({
 
 export function logNavigation(page: string): LogEvent | null {
   if (page === lastNavigationPage) return null;
-  const pageTransition =
-    lastNavigationPage && lastNavigationPage !== page
-      ? { src: lastNavigationPage, target: page }
-      : undefined;
+  const pageTransition = lastNavigationPage
+    ? { src: lastNavigationPage, target: page }
+    : undefined;
 
   const logEvent = log({
     event: 'navigation',

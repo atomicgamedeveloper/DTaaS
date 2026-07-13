@@ -10,6 +10,8 @@ interface UseLogsResult {
   setLogs: (logs: LogEvent[]) => void;
 }
 
+const LIVE_UPDATE_DEBOUNCE_MS = 250;
+
 function useLogs(liveUpdate: boolean): UseLogsResult {
   const [logs, setLogs] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +27,22 @@ function useLogs(liveUpdate: boolean): UseLogsResult {
   useEffect(() => {
     if (!liveUpdate) return undefined;
 
-    const unsubscribe = subscribeToLogChanges(loadLogs);
-    return unsubscribe;
+    // Coalesce bursts of change events (a single click can log a click and
+    // a change) into one full store re-read.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleReload = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        loadLogs().catch(() => {});
+      }, LIVE_UPDATE_DEBOUNCE_MS);
+    };
+
+    const unsubscribe = subscribeToLogChanges(scheduleReload);
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
   }, [liveUpdate, loadLogs]);
 
   return { logs, loading, loadLogs, setLogs };

@@ -78,6 +78,45 @@ describe('settingsSlice', () => {
     }
   });
 
+  it('does not carry a pre-remote loggingEnabled choice over as remote consent', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+    jest
+      .spyOn(Storage.prototype, 'getItem')
+      .mockReturnValue(JSON.stringify({ loggingEnabled: true }));
+
+    try {
+      const result = loadInitialSettings();
+      expect(result.loggingEnabled).toBe(false);
+      expect(result.remoteLoggerConfiguredAtSave).toBe(true);
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('keeps a loggingEnabled choice made while the remote logger was configured', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(
+      JSON.stringify({
+        loggingEnabled: true,
+        remoteLoggerConfiguredAtSave: true,
+      }),
+    );
+
+    try {
+      expect(loadInitialSettings().loggingEnabled).toBe(true);
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
   it('should handle resetToDefaults', () => {
     const modified = {
       ...initialState,

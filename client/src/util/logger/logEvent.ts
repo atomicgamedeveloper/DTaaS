@@ -23,6 +23,8 @@ export interface PageTransition {
 }
 
 export interface LogEvent {
+  /** IndexedDB auto-increment key, present on events read back from the store. */
+  readonly id?: number;
   readonly sessionId: string;
   readonly userHash: string;
   readonly timestamp: string;

@@ -31,7 +31,7 @@ import {
 import {
   buildAssetsLogContext,
   buildActionLogContext,
-} from 'route/digitaltwins/create/CreatePage';
+} from 'route/digitaltwins/create/createPageLogContext';
 
 interface CreateDTDialogProps {
   readonly open: boolean;

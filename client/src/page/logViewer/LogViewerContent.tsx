@@ -1,9 +1,13 @@
 import { ReactNode, useRef } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import LogEntryCard from 'page/logViewer/LogEntryCard';
 import RawLogView from 'page/logViewer/RawLogView';
 import EmptyState from 'page/logViewer/EmptyState';
 import { LogEvent } from 'util/logger/logEvent';
+import {
+  MAX_RENDERED_LOG_ENTRIES,
+  getRenderCapNote,
+} from 'page/logViewer/logViewerUtils';
 import useAvailableHeight from 'util/useAvailableHeight';
 
 interface LogViewerContentProps {
@@ -22,9 +26,22 @@ function renderEntries(
 ): ReactNode {
   if (entries.length === 0) return <EmptyState filtered={filtered} />;
   if (rawView) return <RawLogView entries={entries} />;
-  return entries.map((entry, index) => (
-    <LogEntryCard key={`${entry.timestamp}-${index}`} entry={entry} />
-  ));
+  const capNote = getRenderCapNote(entries.length);
+  return (
+    <>
+      {entries.slice(0, MAX_RENDERED_LOG_ENTRIES).map((entry, index) => (
+        <LogEntryCard
+          key={entry.id ?? `${entry.timestamp}-${index}`}
+          entry={entry}
+        />
+      ))}
+      {capNote && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {capNote}
+        </Typography>
+      )}
+    </>
+  );
 }
 
 function LogViewerContent({

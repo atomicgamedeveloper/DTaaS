@@ -148,6 +148,8 @@ function useLoggerReady(loggingEnabled: boolean, username: string): boolean {
   const initRef = useRef(false);
   const [ready, setReady] = useState(isLoggerInitialized());
 
+  // Deliberately no dependency array: the username can arrive on any later
+  // render, and a failed init (initRef reset) retries the same way.
   useEffect(() => {
     if (!loggingEnabled) return;
     startLogger(username, initRef, () => setReady(true));

@@ -71,7 +71,8 @@ function LogEntryCard({ entry }: Readonly<{ entry: LogEvent }>) {
           <Chip
             label={entry.event}
             size="small"
-            color={EVENT_CHIP_COLOR[entry.event]}
+            // Older stored events may predate the current LogEventType union.
+            color={EVENT_CHIP_COLOR[entry.event] ?? 'default'}
           />
           <OverflowTooltip text={entry.label}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>

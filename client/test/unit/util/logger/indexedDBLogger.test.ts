@@ -175,5 +175,25 @@ describe('indexedDBLogger', () => {
 
       expect(channel.close).toHaveBeenCalled();
     });
+
+    it('rescans the store size after another tab reports a change', async () => {
+      const getAllSpy = jest.spyOn(IDBObjectStore.prototype, 'getAll');
+
+      // The running byte total is already cached, so writes reuse it.
+      await addLog(mockEvent);
+      const scansBefore = getAllSpy.mock.calls.length;
+      await addLog(mockEvent);
+      expect(getAllSpy.mock.calls.length).toBe(scansBefore);
+
+      // A change in another tab must invalidate the cached total; otherwise
+      // a stale over-budget estimate would prune every subsequent write.
+      const channel = FakeBroadcastChannel.instances[0];
+      channel.onmessage?.({} as MessageEvent);
+      await addLog(mockEvent);
+
+      expect(getAllSpy.mock.calls.length).toBe(scansBefore + 1);
+      expect(await getAllLogs()).toHaveLength(3);
+      getAllSpy.mockRestore();
+    });
   });
 });

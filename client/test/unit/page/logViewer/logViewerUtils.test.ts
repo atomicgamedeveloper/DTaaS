@@ -1,4 +1,9 @@
-import { matchesFilter } from 'page/logViewer/logViewerUtils';
+import {
+  MAX_RENDERED_LOG_ENTRIES,
+  getRenderCapNote,
+  matchesFilter,
+  sortLogsNewestFirst,
+} from 'page/logViewer/logViewerUtils';
 import {
   MAX_LOG_CONTEXT_DEPTH,
   MAX_LOG_CONTEXT_ENTRIES,
@@ -62,5 +67,28 @@ describe('matchesFilter', () => {
     expect(
       matchesFilter(buildEvent(context), `value${MAX_LOG_CONTEXT_ENTRIES + 4}`),
     ).toBe(false);
+  });
+});
+
+describe('sortLogsNewestFirst', () => {
+  it('breaks same-timestamp ties by the store id, newest first', () => {
+    const entries = [1, 3, 2].map((id) => ({ ...buildEvent({}), id }));
+
+    const sorted = sortLogsNewestFirst(entries);
+
+    expect(sorted.map((entry) => entry.id)).toEqual([3, 2, 1]);
+  });
+});
+
+describe('getRenderCapNote', () => {
+  it('returns null when the entry count is within the render cap', () => {
+    expect(getRenderCapNote(MAX_RENDERED_LOG_ENTRIES)).toBeNull();
+  });
+
+  it('describes the cap when entries exceed it', () => {
+    const note = getRenderCapNote(MAX_RENDERED_LOG_ENTRIES + 1);
+
+    expect(note).toContain(`newest ${MAX_RENDERED_LOG_ENTRIES}`);
+    expect(note).toContain(`${MAX_RENDERED_LOG_ENTRIES + 1} entries`);
   });
 });

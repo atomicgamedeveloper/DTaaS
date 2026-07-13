@@ -32,8 +32,12 @@ function toDisplayOrder(event: LogEvent) {
 }
 
 export function sortLogsNewestFirst(entries: LogEvent[]): LogEvent[] {
+  // Same-millisecond bursts are common; the store's auto-increment id keeps
+  // their relative order stable across reloads.
   return [...entries].sort(
-    (first, second) => timestampValue(second) - timestampValue(first),
+    (first, second) =>
+      timestampValue(second) - timestampValue(first) ||
+      (second.id ?? 0) - (first.id ?? 0),
   );
 }
 
@@ -76,6 +80,15 @@ export function scheduleLogLoad(loadLogs: () => Promise<void>): () => void {
     loadLogs().catch(() => {});
   }, 0);
   return () => globalThis.clearTimeout(timer);
+}
+
+// Rendering tens of thousands of entries freezes the tab, so both views cap
+// what they render; downloads and clipboard copies still cover every entry.
+export const MAX_RENDERED_LOG_ENTRIES = 500;
+
+export function getRenderCapNote(totalCount: number): string | null {
+  if (totalCount <= MAX_RENDERED_LOG_ENTRIES) return null;
+  return `Showing the newest ${MAX_RENDERED_LOG_ENTRIES} of ${totalCount} entries. Narrow the filter, or use Download to get all of them.`;
 }
 
 export function getCountText(

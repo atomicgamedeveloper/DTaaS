@@ -23,6 +23,10 @@ export const DEFAULT_SETTINGS = {
   RUNNER_TAG,
   BRANCH_NAME,
   loggingEnabled: getDefaultLoggingEnabled(),
+  // Records whether a remote logger was configured when settings were
+  // persisted, so a loggingEnabled choice made under local-only logging is
+  // not carried over as consent once a remote logger appears.
+  remoteLoggerConfiguredAtSave: isRemoteLoggerConfigured(),
 };
 
 export { DEFAULT_MEASUREMENT };
@@ -39,6 +43,7 @@ interface SettingsState {
   secondaryDTName: string;
   disabledTaskNames: string[];
   loggingEnabled: boolean;
+  remoteLoggerConfiguredAtSave: boolean;
 }
 
 const SettingsSchema = z
@@ -54,15 +59,35 @@ const SettingsSchema = z
     secondaryDTName: z.string(),
     disabledTaskNames: z.array(z.string()),
     loggingEnabled: z.boolean(),
+    remoteLoggerConfiguredAtSave: z.boolean(),
   })
   .partial();
+
+type PersistedSettings = z.infer<typeof SettingsSchema>;
+
+// A loggingEnabled choice persisted before any remote logger was configured
+// is not consent to remote streaming; reapply the consent-aware default
+// until the user opts in again.
+function applyRemoteLoggingConsent(
+  persisted: PersistedSettings,
+): PersistedSettings {
+  if (!isRemoteLoggerConfigured() || persisted.remoteLoggerConfiguredAtSave) {
+    return persisted;
+  }
+  return {
+    ...persisted,
+    loggingEnabled: getDefaultLoggingEnabled(),
+    remoteLoggerConfiguredAtSave: true,
+  };
+}
 
 function readPersistedSettings(base: SettingsState): SettingsState | null {
   const settings = localStorage.getItem('settings');
   if (!settings) return null;
   try {
     const result = SettingsSchema.safeParse(JSON.parse(settings));
-    if (result.success) return { ...base, ...result.data };
+    if (result.success)
+      return { ...base, ...applyRemoteLoggingConsent(result.data) };
   } catch {
     // Malformed persisted settings; fall back to defaults.
   }

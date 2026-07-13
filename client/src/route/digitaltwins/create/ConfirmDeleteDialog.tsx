@@ -11,7 +11,7 @@ import { FileState } from 'model/backend/interfaces/sharedInterfaces';
 import {
   buildAssetsLogContext,
   buildActionLogContext,
-} from 'route/digitaltwins/create/CreatePage';
+} from 'route/digitaltwins/create/createPageLogContext';
 
 interface ConfirmDeleteDialogProps {
   readonly open: boolean;

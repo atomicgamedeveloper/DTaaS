@@ -19,14 +19,12 @@ export default defineConfig({
   webServer: useExtServer
     ? undefined
     : {
-        command: 'yarn start',
-        url: BASE_URI,
-      },
+      command: 'yarn start',
+      url: BASE_URI,
+    },
   retries: process.env.CI ? 0 : 1, // Disable retries on Github actions for now as setup always fails
   timeout: 90 * 1000, // 90 seconds per test
   globalTimeout: 25 * 60 * 1000,
-  // 3 for the concurrent chromium/firefox projects, +1 dedicated slot so the
-  // single-worker "sequential" project isn't squeezed out of the shared pool
   workers: 3,
   testDir: './test/e2e/tests',
   testMatch: '**/*.test.ts',
