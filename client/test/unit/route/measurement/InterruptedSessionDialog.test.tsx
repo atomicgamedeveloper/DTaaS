@@ -23,11 +23,11 @@ describe('InterruptedSessionDialog', () => {
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'Previous Session Interrupted',
-      'escapeKeyDown',
-    );
+    expect(logDismiss).toHaveBeenCalledWith({
+      element: 'dialog',
+      label: 'Previous Session Interrupted',
+      reason: 'escapeKeyDown',
+    });
     expect(onClose).toHaveBeenCalled();
   });
 });

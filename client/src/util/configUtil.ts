@@ -145,21 +145,14 @@ export async function urlIsReachable(url: string): Promise<ValidationType> {
     };
   }
 
-  let reachability: ValidationType = {
-    value: undefined,
-    status: undefined,
-    error: `Failed to fetch ${url} after multiple attempts.`,
-  };
-  const corsResponse = await corsRequest(url);
-  if (corsResponse) {
-    reachability = corsResponse;
-  } else {
-    const opaqueResponse = await opaqueRequest(url);
-    if (opaqueResponse) {
-      reachability = opaqueResponse;
+  return (
+    (await corsRequest(url)) ??
+    (await opaqueRequest(url)) ?? {
+      value: undefined,
+      status: undefined,
+      error: `Failed to fetch ${url} after multiple attempts.`,
     }
-  }
-  return reachability;
+  );
 }
 
 const parseField = (

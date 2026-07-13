@@ -5,6 +5,24 @@ interface UseAvailableHeightOptions {
   deps?: unknown[];
 }
 
+function updateAvailableHeight(
+  element: HTMLElement,
+  minHeight: number,
+  setHeight: (height: number) => void,
+): void {
+  const { top } = element.getBoundingClientRect();
+  let candidate = Math.max(minHeight, window.innerHeight - top);
+  element.style.maxHeight = `${candidate}px`;
+
+  const overflow = document.documentElement.scrollHeight - window.innerHeight;
+  if (overflow > 0) {
+    candidate = Math.max(minHeight, candidate - overflow);
+    element.style.maxHeight = `${candidate}px`;
+  }
+
+  setHeight(candidate);
+}
+
 /**
  * Sizes an element to fill the viewport space below its current position,
  * without pushing the page's total height past the viewport. Rather than
@@ -23,20 +41,8 @@ function useAvailableHeight(
     const element = ref.current;
     if (!element) return undefined;
 
-    const updateHeight = () => {
-      const { top } = element.getBoundingClientRect();
-      let candidate = Math.max(minHeight, window.innerHeight - top);
-      element.style.maxHeight = `${candidate}px`;
-
-      const overflow =
-        document.documentElement.scrollHeight - window.innerHeight;
-      if (overflow > 0) {
-        candidate = Math.max(minHeight, candidate - overflow);
-        element.style.maxHeight = `${candidate}px`;
-      }
-
-      setHeight(candidate);
-    };
+    const updateHeight = () =>
+      updateAvailableHeight(element, minHeight, setHeight);
 
     updateHeight();
     window.addEventListener('resize', updateHeight);

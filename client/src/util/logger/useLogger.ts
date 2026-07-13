@@ -67,27 +67,33 @@ function getChangedValue(
   // Value capture is opt-in: an element must explicitly request it, since
   // any future tagged field (e.g. a token/API-key input) would otherwise
   // have its value logged by default.
-  if (el.dataset.loggerCaptureValue !== 'true') return null;
-  if (target instanceof HTMLInputElement) {
-    // Never record secret values, even if a password field gets tagged.
-    if (target.type === 'password') return null;
-    if (target.type === 'checkbox' || target.type === 'radio') {
-      return String(target.checked);
+  let value: string | null = null;
+  if (el.dataset.loggerCaptureValue === 'true') {
+    if (target instanceof HTMLInputElement) {
+      // Never record secret values, even if a password field gets tagged.
+      if (target.type !== 'password') {
+        value =
+          target.type === 'checkbox' || target.type === 'radio'
+            ? String(target.checked)
+            : target.value;
+      }
+    } else if (
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    ) {
+      value = target.value;
     }
-    return target.value;
   }
-  if (
-    target instanceof HTMLTextAreaElement ||
-    target instanceof HTMLSelectElement
-  ) {
-    return target.value;
-  }
-  return null;
+  return value;
+}
+
+function shouldSkipDomEvent(event: Event): boolean {
+  if (!isLoggerInitialized()) return true;
+  return event.type === 'click' && isFormControl(event.target);
 }
 
 function logDomEvent(event: Event): void {
-  if (!isLoggerInitialized()) return;
-  if (event.type === 'click' && isFormControl(event.target)) return;
+  if (shouldSkipDomEvent(event)) return;
   const el = findLoggerElement(event.target);
   if (!el) return;
 

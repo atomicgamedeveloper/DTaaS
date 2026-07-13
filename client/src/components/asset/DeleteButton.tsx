@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Button } from '@mui/material';
+import AssetActionButton from 'components/asset/AssetActionButton';
 
 interface DeleteButtonProps {
   readonly assetName: string;
@@ -14,19 +14,12 @@ const handleToggleDeleteDialog = (
 
 function DeleteButton({ assetName, setShowDelete }: DeleteButtonProps) {
   return (
-    <Button
-      variant="contained"
-      size="small"
-      color="primary"
+    <AssetActionButton
+      action="delete"
+      assetName={assetName}
+      label="Delete"
       onClick={() => handleToggleDeleteDialog(setShowDelete)}
-      data-logger-element="button"
-      data-logger-label="Delete"
-      data-logger-context={JSON.stringify({
-        dt: { name: assetName, button: 'delete' },
-      })}
-    >
-      Delete
-    </Button>
+    />
   );
 }
 

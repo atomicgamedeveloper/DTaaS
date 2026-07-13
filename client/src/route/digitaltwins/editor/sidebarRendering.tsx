@@ -26,13 +26,18 @@ export interface RenderOptions {
   readonly assetPath?: string;
 }
 
-const getBaseLabel = (label: string, asset: AssetOrNull): string => {
-  const lower = label.toLowerCase();
+const normalizeLibraryAssetLabel = (
+  label: string,
+  asset: AssetOrNull,
+): string => {
   if (asset instanceof LibraryAsset && !asset.isPrivate) {
-    return lower.startsWith('common/') ? lower : `common/${lower}`;
+    return label.startsWith('common/') ? label : `common/${label}`;
   }
-  return lower;
+  return label;
 };
+
+const getBaseLabel = (label: string, asset: AssetOrNull): string =>
+  normalizeLibraryAssetLabel(label.toLowerCase(), asset);
 
 const getItemLabel = (item: string, asset: AssetOrNull): string =>
   asset instanceof LibraryAsset && !asset.isPrivate ? `common/${item}` : item;

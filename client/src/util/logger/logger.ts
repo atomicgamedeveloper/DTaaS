@@ -113,12 +113,19 @@ export function logNavigation(page: string): LogEvent | null {
   return logEvent;
 }
 
-export function logDismiss(
-  element: string,
-  label: string,
-  reason?: string,
-  context: LogContext = {},
-): LogEvent | null {
+export interface LogDismissInput {
+  readonly element: string;
+  readonly label: string;
+  readonly reason?: string;
+  readonly context?: LogContext;
+}
+
+export function logDismiss({
+  element,
+  label,
+  reason,
+  context = {},
+}: LogDismissInput): LogEvent | null {
   return log({
     event: 'dismiss',
     page: globalThis.location.pathname,

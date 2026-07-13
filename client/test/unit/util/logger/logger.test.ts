@@ -292,12 +292,18 @@ describe('logger', () => {
   });
 
   it('returns null when logging a dismissal before init', () => {
-    expect(logDismiss('dialog', 'Confirm Clear')).toBeNull();
+    expect(
+      logDismiss({ element: 'dialog', label: 'Confirm Clear' }),
+    ).toBeNull();
   });
 
   it('logs a dismiss event with the dismissal reason', async () => {
     await initLogger('testuser');
-    const event = logDismiss('dialog', 'Confirm Clear', 'backdropClick');
+    const event = logDismiss({
+      element: 'dialog',
+      label: 'Confirm Clear',
+      reason: 'backdropClick',
+    });
 
     expect(event).not.toBeNull();
     expect(event!.event).toBe('dismiss');
@@ -308,7 +314,7 @@ describe('logger', () => {
 
   it('logs a dismiss event without a reason', async () => {
     await initLogger('testuser');
-    const event = logDismiss('snackbar', 'Saved settings');
+    const event = logDismiss({ element: 'snackbar', label: 'Saved settings' });
 
     expect(event).not.toBeNull();
     expect(event!.event).toBe('dismiss');
@@ -328,7 +334,9 @@ describe('logger', () => {
       log({ event: 'click', page: '/library', element: 'tab', label: 'Data' }),
     ).toBeNull();
     expect(logNavigation('/library')).toBeNull();
-    expect(logDismiss('dialog', 'Confirm Clear')).toBeNull();
+    expect(
+      logDismiss({ element: 'dialog', label: 'Confirm Clear' }),
+    ).toBeNull();
     expect(isLoggerInitialized()).toBe(true);
   });
 

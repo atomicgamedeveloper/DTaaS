@@ -1,19 +1,34 @@
 import { DB_CONFIG } from 'database/types';
 
+type StoreConfig = (typeof DB_CONFIG.stores)[keyof typeof DB_CONFIG.stores];
+
+function storeOptions(storeConfig: StoreConfig): IDBObjectStoreParameters {
+  const options: IDBObjectStoreParameters = { keyPath: storeConfig.keyPath };
+  if ('autoIncrement' in storeConfig) {
+    options.autoIncrement = storeConfig.autoIncrement;
+  }
+  return options;
+}
+
+function createIndexes(store: IDBObjectStore, storeConfig: StoreConfig): void {
+  for (const index of storeConfig.indexes) {
+    store.createIndex(index.name, index.keyPath);
+  }
+}
+
+function setupObjectStore(
+  db: IDBDatabase,
+  storeName: string,
+  storeConfig: StoreConfig,
+): void {
+  if (db.objectStoreNames.contains(storeName)) return;
+  const store = db.createObjectStore(storeName, storeOptions(storeConfig));
+  createIndexes(store, storeConfig);
+}
+
 export function setupObjectStores(db: IDBDatabase): void {
   for (const [storeName, storeConfig] of Object.entries(DB_CONFIG.stores)) {
-    if (!db.objectStoreNames.contains(storeName)) {
-      const options: IDBObjectStoreParameters = {
-        keyPath: storeConfig.keyPath,
-      };
-      if ('autoIncrement' in storeConfig) {
-        options.autoIncrement = storeConfig.autoIncrement;
-      }
-      const store = db.createObjectStore(storeName, options);
-      for (const index of storeConfig.indexes) {
-        store.createIndex(index.name, index.keyPath);
-      }
-    }
+    setupObjectStore(db, storeName, storeConfig);
   }
 }
 
@@ -43,36 +58,56 @@ function rejectOpen(reject: (reason?: unknown) => void, message: string): void {
   reject(new Error(message));
 }
 
+interface OpenRequestState {
+  settled: boolean;
+}
+
+function settleOpenFailure(
+  state: OpenRequestState,
+  reject: (reason?: unknown) => void,
+  message: string,
+): void {
+  if (state.settled) return;
+  state.settled = true;
+  rejectOpen(reject, message);
+}
+
+function settleOpenSuccess(
+  state: OpenRequestState,
+  request: IDBOpenDBRequest,
+  resolve: (db: IDBDatabase) => void,
+): void {
+  const db = request.result;
+  if (state.settled) {
+    db.close();
+    return;
+  }
+  state.settled = true;
+  resolve(cacheDBConnection(db));
+}
+
+function configureOpenRequest(
+  request: IDBOpenDBRequest,
+  state: OpenRequestState,
+  resolve: (db: IDBDatabase) => void,
+  reject: (reason?: unknown) => void,
+): void {
+  request.onerror = () =>
+    settleOpenFailure(state, reject, 'Failed to open IndexedDB');
+  request.onblocked = () =>
+    settleOpenFailure(
+      state,
+      reject,
+      'IndexedDB open blocked by another connection',
+    );
+  request.onsuccess = () => settleOpenSuccess(state, request, resolve);
+  request.onupgradeneeded = () => setupObjectStores(request.result);
+}
+
 function createOpenDBPromise(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    let settled = false;
     const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
-
-    request.onerror = () => {
-      if (settled) return;
-      settled = true;
-      rejectOpen(reject, 'Failed to open IndexedDB');
-    };
-
-    request.onblocked = () => {
-      if (settled) return;
-      settled = true;
-      rejectOpen(reject, 'IndexedDB open blocked by another connection');
-    };
-
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (settled) {
-        db.close();
-        return;
-      }
-      settled = true;
-      resolve(cacheDBConnection(db));
-    };
-
-    request.onupgradeneeded = (event) => {
-      setupObjectStores((event.target as IDBOpenDBRequest).result);
-    };
+    configureOpenRequest(request, { settled: false }, resolve, reject);
   });
 }
 

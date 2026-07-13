@@ -16,17 +16,22 @@ const NOTICE_KEY = 'remoteLoggingConsentNoticeDismissed';
 const hasDismissedNotice = (): boolean =>
   localStorage.getItem(NOTICE_KEY) === 'true';
 
-const RemoteLoggingNotice: React.FC<{ loggingEnabled: boolean }> = ({
-  loggingEnabled,
-}) => {
-  const [visible, setVisible] = useState(
-    isRemoteLoggerConfigured() && !hasDismissedNotice(),
-  );
+const shouldShowRemoteLoggingNotice = (): boolean =>
+  isRemoteLoggerConfigured() && !hasDismissedNotice();
 
-  const dismissNotice = () => {
+function useRemoteLoggingNotice(): [boolean, () => void] {
+  const [visible, setVisible] = useState(shouldShowRemoteLoggingNotice());
+  const dismiss = () => {
     localStorage.setItem(NOTICE_KEY, 'true');
     setVisible(false);
   };
+  return [visible, dismiss];
+}
+
+const RemoteLoggingNotice: React.FC<{ loggingEnabled: boolean }> = ({
+  loggingEnabled,
+}) => {
+  const [visible, dismissNotice] = useRemoteLoggingNotice();
 
   if (!visible) return null;
 

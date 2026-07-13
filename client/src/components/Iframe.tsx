@@ -16,21 +16,18 @@ function useIframeFocusLogger(title: string): void {
     const pendingChecks = new Set<ReturnType<typeof globalThis.setTimeout>>();
     const logFocusedIframe = () => {
       const active = document.activeElement;
-      if (
-        document.visibilityState === 'visible' &&
-        document.hasFocus() &&
-        active instanceof HTMLIFrameElement &&
-        active.title === title &&
-        !focusLogged
-      ) {
-        focusLogged = true;
-        log({
-          event: 'click',
-          page: globalThis.location.pathname,
-          element: 'iframe',
-          label: title,
-        });
-      }
+      if (document.visibilityState !== 'visible') return;
+      if (!document.hasFocus()) return;
+      if (!(active instanceof HTMLIFrameElement)) return;
+      if (active.title !== title) return;
+      if (focusLogged) return;
+      focusLogged = true;
+      log({
+        event: 'click',
+        page: globalThis.location.pathname,
+        element: 'iframe',
+        label: title,
+      });
     };
     const handleWindowBlur = () => {
       const timer = globalThis.setTimeout(() => {

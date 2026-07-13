@@ -42,25 +42,34 @@ function estimateEventBytes(event: LogEvent): number {
 // Cached running total of the logs store's approximate byte size
 let cachedTotalBytes: number | null = null;
 
+interface PruneState {
+  remaining: number;
+}
+
+function pruneCursor(
+  request: IDBRequest<IDBCursorWithValue | null>,
+  state: PruneState,
+): void {
+  const cursor = request.result;
+  if (!cursor || state.remaining <= MAX_LOG_BYTES) {
+    cachedTotalBytes = state.remaining;
+    return;
+  }
+  state.remaining -= estimateEventBytes(cursor.value as LogEvent);
+  cursor.delete();
+  cursor.continue();
+}
+
 function pruneToByteBudget(store: IDBObjectStore, totalBytes: number): void {
   if (totalBytes <= MAX_LOG_BYTES) {
     cachedTotalBytes = totalBytes;
     return;
   }
 
-  let remaining = totalBytes;
   const cursorReq = store.index('timestamp').openCursor();
   swallowRequestError(cursorReq);
-  cursorReq.onsuccess = () => {
-    const cursor = cursorReq.result;
-    if (!cursor || remaining <= MAX_LOG_BYTES) {
-      cachedTotalBytes = remaining;
-      return;
-    }
-    remaining -= estimateEventBytes(cursor.value as LogEvent);
-    cursor.delete();
-    cursor.continue();
-  };
+  const state = { remaining: totalBytes };
+  cursorReq.onsuccess = () => pruneCursor(cursorReq, state);
 }
 
 function withCurrentTotalBytes(

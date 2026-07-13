@@ -86,8 +86,11 @@ function ShoppingCart() {
       <Dialog
         open={openDialog}
         onClose={(_event, reason) => {
-          logDismiss('dialog', 'Confirm Clear Cart', reason, {
-            cart: { count: state.assets.length },
+          logDismiss({
+            element: 'dialog',
+            label: 'Confirm Clear Cart',
+            reason,
+            context: { cart: { count: state.assets.length } },
           });
           setOpenDialog(false);
         }}

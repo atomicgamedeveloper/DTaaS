@@ -40,8 +40,10 @@ const CustomSnackbar: React.FC = () => {
     }
     const item = items.find((entry) => entry.id === id);
     if (item)
-      logDismiss('snackbar', item.message, undefined, {
-        notification: { severity: item.severity },
+      logDismiss({
+        element: 'snackbar',
+        label: item.message,
+        context: { notification: { severity: item.severity } },
       });
     dispatch(hideSnackbar(id));
   };

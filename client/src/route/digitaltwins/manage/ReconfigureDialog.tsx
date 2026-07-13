@@ -241,8 +241,11 @@ const ConfirmationDialog = ({
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Reconfigure Confirmation', reason, {
-        dt: { name, action },
+      logDismiss({
+        element: 'dialog',
+        label: 'Reconfigure Confirmation',
+        reason,
+        context: { dt: { name, action } },
       });
       onClose();
     }}

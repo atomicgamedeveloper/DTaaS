@@ -7,14 +7,9 @@ import {
 } from 'model/backend/gitlab/measure/measurement.execution';
 import { mergeExecutionStatus } from 'model/backend/gitlab/measure/measurement.utils';
 
-export function initCurrentExecutions(): ExecutionResult[] {
-  if (
-    !measurementState.isRunning ||
-    measurementState.currentTaskIndexUI === null
-  ) {
-    return [];
-  }
-  const task = getTasks()[measurementState.currentTaskIndexUI];
+function computeExecutionsForTask(taskIndex: number | null): ExecutionResult[] {
+  if (taskIndex === null) return [];
+  const task = getTasks()[taskIndex];
   const executions = task?.Executions?.() ?? [];
   return mergeExecutionStatus(
     executions,
@@ -22,6 +17,11 @@ export function initCurrentExecutions(): ExecutionResult[] {
     measurementState.executionResults,
     getDefaultConfig(),
   );
+}
+
+export function initCurrentExecutions(): ExecutionResult[] {
+  if (!measurementState.isRunning) return [];
+  return computeExecutionsForTask(measurementState.currentTaskIndexUI);
 }
 
 export function initInterruptedDialogOpen(): boolean {
@@ -40,16 +40,7 @@ export function usePollingEffect(
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => {
-      if (currentTaskIndex === null) return;
-      const task = getTasks()[currentTaskIndex];
-      const executions = task?.Executions?.() ?? [];
-      const merged = mergeExecutionStatus(
-        executions,
-        measurementState.activePipelines,
-        measurementState.executionResults,
-        getDefaultConfig(),
-      );
-      setCurrentExecutions(merged);
+      setCurrentExecutions(computeExecutionsForTask(currentTaskIndex));
     }, 500);
     return () => clearInterval(interval);
   }, [isRunning, currentTaskIndex, setCurrentExecutions]);

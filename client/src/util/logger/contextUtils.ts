@@ -10,6 +10,11 @@ interface WalkBudget {
   remainingEntries: number;
 }
 
+interface WalkState {
+  depth: number;
+  budget: WalkBudget;
+}
+
 export interface FlattenedLogContextEntry {
   key: string;
   value: string;
@@ -17,6 +22,14 @@ export interface FlattenedLogContextEntry {
 
 function isContextObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isPassthroughPrimitive(
+  value: unknown,
+): value is number | boolean | null {
+  return (
+    typeof value === 'number' || typeof value === 'boolean' || value === null
+  );
 }
 
 function useContextEntry(budget: WalkBudget): boolean {
@@ -53,6 +66,28 @@ function sanitizeContextObject(
   return sanitized;
 }
 
+function stringifyLeafValue(value: unknown): string {
+  const stringified =
+    typeof value === 'function' ||
+    typeof value === 'symbol' ||
+    typeof value === 'bigint' ||
+    value === undefined
+      ? String(value) // NOSONAR
+      : JSON.stringify(value);
+  return stringified.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
+}
+
+function sanitizeStructuredValue(
+  value: unknown,
+  depth: number,
+  budget: WalkBudget,
+): LogContextValue {
+  if (Array.isArray(value)) return sanitizeContextArray(value, depth, budget);
+  if (isContextObject(value))
+    return sanitizeContextObject(value, depth, budget);
+  return stringifyLeafValue(value);
+}
+
 function sanitizeContextValue(
   value: unknown,
   depth: number,
@@ -60,20 +95,9 @@ function sanitizeContextValue(
 ): LogContextValue {
   if (typeof value === 'string')
     return value.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
-  if (typeof value === 'number' || typeof value === 'boolean' || value === null)
-    return value;
+  if (isPassthroughPrimitive(value)) return value;
   if (depth <= 0) return MAX_DEPTH_VALUE;
-  if (Array.isArray(value)) return sanitizeContextArray(value, depth, budget);
-  if (isContextObject(value))
-    return sanitizeContextObject(value, depth, budget);
-  const stringified =
-    typeof value === 'function' ||
-      typeof value === 'symbol' ||
-      typeof value === 'bigint' ||
-      value === undefined
-      ? String(value) // NOSONAR
-      : JSON.stringify(value);
-  return stringified.slice(0, MAX_LOG_CONTEXT_VALUE_LENGTH);
+  return sanitizeStructuredValue(value, depth, budget);
 }
 
 export function sanitizeLogContext(value: unknown): LogContext {
@@ -92,35 +116,48 @@ function formatContextValue(value: LogContextValue): string {
 function flattenContextValue(
   key: string,
   value: LogContextValue,
-  depth: number,
-  budget: WalkBudget,
+  walk: WalkState,
 ): FlattenedLogContextEntry[] {
   if (isContextObject(value)) {
-    if (depth <= 1) return [{ key, value: MAX_DEPTH_VALUE }];
-    return flattenContextObject(value, depth - 1, budget, key);
+    if (walk.depth <= 1) return [{ key, value: MAX_DEPTH_VALUE }];
+    return flattenContextObject(
+      value,
+      { depth: walk.depth - 1, budget: walk.budget },
+      key,
+    );
   }
   return [{ key, value: formatContextValue(value) }];
 }
 
 function flattenContextObject(
   context: LogContext,
-  depth: number,
-  budget: WalkBudget,
+  walk: WalkState,
   prefix = '',
 ): FlattenedLogContextEntry[] {
   return Object.entries(context).flatMap(([key, value]) => {
-    if (!useContextEntry(budget)) return [];
+    if (!useContextEntry(walk.budget)) return [];
     const path = prefix ? `${prefix}.${key}` : key;
-    return flattenContextValue(path, value, depth, budget);
+    return flattenContextValue(path, value, walk);
   });
 }
 
 export function flattenLogContext(
   context: LogContext,
 ): FlattenedLogContextEntry[] {
-  return flattenContextObject(context, MAX_LOG_CONTEXT_DEPTH, {
-    remainingEntries: MAX_LOG_CONTEXT_ENTRIES,
+  return flattenContextObject(context, {
+    depth: MAX_LOG_CONTEXT_DEPTH,
+    budget: { remainingEntries: MAX_LOG_CONTEXT_ENTRIES },
   });
+}
+
+function collectStructuredText(
+  value: LogContextValue,
+  depth: number,
+  budget: WalkBudget,
+): string[] {
+  if (Array.isArray(value)) return collectTextArray(value, depth, budget);
+  if (isContextObject(value)) return collectTextObject(value, depth, budget);
+  return [String(value)];
 }
 
 function collectTextValue(
@@ -129,9 +166,7 @@ function collectTextValue(
   budget: WalkBudget,
 ): string[] {
   if (value === null || depth <= 0) return [];
-  if (Array.isArray(value)) return collectTextArray(value, depth, budget);
-  if (isContextObject(value)) return collectTextObject(value, depth, budget);
-  return [String(value)];
+  return collectStructuredText(value, depth, budget);
 }
 
 function collectTextArray(

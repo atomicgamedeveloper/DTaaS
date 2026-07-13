@@ -10,32 +10,45 @@ import {
   toPrettyDisplayJson,
 } from 'page/logViewer/logViewerUtils';
 
+function useTemporaryFlag(timeout: number): [boolean, () => void] {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (!active) return undefined;
+    const timer = setTimeout(() => setActive(false), timeout);
+    return () => clearTimeout(timer);
+  }, [active, timeout]);
+  return [active, () => setActive(true)];
+}
+
+async function copyToClipboard(
+  text: string,
+  onSuccess: () => void,
+  onError: () => void,
+): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    onSuccess();
+  } catch {
+    onError();
+  }
+}
+
 function RawLogView({ entries }: Readonly<{ entries: LogEvent[] }>) {
   const dispatch = useDispatch();
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return undefined;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
+  const [copied, markCopied] = useTemporaryFlag(2000);
 
   const rawText = useMemo(() => toDisplayJsonLines(entries), [entries]);
   const prettyText = useMemo(() => toPrettyDisplayJson(entries), [entries]);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(rawText);
-      setCopied(true);
-    } catch {
+  const handleCopy = () =>
+    copyToClipboard(rawText, markCopied, () => {
       dispatch(
         showSnackbar({
           message: 'Could not copy logs to clipboard.',
           severity: 'error',
         }),
       );
-    }
-  };
+    });
 
   return (
     <>

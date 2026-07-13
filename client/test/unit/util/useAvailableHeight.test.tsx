@@ -32,7 +32,7 @@ describe('useAvailableHeight', () => {
     });
     jest
       .spyOn(Element.prototype, 'getBoundingClientRect')
-      .mockReturnValue({ top } as DOMRect);
+      .mockReturnValue(new DOMRect(0, top));
     jest
       .spyOn(document.documentElement, 'scrollHeight', 'get')
       .mockReturnValue(scrollHeight);

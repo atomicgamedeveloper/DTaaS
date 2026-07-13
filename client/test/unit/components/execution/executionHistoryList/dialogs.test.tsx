@@ -197,12 +197,12 @@ describe('ExecutionHistoryList - details and dialogs', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
     const { logDismiss } = jest.requireMock('util/logger/logger');
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'Confirm Deletion',
-      'escapeKeyDown',
-      { dt: { name: dtName, executionId: 'exec1' } },
-    );
+    expect(logDismiss).toHaveBeenCalledWith({
+      element: 'dialog',
+      label: 'Confirm Deletion',
+      reason: 'escapeKeyDown',
+      context: { dt: { name: dtName, executionId: 'exec1' } },
+    });
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });

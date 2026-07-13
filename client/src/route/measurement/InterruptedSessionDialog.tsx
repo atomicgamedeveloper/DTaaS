@@ -21,7 +21,11 @@ function InterruptedSessionDialog({
     <Dialog
       open={open}
       onClose={(_event, reason) => {
-        logDismiss('dialog', 'Previous Session Interrupted', reason);
+        logDismiss({
+          element: 'dialog',
+          label: 'Previous Session Interrupted',
+          reason,
+        });
         onClose();
       }}
     >

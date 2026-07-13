@@ -65,8 +65,11 @@ function ConfirmDialog({
     <Dialog
       open={open}
       onClose={(_event, reason) => {
-        logDismiss('dialog', title, reason, {
-          measurement: measurementContext,
+        logDismiss({
+          element: 'dialog',
+          label: title,
+          reason,
+          context: { measurement: measurementContext },
         });
         onClose();
       }}

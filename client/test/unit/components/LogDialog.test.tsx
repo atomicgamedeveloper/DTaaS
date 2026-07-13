@@ -250,12 +250,12 @@ describe('LogDialog', () => {
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'TestDT Execution History',
-      'escapeKeyDown',
-      { dt: { name: 'testDT' } },
-    );
+    expect(logDismiss).toHaveBeenCalledWith({
+      element: 'dialog',
+      label: 'TestDT Execution History',
+      reason: 'escapeKeyDown',
+      context: { dt: { name: 'testDT' } },
+    });
     expect(setShowLog).toHaveBeenCalledWith(false);
   });
 
@@ -271,12 +271,12 @@ describe('LogDialog', () => {
 
     fireEvent.keyDown(confirmDialog, { key: 'Escape' });
 
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'Confirm Clear All',
-      'escapeKeyDown',
-      { dt: { name: 'TestDT' } },
-    );
+    expect(logDismiss).toHaveBeenCalledWith({
+      element: 'dialog',
+      label: 'Confirm Clear All',
+      reason: 'escapeKeyDown',
+      context: { dt: { name: 'TestDT' } },
+    });
     expect(setShowLog).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(screen.queryByText('Confirm Clear All')).not.toBeInTheDocument();

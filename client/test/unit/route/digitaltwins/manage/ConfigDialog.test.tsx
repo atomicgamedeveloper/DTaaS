@@ -159,8 +159,9 @@ describe('ReconfigureDialog', () => {
       .getAllByRole('dialog')
       .find((dialog) => within(dialog).queryByText(confirmText));
     expect(confirmDialog).toBeDefined();
+    if (!confirmDialog) throw new Error('Confirmation dialog was not found');
 
-    fireEvent.keyDown(confirmDialog!, { key: 'Escape' });
+    fireEvent.keyDown(confirmDialog, { key: 'Escape' });
 
     await waitFor(() => {
       expect(screen.queryByText(confirmText)).not.toBeInTheDocument();

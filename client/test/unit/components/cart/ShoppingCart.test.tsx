@@ -46,12 +46,12 @@ describe('ShoppingCart', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 
-    expect(logDismiss).toHaveBeenCalledWith(
-      'dialog',
-      'Confirm Clear Cart',
-      'escapeKeyDown',
-      { cart: { count: 0 } },
-    );
+    expect(logDismiss).toHaveBeenCalledWith({
+      element: 'dialog',
+      label: 'Confirm Clear Cart',
+      reason: 'escapeKeyDown',
+      context: { cart: { count: 0 } },
+    });
     await waitFor(() => {
       expect(screen.queryByText('Confirm Clear')).not.toBeInTheDocument();
     });

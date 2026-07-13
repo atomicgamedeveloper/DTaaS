@@ -10,12 +10,11 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   Accordion,
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import ConfirmationDialogActions from 'components/logDialog/ConfirmationDialogActions';
 import {
   Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
@@ -123,8 +122,11 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Confirm Deletion', reason, {
-        dt: { name: dtName, executionId },
+      logDismiss({
+        element: 'dialog',
+        label: 'Confirm Deletion',
+        reason,
+        context: { dt: { name: dtName, executionId } },
       });
       onClose();
     }}
@@ -143,34 +145,18 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         This action cannot be undone.
       </Typography>
     </DialogContent>
-    <DialogActions>
-      <Button
-        onClick={onClose}
-        color="primary"
-        data-logger-element="button"
-        data-logger-label="Cancel"
-        data-logger-context={JSON.stringify({
-          dt: { name: dtName, executionId, button: 'delete-execution-cancel' },
-        })}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={onConfirm}
-        color="error"
-        data-logger-element="button"
-        data-logger-label="Delete Execution"
-        data-logger-context={JSON.stringify({
-          dt: {
-            name: dtName,
-            executionId,
-            button: 'delete-execution-confirm',
-          },
-        })}
-      >
-        Delete
-      </Button>
-    </DialogActions>
+    <ConfirmationDialogActions
+      cancelContext={{
+        dt: { name: dtName, executionId, button: 'delete-execution-cancel' },
+      }}
+      confirmContext={{
+        dt: { name: dtName, executionId, button: 'delete-execution-confirm' },
+      }}
+      confirmLabel="Delete Execution"
+      confirmText="Delete"
+      onClose={onClose}
+      onConfirm={onConfirm}
+    />
   </Dialog>
 );
 

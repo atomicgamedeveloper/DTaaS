@@ -1,12 +1,6 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Typography,
-  DialogActions,
-  Button,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Typography } from '@mui/material';
 import { logDismiss } from 'util/logger/logger';
+import ConfirmationDialogActions from 'components/logDialog/ConfirmationDialogActions';
 
 interface DeleteAllConfirmationDialogProps {
   open: boolean;
@@ -21,8 +15,11 @@ const DeleteAllConfirmationDialog: React.FC<
   <Dialog
     open={open}
     onClose={(_event, reason) => {
-      logDismiss('dialog', 'Confirm Clear All', reason, {
-        dt: { name: dtName },
+      logDismiss({
+        element: 'dialog',
+        label: 'Confirm Clear All',
+        reason,
+        context: { dt: { name: dtName } },
       });
       onClose();
     }}
@@ -36,30 +33,14 @@ const DeleteAllConfirmationDialog: React.FC<
         This action cannot be undone.
       </Typography>
     </DialogContent>
-    <DialogActions>
-      <Button
-        onClick={onClose}
-        color="primary"
-        data-logger-element="button"
-        data-logger-label="Cancel"
-        data-logger-context={JSON.stringify({
-          dt: { name: dtName, button: 'clear-all-cancel' },
-        })}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={onConfirm}
-        color="error"
-        data-logger-element="button"
-        data-logger-label="Delete All"
-        data-logger-context={JSON.stringify({
-          dt: { name: dtName, button: 'clear-all-confirm' },
-        })}
-      >
-        Delete All
-      </Button>
-    </DialogActions>
+    <ConfirmationDialogActions
+      cancelContext={{ dt: { name: dtName, button: 'clear-all-cancel' } }}
+      confirmContext={{ dt: { name: dtName, button: 'clear-all-confirm' } }}
+      confirmLabel="Delete All"
+      confirmText="Delete All"
+      onClose={onClose}
+      onConfirm={onConfirm}
+    />
   </Dialog>
 );
 

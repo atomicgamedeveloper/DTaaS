@@ -57,20 +57,21 @@ const SettingsSchema = z
   })
   .partial();
 
+function readPersistedSettings(base: SettingsState): SettingsState | null {
+  const settings = localStorage.getItem('settings');
+  if (!settings) return null;
+  try {
+    const result = SettingsSchema.safeParse(JSON.parse(settings));
+    if (result.success) return { ...base, ...result.data };
+  } catch {
+    // Malformed persisted settings; fall back to defaults.
+  }
+  return null;
+}
+
 export const loadInitialSettings = (): SettingsState => {
   const base = { ...DEFAULT_SETTINGS, ...DEFAULT_MEASUREMENT };
-  const settings = localStorage.getItem('settings');
-  if (settings) {
-    try {
-      const result = SettingsSchema.safeParse(JSON.parse(settings));
-      if (result.success) {
-        return { ...base, ...result.data };
-      }
-    } catch {
-      // Malformed persisted settings; fall back to defaults.
-    }
-  }
-  return base;
+  return readPersistedSettings(base) ?? base;
 };
 
 export const settingsSlice = createSlice({

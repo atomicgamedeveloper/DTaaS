@@ -15,19 +15,40 @@ interface FilterProps {
   sx?: SxProps<Theme>;
 }
 
-const Filter: React.FC<FilterProps> = ({
-  placeholder = 'Search by name',
-  value,
-  onChange,
-  loggerLabel = 'Asset filter',
-  loggerContext = {},
-  captureValue = false,
-  disableLogging = false,
-  sx,
-}) => {
-  const handleClear = () => onChange('');
-  const context = JSON.stringify(loggerContext);
-  const inputLoggerProps = disableLogging
+const filterDefaults: Required<
+  Pick<
+    FilterProps,
+    | 'placeholder'
+    | 'loggerLabel'
+    | 'loggerContext'
+    | 'captureValue'
+    | 'disableLogging'
+  >
+> = {
+  placeholder: 'Search by name',
+  loggerLabel: 'Asset filter',
+  loggerContext: {},
+  captureValue: false,
+  disableLogging: false,
+} satisfies Partial<FilterProps>;
+
+type FilterContentProps = Omit<
+  FilterProps,
+  | 'placeholder'
+  | 'loggerLabel'
+  | 'loggerContext'
+  | 'captureValue'
+  | 'disableLogging'
+> &
+  typeof filterDefaults;
+
+function inputLoggerProps(
+  disableLogging: boolean,
+  loggerLabel: string,
+  captureValue: boolean,
+  context: string,
+) {
+  return disableLogging
     ? {}
     : {
         'data-logger-element': 'input',
@@ -35,19 +56,44 @@ const Filter: React.FC<FilterProps> = ({
         'data-logger-context': context,
         'data-logger-capture-value': captureValue ? 'true' : 'false',
       };
-  const clearButtonLoggerProps = disableLogging
+}
+
+function clearButtonLoggerProps(disableLogging: boolean, context: string) {
+  return disableLogging
     ? {}
     : {
         'data-logger-element': 'button',
         'data-logger-label': 'Clear search',
         'data-logger-context': context,
       };
+}
+
+function sxValues(sx?: SxProps<Theme>) {
+  return Array.isArray(sx) ? sx : [sx];
+}
+
+function defaultValue<T>(value: T | undefined, fallback: T): T {
+  return value === undefined ? fallback : value;
+}
+
+function FilterContent({
+  placeholder,
+  value,
+  onChange,
+  loggerLabel,
+  loggerContext,
+  captureValue,
+  disableLogging,
+  sx,
+}: FilterContentProps) {
+  const handleClear = () => onChange('');
+  const context = JSON.stringify(loggerContext);
 
   return (
     <Box
       sx={[
         { marginTop: 2, display: 'flex', alignItems: 'center', gap: 1 },
-        ...(Array.isArray(sx) ? sx : [sx]),
+        ...sxValues(sx),
       ]}
     >
       <TextField
@@ -66,20 +112,42 @@ const Filter: React.FC<FilterProps> = ({
               </InputAdornment>
             ),
           },
-          htmlInput: inputLoggerProps,
+          htmlInput: inputLoggerProps(
+            disableLogging,
+            loggerLabel,
+            captureValue,
+            context,
+          ),
         }}
       />
       {value && (
         <IconButton
           onClick={handleClear}
           aria-label="Clear search"
-          {...clearButtonLoggerProps}
+          {...clearButtonLoggerProps(disableLogging, context)}
         >
           <ClearIcon />
         </IconButton>
       )}
     </Box>
   );
-};
+}
+
+const Filter: React.FC<FilterProps> = (props) => (
+  <FilterContent
+    {...props}
+    placeholder={defaultValue(props.placeholder, filterDefaults.placeholder)}
+    loggerLabel={defaultValue(props.loggerLabel, filterDefaults.loggerLabel)}
+    loggerContext={defaultValue(
+      props.loggerContext,
+      filterDefaults.loggerContext,
+    )}
+    captureValue={defaultValue(props.captureValue, filterDefaults.captureValue)}
+    disableLogging={defaultValue(
+      props.disableLogging,
+      filterDefaults.disableLogging,
+    )}
+  />
+);
 
 export default Filter;

@@ -60,6 +60,10 @@ function isInvalidTrials(value: string): boolean {
   return !value.trim() || Number.isNaN(trialsValue) || trialsValue < 1;
 }
 
+function isInvalidRequiredString(value: unknown): boolean {
+  return typeof value !== 'string' || !value.trim();
+}
+
 export function validateSettingsForm(
   formValues: FormValues,
 ): Record<string, boolean> {
@@ -67,7 +71,7 @@ export function validateSettingsForm(
 
   for (const field of requiredStringFields) {
     const value = formValues[field];
-    if (typeof value !== 'string' || !value.trim()) {
+    if (isInvalidRequiredString(value)) {
       errors[field] = true;
     }
   }

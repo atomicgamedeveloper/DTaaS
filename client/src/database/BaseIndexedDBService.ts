@@ -6,6 +6,38 @@ export interface CursorQuery {
   key: IDBValidKey;
 }
 
+function openCursorRequest(
+  store: IDBObjectStore,
+  query: CursorQuery,
+): IDBRequest<IDBCursorWithValue | null> {
+  return store.index(query.indexName).openCursor(IDBKeyRange.only(query.key));
+}
+
+function handleCursorResult(
+  request: IDBRequest<IDBCursorWithValue | null>,
+  cursorAction: (cursor: IDBCursorWithValue) => void,
+  resolve: () => void,
+): void {
+  const cursor = request.result;
+  if (!cursor) {
+    resolve();
+    return;
+  }
+  cursorAction(cursor);
+  cursor.continue();
+}
+
+function attachCursorHandlers(
+  request: IDBRequest<IDBCursorWithValue | null>,
+  cursorAction: (cursor: IDBCursorWithValue) => void,
+  resolve: () => void,
+  reject: (reason?: unknown) => void,
+  errorMessage: string,
+): void {
+  request.onerror = () => reject(new Error(errorMessage));
+  request.onsuccess = () => handleCursorResult(request, cursorAction, resolve);
+}
+
 export default abstract class BaseIndexedDBService {
   protected db: IDBDatabase | undefined;
 
@@ -60,22 +92,14 @@ export default abstract class BaseIndexedDBService {
 
       const transaction = this.db.transaction([query.storeName], 'readwrite');
       const store = transaction.objectStore(query.storeName);
-      const index = store.index(query.indexName);
-      const request = index.openCursor(IDBKeyRange.only(query.key));
-
-      request.onerror = () => {
-        reject(new Error(errorMessage));
-      };
-
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result;
-        if (cursor) {
-          cursorAction(cursor);
-          cursor.continue();
-        } else {
-          resolve();
-        }
-      };
+      const request = openCursorRequest(store, query);
+      attachCursorHandlers(
+        request,
+        cursorAction,
+        resolve,
+        reject,
+        errorMessage,
+      );
     });
   }
 }
