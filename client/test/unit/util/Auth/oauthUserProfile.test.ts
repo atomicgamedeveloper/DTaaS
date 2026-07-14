@@ -14,6 +14,10 @@ describe('oauthUserProfile', () => {
       ).toBe('kc-user');
     });
 
+    it('normalizes resolved usernames to lowercase for GitLab paths', () => {
+      expect(resolveOAuthUsername({ preferred_username: 'Enok' })).toBe('enok');
+    });
+
     it('resolves username from profile URL for gitlab profiles', () => {
       expect(
         resolveOAuthUsername({
