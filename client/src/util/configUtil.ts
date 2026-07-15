@@ -30,8 +30,10 @@ const urlKeys = [
   'LOGGER_URL',
 ];
 
-const configuredKeys = (keys: string[]) =>
-  keys.filter((key) => (key === 'LOGGER_URL' ? key in globalThis.env : true));
+const isConfiguredKey = (key: string): boolean =>
+  key === 'LOGGER_URL' ? Boolean(globalThis.env.LOGGER_URL?.trim()) : true;
+
+const configuredKeys = (keys: string[]) => keys.filter(isConfiguredKey);
 
 function getValidationPromises(): Record<string, Promise<ValidationType>> {
   return {

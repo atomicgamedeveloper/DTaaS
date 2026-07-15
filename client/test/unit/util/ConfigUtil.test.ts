@@ -133,6 +133,14 @@ describe('configUtil', () => {
       expect(results.LOGGER_URL).toBeUndefined();
     });
 
+    test('getValidationResult omits LOGGER_URL when it is blank', async () => {
+      globalThis.env.LOGGER_URL = '';
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL).toBeUndefined();
+    });
+
     test('getValidationResult reports missing required URLs', async () => {
       const envWithoutRedirect: Partial<NodeJS.ProcessEnv> = {
         ...globalThis.env,
