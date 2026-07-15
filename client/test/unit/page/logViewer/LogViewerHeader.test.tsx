@@ -34,6 +34,13 @@ describe('LogViewerHeader', () => {
     );
   });
 
+  it('does not mention the remote logging server when LOGGER_URL is blank', () => {
+    globalThis.env.LOGGER_URL = '   ';
+    const { container } = render(<LogViewerHeader />);
+
+    expect(container.textContent).toContain('and never leave this device');
+  });
+
   it('does not instrument the description toggle for logging', () => {
     render(<LogViewerHeader />);
 

@@ -2,7 +2,7 @@ import { LogEvent } from 'util/logger/logEvent';
 
 // eslint-disable-next-line import/prefer-default-export
 export function sendBeacon(loggerUrl: string, event: LogEvent): boolean {
-  if (!loggerUrl || typeof navigator.sendBeacon !== 'function') {
+  if (!loggerUrl.trim() || typeof navigator.sendBeacon !== 'function') {
     return false;
   }
   // text/plain avoids a CORS preflight (application/json does not qualify as

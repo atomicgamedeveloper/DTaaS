@@ -49,6 +49,11 @@ describe('logger', () => {
     jest.clearAllMocks();
     (uuidv4 as jest.Mock).mockReturnValue('test-uuid-1234');
     (indexedDBLogger.addLog as jest.Mock).mockResolvedValue(undefined);
+    setSettingsStore({
+      getState: () => ({
+        settings: { ...DEFAULT_SETTINGS, loggingEnabled: true },
+      }),
+    });
     setLoggerStore({ showSnackbar });
   });
 
@@ -243,10 +248,47 @@ describe('logger', () => {
     globalThis.env = origEnv;
   });
 
+  it('trims logger URL before sending beacon', async () => {
+    const origEnv = globalThis.env;
+    globalThis.env = {
+      ...globalThis.env,
+      LOGGER_URL: '  https://example.com/logger  ',
+    };
+
+    await initLogger('testuser');
+    const event = log({
+      event: 'change',
+      page: '/library',
+      element: 'tab',
+      label: 'Data',
+    });
+
+    expect(beaconLogger.sendBeacon).toHaveBeenCalledWith(
+      'https://example.com/logger',
+      event,
+    );
+
+    globalThis.env = origEnv;
+  });
+
   it('does not send beacon when logger URL is empty', async () => {
     await initLogger('testuser');
     log({ event: 'click', page: '/library', element: 'tab', label: 'Data' });
     expect(beaconLogger.sendBeacon).not.toHaveBeenCalled();
+  });
+
+  it('does not send beacon when logger URL is blank', async () => {
+    const origEnv = globalThis.env;
+    globalThis.env = {
+      ...globalThis.env,
+      LOGGER_URL: '   ',
+    };
+
+    await initLogger('testuser');
+    log({ event: 'click', page: '/library', element: 'tab', label: 'Data' });
+    expect(beaconLogger.sendBeacon).not.toHaveBeenCalled();
+
+    globalThis.env = origEnv;
   });
 
   it('resets the logger state', async () => {

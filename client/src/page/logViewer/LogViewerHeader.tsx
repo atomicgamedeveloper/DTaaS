@@ -2,7 +2,7 @@ import { Typography } from '@mui/material';
 import CollapsibleSectionHeader from 'components/CollapsibleSectionHeader';
 
 function LogViewerHeader() {
-  const remoteLoggingConfigured = Boolean(globalThis.env?.LOGGER_URL);
+  const remoteLoggingConfigured = Boolean(globalThis.env?.LOGGER_URL?.trim());
 
   return (
     <CollapsibleSectionHeader

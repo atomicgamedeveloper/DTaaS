@@ -54,7 +54,7 @@ export interface LogInput {
 export async function initLogger(username: string): Promise<void> {
   sessionId = getSessionId();
   userHash = await hashUsername(username);
-  loggerUrl = globalThis.env?.LOGGER_URL ?? '';
+  loggerUrl = globalThis.env?.LOGGER_URL?.trim() ?? '';
   initialized = true;
 }
 
@@ -85,7 +85,7 @@ export function log({
   addLog(logEvent).catch(() => {
     warnPersistenceFailureOnce();
   });
-  if (loggerUrl) {
+  if (loggerUrl.trim()) {
     sendBeacon(loggerUrl, logEvent);
   }
   return logEvent;

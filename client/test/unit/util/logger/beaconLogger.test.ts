@@ -38,6 +38,12 @@ describe('beaconLogger', () => {
     expect(navigator.sendBeacon).not.toHaveBeenCalled();
   });
 
+  it('returns false when loggerUrl is blank', () => {
+    const result = sendBeacon('   ', mockEvent);
+    expect(result).toBe(false);
+    expect(navigator.sendBeacon).not.toHaveBeenCalled();
+  });
+
   it('returns false when sendBeacon is not available', () => {
     const saved = navigator.sendBeacon;
     Object.defineProperty(navigator, 'sendBeacon', {
