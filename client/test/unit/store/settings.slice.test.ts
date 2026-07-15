@@ -48,17 +48,17 @@ describe('settingsSlice', () => {
   });
 
   it('should handle setLoggingEnabled', () => {
-    const state = settingsReducer(initialState, setLoggingEnabled(false));
-    expect(state.loggingEnabled).toBe(false);
+    const state = settingsReducer(initialState, setLoggingEnabled(true));
+    expect(state.loggingEnabled).toBe(true);
   });
 
-  it('defaults logging on when no remote logger is configured', () => {
+  it('defaults logging off when no remote logger is configured', () => {
     const originalEnv = globalThis.env;
     globalThis.env = { ...originalEnv };
     delete globalThis.env.LOGGER_URL;
 
     try {
-      expect(getDefaultLoggingEnabled()).toBe(true);
+      expect(getDefaultLoggingEnabled()).toBe(false);
     } finally {
       globalThis.env = originalEnv;
     }

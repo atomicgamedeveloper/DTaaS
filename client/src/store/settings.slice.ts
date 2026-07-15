@@ -12,8 +12,7 @@ import DEFAULT_MEASUREMENT from 'model/backend/gitlab/measure/constants';
 export const isRemoteLoggerConfigured = (): boolean =>
   Boolean(globalThis.env?.LOGGER_URL?.trim());
 
-export const getDefaultLoggingEnabled = (): boolean =>
-  !isRemoteLoggerConfigured();
+export const getDefaultLoggingEnabled = (): boolean => false;
 
 // Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
@@ -24,8 +23,8 @@ export const DEFAULT_SETTINGS = {
   BRANCH_NAME,
   loggingEnabled: getDefaultLoggingEnabled(),
   // Records whether a remote logger was configured when settings were
-  // persisted, so a loggingEnabled choice made under local-only logging is
-  // not carried over as consent once a remote logger appears.
+  // persisted, so local-only logging consent is not carried over once a
+  // remote logger appears.
   remoteLoggerConfiguredAtSave: isRemoteLoggerConfigured(),
 };
 
@@ -65,9 +64,8 @@ const SettingsSchema = z
 
 type PersistedSettings = z.infer<typeof SettingsSchema>;
 
-// A loggingEnabled choice persisted before any remote logger was configured
-// is not consent to remote streaming; reapply the consent-aware default
-// until the user opts in again.
+// Local-only logging consent is not consent to remote streaming; reapply the
+// default until the user opts in while a remote logger is configured.
 function applyRemoteLoggingConsent(
   persisted: PersistedSettings,
 ): PersistedSettings {

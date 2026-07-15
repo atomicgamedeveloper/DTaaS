@@ -51,7 +51,7 @@ describe('SettingsForm', () => {
     expect(screen.getByLabelText(/common library/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^runner tag$/i)).toBeInTheDocument();
     expect(screen.getByText(/logging settings/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/enable logging/i)).toBeChecked();
+    expect(screen.getByLabelText(/enable logging/i)).not.toBeChecked();
   });
 
   it('updates local state on input change', () => {
@@ -151,7 +151,7 @@ describe('SettingsForm', () => {
       fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
     });
 
-    expect(mockDispatch).toHaveBeenCalledWith(setLoggingEnabled(false));
+    expect(mockDispatch).toHaveBeenCalledWith(setLoggingEnabled(true));
   });
 
   it('shows the one-time remote logging consent notice', () => {

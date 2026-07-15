@@ -137,5 +137,6 @@ window.env = {
 };
 ```
 
-When `LOGGER_URL` is empty or undefined, backend streaming is
-disabled and logs remain stored locally in the browser (IndexedDB).
+Logging is disabled by default and can be enabled from the account settings.
+When `LOGGER_URL` is empty or undefined, enabled logging stores events locally
+in the browser (IndexedDB) without backend streaming.
