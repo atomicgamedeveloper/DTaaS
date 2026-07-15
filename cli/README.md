@@ -529,6 +529,7 @@ The flag is read on every `user add`, so a deployment can host both constrained
 and unconstrained users by toggling `set_limits` between runs.
 
 > **Notes**
+>
 > - `user add` starts a container for a new user or restarts a stopped one; it
 >   reports *Running* for containers already up without restarting them.
 > - Provisioning is idempotent: re-running `user add` reprovisions every
