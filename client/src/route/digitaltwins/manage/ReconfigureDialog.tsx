@@ -20,12 +20,12 @@ import {
 import { formatName } from 'model/backend/digitalTwin';
 import Editor from 'route/digitaltwins/editor/Editor';
 import { logDismiss } from 'util/logger/logger';
-import {
+import { saveChanges } from 'route/digitaltwins/manage/reconfigureDialogHandlers';
+
+export {
   saveChanges,
   handleFileUpdate,
 } from 'route/digitaltwins/manage/reconfigureDialogHandlers';
-
-export { saveChanges, handleFileUpdate };
 
 interface ReconfigureDialogProps {
   readonly showDialog: boolean;
