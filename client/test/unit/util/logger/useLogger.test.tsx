@@ -50,7 +50,11 @@ function TestComponent() {
   );
 }
 
-const createTestStore = (userName?: string, loggingEnabled = true) =>
+const createTestStore = (
+  userName?: string,
+  loggingEnabled = true,
+  remoteLoggingEnabled = false,
+) =>
   configureStore({
     reducer: combineReducers({ auth: authSlice, settings: settingsSlice }),
     preloadedState: {
@@ -59,6 +63,7 @@ const createTestStore = (userName?: string, loggingEnabled = true) =>
         ...DEFAULT_SETTINGS,
         ...DEFAULT_MEASUREMENT,
         loggingEnabled,
+        remoteLoggingEnabled,
       },
     },
   });
@@ -107,13 +112,23 @@ describe('useLogger', () => {
   });
 
   it('does not initialize when logging is disabled', async () => {
-    const store = createTestStore('alice', false);
+    const store = createTestStore('alice', false, false);
 
     await act(async () => {
       renderWithProviders(<TestComponent />, store);
     });
 
     expect(logger.initLogger).not.toHaveBeenCalled();
+  });
+
+  it('initializes when only remote logging is enabled', async () => {
+    const store = createTestStore('alice', false, true);
+
+    renderWithProviders(<TestComponent />, store);
+
+    await waitFor(() => {
+      expect(capturedInitCall).toBe('alice');
+    });
   });
 
   it('retries initialization on a later render after failure', async () => {

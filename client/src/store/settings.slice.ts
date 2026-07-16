@@ -13,6 +13,7 @@ export const isRemoteLoggerConfigured = (): boolean =>
   Boolean(globalThis.env?.LOGGER_URL?.trim());
 
 export const getDefaultLoggingEnabled = (): boolean => false;
+export const getDefaultRemoteLoggingEnabled = (): boolean => false;
 
 // Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
@@ -22,9 +23,10 @@ export const DEFAULT_SETTINGS = {
   RUNNER_TAG,
   BRANCH_NAME,
   loggingEnabled: getDefaultLoggingEnabled(),
+  remoteLoggingEnabled: getDefaultRemoteLoggingEnabled(),
   // Records whether a remote logger was configured when settings were
-  // persisted, so local-only logging consent is not carried over once a
-  // remote logger appears.
+  // persisted, so local-only logging is not treated as a remote-send choice
+  // once a remote logger appears.
   remoteLoggerConfiguredAtSave: isRemoteLoggerConfigured(),
 };
 
@@ -42,6 +44,7 @@ interface SettingsState {
   secondaryDTName: string;
   disabledTaskNames: string[];
   loggingEnabled: boolean;
+  remoteLoggingEnabled: boolean;
   remoteLoggerConfiguredAtSave: boolean;
 }
 
@@ -58,23 +61,27 @@ const SettingsSchema = z
     secondaryDTName: z.string(),
     disabledTaskNames: z.array(z.string()),
     loggingEnabled: z.boolean(),
+    remoteLoggingEnabled: z.boolean(),
     remoteLoggerConfiguredAtSave: z.boolean(),
   })
   .partial();
 
 type PersistedSettings = z.infer<typeof SettingsSchema>;
 
-// Local-only logging consent is not consent to remote streaming; reapply the
-// default until the user opts in while a remote logger is configured.
+// Local-only logging is not a remote-send choice; reapply the remote default
+// until the user opts in while a remote logger is configured.
 function applyRemoteLoggingConsent(
   persisted: PersistedSettings,
 ): PersistedSettings {
-  if (!isRemoteLoggerConfigured() || persisted.remoteLoggerConfiguredAtSave) {
+  if (!isRemoteLoggerConfigured()) {
+    return { ...persisted, remoteLoggingEnabled: false };
+  }
+  if (persisted.remoteLoggerConfiguredAtSave) {
     return persisted;
   }
   return {
     ...persisted,
-    loggingEnabled: getDefaultLoggingEnabled(),
+    remoteLoggingEnabled: getDefaultRemoteLoggingEnabled(),
     remoteLoggerConfiguredAtSave: true,
   };
 }
@@ -131,6 +138,9 @@ export const settingsSlice = createSlice({
     setLoggingEnabled: (state, action: PayloadAction<boolean>) => {
       state.loggingEnabled = action.payload;
     },
+    setRemoteLoggingEnabled: (state, action: PayloadAction<boolean>) => {
+      state.remoteLoggingEnabled = action.payload && isRemoteLoggerConfigured();
+    },
     toggleTaskEnabled: (state, action: PayloadAction<string>) => {
       const name = action.payload;
       const idx = state.disabledTaskNames.indexOf(name);
@@ -157,6 +167,7 @@ export const {
   setPrimaryDTName,
   setSecondaryDTName,
   setLoggingEnabled,
+  setRemoteLoggingEnabled,
   toggleTaskEnabled,
   resetToDefaults,
 } = settingsSlice.actions;

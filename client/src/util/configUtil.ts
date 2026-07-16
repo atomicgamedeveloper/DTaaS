@@ -31,9 +31,33 @@ const urlKeys = [
 ];
 
 const isConfiguredKey = (key: string): boolean =>
-  key === 'LOGGER_URL' ? Boolean(globalThis.env.LOGGER_URL?.trim()) : true;
+  key === 'LOGGER_URL'
+    ? Boolean(globalThis.env.LOGGER_URL?.trim()) && remoteLoggingIsEnabled()
+    : true;
 
 const configuredKeys = (keys: string[]) => keys.filter(isConfiguredKey);
+
+function remoteLoggingIsEnabled(): boolean {
+  try {
+    const settings = localStorage.getItem('settings');
+    if (!settings) return false;
+    const parsedSettings = JSON.parse(settings) as {
+      remoteLoggingEnabled?: unknown;
+    };
+    return parsedSettings.remoteLoggingEnabled === true;
+  } catch {
+    return false;
+  }
+}
+
+function appendHealthPath(url: string): string {
+  return `${url.replace(/\/+$/, '')}/health`;
+}
+
+async function loggerUrlIsReachable(url: string): Promise<ValidationType> {
+  const result = await urlIsReachable(appendHealthPath(url));
+  return result.error === undefined ? { ...result, value: url } : result;
+}
 
 function getValidationPromises(): Record<string, Promise<ValidationType>> {
   return {
@@ -52,7 +76,9 @@ function getValidationPromises(): Record<string, Promise<ValidationType>> {
     ...Object.fromEntries(
       configuredKeys(urlKeys).map((key) => [
         key,
-        urlIsReachable(globalThis.env[key] ?? ''),
+        key === 'LOGGER_URL'
+          ? loggerUrlIsReachable(globalThis.env[key] ?? '')
+          : urlIsReachable(globalThis.env[key] ?? ''),
       ]),
     ),
   };

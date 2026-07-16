@@ -4,10 +4,12 @@ import settingsReducer, {
   setCommonLibraryProjectName,
   setRunnerTag,
   setLoggingEnabled,
+  setRemoteLoggingEnabled,
   resetToDefaults,
   DEFAULT_SETTINGS,
   DEFAULT_MEASUREMENT,
   getDefaultLoggingEnabled,
+  getDefaultRemoteLoggingEnabled,
   loadInitialSettings,
 } from 'store/settings.slice';
 
@@ -52,6 +54,37 @@ describe('settingsSlice', () => {
     expect(state.loggingEnabled).toBe(true);
   });
 
+  it('does not clear remote logging when local logging is disabled', () => {
+    const state = settingsReducer(
+      {
+        ...initialState,
+        loggingEnabled: true,
+        remoteLoggingEnabled: true,
+      },
+      setLoggingEnabled(false),
+    );
+    expect(state.loggingEnabled).toBe(false);
+    expect(state.remoteLoggingEnabled).toBe(true);
+  });
+
+  it('should handle setRemoteLoggingEnabled when a logger is configured', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      const state = settingsReducer(
+        { ...initialState, loggingEnabled: false },
+        setRemoteLoggingEnabled(true),
+      );
+      expect(state.remoteLoggingEnabled).toBe(true);
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
   it('defaults logging off when no remote logger is configured', () => {
     const originalEnv = globalThis.env;
     globalThis.env = { ...originalEnv };
@@ -62,6 +95,10 @@ describe('settingsSlice', () => {
     } finally {
       globalThis.env = originalEnv;
     }
+  });
+
+  it('defaults remote logging off', () => {
+    expect(getDefaultRemoteLoggingEnabled()).toBe(false);
   });
 
   it('defaults logging off when a remote logger is configured', () => {
@@ -78,7 +115,7 @@ describe('settingsSlice', () => {
     }
   });
 
-  it('does not carry a pre-remote loggingEnabled choice over as remote consent', () => {
+  it('keeps local logging but does not infer remote logging when a logger appears', () => {
     const originalEnv = globalThis.env;
     globalThis.env = {
       ...originalEnv,
@@ -90,14 +127,15 @@ describe('settingsSlice', () => {
 
     try {
       const result = loadInitialSettings();
-      expect(result.loggingEnabled).toBe(false);
+      expect(result.loggingEnabled).toBe(true);
+      expect(result.remoteLoggingEnabled).toBe(false);
       expect(result.remoteLoggerConfiguredAtSave).toBe(true);
     } finally {
       globalThis.env = originalEnv;
     }
   });
 
-  it('keeps a loggingEnabled choice made while the remote logger was configured', () => {
+  it('keeps remote logging when the choice was made while configured', () => {
     const originalEnv = globalThis.env;
     globalThis.env = {
       ...originalEnv,
@@ -106,15 +144,32 @@ describe('settingsSlice', () => {
     jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(
       JSON.stringify({
         loggingEnabled: true,
+        remoteLoggingEnabled: true,
         remoteLoggerConfiguredAtSave: true,
       }),
     );
 
     try {
-      expect(loadInitialSettings().loggingEnabled).toBe(true);
+      const result = loadInitialSettings();
+      expect(result.loggingEnabled).toBe(true);
+      expect(result.remoteLoggingEnabled).toBe(true);
     } finally {
       globalThis.env = originalEnv;
     }
+  });
+
+  it('clears persisted remote logging when no remote logger is configured', () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(
+      JSON.stringify({
+        loggingEnabled: true,
+        remoteLoggingEnabled: true,
+        remoteLoggerConfiguredAtSave: true,
+      }),
+    );
+
+    const result = loadInitialSettings();
+    expect(result.loggingEnabled).toBe(true);
+    expect(result.remoteLoggingEnabled).toBe(false);
   });
 
   it('should handle resetToDefaults', () => {

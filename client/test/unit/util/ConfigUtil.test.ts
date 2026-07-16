@@ -22,6 +22,7 @@ describe('configUtil', () => {
 
   afterEach(() => {
     globalThis.env = { ...initialEnv };
+    localStorage.clear();
     jest.resetAllMocks();
   });
 
@@ -75,10 +76,19 @@ describe('configUtil', () => {
   });
 
   describe('getValidationResults', () => {
+    function enableRemoteLogging() {
+      localStorage.setItem(
+        'settings',
+        JSON.stringify({ remoteLoggingEnabled: true }),
+      );
+    }
+
     test('getValidationResults object includes all keys of globalThis.env', async () => {
       const results: ValidationType = await getValidationResults();
       const resultKeys: string[] = Object.keys(results);
-      const envKeys: string[] = Object.keys(globalThis.env);
+      const envKeys: string[] = Object.keys(globalThis.env).filter(
+        (key) => key !== 'LOGGER_URL',
+      );
 
       const missingKeys: string[] = envKeys.filter(
         (key) => !resultKeys.includes(key),
@@ -118,11 +128,44 @@ describe('configUtil', () => {
 
     test('getValidationResult LOGGER_URL validates when configured', async () => {
       globalThis.env.LOGGER_URL = 'https://logger.example.com';
+      enableRemoteLogging();
       const results: Record<string, ValidationType> =
         await getValidationResults();
       expect(results.LOGGER_URL.error).toBeUndefined();
       expect(results.LOGGER_URL.status).toBe(200);
       expect(results.LOGGER_URL.value).toEqual('https://logger.example.com');
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'https://logger.example.com/health',
+        expect.objectContaining({ method: 'GET' }),
+      );
+    });
+
+    test('getValidationResult LOGGER_URL handles trailing slashes', async () => {
+      globalThis.env.LOGGER_URL = 'https://logger.example.com/logger/';
+      enableRemoteLogging();
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL.error).toBeUndefined();
+      expect(results.LOGGER_URL.value).toEqual(
+        'https://logger.example.com/logger/',
+      );
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'https://logger.example.com/logger/health',
+        expect.objectContaining({ method: 'GET' }),
+      );
+    });
+
+    test('getValidationResult omits LOGGER_URL when remote logging is disabled', async () => {
+      globalThis.env.LOGGER_URL = 'https://logger.example.com';
+      localStorage.setItem(
+        'settings',
+        JSON.stringify({ remoteLoggingEnabled: false }),
+      );
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL).toBeUndefined();
     });
 
     test('getValidationResult omits LOGGER_URL when it is not configured', async () => {

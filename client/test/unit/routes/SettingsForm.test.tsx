@@ -16,6 +16,7 @@ import {
   setRunnerTag,
   setBranchName,
   setLoggingEnabled,
+  setRemoteLoggingEnabled,
 } from 'store/settings.slice';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
 import { clearDigitalTwins } from 'model/backend/state/digitalTwin.slice';
@@ -51,7 +52,9 @@ describe('SettingsForm', () => {
     expect(screen.getByLabelText(/common library/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^runner tag$/i)).toBeInTheDocument();
     expect(screen.getByText(/logging settings/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/enable logging/i)).not.toBeChecked();
+    expect(
+      screen.getByLabelText(/keep a local activity log/i),
+    ).not.toBeChecked();
   });
 
   it('updates local state on input change', () => {
@@ -145,7 +148,7 @@ describe('SettingsForm', () => {
   });
 
   it('saves logging preference when toggled', async () => {
-    fireEvent.click(screen.getByLabelText(/enable logging/i));
+    fireEvent.click(screen.getByLabelText(/keep a local activity log/i));
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
@@ -154,7 +157,7 @@ describe('SettingsForm', () => {
     expect(mockDispatch).toHaveBeenCalledWith(setLoggingEnabled(true));
   });
 
-  it('shows the one-time remote logging consent notice', () => {
+  it('shows the remote logging option when a logger is configured', () => {
     const originalEnv = globalThis.env;
     globalThis.env = {
       ...originalEnv,
@@ -163,19 +166,89 @@ describe('SettingsForm', () => {
 
     try {
       cleanup();
-      setupSettingsFormTest();
+      ({ mockDispatch } = setupSettingsFormTest());
       renderWithRouter(<SettingsForm />, { route: '/private' });
 
-      expect(screen.getByText(/participant consent/i)).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
-
-      expect(localStorage.getItem('remoteLoggingConsentNoticeDismissed')).toBe(
-        'true',
-      );
       expect(
-        screen.queryByText(/participant consent/i),
-      ).not.toBeInTheDocument();
+        screen.getByLabelText(/send logs to example.com/i),
+      ).not.toBeDisabled();
+      expect(
+        screen.getByText(/shares your workflow events/i),
+      ).toBeInTheDocument();
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('keeps remote logging available when local logging is off', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      cleanup();
+      ({ mockDispatch } = setupSettingsFormTest());
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+
+      fireEvent.click(screen.getByLabelText(/send logs to example.com/i));
+
+      expect(screen.getByLabelText(/send logs to example.com/i)).toBeChecked();
+      expect(
+        screen.getByLabelText(/keep a local activity log/i),
+      ).not.toBeChecked();
+      expect(
+        screen.getByLabelText(/send logs to example.com/i),
+      ).not.toBeDisabled();
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('allows local and remote logging to both be enabled', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      cleanup();
+      ({ mockDispatch } = setupSettingsFormTest());
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+
+      fireEvent.click(screen.getByLabelText(/keep a local activity log/i));
+      fireEvent.click(screen.getByLabelText(/send logs to example.com/i));
+
+      expect(screen.getByLabelText(/keep a local activity log/i)).toBeChecked();
+      expect(screen.getByLabelText(/send logs to example.com/i)).toBeChecked();
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('saves remote logging preference when toggled', async () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+
+    try {
+      cleanup();
+      ({ mockDispatch } = setupSettingsFormTest());
+      renderWithRouter(<SettingsForm />, { route: '/private' });
+
+      const remoteCheckbox = screen.getByLabelText(/send logs to example.com/i);
+      fireEvent.click(remoteCheckbox);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+      });
+
+      expect(mockDispatch).toHaveBeenCalledWith(setRemoteLoggingEnabled(true));
+      expect(mockDispatch).not.toHaveBeenCalledWith(setLoggingEnabled(true));
     } finally {
       globalThis.env = originalEnv;
     }
