@@ -19,8 +19,9 @@
   "type": "module",
   "scripts": {
     "analyze": "yarn build && npx source-map-explorer 'build/assets/*.js'",
-    "build": "vite build --sourcemap",
-    "build:fast": "vite build",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "build": "yarn typecheck && vite build --sourcemap",
+    "build:fast": "yarn typecheck && vite build",
     "clean": "npx rimraf build/ dist/ coverage/ playwright-report/ test-results/ test.svg src.svg",
     "clean:all": "yarn clean && npx rimraf node_modules/",
     "config:dev": "npx shx cp config/dev.js public/env.js && npx shx cp config/dev.js build/env.js",

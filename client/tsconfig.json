@@ -17,6 +17,7 @@
     "noUnusedParameters": false, //raise no error on unused parameters
     "strict": true, //enable all strict type-checking options
     "outDir": "dist", //output directory
+    "ignoreDeprecations": "6.0",
     "baseUrl": "src", //base url for imports
     "paths": {
       "test/*": ["../test/*"]
