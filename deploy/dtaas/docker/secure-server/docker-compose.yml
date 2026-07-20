@@ -94,13 +94,10 @@ services:
       - frontend
 
   logger-ms:
-    image: intocps/logger-ms:0.1.0
+    image: intocps/logger-ms:latest
     restart: unless-stopped
-    user: "0:0"
-    environment:
-      - LOGGER_HOSTNAME=0.0.0.0
     volumes:
-      - ./files/logs:/dtaas/logger/logs
+      - ./files/common:/dtaas/logger/logs
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.logger-ms.loadbalancer.server.port=4003"
@@ -108,9 +105,7 @@ services:
         traefik.http.routers.logger-ms.rule=Host(`${SERVER_DNS:-localhost}`)
         && PathPrefix(`/logger`)
       - "traefik.http.routers.logger-ms.tls=true"
-      - "traefik.http.routers.logger-ms.middlewares=traefik-forward-auth,logger-rate-limit"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.average=20"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.burst=50"
+      - "traefik.http.routers.logger-ms.middlewares=traefik-forward-auth"
     networks:
       - frontend
 

@@ -91,9 +91,6 @@ Important defaults:
 - max payload: 64 KiB;
 - log rotation: 50 MiB active file, 5 retained rotated files.
 
-Docker deployments explicitly set `LOGGER_HOSTNAME=0.0.0.0` so Traefik can reach
-the container.
-
 ### Authentication and deployment boundary
 
 The service supports an optional static bearer token configured by
@@ -110,9 +107,8 @@ therefore delegated to the reverse proxy in deployments that expose the logger
 to users.
 
 The deployment compose files route `/logger` through Traefik. Server-style
-deployments use `traefik-forward-auth` plus a Traefik rate-limit middleware; the
-service also applies an internal request throttle for callers that bypass the
-proxy.
+deployments use `traefik-forward-auth`; the service also applies an internal
+request throttle for callers that bypass the proxy.
 
 ## Security considerations
 
@@ -123,8 +119,8 @@ proxy.
   client-supplied.
 - Username hashing is pseudonymization, not anonymization. The same username
   produces the same hash.
-- The logger writes to deployment storage that is separate from user workspaces
-  and the library service.
+- Production deployments should store logger output outside user workspaces and
+  the library service.
 - Log writes are best-effort. Graceful shutdown closes the stream, but recent
   events may be lost on hard container termination because writes are not fsynced
   per request.

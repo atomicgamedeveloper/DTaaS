@@ -11,7 +11,7 @@ services:
       - "--entrypoints.web.forwardedHeaders.insecure=true"
       - "--entrypoints.web.proxyProtocol.insecure=true"
     ports:
-      - "127.0.0.1:80:80"
+      - "80:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
@@ -27,21 +27,15 @@ services:
       - "traefik.http.routers.client.rule=PathPrefix(`/`)"
 
   logger-ms:
-    image: intocps/logger-ms:0.1.0
+    image: intocps/logger-ms:latest
     restart: unless-stopped
-    user: "0:0"
-    environment:
-      - LOGGER_HOSTNAME=0.0.0.0
     volumes:
-      - "./files/logs:/dtaas/logger/logs"
+      - "./files/common:/dtaas/logger/logs"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.logger-ms.entryPoints=web"
       - "traefik.http.services.logger-ms.loadbalancer.server.port=4003"
       - "traefik.http.routers.logger-ms.rule=PathPrefix(`/logger`)"
-      - "traefik.http.routers.logger-ms.middlewares=logger-rate-limit"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.average=20"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.burst=50"
 
   user:
     image: intocps/workspace:main-967bc10

@@ -57,27 +57,6 @@ services:
     networks:
       - frontend
 
-  logger-ms:
-    build:
-      context: ../
-      dockerfile: developer/logger.dockerfile
-    restart: unless-stopped
-    user: "0:0"
-    environment:
-      - LOGGER_HOSTNAME=0.0.0.0
-    volumes:
-      - "./files/logs:/dtaas/logger/logs"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.logger-ms.entryPoints=web"
-      - "traefik.http.services.logger-ms.loadbalancer.server.port=4003"
-      - "traefik.http.routers.logger-ms.middlewares=traefik-forward-auth,logger-rate-limit"
-      - "traefik.http.routers.logger-ms.rule=PathPrefix(`/logger`)"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.average=20"
-      - "traefik.http.middlewares.logger-rate-limit.ratelimit.burst=50"
-    networks:
-      - frontend
-
   user1:
     image: intocps/workspace:main-967bc10
     restart: unless-stopped

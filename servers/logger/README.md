@@ -91,9 +91,6 @@ jq -c '.event' logs/workflow-logs.jsonl
 The active log rotates at `log-max-bytes` and keeps the configured number of
 rotated files. The defaults are 50 MiB and 5 rotated files.
 
-Docker deployments mount logger output under `./files/logs`, separate from the
-shared `./files/common` workspace/library path.
-
 Log writes are best-effort analytics storage. Graceful shutdown closes the
 write stream, but recent events may be lost on hard container termination
 because writes are not fsynced per request.
