@@ -2,7 +2,7 @@
   "sessionId": "55555555-5555-4555-8555-555555555555",
   "userHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
   "timestamp": "2026-03-24T20:04:00.000Z",
-  "event": "toggle",
+  "event": "change",
   "page": "/settings",
   "element": "switch",
   "label": "Dark Mode",

@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
-import { json } from 'express';
 import supertest from 'supertest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import AppModule from 'src/app.module';
+import Config from 'src/config/config.service';
+import { createLoggerApp } from 'src/main';
 
 const VALID_PAYLOAD_FIXTURES = [
   'sample.json',
@@ -27,11 +26,19 @@ const INVALID_PAYLOAD_FIXTURES = [
 ] as const;
 
 async function readPayloadFixture(
-  fileName: (typeof VALID_PAYLOAD_FIXTURES)[number] | (typeof INVALID_PAYLOAD_FIXTURES)[number],
+  fileName:
+    | (typeof VALID_PAYLOAD_FIXTURES)[number]
+    | (typeof INVALID_PAYLOAD_FIXTURES)[number],
 ): Promise<Record<string, unknown>> {
   const fixturePath = path.resolve(process.cwd(), 'api', fileName);
   const payload = await readFile(fixturePath, 'utf8');
   return JSON.parse(payload) as Record<string, unknown>;
+}
+
+async function createTestApp(): Promise<INestApplication> {
+  const app = await createLoggerApp(new Config(), { logger: false });
+  await app.init();
+  return app;
 }
 
 describe('Logger service e2e', () => {
@@ -48,18 +55,10 @@ describe('Logger service e2e', () => {
     process.env.LOGGER_CORS_ALLOW_ORIGIN = '*';
     process.env.LOGGER_LOG_FILE_PATH = logFilePath;
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
+    delete process.env.LOGGER_AUTH_TOKEN;
+    delete process.env.LOGGER_JWT;
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.enableCors({
-      origin: true,
-      methods: ['GET', 'POST', 'OPTIONS'],
-      credentials: true,
-    });
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -70,6 +69,8 @@ describe('Logger service e2e', () => {
     delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
+    delete process.env.LOGGER_AUTH_TOKEN;
+    delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -129,26 +130,22 @@ describe('Logger service e2e', () => {
   });
 });
 
-describe('Logger service e2e with jwt configured', () => {
+describe('Logger service e2e with auth token configured', () => {
   let app: INestApplication;
   let tempDir = '';
 
   beforeAll(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), 'dtaas-logger-e2e-jwt-'));
+    tempDir = await mkdtemp(path.join(os.tmpdir(), 'dtaas-logger-e2e-auth-'));
     process.env.LOGGER_CONFIG_PATH = '';
     process.env.LOGGER_TLS = 'false';
     process.env.LOGGER_CERTS_DIR = '';
     process.env.LOGGER_CORS_ALLOW_ORIGIN = '*';
     process.env.LOGGER_LOG_FILE_PATH = path.join(tempDir, 'events.jsonl');
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
-    process.env.LOGGER_JWT = 'test-secret-token';
+    process.env.LOGGER_AUTH_TOKEN = 'test-secret-token';
+    delete process.env.LOGGER_JWT;
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -159,6 +156,7 @@ describe('Logger service e2e with jwt configured', () => {
     delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
+    delete process.env.LOGGER_AUTH_TOKEN;
     delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
@@ -215,14 +213,10 @@ describe('Logger service e2e with production body-parser config', () => {
     process.env.LOGGER_CORS_ALLOW_ORIGIN = '*';
     process.env.LOGGER_LOG_FILE_PATH = logFilePath;
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
+    delete process.env.LOGGER_AUTH_TOKEN;
+    delete process.env.LOGGER_JWT;
 
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(json({ limit: '65536b', type: ['application/json', 'text/plain'] }));
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -233,6 +227,8 @@ describe('Logger service e2e with production body-parser config', () => {
     delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
+    delete process.env.LOGGER_AUTH_TOKEN;
+    delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -246,5 +242,24 @@ describe('Logger service e2e with production body-parser config', () => {
 
     const content = await readFile(logFilePath, 'utf8');
     expect(JSON.parse(content.trim())).toEqual(payload);
+  });
+
+  it.each([
+    ['application/json', (payload: Record<string, unknown>) => payload],
+    [
+      'text/plain;charset=UTF-8',
+      (payload: Record<string, unknown>) => JSON.stringify(payload),
+    ],
+  ])('rejects oversized %s payloads', async (contentType, body) => {
+    const payload = {
+      ...(await readPayloadFixture('sample.json')),
+      context: { padding: 'x'.repeat(80 * 1024) },
+    };
+    const response = await supertest(app.getHttpServer())
+      .post('/logger')
+      .send(body(payload))
+      .set('Content-Type', contentType);
+
+    expect(response.status).toBe(HttpStatus.PAYLOAD_TOO_LARGE);
   });
 });

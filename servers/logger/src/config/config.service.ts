@@ -10,23 +10,24 @@ type ConfigValues = {
   hostname: string;
   port: number;
   'cors-allow-origin': string;
-  jwt: string;
+  'auth-token': string;
   certs: string;
   tls: boolean;
   'log-file-path': string;
   'max-payload-bytes': number;
+  'log-max-bytes': number;
+  'log-retention-files': number;
 };
 
-const DEFAULT_HOSTNAME = '0.0.0.0';
+const DEFAULT_HOSTNAME = '127.0.0.1';
 const DEFAULT_PORT = 4003;
-const DEFAULT_JWT = '';
+const DEFAULT_AUTH_TOKEN = '';
 const DEFAULT_CERTS_DIR = 'certs';
 const DEFAULT_LOG_FILE = 'logs/workflow-logs.jsonl';
 const DEFAULT_MAX_PAYLOAD_BYTES = 64 * 1024;
-
-function defaultCorsAllowOrigin(port: number): string {
-  return `${DEFAULT_HOSTNAME}:${port}`;
-}
+const DEFAULT_CORS_ALLOW_ORIGIN = '';
+const DEFAULT_LOG_MAX_BYTES = 50 * 1024 * 1024;
+const DEFAULT_LOG_RETENTION_FILES = 5;
 
 const booleanSchema = z.preprocess((value) => {
   if (typeof value === 'boolean') {
@@ -60,11 +61,14 @@ const loggerConfigSchema = z
     hostname: z.string().trim().min(1).optional(),
     port: z.coerce.number().int().positive().optional(),
     'cors-allow-origin': z.string().trim().min(1).optional(),
+    'auth-token': z.string().optional(),
     jwt: z.string().optional(),
     certs: z.string().trim().min(1).optional(),
     tls: booleanSchema.optional(),
     'log-file-path': z.string().trim().min(1).optional(),
     'max-payload-bytes': z.coerce.number().int().positive().optional(),
+    'log-max-bytes': z.coerce.number().int().positive().optional(),
+    'log-retention-files': z.coerce.number().int().positive().optional(),
   })
   .strict();
 
@@ -72,12 +76,14 @@ function defaultConfigValues(): ConfigValues {
   return {
     hostname: DEFAULT_HOSTNAME,
     port: DEFAULT_PORT,
-    'cors-allow-origin': defaultCorsAllowOrigin(DEFAULT_PORT),
-    jwt: DEFAULT_JWT,
+    'cors-allow-origin': DEFAULT_CORS_ALLOW_ORIGIN,
+    'auth-token': DEFAULT_AUTH_TOKEN,
     certs: path.resolve(process.cwd(), DEFAULT_CERTS_DIR),
     tls: false,
     'log-file-path': path.resolve(process.cwd(), DEFAULT_LOG_FILE),
     'max-payload-bytes': DEFAULT_MAX_PAYLOAD_BYTES,
+    'log-max-bytes': DEFAULT_LOG_MAX_BYTES,
+    'log-retention-files': DEFAULT_LOG_RETENTION_FILES,
   };
 }
 
@@ -147,8 +153,8 @@ export default class Config implements IConfig {
     return this.configValues['cors-allow-origin'];
   }
 
-  getJwt(): string {
-    return this.configValues.jwt;
+  getAuthToken(): string {
+    return this.configValues['auth-token'];
   }
 
   getTls(): boolean {
@@ -167,6 +173,14 @@ export default class Config implements IConfig {
     return this.configValues['max-payload-bytes'];
   }
 
+  getLogMaxBytes(): number {
+    return this.configValues['log-max-bytes'];
+  }
+
+  getLogRetentionFiles(): number {
+    return this.configValues['log-retention-files'];
+  }
+
   private loadYamlConfig(configPath: string): void {
     const resolvedConfigPath = resolveFile(configPath);
     const configDirectory = path.dirname(resolvedConfigPath);
@@ -180,15 +194,15 @@ export default class Config implements IConfig {
     }
     if (yamlValues.port !== undefined) {
       this.configValues.port = yamlValues.port;
-      this.configValues['cors-allow-origin'] = defaultCorsAllowOrigin(
-        yamlValues.port,
-      );
     }
     if (yamlValues['cors-allow-origin'] !== undefined) {
       this.configValues['cors-allow-origin'] = yamlValues['cors-allow-origin'];
     }
     if (yamlValues.jwt !== undefined) {
-      this.configValues.jwt = yamlValues.jwt;
+      this.configValues['auth-token'] = yamlValues.jwt;
+    }
+    if (yamlValues['auth-token'] !== undefined) {
+      this.configValues['auth-token'] = yamlValues['auth-token'];
     }
     if (yamlValues.tls !== undefined) {
       this.configValues.tls = yamlValues.tls;
@@ -205,6 +219,13 @@ export default class Config implements IConfig {
     if (yamlValues['max-payload-bytes'] !== undefined) {
       this.configValues['max-payload-bytes'] = yamlValues['max-payload-bytes'];
     }
+    if (yamlValues['log-max-bytes'] !== undefined) {
+      this.configValues['log-max-bytes'] = yamlValues['log-max-bytes'];
+    }
+    if (yamlValues['log-retention-files'] !== undefined) {
+      this.configValues['log-retention-files'] =
+        yamlValues['log-retention-files'];
+    }
   }
 
   private applyEnvOverrides(): void {
@@ -218,14 +239,7 @@ export default class Config implements IConfig {
       'LOGGER_PORT',
     );
     if (port !== undefined) {
-      const previousPort = this.configValues.port;
       this.configValues.port = port;
-      if (
-        this.configValues['cors-allow-origin'] ===
-        defaultCorsAllowOrigin(previousPort)
-      ) {
-        this.configValues['cors-allow-origin'] = defaultCorsAllowOrigin(port);
-      }
     }
 
     const corsAllowOrigin = process.env.LOGGER_CORS_ALLOW_ORIGIN;
@@ -233,9 +247,14 @@ export default class Config implements IConfig {
       this.configValues['cors-allow-origin'] = corsAllowOrigin.trim();
     }
 
-    const jwt = process.env.LOGGER_JWT;
-    if (jwt !== undefined) {
-      this.configValues.jwt = jwt;
+    const deprecatedJwt = process.env.LOGGER_JWT;
+    if (deprecatedJwt !== undefined) {
+      this.configValues['auth-token'] = deprecatedJwt;
+    }
+
+    const authToken = process.env.LOGGER_AUTH_TOKEN;
+    if (authToken !== undefined) {
+      this.configValues['auth-token'] = authToken;
     }
 
     const tls = parseBooleanEnv(process.env.LOGGER_TLS, 'LOGGER_TLS');
@@ -262,6 +281,22 @@ export default class Config implements IConfig {
     );
     if (maxPayloadBytes !== undefined) {
       this.configValues['max-payload-bytes'] = maxPayloadBytes;
+    }
+
+    const logMaxBytes = parsePositiveIntegerEnv(
+      process.env.LOGGER_LOG_MAX_BYTES,
+      'LOGGER_LOG_MAX_BYTES',
+    );
+    if (logMaxBytes !== undefined) {
+      this.configValues['log-max-bytes'] = logMaxBytes;
+    }
+
+    const retentionFiles = parsePositiveIntegerEnv(
+      process.env.LOGGER_LOG_RETENTION_FILES,
+      'LOGGER_LOG_RETENTION_FILES',
+    );
+    if (retentionFiles !== undefined) {
+      this.configValues['log-retention-files'] = retentionFiles;
     }
   }
 }

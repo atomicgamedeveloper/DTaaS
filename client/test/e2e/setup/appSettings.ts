@@ -5,6 +5,16 @@ export const SECONDARY_RUNNER = process.env.SECONDARY_RUNNER ?? 'windows';
 
 export async function disableRemoteLogging(page: Page) {
   await page.evaluate(() => {
+    const getLoggerOrigin = (): string => {
+      const loggerUrl = globalThis.env?.LOGGER_URL?.trim() ?? '';
+      if (!loggerUrl) return '';
+      try {
+        return new URL(loggerUrl).origin;
+      } catch {
+        return loggerUrl;
+      }
+    };
+
     const readSettings = (): Record<string, unknown> => {
       const persistedSettings = localStorage.getItem('settings');
       if (persistedSettings === null) return {};
@@ -21,6 +31,7 @@ export async function disableRemoteLogging(page: Page) {
         ...readSettings(),
         remoteLoggingEnabled: false,
         remoteLoggerConfiguredAtSave: Boolean(globalThis.env?.LOGGER_URL),
+        remoteLoggerOriginAtSave: getLoggerOrigin(),
       }),
     );
   });

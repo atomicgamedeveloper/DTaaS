@@ -22,34 +22,46 @@ Environment variables always override YAML values.
 
 ### YAML fields
 
-- `hostname` (default: `0.0.0.0`)
+- `hostname` (default: `127.0.0.1`; set `0.0.0.0` for Docker/reverse-proxy
+  deployments)
 - `port` (default: `4003`)
-- `cors-allow-origin` (default: `0.0.0.0:<port>`, e.g. `0.0.0.0:4003`)
-- `jwt` (default: empty string) — when set, `POST /logger` requires an
-  `Authorization: Bearer <jwt>` header matching this value; requests without
-  it are rejected with `401 Unauthorized`. Leave empty to accept unauthenticated
-  requests (the default). **Note:** the bundled DTaaS client posts events via
-  `navigator.sendBeacon`, which cannot set custom headers, so enabling this
-  setting will block ingestion from that client. It is intended for
-  authenticating other producers of `POST /logger`, not the shipped client.
+- `cors-allow-origin` (default: disabled; set explicitly for browser clients on another origin)
+- `auth-token` (default: empty string) — a static bearer token for non-browser
+  producers. When set, `POST /logger` requires an
+  `Authorization: Bearer <auth-token>` header matching this value; requests
+  without it are rejected with `401 Unauthorized`. Leave empty to accept
+  unauthenticated requests (the default). **Note:** the bundled DTaaS client
+  posts events via `navigator.sendBeacon`, which cannot set custom headers, so
+  enabling this setting will block ingestion from that client. Browser ingest
+  security is delegated to the reverse proxy. The deprecated `jwt` YAML field
+  is still accepted as an alias for existing deployments.
 - `tls` (default: `false`)
 - `certs` (default: `./certs`)
 - `log-file-path` (default: `./logs/workflow-logs.jsonl`)
 - `max-payload-bytes` (default: `65536`)
+- `log-max-bytes` (default: `52428800`)
+- `log-retention-files` (default: `5` rotated files)
 
 Use `logger.yaml.sample` as a template.
 
 ### Environment variables
 
 - `LOGGER_CONFIG_PATH`
-- `LOGGER_HOSTNAME`
+- `LOGGER_HOSTNAME` (default: `127.0.0.1`; use `0.0.0.0` in containers)
 - `LOGGER_PORT` (default: `4003`)
-- `LOGGER_CORS_ALLOW_ORIGIN` (default: `0.0.0.0:<port>`)
-- `LOGGER_JWT`
+- `LOGGER_CORS_ALLOW_ORIGIN` (default: disabled)
+- `LOGGER_AUTH_TOKEN`
+- `LOGGER_JWT` (deprecated alias for `LOGGER_AUTH_TOKEN`)
 - `LOGGER_TLS`
 - `LOGGER_CERTS_DIR`
 - `LOGGER_LOG_FILE_PATH` (default: `logs/workflow-logs.jsonl`)
 - `LOGGER_MAX_PAYLOAD_BYTES` (default: `65536`)
+- `LOGGER_LOG_MAX_BYTES` (default: `52428800`)
+- `LOGGER_LOG_RETENTION_FILES` (default: `5`)
+
+External authentication and edge rate limiting are provided by the reverse
+proxy in the deployment compose files. The service also applies an internal
+request throttle for callers that bypass the proxy.
 
 The service always sets `Access-Control-Allow-Credentials: true` for CORS
 responses.
@@ -76,6 +88,16 @@ append-efficient and can be queried directly:
 jq -c '.event' logs/workflow-logs.jsonl
 ```
 
+The active log rotates at `log-max-bytes` and keeps the configured number of
+rotated files. The defaults are 50 MiB and 5 rotated files.
+
+Docker deployments mount logger output under `./files/logs`, separate from the
+shared `./files/common` workspace/library path.
+
+Log writes are best-effort analytics storage. Graceful shutdown closes the
+write stream, but recent events may be lost on hard container termination
+because writes are not fsynced per request.
+
 ## Run locally
 
 ```bash
@@ -83,3 +105,14 @@ yarn install
 yarn build
 yarn start
 ```
+
+For non-Docker development, point the client at the logger's direct port:
+
+```javascript
+LOGGER_URL: 'http://localhost:4003/logger';
+```
+
+The `/logger` suffix is required. The client validates logger reachability by
+appending `/health`, so `http://localhost:4003/logger` checks
+`http://localhost:4003/logger/health`. A bare host such as
+`http://localhost:4003` would check `/health`, which is not a logger endpoint.

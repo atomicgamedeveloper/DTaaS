@@ -2,8 +2,12 @@
   "sessionId": "22222222-2222-4222-8222-222222222222",
   "userHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "timestamp": "2026-03-24T20:01:00.000Z",
-  "event": "click",
+  "event": "navigation",
   "page": "/preview/digitaltwins",
+  "page_transition": {
+    "src": "/library",
+    "target": "/preview/digitaltwins"
+  },
   "element": "button",
   "label": "Start",
   "context": {

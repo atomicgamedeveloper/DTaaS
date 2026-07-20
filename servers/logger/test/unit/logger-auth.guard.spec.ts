@@ -16,21 +16,19 @@ function createContext(authorizationHeader?: string): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
-function createConfig(jwt: string): Config {
-  return { getJwt: () => jwt } as Config;
+function createConfig(authToken: string): Config {
+  return { getAuthToken: () => authToken } as Config;
 }
 
 describe('Logger auth guard', () => {
-  it('allows requests when no jwt is configured', () => {
+  it('allows requests when no auth token is configured', () => {
     const guard = new LoggerAuthGuard(createConfig(''));
     expect(guard.canActivate(createContext())).toBe(true);
   });
 
   it('allows requests with a matching bearer token', () => {
     const guard = new LoggerAuthGuard(createConfig('secret-token'));
-    expect(guard.canActivate(createContext('Bearer secret-token'))).toBe(
-      true,
-    );
+    expect(guard.canActivate(createContext('Bearer secret-token'))).toBe(true);
   });
 
   it('rejects requests missing the authorization header', () => {

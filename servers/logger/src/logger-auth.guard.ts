@@ -24,7 +24,7 @@ export default class LoggerAuthGuard implements CanActivate {
   constructor(private readonly config: Config) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const expectedToken = this.config.getJwt();
+    const expectedToken = this.config.getAuthToken();
     if (expectedToken === '') {
       return true;
     }

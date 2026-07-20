@@ -1,8 +1,10 @@
-hostname: 0.0.0.0
+hostname: 127.0.0.1
 port: 4003
-cors-allow-origin: 0.0.0.0:4003
-jwt: ""
+# Set cors-allow-origin explicitly when browser clients use another origin.
+auth-token: ''
 tls: false
 certs: ./certs
 log-file-path: ./logs/workflow-logs.jsonl
 max-payload-bytes: 65536
+log-max-bytes: 52428800
+log-retention-files: 5

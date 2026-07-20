@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { getEffectiveRemoteLoggingEnabled } from 'store/settings.slice';
 import { wait } from 'util/auth/Authentication';
 
 export interface ValidationType {
@@ -32,23 +33,11 @@ const urlKeys = [
 
 const isConfiguredKey = (key: string): boolean =>
   key === 'LOGGER_URL'
-    ? Boolean(globalThis.env.LOGGER_URL?.trim()) && remoteLoggingIsEnabled()
+    ? Boolean(globalThis.env.LOGGER_URL?.trim()) &&
+      getEffectiveRemoteLoggingEnabled()
     : true;
 
 const configuredKeys = (keys: string[]) => keys.filter(isConfiguredKey);
-
-function remoteLoggingIsEnabled(): boolean {
-  try {
-    const settings = localStorage.getItem('settings');
-    if (!settings) return false;
-    const parsedSettings = JSON.parse(settings) as {
-      remoteLoggingEnabled?: unknown;
-    };
-    return parsedSettings.remoteLoggingEnabled === true;
-  } catch {
-    return false;
-  }
-}
 
 function trimTrailingSlashes(url: string): string {
   let end = url.length;

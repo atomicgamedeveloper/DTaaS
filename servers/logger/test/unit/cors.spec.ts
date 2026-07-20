@@ -2,8 +2,8 @@ import { describe, it, expect } from '@jest/globals';
 import { buildCorsOptions, normalizeCorsOrigin } from 'src/config/cors';
 
 describe('CORS config helpers', () => {
-  it('allows all origins for default cors-allow-origin value', () => {
-    expect(normalizeCorsOrigin('0.0.0.0:4003', 4003)).toBe(true);
+  it('disables cross-origin requests when no origin is configured', () => {
+    expect(normalizeCorsOrigin('', 4003)).toBe(false);
   });
 
   it('supports wildcard input by allowing all origins', () => {

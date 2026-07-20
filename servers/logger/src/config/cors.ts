@@ -1,12 +1,9 @@
 export function normalizeCorsOrigin(
   configuredOrigin: string,
-  port: number,
+  _port: number,
 ): boolean | string {
   const trimmedOrigin = configuredOrigin.trim();
-  const defaultOrigin = `0.0.0.0:${port}`;
-  if (trimmedOrigin === defaultOrigin) {
-    return true;
-  }
+  if (trimmedOrigin === '') return false;
   if (trimmedOrigin === '*') {
     return true;
   }

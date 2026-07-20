@@ -9,11 +9,22 @@ import {
 } from 'model/backend/gitlab/digitalTwinConfig/constants';
 import DEFAULT_MEASUREMENT from 'model/backend/gitlab/measure/constants';
 
+export function getRemoteLoggerOrigin(): string {
+  const loggerUrl = globalThis.env?.LOGGER_URL?.trim() ?? '';
+  if (!loggerUrl) return '';
+  try {
+    return new URL(loggerUrl).origin;
+  } catch {
+    return loggerUrl;
+  }
+}
+
 export const isRemoteLoggerConfigured = (): boolean =>
-  Boolean(globalThis.env?.LOGGER_URL?.trim());
+  Boolean(getRemoteLoggerOrigin());
 
 export const getDefaultLoggingEnabled = (): boolean => false;
 export const getDefaultRemoteLoggingEnabled = (): boolean => false;
+export const SETTINGS_STORAGE_KEY = 'settings';
 
 // Filled out from model/backend/gitlab/digitalTwinConfig/constants.ts
 export const DEFAULT_SETTINGS = {
@@ -24,10 +35,9 @@ export const DEFAULT_SETTINGS = {
   BRANCH_NAME,
   loggingEnabled: getDefaultLoggingEnabled(),
   remoteLoggingEnabled: getDefaultRemoteLoggingEnabled(),
-  // Records whether a remote logger was configured when settings were
-  // persisted, so local-only logging is not treated as a remote-send choice
-  // once a remote logger appears.
+  // Deprecated; kept for persisted settings written before origin-bound consent.
   remoteLoggerConfiguredAtSave: isRemoteLoggerConfigured(),
+  remoteLoggerOriginAtSave: getRemoteLoggerOrigin(),
 };
 
 export { DEFAULT_MEASUREMENT };
@@ -46,6 +56,7 @@ interface SettingsState {
   loggingEnabled: boolean;
   remoteLoggingEnabled: boolean;
   remoteLoggerConfiguredAtSave: boolean;
+  remoteLoggerOriginAtSave: string;
 }
 
 const SettingsSchema = z
@@ -63,6 +74,7 @@ const SettingsSchema = z
     loggingEnabled: z.boolean(),
     remoteLoggingEnabled: z.boolean(),
     remoteLoggerConfiguredAtSave: z.boolean(),
+    remoteLoggerOriginAtSave: z.string(),
   })
   .partial();
 
@@ -70,33 +82,51 @@ type PersistedSettings = z.infer<typeof SettingsSchema>;
 
 // Local-only logging is not a remote-send choice; reapply the remote default
 // until the user opts in while a remote logger is configured.
-function applyRemoteLoggingConsent(
+export function applyRemoteLoggingConsent(
   persisted: PersistedSettings,
 ): PersistedSettings {
-  if (!isRemoteLoggerConfigured()) {
-    return { ...persisted, remoteLoggingEnabled: false };
+  const currentOrigin = getRemoteLoggerOrigin();
+  if (!currentOrigin) {
+    return {
+      ...persisted,
+      remoteLoggingEnabled: false,
+      remoteLoggerConfiguredAtSave: false,
+      remoteLoggerOriginAtSave: '',
+    };
   }
-  if (persisted.remoteLoggerConfiguredAtSave) {
+  if (persisted.remoteLoggerOriginAtSave === currentOrigin) {
     return persisted;
   }
   return {
     ...persisted,
     remoteLoggingEnabled: getDefaultRemoteLoggingEnabled(),
     remoteLoggerConfiguredAtSave: true,
+    remoteLoggerOriginAtSave: currentOrigin,
   };
 }
 
-function readPersistedSettings(base: SettingsState): SettingsState | null {
-  const settings = localStorage.getItem('settings');
+export function loadPersistedSettings(): PersistedSettings | null {
+  const settings = localStorage.getItem(SETTINGS_STORAGE_KEY);
   if (!settings) return null;
   try {
     const result = SettingsSchema.safeParse(JSON.parse(settings));
-    if (result.success)
-      return { ...base, ...applyRemoteLoggingConsent(result.data) };
+    if (result.success) return applyRemoteLoggingConsent(result.data);
   } catch {
     // Malformed persisted settings; fall back to defaults.
   }
   return null;
+}
+
+export function getEffectiveRemoteLoggingEnabled(): boolean {
+  return (
+    loadPersistedSettings()?.remoteLoggingEnabled ??
+    getDefaultRemoteLoggingEnabled()
+  );
+}
+
+function readPersistedSettings(base: SettingsState): SettingsState | null {
+  const persisted = loadPersistedSettings();
+  return persisted === null ? null : { ...base, ...persisted };
 }
 
 export const loadInitialSettings = (): SettingsState => {
@@ -139,7 +169,10 @@ export const settingsSlice = createSlice({
       state.loggingEnabled = action.payload;
     },
     setRemoteLoggingEnabled: (state, action: PayloadAction<boolean>) => {
-      state.remoteLoggingEnabled = action.payload && isRemoteLoggerConfigured();
+      const loggerOrigin = getRemoteLoggerOrigin();
+      state.remoteLoggerOriginAtSave = loggerOrigin;
+      state.remoteLoggerConfiguredAtSave = Boolean(loggerOrigin);
+      state.remoteLoggingEnabled = action.payload && Boolean(loggerOrigin);
     },
     toggleTaskEnabled: (state, action: PayloadAction<string>) => {
       const name = action.payload;

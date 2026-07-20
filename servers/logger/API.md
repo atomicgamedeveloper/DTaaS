@@ -7,6 +7,12 @@ backend logger microservice via the browser Beacon API. Events are sent
 as fire-and-forget JSON payloads — the client does not wait for or
 process responses.
 
+## Base URL
+
+The bundled DTaaS client expects `LOGGER_URL` to include the logger route
+prefix, for example `https://example.com/logger`. With that value, events are
+posted to `/logger` and health checks use `/logger/health`.
+
 ## Endpoints
 
 ### POST /logger
@@ -39,11 +45,13 @@ Ingest a single log event.
 
 #### POST Response
 
-| Status                | Description                               |
-| --------------------- | ----------------------------------------- |
-| 204 No Content        | Event accepted (no body)                  |
-| 400 Bad Request       | Malformed JSON or missing required fields |
-| 413 Payload Too Large | Body exceeds configured max payload bytes |
+| Status                    | Description                               |
+| ------------------------- | ----------------------------------------- |
+| 204 No Content            | Event accepted (no body)                  |
+| 400 Bad Request           | Malformed JSON or missing required fields |
+| 413 Payload Too Large     | Body exceeds configured max payload bytes |
+| 429 Too Many Requests     | Rate limit exceeded                       |
+| 500 Internal Server Error | Server failure                            |
 
 The service enables CORS with `Access-Control-Allow-Origin` controlled by
 `cors-allow-origin` (`LOGGER_CORS_ALLOW_ORIGIN` in env).
@@ -65,20 +73,23 @@ Returns service health.
 
 ## Log Event Schema
 
-| Field       | Type                 | Required | Description                                              |
-| ----------- | -------------------- | -------- | -------------------------------------------------------- |
-| `sessionId` | string (UUID v4)     | Yes      | Unique browser session identifier                        |
-| `userHash`  | string (SHA-256 hex) | Yes      | Anonymized username hash                                 |
-| `timestamp` | string (ISO 8601)    | Yes      | UTC timestamp of the event                               |
-| `event`     | string               | Yes      | Event type (currently always `"click"`)                  |
-| `page`      | string               | Yes      | URL path of the current page                             |
-| `element`   | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`) |
-| `label`     | string               | Yes      | Human-readable label of the element                      |
-| `context`   | object               | No       | Additional key-value metadata                            |
+| Field             | Type                 | Required | Description                                                                                             |
+| ----------------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `sessionId`       | string (UUID v4)     | Yes      | Unique browser session identifier                                                                       |
+| `userHash`        | string (SHA-256 hex) | Yes      | Anonymized username hash                                                                                |
+| `timestamp`       | string (ISO 8601)    | Yes      | UTC timestamp of the event                                                                              |
+| `event`           | string enum          | Yes      | Event type: `"click"`, `"change"`, `"navigation"`, `"notification"`, or `"dismiss"`                     |
+| `page`            | string               | Yes      | URL path of the current page                                                                            |
+| `page_transition` | object               | No       | Navigation transition metadata, when present: `{ "src": "/from", "target": "/to" }`                     |
+| `element`         | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`)                                                |
+| `label`           | string               | Yes      | Human-readable label of the element                                                                     |
+| `context`         | object               | No       | Additional metadata; max 6 levels, 100 total nested entries, 128-char keys, and 1024-char string values |
 
 ## Privacy
 
-- **Usernames** are anonymized client-side using SHA-256 before
-  transmission. The backend never receives plaintext usernames.
+- **Usernames** are hashed client-side using SHA-256 before transmission. This
+  is pseudonymization, not anonymization: the same username produces the same
+  hash, so events for one user can still be linked together. The backend never
+  receives plaintext usernames from the bundled client.
 - **Session IDs** are random UUID v4 values with no link to user identity.
 - No cookies or IP-based tracking is performed by the client.

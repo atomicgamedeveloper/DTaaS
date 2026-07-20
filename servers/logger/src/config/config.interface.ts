@@ -3,9 +3,11 @@ export interface IConfig {
   getHostname(): string;
   getPort(): number;
   getCorsAllowOrigin(): string;
-  getJwt(): string;
+  getAuthToken(): string;
   getTls(): boolean;
   getCertsDirectory(): string;
   getLogFilePath(): string;
   getMaxPayloadBytes(): number;
+  getLogMaxBytes(): number;
+  getLogRetentionFiles(): number;
 }

@@ -8,6 +8,7 @@ import {
   UsePipes,
   HttpCode,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import LogsService from './logs/logs.service.js';
 import { LogEventDto } from './dto/log-event.dto.js';
 import LogEventValidationPipe from './log-event-validation.pipe.js';
@@ -24,6 +25,7 @@ export default class AppController {
 
   @Get('health')
   @HttpCode(HttpStatus.OK)
+  @SkipThrottle()
   health(): HealthResponse {
     return { status: 'ok' };
   }

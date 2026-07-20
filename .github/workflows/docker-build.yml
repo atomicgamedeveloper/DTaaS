@@ -34,6 +34,7 @@ jobs:
             client
             developer
             servers/lib
+            servers/logger
 
       - name: Setup node
         if: ${{ inputs.dockerfile == 'client.built.dockerfile' }}

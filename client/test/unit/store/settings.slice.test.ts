@@ -10,6 +10,8 @@ import settingsReducer, {
   DEFAULT_MEASUREMENT,
   getDefaultLoggingEnabled,
   getDefaultRemoteLoggingEnabled,
+  getEffectiveRemoteLoggingEnabled,
+  getRemoteLoggerOrigin,
   loadInitialSettings,
 } from 'store/settings.slice';
 
@@ -80,6 +82,21 @@ describe('settingsSlice', () => {
         setRemoteLoggingEnabled(true),
       );
       expect(state.remoteLoggingEnabled).toBe(true);
+      expect(state.remoteLoggerOriginAtSave).toBe('https://example.com');
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('normalizes the remote logger origin for consent', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com:8443/logger/',
+    };
+
+    try {
+      expect(getRemoteLoggerOrigin()).toBe('https://example.com:8443');
     } finally {
       globalThis.env = originalEnv;
     }
@@ -130,12 +147,13 @@ describe('settingsSlice', () => {
       expect(result.loggingEnabled).toBe(true);
       expect(result.remoteLoggingEnabled).toBe(false);
       expect(result.remoteLoggerConfiguredAtSave).toBe(true);
+      expect(result.remoteLoggerOriginAtSave).toBe('https://example.com');
     } finally {
       globalThis.env = originalEnv;
     }
   });
 
-  it('keeps remote logging when the choice was made while configured', () => {
+  it('keeps remote logging when the saved origin matches the current logger', () => {
     const originalEnv = globalThis.env;
     globalThis.env = {
       ...originalEnv,
@@ -146,6 +164,7 @@ describe('settingsSlice', () => {
         loggingEnabled: true,
         remoteLoggingEnabled: true,
         remoteLoggerConfiguredAtSave: true,
+        remoteLoggerOriginAtSave: 'https://example.com',
       }),
     );
 
@@ -153,6 +172,50 @@ describe('settingsSlice', () => {
       const result = loadInitialSettings();
       expect(result.loggingEnabled).toBe(true);
       expect(result.remoteLoggingEnabled).toBe(true);
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('clears remote logging when the configured logger origin changes', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://new.example.com/logger',
+    };
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(
+      JSON.stringify({
+        loggingEnabled: true,
+        remoteLoggingEnabled: true,
+        remoteLoggerOriginAtSave: 'https://old.example.com',
+      }),
+    );
+
+    try {
+      const result = loadInitialSettings();
+      expect(result.loggingEnabled).toBe(true);
+      expect(result.remoteLoggingEnabled).toBe(false);
+      expect(result.remoteLoggerOriginAtSave).toBe('https://new.example.com');
+    } finally {
+      globalThis.env = originalEnv;
+    }
+  });
+
+  it('reports effective remote logging using persisted consent rules', () => {
+    const originalEnv = globalThis.env;
+    globalThis.env = {
+      ...originalEnv,
+      LOGGER_URL: 'https://example.com/logger',
+    };
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(
+      JSON.stringify({
+        remoteLoggingEnabled: true,
+        remoteLoggerConfiguredAtSave: false,
+      }),
+    );
+
+    try {
+      expect(getEffectiveRemoteLoggingEnabled()).toBe(false);
     } finally {
       globalThis.env = originalEnv;
     }
@@ -170,6 +233,7 @@ describe('settingsSlice', () => {
     const result = loadInitialSettings();
     expect(result.loggingEnabled).toBe(true);
     expect(result.remoteLoggingEnabled).toBe(false);
+    expect(result.remoteLoggerOriginAtSave).toBe('');
   });
 
   it('should handle resetToDefaults', () => {

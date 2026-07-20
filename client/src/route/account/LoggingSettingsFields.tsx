@@ -13,7 +13,7 @@ function getLoggerDestination(): string {
   try {
     return new URL(loggerUrl).host;
   } catch {
-    return "your organization's server";
+    return 'your organization\u0027s server';
   }
 }
 

@@ -79,7 +79,11 @@ describe('configUtil', () => {
     function enableRemoteLogging() {
       localStorage.setItem(
         'settings',
-        JSON.stringify({ remoteLoggingEnabled: true }),
+        JSON.stringify({
+          remoteLoggingEnabled: true,
+          remoteLoggerConfiguredAtSave: true,
+          remoteLoggerOriginAtSave: 'https://logger.example.com',
+        }),
       );
     }
 
@@ -166,6 +170,38 @@ describe('configUtil', () => {
         await getValidationResults();
 
       expect(results.LOGGER_URL).toBeUndefined();
+    });
+
+    test('getValidationResult omits LOGGER_URL when remote consent is stale', async () => {
+      globalThis.env.LOGGER_URL = 'https://logger.example.com';
+      localStorage.setItem(
+        'settings',
+        JSON.stringify({
+          remoteLoggingEnabled: true,
+          remoteLoggerConfiguredAtSave: false,
+        }),
+      );
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL).toBeUndefined();
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        'https://logger.example.com/health',
+        expect.any(Object),
+      );
+    });
+
+    test('getValidationResult omits LOGGER_URL when stored settings are invalid', async () => {
+      globalThis.env.LOGGER_URL = 'https://logger.example.com';
+      localStorage.setItem('settings', '{');
+      const results: Record<string, ValidationType> =
+        await getValidationResults();
+
+      expect(results.LOGGER_URL).toBeUndefined();
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        'https://logger.example.com/health',
+        expect.any(Object),
+      );
     });
 
     test('getValidationResult omits LOGGER_URL when it is not configured', async () => {

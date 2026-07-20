@@ -22,6 +22,7 @@ type FakeStream = {
   off: (event: string, listener: (error: Error) => void) => void;
   write: (line: string, encoding: string, callback: WriteCallback) => void;
   end: (callback: WriteCallback) => void;
+  destroy: (error?: Error) => void;
 };
 
 function installFakeStream(service: LogsService, stream: FakeStream): void {
@@ -94,6 +95,23 @@ describe('LogsService', () => {
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[0]) as LogEventDto).toEqual(baseEvent);
     expect(JSON.parse(lines[1]) as LogEventDto).toEqual(nextEvent);
+  });
+
+  it('rotates the log when the configured size is exceeded', async () => {
+    process.env.LOGGER_LOG_MAX_BYTES = '1';
+    process.env.LOGGER_LOG_RETENTION_FILES = '2';
+    const config = new Config();
+    const service = new LogsService(config);
+    const nextEvent = { ...baseEvent, label: 'Next action' };
+
+    await service.appendEvent(baseEvent);
+    await service.appendEvent(nextEvent);
+    await service.onModuleDestroy();
+
+    const rotated = await readFile(`${logFilePath}.1`, 'utf8');
+    const current = await readFile(logFilePath, 'utf8');
+    expect(JSON.parse(rotated) as LogEventDto).toEqual(baseEvent);
+    expect(JSON.parse(current) as LogEventDto).toEqual(nextEvent);
   });
 
   it('appends multiple events in order', async () => {
@@ -178,6 +196,7 @@ describe('LogsService', () => {
       off: noListener,
       write: (_line, _encoding, callback) => callback(new Error('disk full')),
       end: (callback) => callback(null),
+      destroy: jest.fn(),
     });
 
     await expect(service.appendEvent(baseEvent)).rejects.toThrow('disk full');
@@ -185,6 +204,9 @@ describe('LogsService', () => {
   });
 
   it('rejects append when the stream emits an error event', async () => {
+    const errorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
     const service = new LogsService(new Config());
     let errorListener: ((error: Error) => void) | undefined;
     installFakeStream(service, {
@@ -198,11 +220,13 @@ describe('LogsService', () => {
         errorListener?.(new Error('stream failure'));
       },
       end: (callback) => callback(null),
+      destroy: jest.fn(),
     });
 
     await expect(service.appendEvent(baseEvent)).rejects.toThrow(
       'stream failure',
     );
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it('propagates close errors from the write stream', async () => {
@@ -212,6 +236,7 @@ describe('LogsService', () => {
       off: noListener,
       write: (_line, _encoding, callback) => callback(undefined),
       end: (callback) => callback(new Error('close failed')),
+      destroy: jest.fn(),
     });
 
     await service.appendEvent(baseEvent);
@@ -226,6 +251,7 @@ describe('LogsService', () => {
       off: noListener,
       write: (_line, _encoding, callback) => callback(undefined),
       end: (callback) => callback(null),
+      destroy: jest.fn(),
     });
 
     await service.appendEvent(baseEvent);
@@ -233,7 +259,7 @@ describe('LogsService', () => {
     await expect(service.onModuleDestroy()).resolves.toBeUndefined();
   });
 
-  it('still persists later events after a prior append failed', async () => {
+  it('reopens the stream after a prior append failed', async () => {
     const errorSpy = jest
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
@@ -254,14 +280,35 @@ describe('LogsService', () => {
         callback(undefined);
       },
       end: (callback) => callback(null),
+      destroy: jest.fn(),
     });
 
     await expect(service.appendEvent(baseEvent)).rejects.toThrow('disk full');
     await service.appendEvent(nextEvent);
 
-    expect(writtenLines).toHaveLength(1);
-    expect(JSON.parse(writtenLines[0]) as LogEventDto).toEqual(nextEvent);
+    await service.onModuleDestroy();
+
+    const content = await readFile(logFilePath, 'utf8');
+    expect(JSON.parse(content.trim()) as LogEventDto).toEqual(nextEvent);
+    expect(writtenLines).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it('handles late stream errors without an active write listener', async () => {
+    const errorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
+    const service = new LogsService(new Config());
+    await service.appendEvent(baseEvent);
+    const internals = service as unknown as {
+      writeStream: { emit: (event: 'error', error: Error) => boolean } | null;
+      initialized: boolean;
+    };
+
+    internals.writeStream?.emit('error', new Error('late stream failure'));
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(internals.initialized).toBe(false);
   });
 
   it('rejects append when the stream is missing after initialization', async () => {

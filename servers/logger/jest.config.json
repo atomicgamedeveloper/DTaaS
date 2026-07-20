@@ -2,7 +2,7 @@
   "preset": "ts-jest/presets/default-esm",
   "testEnvironment": "node",
   "transform": {
-    "(src|test)/^.+\\.(t|j)sx?$": [
+    "^.+\\.(t|j)sx?$": [
       "ts-jest",
       {
         "useESM": true
@@ -15,15 +15,10 @@
   "coveragePathIgnorePatterns": [
     "node_modules",
     "./dist",
-    "./src/app.module.ts",
-    "./src/main.ts"
+    "./src/app.module.ts"
   ],
   "extensionsToTreatAsEsm": [".ts"],
-  "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-  ],
+  "moduleFileExtensions": ["js", "json", "ts"],
   "modulePathIgnorePatterns": [],
   "coverageDirectory": "<rootDir>/coverage/",
   "coverageThreshold": {
@@ -37,17 +32,9 @@
   "verbose": true,
   "testRegex": "./test/.*\\.spec.tsx?$",
   "modulePaths": ["<rootDir>", "<rootDir>/src/", "<rootDir>/test/"],
-  "moduleDirectories": [
-    "node_modules",
-    "src",
-    "test"
-  ],
+  "moduleDirectories": ["node_modules", "src", "test"],
   "rootDir": "./",
-  "roots": [
-    "<rootDir>",
-    "src/",
-    "test/"
-  ],
+  "roots": ["<rootDir>", "src/", "test/"],
   "moduleNameMapper": {
     "^(\\.\\.?\\/.+)\\.jsx?$": "$1"
   }

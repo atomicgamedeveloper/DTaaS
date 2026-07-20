@@ -16,6 +16,7 @@ describe('Config service', () => {
     delete process.env.LOGGER_HOSTNAME;
     delete process.env.LOGGER_PORT;
     delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
+    delete process.env.LOGGER_AUTH_TOKEN;
     delete process.env.LOGGER_JWT;
     delete process.env.LOGGER_TLS;
     delete process.env.LOGGER_CERTS_DIR;
@@ -31,10 +32,10 @@ describe('Config service', () => {
   it('returns defaults when no config is provided', () => {
     const config = new Config();
 
-    expect(config.getHostname()).toBe('0.0.0.0');
+    expect(config.getHostname()).toBe('127.0.0.1');
     expect(config.getPort()).toBe(4003);
-    expect(config.getCorsAllowOrigin()).toBe('0.0.0.0:4003');
-    expect(config.getJwt()).toBe('');
+    expect(config.getCorsAllowOrigin()).toBe('');
+    expect(config.getAuthToken()).toBe('');
     expect(config.getTls()).toBe(false);
     expect(config.getCertsDirectory()).toBe(
       path.resolve(process.cwd(), 'certs'),
@@ -53,7 +54,7 @@ describe('Config service', () => {
         'hostname: 127.0.0.1',
         'port: 4500',
         'cors-allow-origin: https://client.example',
-        'jwt: test-token',
+        'auth-token: test-token',
         'tls: true',
         'certs: ./secure-certs',
         'log-file-path: ./data/events.jsonl',
@@ -68,7 +69,7 @@ describe('Config service', () => {
     expect(config.getHostname()).toBe('127.0.0.1');
     expect(config.getPort()).toBe(4500);
     expect(config.getCorsAllowOrigin()).toBe('https://client.example');
-    expect(config.getJwt()).toBe('test-token');
+    expect(config.getAuthToken()).toBe('test-token');
     expect(config.getTls()).toBe(true);
     expect(config.getCertsDirectory()).toBe(
       path.resolve(tempDir, 'secure-certs'),
@@ -86,7 +87,7 @@ describe('Config service', () => {
       [
         'hostname: 127.0.0.1',
         'port: 4500',
-        'jwt: token-from-yaml',
+        'auth-token: token-from-yaml',
         'tls: false',
         'certs: ./secure-certs',
       ].join('\n'),
@@ -97,7 +98,7 @@ describe('Config service', () => {
     process.env.LOGGER_HOSTNAME = '0.0.0.0';
     process.env.LOGGER_PORT = '4900';
     process.env.LOGGER_CORS_ALLOW_ORIGIN = 'http://frontend.local:3000';
-    process.env.LOGGER_JWT = 'token-from-env';
+    process.env.LOGGER_AUTH_TOKEN = 'token-from-env';
     process.env.LOGGER_TLS = 'true';
     process.env.LOGGER_CERTS_DIR = './runtime-certs';
     process.env.LOGGER_LOG_FILE_PATH = './runtime-logs/events.jsonl';
@@ -108,7 +109,7 @@ describe('Config service', () => {
     expect(config.getHostname()).toBe('0.0.0.0');
     expect(config.getPort()).toBe(4900);
     expect(config.getCorsAllowOrigin()).toBe('http://frontend.local:3000');
-    expect(config.getJwt()).toBe('token-from-env');
+    expect(config.getAuthToken()).toBe('token-from-env');
     expect(config.getTls()).toBe(true);
     expect(config.getCertsDirectory()).toBe(
       path.resolve(process.cwd(), 'runtime-certs'),
@@ -139,9 +140,9 @@ describe('Config service', () => {
 
     const config = new Config();
 
-    expect(config.getHostname()).toBe('0.0.0.0');
+    expect(config.getHostname()).toBe('127.0.0.1');
     expect(config.getPort()).toBe(4003);
-    expect(config.getCorsAllowOrigin()).toBe('0.0.0.0:4003');
+    expect(config.getCorsAllowOrigin()).toBe('');
     expect(config.getTls()).toBe(false);
     expect(config.getCertsDirectory()).toBe(
       path.resolve(process.cwd(), 'certs'),
@@ -183,9 +184,33 @@ describe('Config service', () => {
     process.env.LOGGER_CONFIG_PATH = configPath;
     const config = new Config();
 
-    expect(config.getHostname()).toBe('0.0.0.0');
+    expect(config.getHostname()).toBe('127.0.0.1');
     expect(config.getPort()).toBe(4003);
-    expect(config.getCorsAllowOrigin()).toBe('0.0.0.0:4003');
+    expect(config.getCorsAllowOrigin()).toBe('');
+  });
+
+  it('loads deprecated jwt aliases for existing deployments', async () => {
+    const configPath = path.join(tempDir, 'logger.yaml');
+    await writeFile(configPath, 'jwt: legacy-yaml-token\n', 'utf8');
+    process.env.LOGGER_CONFIG_PATH = configPath;
+    expect(new Config().getAuthToken()).toBe('legacy-yaml-token');
+
+    process.env.LOGGER_JWT = 'legacy-env-token';
+    expect(new Config().getAuthToken()).toBe('legacy-env-token');
+  });
+
+  it('prefers auth-token over deprecated jwt aliases', async () => {
+    const configPath = path.join(tempDir, 'logger.yaml');
+    await writeFile(
+      configPath,
+      ['jwt: legacy-yaml-token', 'auth-token: yaml-token'].join('\n'),
+      'utf8',
+    );
+    process.env.LOGGER_CONFIG_PATH = configPath;
+    process.env.LOGGER_JWT = 'legacy-env-token';
+    process.env.LOGGER_AUTH_TOKEN = 'env-token';
+
+    expect(new Config().getAuthToken()).toBe('env-token');
   });
 
   it('throws when yaml tls is not a boolean', async () => {
