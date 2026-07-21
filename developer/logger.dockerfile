@@ -2,7 +2,12 @@ FROM node:24.12.0-slim AS build
 
 WORKDIR /dtaas/logger
 COPY ./servers/logger/ .
-RUN yarn install --immutable --immutable-cache --check-cache --network-timeout 1000000
+RUN YARN_ENABLE_SCRIPTS=false yarn install \
+  --immutable \
+  --immutable-cache \
+  --check-cache \
+  --ignore-scripts \
+  --network-timeout 1000000
 RUN yarn build
 
 FROM node:24.12.0-slim
