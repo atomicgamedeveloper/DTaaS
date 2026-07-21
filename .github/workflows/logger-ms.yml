@@ -75,32 +75,30 @@ jobs:
           files: servers/logger/coverage/clover.xml
           flags: logger-microservice-tests
 
-      - name: Start logger microservice
-        id: logger-ms
+      - name: Check logger microservice health
         env:
           NODE_NO_WARNINGS: '1'
           NODE_OPTIONS: >-
             --es-module-specifier-resolution=node
             --experimental-specifier-resolution=node
-        run: |
-          yarn build
-          node dist/src/main.js
-        background: true
-
-      - name: Check server is running
-        env:
           PORT: ${{ env.LOGGER_PORT }}
         run: |
+          yarn build
+          node dist/src/main.js > logger-ms.log 2>&1 &
+          logger_pid="$!"
+          trap 'kill "$logger_pid" 2>/dev/null || true' EXIT
           for attempt in 1 2 3 4; do
             if curl -f -LI "http://localhost:${PORT}/logger/health"; then
               exit 0
             fi
+            if ! kill -0 "$logger_pid" 2>/dev/null; then
+              cat logger-ms.log
+              exit 1
+            fi
             sleep 10
           done
+          cat logger-ms.log
           exit 1
-
-      - name: Stop logger microservice
-        cancel: logger-ms
 
   get-version:
     permissions:
