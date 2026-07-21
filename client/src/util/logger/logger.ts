@@ -56,6 +56,22 @@ function sendRemoteLogEvent(logEvent: LogEvent): void {
   sendBeacon(loggerUrl, logEvent);
 }
 
+function shouldCreateLogEvent(
+  localLoggingEnabled: boolean,
+  remoteLoggingEnabled: boolean,
+): boolean {
+  return initialized && (localLoggingEnabled || remoteLoggingEnabled);
+}
+
+function dispatchLogEvent(
+  logEvent: LogEvent,
+  localLoggingEnabled: boolean,
+  remoteLoggingEnabled: boolean,
+): void {
+  if (localLoggingEnabled) persistLogEvent(logEvent);
+  if (remoteLoggingEnabled) sendRemoteLogEvent(logEvent);
+}
+
 export interface LogInput {
   readonly event: LogEventType;
   readonly page: string;
@@ -86,9 +102,8 @@ export function log({
 }: LogInput): LogEvent | null {
   const localLoggingEnabled = getLoggingEnabled();
   const remoteLoggingEnabled = getRemoteLoggingEnabled();
-  if (!initialized || (!localLoggingEnabled && !remoteLoggingEnabled)) {
+  if (!shouldCreateLogEvent(localLoggingEnabled, remoteLoggingEnabled))
     return null;
-  }
 
   const logEvent = createLogEvent({
     sessionId,
@@ -100,8 +115,7 @@ export function log({
     label,
     context: sanitizeLogContext(context),
   });
-  if (localLoggingEnabled) persistLogEvent(logEvent);
-  if (remoteLoggingEnabled) sendRemoteLogEvent(logEvent);
+  dispatchLogEvent(logEvent, localLoggingEnabled, remoteLoggingEnabled);
   return logEvent;
 }
 

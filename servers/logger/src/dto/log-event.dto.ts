@@ -152,7 +152,10 @@ function queueContextChild(
   walk.stack.push({ value: entry.value, depth: entry.depth, path: entry.path });
 }
 
-function validateContextEntry(entry: ContextEntryCheck, ctx: z.RefinementCtx): void {
+function validateContextEntry(
+  entry: ContextEntryCheck,
+  ctx: z.RefinementCtx,
+): void {
   validateContextKey(entry.key, ctx, entry.path);
   validateContextBudget(entry.entriesSeen, ctx, entry.path);
   if (rejectsContextDepth(entry, ctx)) return;
@@ -191,7 +194,8 @@ function rejectsContextDepth(
   entry: ContextEntryCheck,
   ctx: z.RefinementCtx,
 ): boolean {
-  if (!Array.isArray(entry.value) && !isContextObject(entry.value)) return false;
+  if (!Array.isArray(entry.value) && !isContextObject(entry.value))
+    return false;
   if (entry.depth > 0) return false;
   addContextIssue(
     ctx,
