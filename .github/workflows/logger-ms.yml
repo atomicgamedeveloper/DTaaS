@@ -54,7 +54,7 @@ jobs:
 
       - name: Run linting and formatting checks
         run: |
-          yarn install --frozen-lockfile
+          YARN_ENABLE_SCRIPTS=false yarn install --frozen-lockfile --ignore-scripts
           yarn syntax:check
           yarn format:check
 
@@ -76,23 +76,31 @@ jobs:
           flags: logger-microservice-tests
 
       - name: Start logger microservice
+        id: logger-ms
+        env:
+          NODE_NO_WARNINGS: '1'
+          NODE_OPTIONS: >-
+            --es-module-specifier-resolution=node
+            --experimental-specifier-resolution=node
         run: |
           yarn build
-          npx pm2 start -f --name logger-ms dist/src/main.js
+          node dist/src/main.js
+        background: true
 
       - name: Check server is running
         env:
           PORT: ${{ env.LOGGER_PORT }}
-        # v3.0.2
-        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08
-        with:
-          timeout_seconds: 10
-          max_attempts: 4
-          command: 'curl -f -LI http://localhost:${{ env.PORT }}/logger/health'
+        run: |
+          for attempt in 1 2 3 4; do
+            if curl -f -LI "http://localhost:${PORT}/logger/health"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
 
       - name: Stop logger microservice
-        run: |
-          npx pm2 delete logger-ms
+        cancel: logger-ms
 
   get-version:
     permissions:
