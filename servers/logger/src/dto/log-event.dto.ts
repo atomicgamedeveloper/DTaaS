@@ -29,6 +29,25 @@ type ContextFrame = {
   path: Array<string | number>;
 };
 
+type ContextWalkState = {
+  stack: ContextFrame[];
+  entriesSeen: number;
+};
+
+type ContextEntryCheck = {
+  key: string | number;
+  value: unknown;
+  depth: number;
+  entriesSeen: number;
+  path: Array<string | number>;
+};
+
+type ContextChildCheck = {
+  entry: [string | number, unknown];
+  frame: ContextFrame;
+  walk: ContextWalkState;
+};
+
 function isContextObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -81,37 +100,64 @@ function validateContextStructure(
   context: ContextObject,
   ctx: z.RefinementCtx,
 ): void {
-  const stack: ContextFrame[] = [
-    { value: context, depth: MAX_CONTEXT_DEPTH, path: [] },
-  ];
-  let entriesSeen = 0;
-  while (stack.length > 0) {
-    const frame = stack.pop() as ContextFrame;
-    for (const [key, value] of childEntries(frame)) {
-      entriesSeen += 1;
-      const path = [...frame.path, key];
-      const childDepth = frame.depth - 1;
-      validateContextEntry(key, value, childDepth, entriesSeen, ctx, path);
-      if (Array.isArray(value) || isContextObject(value)) {
-        stack.push({ value, depth: childDepth, path });
-      }
-    }
+  const walk = createContextWalk(context);
+  while (walk.stack.length > 0) {
+    validateContextFrame(walk.stack.pop() as ContextFrame, walk, ctx);
   }
 }
 
-function validateContextEntry(
-  key: string | number,
-  value: unknown,
-  depth: number,
-  entriesSeen: number,
+function createContextWalk(context: ContextObject): ContextWalkState {
+  return {
+    stack: [{ value: context, depth: MAX_CONTEXT_DEPTH, path: [] }],
+    entriesSeen: 0,
+  };
+}
+
+function validateContextFrame(
+  frame: ContextFrame,
+  walk: ContextWalkState,
   ctx: z.RefinementCtx,
-  path: Array<string | number>,
 ): void {
-  validateContextKey(key, ctx, path);
-  validateContextBudget(entriesSeen, ctx, path);
-  if (rejectsContextDepth(value, depth, ctx, path)) return;
-  if (!Array.isArray(value) && !isContextObject(value)) {
-    validatePrimitive(value, ctx, path);
+  for (const entry of childEntries(frame)) {
+    validateContextChildEntry({ entry, frame, walk }, ctx);
+  }
+}
+
+function validateContextChildEntry(
+  child: ContextChildCheck,
+  ctx: z.RefinementCtx,
+): void {
+  const entry = createContextEntryCheck(child);
+  validateContextEntry(entry, ctx);
+  queueContextChild(entry, child.walk);
+}
+
+function createContextEntryCheck(child: ContextChildCheck): ContextEntryCheck {
+  const [key, value] = child.entry;
+  child.walk.entriesSeen += 1;
+  return {
+    key,
+    value,
+    depth: child.frame.depth - 1,
+    entriesSeen: child.walk.entriesSeen,
+    path: [...child.frame.path, key],
+  };
+}
+
+function queueContextChild(
+  entry: ContextEntryCheck,
+  walk: ContextWalkState,
+): void {
+  if (!Array.isArray(entry.value) && !isContextObject(entry.value)) return;
+  walk.stack.push({ value: entry.value, depth: entry.depth, path: entry.path });
+}
+
+function validateContextEntry(entry: ContextEntryCheck, ctx: z.RefinementCtx): void {
+  validateContextKey(entry.key, ctx, entry.path);
+  validateContextBudget(entry.entriesSeen, ctx, entry.path);
+  if (rejectsContextDepth(entry, ctx)) return;
+  if (!Array.isArray(entry.value) && !isContextObject(entry.value)) {
+    validatePrimitive(entry.value, ctx, entry.path);
   }
 }
 
@@ -142,17 +188,15 @@ function validateContextBudget(
 }
 
 function rejectsContextDepth(
-  value: unknown,
-  depth: number,
+  entry: ContextEntryCheck,
   ctx: z.RefinementCtx,
-  path: Array<string | number>,
 ): boolean {
-  if (!Array.isArray(value) && !isContextObject(value)) return false;
-  if (depth > 0) return false;
+  if (!Array.isArray(entry.value) && !isContextObject(entry.value)) return false;
+  if (entry.depth > 0) return false;
   addContextIssue(
     ctx,
     `context may have at most ${MAX_CONTEXT_DEPTH} levels`,
-    path,
+    entry.path,
   );
   return true;
 }

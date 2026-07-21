@@ -45,6 +45,17 @@ function warnPersistenceFailureOnce(): void {
   loggerStore?.showSnackbar(PERSISTENCE_FAILURE_MESSAGE, 'warning');
 }
 
+function persistLogEvent(logEvent: LogEvent): void {
+  addLog(logEvent).catch(() => {
+    warnPersistenceFailureOnce();
+  });
+}
+
+function sendRemoteLogEvent(logEvent: LogEvent): void {
+  if (!loggerUrl.trim()) return;
+  sendBeacon(loggerUrl, logEvent);
+}
+
 export interface LogInput {
   readonly event: LogEventType;
   readonly page: string;
@@ -89,14 +100,8 @@ export function log({
     label,
     context: sanitizeLogContext(context),
   });
-  if (localLoggingEnabled) {
-    addLog(logEvent).catch(() => {
-      warnPersistenceFailureOnce();
-    });
-  }
-  if (loggerUrl.trim() && remoteLoggingEnabled) {
-    sendBeacon(loggerUrl, logEvent);
-  }
+  if (localLoggingEnabled) persistLogEvent(logEvent);
+  if (remoteLoggingEnabled) sendRemoteLogEvent(logEvent);
   return logEvent;
 }
 
