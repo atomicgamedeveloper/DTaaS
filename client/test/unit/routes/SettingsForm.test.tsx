@@ -77,9 +77,10 @@ describe('SettingsForm', () => {
     fireEvent.change(input, { target: { value: 'new-branch-name' } });
 
     // Click the save settings button
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins()),
+    );
 
     // Dispatch has been called with the new values
     expect(mockDispatch).toHaveBeenCalledWith(setGroupName('new-group'));
@@ -127,9 +128,10 @@ describe('SettingsForm', () => {
       target: { value: 'new-group' },
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins()),
+    );
 
     expect(mockDispatch).toHaveBeenCalledWith(setGroupName('new-group'));
     expect(mockDispatch).not.toHaveBeenCalledWith(
@@ -150,9 +152,7 @@ describe('SettingsForm', () => {
   it('saves logging preference when toggled', async () => {
     fireEvent.click(screen.getByLabelText(/keep a local activity log/i));
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
     expect(mockDispatch).toHaveBeenCalledWith(setLoggingEnabled(true));
   });
@@ -243,9 +243,7 @@ describe('SettingsForm', () => {
       const remoteCheckbox = screen.getByLabelText(/send logs to example.com/i);
       fireEvent.click(remoteCheckbox);
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-      });
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith(setRemoteLoggingEnabled(true));
       expect(mockDispatch).not.toHaveBeenCalledWith(setLoggingEnabled(true));
@@ -277,48 +275,48 @@ describe('SettingsForm', () => {
       fireEvent.change(screen.getByLabelText(/group name/i), {
         target: { value: 'new-group' },
       });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-      });
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins());
-      expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1);
+      await waitFor(() =>
+        expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1),
+      );
     });
 
     it('clears and re-fetches when DT directory changes', async () => {
       fireEvent.change(screen.getByLabelText(/dt directory/i), {
         target: { value: 'new-dir' },
       });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-      });
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins());
-      expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1);
+      await waitFor(() =>
+        expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1),
+      );
     });
 
     it('clears and re-fetches when common library project name changes', async () => {
       fireEvent.change(screen.getByLabelText(/common library project name/i), {
         target: { value: 'new-lib' },
       });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-      });
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins());
-      expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1);
+      await waitFor(() =>
+        expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1),
+      );
     });
 
     it('clears and re-fetches when branch name changes', async () => {
       fireEvent.change(screen.getByLabelText(/branch name/i), {
         target: { value: 'new-branch' },
       });
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
-      });
+      fireEvent.click(screen.getByRole('button', { name: /save settings/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith(clearDigitalTwins());
-      expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1);
+      await waitFor(() =>
+        expect(fetchDigitalTwinsMock).toHaveBeenCalledTimes(1),
+      );
     });
 
     it('does not clear or re-fetch when only runner tag changes', () => {
