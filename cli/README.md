@@ -65,11 +65,13 @@ dtaas admin uninstall
       - [TLS certificate placement](#tls-certificate-placement)
     - [🚀 `admin install`](#-admin-install)
     - [🧹 `admin uninstall`](#-admin-uninstall)
+    - [Lifecycle operations: `status` / `stop` / `start` / `pause` / `resume`](#lifecycle-operations)
     - [🔁 `admin update --certs`](#-admin-update---certs)
     - [🧩 `admin update --config`](#-admin-update---config)
     - [`generate-project`](#generate-project)
     - [➕ `admin user add`](#-admin-user-add)
     - [➖ `admin user delete`](#-admin-user-delete)
+    - [⏯️ `admin user pause` / `stop` / `resume`](#️-admin-user-pause--stop--resume)
     - [🔍 `admin config reconcile`](#-admin-config-reconcile)
   - [👥 User files](#-user-files)
   - [⚙️ Configuration Reference `dtaas.toml`](#️-configuration-reference-dtaastoml)
@@ -288,7 +290,8 @@ User containers added with `admin user add` run as a separate Compose project;
 they are torn down first so they do not hold the shared network open.
 **Per-user workspace files are preserved by default.**
 
-To also delete the generated per-user workspace directories:
+To also delete the generated per-user workspace directories **and** the
+CLI-owned `dtaas.users.registry.json` / `.dtaas.state.json`:
 
 ```bash
 dtaas admin uninstall --remove-user-files
@@ -306,13 +309,133 @@ dtaas admin uninstall --remove-user-files --yes
 | Option | Default | Description |
 |---|---|---|
 | `--output-dir PATH` | `.` | Installation directory |
-| `--remove-user-files` | off | Also delete per-user workspace directories |
+| `--remove-user-files` | off | Also delete per-user workspace dirs + registry/state files |
 | `--yes` / `-y` | off | Skip the confirmation prompt for `--remove-user-files` |
 
 > `--remove-user-files` removes only the per-user directories inside
 > `<output-dir>/files/`, preserving `files/common/` and `files/template/` so
 > a later `admin install` can recreate user directories. It refuses to follow
 > a symlinked `files/`. Double-check `--output-dir` before using this flag.
+
+---
+
+### Lifecycle operations
+
+Operational controls for an **already-installed** deployment: observe it with
+`status`, and suspend or resume it with `stop`/`start` and `pause`/`resume`.
+None of these remove containers or networks, that is `uninstall`'s job. Each
+command targets both the main deployment and any user-added workloads
+(`compose.users.yml`), and exits `0` on success (including the idempotent
+"nothing installed" case) and non-zero on failure, so they are safe to call
+from CI/ops scripts.
+
+`stop`/`start`/`pause`/`resume` act on the main deployment first, then
+user-added workloads. If the second project fails after the first already
+succeeded, there is no rollback, re-run the same command: each project's
+compose command is idempotent, so retrying repeats a harmless no-op against
+whichever project already changed and retries the one that failed.
+
+**Lifecycle command matrix**
+
+| Command | `docker compose` verb | Effect | Containers kept? | Reverse with |
+|---|---|---|:---:|---|
+| `admin install` | `up -d` | Create and start every service | n/a | `admin stop` / `admin uninstall` |
+| `admin status` | `ps` (read-only) | Report per-service state; no change | n/a | n/a |
+| `admin stop` | `stop` | Terminate the processes, keep the containers | yes | `admin start` |
+| `admin start` | `start` | Start previously stopped containers | yes | `admin stop` |
+| `admin pause` | `pause` | Freeze the processes (memory preserved) | yes | `admin resume` |
+| `admin resume` | `unpause` | Thaw previously paused processes | yes | n/a |
+| `admin uninstall` | `down` | Stop **and remove** containers and networks | no | `admin install` |
+
+> **`stop` vs `pause`.** `stop` sends `SIGTERM`/`SIGKILL`: processes end, and a
+> restart re-runs them from scratch (reverse with `admin start`). `pause` uses
+> the kernel cgroup freezer: processes are suspended in place with their memory
+> intact and resume instantly (reverse with `admin resume`), but a paused
+> container still holds its resources. Use `stop` to free CPU; use `pause` for
+> a brief, instantly reversible suspension. `pause` expects running containers
+> and will error if the deployment is already stopped.
+
+#### 📊 `admin status`
+
+Reports the state of every service, for both the deployment and user
+workloads.
+
+```bash
+dtaas admin status
+```
+
+```text
+PROJECT     SERVICE            STATE        HEALTH
+deployment  traefik            running      healthy
+deployment  client             running      -
+deployment  gitlab             not created  -
+users       user-alice         paused       -
+```
+
+State values are `running`, `paused`, `stopped` (a terminated container, what
+Docker calls `exited`), `restarting`, or `not created` (a service defined in
+`docker-compose.yml` that has no container yet). `HEALTH` shows the container
+healthcheck status, or `-` when the service has none.
+
+For automation, `--json` emits the same records as machine-readable JSON:
+
+```bash
+dtaas admin status --json
+```
+
+```json
+[
+  {"project": "deployment", "service": "traefik", "state": "running", "health": "healthy"}
+]
+```
+
+**Options**
+
+| Option | Default | Description |
+|---|---|---|
+| `--output-dir PATH` | `.` | Installation directory |
+| `--json` | off | Emit machine-readable JSON instead of the table |
+
+#### ⏹️ `admin stop` / ▶️ `admin start`
+
+`stop` stops all services with `docker compose stop`; `start` brings the
+stopped containers back with `docker compose start`. Containers and networks
+are **kept**, so `stop` is not an uninstall.
+
+```bash
+dtaas admin stop
+dtaas admin start
+```
+
+Both report `no existing DTaaS / Workspace installation` and exit `0` when
+nothing is installed (no containers in any state), so they are safe to call
+repeatedly.
+
+**Options**
+
+| Option | Default | Description |
+|---|---|---|
+| `--output-dir PATH` | `.` | Installation directory |
+
+#### ⏸️ `admin pause` / ▶️ `admin resume`
+
+`pause` freezes every running container in place with `docker compose pause`;
+`resume` thaws them with `docker compose unpause`. Memory is preserved and
+resume is near-instant.
+
+```bash
+dtaas admin pause
+dtaas admin resume
+```
+
+Both report the absent-installation case and exit `0` when nothing is
+installed (no containers in any state).
+
+**Options**
+
+| Option | Default | Description |
+|---|---|---|
+| `--output-dir PATH` | `.` | Installation directory |
 
 ---
 
@@ -433,7 +556,7 @@ the CLI-owned `dtaas.users.registry.json`
 | Option | Default | Description |
 |---|---|---|
 | `USERNAME` | — | Add one user (requires `--email`) |
-| `--file PATH` | — | Bulk-add users from a CSV |
+| `--file PATH` / `-f` | — | Bulk-add users from a CSV |
 | `--email TEXT` | — | Email for `USERNAME` (enables forward-auth routing) |
 | `--group TEXT` | `additional` | Group tag for `USERNAME`; repeat the flag for multiple groups, e.g. `--group dtaas --group testers` |
 | `--load-balance / --no-load-balance` | on | Mark `USERNAME` for load balancing |
@@ -470,21 +593,24 @@ bob,bob@intocps.org,additional;beta-testers,false
 ```
 
 `groups` is a `;`-separated list and `load_balance` is `true`/`false`. Both
-forms merge into the registry (never hand-edited), then every registry user is
-provisioned. A username already declared in `dtaas.toml`'s `[[users]]` or the
-registry is **skipped with a warning** it is never added twice or overwritten.
+forms merge into the registry (never hand-edited) with `desired_status` set to
+`running`, then **only the newly-added users are started** — already-running
+users are left untouched, so adding one user never recreates the rest. A
+username already declared in `dtaas.toml`'s `[[users]]` or the registry is
+**skipped with a warning**: it is never added twice or overwritten.
 
-A `USERNAME` or `--file` is required a bare `dtaas admin user add` with
-neither is rejected rather than silently reprovisioning the whole registry.
-To resync everyone already in the registry (e.g. after `compose.users.yml`
-was lost), use `dtaas admin config reconcile --fix` instead.
+A `USERNAME` or `--file` is required (not both) — a bare `dtaas admin user add`
+with neither is rejected rather than silently reprovisioning the whole
+registry. To (re)provision **every** registry user at once (e.g. after
+`compose.users.yml` was lost), use `dtaas admin config reconcile --fix`
+instead.
 
 **Options**
 
 | Option | Default | Description |
 |---|---|---|
 | `USERNAME` | — | Add one user (requires `--email`) |
-| `--file PATH` | — | Bulk-add users from a CSV |
+| `--file PATH` / `-f` | — | Bulk-add users from a CSV |
 | `--email TEXT` | — | Email for `USERNAME` (enables forward-auth routing) |
 | `--group TEXT` | `additional` | Group tag for `USERNAME`; repeat the flag for multiple groups, e.g. `--group dtaas --group testers` |
 | `--load-balance / --no-load-balance` | on | Mark `USERNAME` for load balancing |
@@ -549,7 +675,7 @@ Removes one or more users from a running DTaaS instance, like `userdel`.
 | Option | Default | Description |
 |---|---|---|
 | `USERNAMES` | — | One or more usernames to remove |
-| `--file PATH` | — | Bulk-delete users listed in a CSV (only the `username` column is used) |
+| `--file PATH` / `-f` | — | Bulk-delete users listed in a CSV (only the `username` column is used) |
 | `--dry-run` | off | Preview the removal without making any changes |
 
 Pass the usernames as arguments:
@@ -591,6 +717,57 @@ docker compose --env-file config/.env up -d --force-recreate traefik-forward-aut
 
 ---
 
+### ⏯️ `admin user pause` / `stop` / `resume`
+
+Suspend or resume **specific additional (registry) users** without touching
+the rest of the installation, targeting one or more `USERNAMES` or a
+`--file`/`-f users.csv` (only the `username` column is read) the same way
+`admin user delete` does.
+
+```bash
+dtaas admin user pause alice bob
+dtaas admin user stop alice
+dtaas admin user resume alice bob
+dtaas admin user pause --file users.csv
+```
+
+| Command | `docker compose` verb | Effect | Reverse with |
+|---|---|---|---|
+| `admin user pause` | `pause` | Freeze the named users' containers (memory preserved) | `admin user resume` |
+| `admin user stop` | `stop` | Terminate the named users' containers, keep them | `admin user resume` |
+| `admin user resume` | `unpause` or `start`, as needed | Thaw a paused user, or restart a stopped one | — |
+
+Each command also writes a `desired_status` (`"paused"`/`"stopped"`/`"running"`)
+into `dtaas.users.registry.json` for the users it acted on. This is what makes
+the suspension durable: a later `dtaas admin user add` (which idempotently
+re-provisions every registry user on every run) or `dtaas admin config
+reconcile --fix` checks `desired_status` and will **not** silently restart a
+user you paused or stopped. Only `admin user resume` (or hand-editing the
+registry) clears it back to `"running"`.
+
+Only additional users can be targeted here. Naming a `dtaas.toml` starting
+user is rejected with an error: suspend or resume the whole installation
+(starting users included) with [`dtaas admin pause`/`stop`/`resume`](#lifecycle-operations)
+instead.
+
+A username not found in the registry, or found but not currently provisioned
+(e.g. `user add` was never run for them), is reported and skipped rather than
+aborting the whole batch:
+
+```text
+'carol' is not a registered user, skipping
+alice, bob paused successfully
+```
+
+**Options**
+
+| Option | Default | Description |
+|---|---|---|
+| `USERNAMES` | — | One or more usernames to target |
+| `--file PATH` / `-f` | — | Bulk-target users listed in a CSV (only the `username` column is used) |
+
+---
+
 ### 🔍 `admin config reconcile`
 
 Reports drift between `dtaas.users.registry.json` (who **should** be
@@ -607,13 +784,17 @@ It lists:
 - **unexpected** provisioned but not in the registry (investigate: may be a
   manual edit or a partial delete);
 - **drifted** provisioned, but the live config no longer matches what
-  `.dtaas.state.json` recorded when it was last provisioned.
+  `.dtaas.state.json` recorded when it was last provisioned;
+- **desired-status drift** provisioned, but the live container state does not
+  match the user's registry `desired_status` (e.g. `desired 'paused' but
+  container is 'running'`).
 
 When everything matches it prints `In sync: no drift detected.`
 
 Without `--fix` this is read-only. Pass `--fix` to reprovision **missing** and
-**drifted** users afterward (equivalent to running `dtaas admin user add`, so
-it acts on the current directory, not `--output-dir`):
+**drifted** users and to pause/stop/start every provisioned user to match its
+`desired_status` (equivalent to running `dtaas admin user add`, so it acts on
+the current directory, not `--output-dir`):
 
 ```bash
 dtaas admin config reconcile --fix
@@ -640,16 +821,19 @@ config/state split Terraform uses for `.tf` vs `terraform.tfstate`:
 | File | Owner | Contents | Git |
 |---|---|---|---|
 | `dtaas.toml` `[[users]]` | Human, at install time | **Starting** users: one self-contained record per user (`username`, `email`, `groups`, `load_balance`) | Tracked hand-edited |
-| `dtaas.users.registry.json` | CLI (`user add` / `user delete`) | **Additional** users, same fields | Tracked CLI-written, never hand-edited |
+| `dtaas.users.registry.json` | CLI (`user add` / `delete` / `pause` / `stop` / `resume`) | **Additional** users: the same fields, plus `desired_status` (`running`/`paused`/`stopped`) | Tracked CLI-written, never hand-edited |
 | `.dtaas.state.json` | CLI, at provisioning time | Observed runtime facts: container id, status, provisioned-at, config hash | Ignored runtime cache |
 
 - **`dtaas.toml`** is written once by a human and never rewritten by the CLI,
   so a comment-bearing, reviewed config is never silently mutated.
 - **`dtaas.users.registry.json`** is a database the CLI owns and mutates
   atomically (the way `useradd` owns `/etc/passwd`). Edit its users through
-  `dtaas admin user add --file users.csv` / `dtaas admin user delete`, not by
-  hand. `users.csv` copied by `dtaas admin config generate` is the
-  human-editable bulk input that feeds it.
+  `dtaas admin user add --file users.csv` / `delete` / `pause` / `stop` /
+  `resume`, not by hand. `users.csv` copied by `dtaas admin config generate`
+  is the human-editable bulk input that feeds `add`/`delete`. `desired_status`
+  defaults to `running` for a user who has never been paused or stopped, and
+  `user add`/`config reconcile --fix` skip starting any user whose
+  `desired_status` is not `running`.
 - **`.dtaas.state.json`** is a disposable cache of what is actually running,
   refreshed on every add/delete. It is git-ignored and safe to delete.
 
