@@ -56,7 +56,6 @@ describe('Logger service e2e', () => {
     process.env.LOGGER_LOG_FILE_PATH = logFilePath;
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
 
     app = await createTestApp();
   });
@@ -70,7 +69,6 @@ describe('Logger service e2e', () => {
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -143,7 +141,6 @@ describe('Logger service e2e with auth token configured', () => {
     process.env.LOGGER_LOG_FILE_PATH = path.join(tempDir, 'events.jsonl');
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
     process.env.LOGGER_AUTH_TOKEN = 'test-secret-token';
-    delete process.env.LOGGER_JWT;
 
     app = await createTestApp();
   });
@@ -157,7 +154,6 @@ describe('Logger service e2e with auth token configured', () => {
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -214,7 +210,6 @@ describe('Logger service e2e with production body-parser config', () => {
     process.env.LOGGER_LOG_FILE_PATH = logFilePath;
     process.env.LOGGER_MAX_PAYLOAD_BYTES = '65536';
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
 
     app = await createTestApp();
   });
@@ -228,7 +223,6 @@ describe('Logger service e2e with production body-parser config', () => {
     delete process.env.LOGGER_LOG_FILE_PATH;
     delete process.env.LOGGER_MAX_PAYLOAD_BYTES;
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
     await rm(tempDir, { recursive: true, force: true });
   });
 

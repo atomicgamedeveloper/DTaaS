@@ -62,7 +62,6 @@ const loggerConfigSchema = z
     port: z.coerce.number().int().positive().optional(),
     'cors-allow-origin': z.string().trim().min(1).optional(),
     'auth-token': z.string().optional(),
-    jwt: z.string().optional(),
     certs: z.string().trim().min(1).optional(),
     tls: booleanSchema.optional(),
     'log-file-path': z.string().trim().min(1).optional(),
@@ -198,9 +197,6 @@ export default class Config implements IConfig {
     if (yamlValues['cors-allow-origin'] !== undefined) {
       this.configValues['cors-allow-origin'] = yamlValues['cors-allow-origin'];
     }
-    if (yamlValues.jwt !== undefined) {
-      this.configValues['auth-token'] = yamlValues.jwt;
-    }
     if (yamlValues['auth-token'] !== undefined) {
       this.configValues['auth-token'] = yamlValues['auth-token'];
     }
@@ -245,11 +241,6 @@ export default class Config implements IConfig {
     const corsAllowOrigin = process.env.LOGGER_CORS_ALLOW_ORIGIN;
     if (corsAllowOrigin !== undefined && corsAllowOrigin.trim() !== '') {
       this.configValues['cors-allow-origin'] = corsAllowOrigin.trim();
-    }
-
-    const deprecatedJwt = process.env.LOGGER_JWT;
-    if (deprecatedJwt !== undefined) {
-      this.configValues['auth-token'] = deprecatedJwt;
     }
 
     const authToken = process.env.LOGGER_AUTH_TOKEN;

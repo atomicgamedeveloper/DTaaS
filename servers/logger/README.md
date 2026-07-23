@@ -34,8 +34,7 @@ Environment variables always override YAML values.
   unauthenticated requests (the default). **Note:** the bundled DTaaS client
   posts events via `navigator.sendBeacon`, which cannot set custom headers, so
   enabling this setting will block ingestion from that client. Browser ingest
-  security is delegated to the reverse proxy. The deprecated `jwt` YAML field
-  is still accepted as an alias for existing deployments.
+  security is delegated to the reverse proxy.
 - `tls` (default: `false`)
 - `certs` (default: `./certs`)
 - `log-file-path` (default: `./logs/workflow-logs.jsonl`)
@@ -52,7 +51,6 @@ Use `logger.yaml.sample` as a template.
 - `LOGGER_PORT` (default: `4003`)
 - `LOGGER_CORS_ALLOW_ORIGIN` (default: disabled)
 - `LOGGER_AUTH_TOKEN`
-- `LOGGER_JWT` (deprecated alias for `LOGGER_AUTH_TOKEN`)
 - `LOGGER_TLS`
 - `LOGGER_CERTS_DIR`
 - `LOGGER_LOG_FILE_PATH` (default: `logs/workflow-logs.jsonl`)

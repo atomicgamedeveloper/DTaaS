@@ -94,8 +94,7 @@ Important defaults:
 ### Authentication and deployment boundary
 
 The service supports an optional static bearer token configured by
-`auth-token` / `LOGGER_AUTH_TOKEN`. The deprecated `jwt` / `LOGGER_JWT` names are
-still accepted as aliases for existing deployments.
+`auth-token` / `LOGGER_AUTH_TOKEN`.
 
 This token is not a JWT: it is a shared secret compared in constant time. It is
 for non-browser producers that can send an `Authorization: Bearer <token>`

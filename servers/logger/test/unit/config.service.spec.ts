@@ -17,7 +17,6 @@ describe('Config service', () => {
     delete process.env.LOGGER_PORT;
     delete process.env.LOGGER_CORS_ALLOW_ORIGIN;
     delete process.env.LOGGER_AUTH_TOKEN;
-    delete process.env.LOGGER_JWT;
     delete process.env.LOGGER_TLS;
     delete process.env.LOGGER_CERTS_DIR;
     delete process.env.LOGGER_LOG_FILE_PATH;
@@ -187,30 +186,6 @@ describe('Config service', () => {
     expect(config.getHostname()).toBe('127.0.0.1');
     expect(config.getPort()).toBe(4003);
     expect(config.getCorsAllowOrigin()).toBe('');
-  });
-
-  it('loads deprecated jwt aliases for existing deployments', async () => {
-    const configPath = path.join(tempDir, 'logger.yaml');
-    await writeFile(configPath, 'jwt: legacy-yaml-token\n', 'utf8');
-    process.env.LOGGER_CONFIG_PATH = configPath;
-    expect(new Config().getAuthToken()).toBe('legacy-yaml-token');
-
-    process.env.LOGGER_JWT = 'legacy-env-token';
-    expect(new Config().getAuthToken()).toBe('legacy-env-token');
-  });
-
-  it('prefers auth-token over deprecated jwt aliases', async () => {
-    const configPath = path.join(tempDir, 'logger.yaml');
-    await writeFile(
-      configPath,
-      ['jwt: legacy-yaml-token', 'auth-token: yaml-token'].join('\n'),
-      'utf8',
-    );
-    process.env.LOGGER_CONFIG_PATH = configPath;
-    process.env.LOGGER_JWT = 'legacy-env-token';
-    process.env.LOGGER_AUTH_TOKEN = 'env-token';
-
-    expect(new Config().getAuthToken()).toBe('env-token');
   });
 
   it('throws when yaml tls is not a boolean', async () => {
