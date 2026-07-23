@@ -183,7 +183,7 @@ jobs:
     with:
       image-name: logger-ms
       version: ${{ needs.get-version.outputs.version }}
-      dockerfile: developer/logger.dockerfile
+      dockerfile: logger.dockerfile
     secrets: inherit
 
   publish-docker-image-dockerhub:
@@ -203,7 +203,7 @@ jobs:
     with:
       image-name: logger-ms
       version: ${{ needs.get-version.outputs.version }}
-      dockerfile: developer/logger.dockerfile
+      dockerfile: logger.dockerfile
       readme-file: servers/logger/DOCKER.md
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
