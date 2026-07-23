@@ -25,8 +25,8 @@ Environment variables always override YAML values.
 - `hostname` (default: `127.0.0.1`; set `0.0.0.0` for Docker/reverse-proxy
   deployments)
 - `port` (default: `4003`)
-- `cors-allow-origin` (default: disabled; set explicitly for browser clients
-  on another origin)
+- `cors-allow-origin` (default: disabled; set to a single origin or YAML list
+  of origins for browser clients)
 - `auth-token` (default: empty string) — a static bearer token for non-browser
   producers. When set, `POST /logger` requires an
   `Authorization: Bearer <auth-token>` header matching this value; requests

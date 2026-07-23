@@ -1,6 +1,14 @@
 hostname: 127.0.0.1
 port: 4003
-# Set cors-allow-origin explicitly when browser clients use another origin.
+# Restrictive same origin.
+cors-allow-origin: http://localhost
+# One external domain.
+# cors-allow-origin: https://client.example.org
+# Three external domains.
+# cors-allow-origin:
+#   - https://client-a.example.org
+#   - https://client-b.example.org
+#   - https://client-c.example.org
 auth-token: ''
 tls: false
 certs: ./certs

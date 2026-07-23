@@ -25,6 +25,15 @@ describe('CORS config helpers', () => {
     );
   });
 
+  it('normalizes multiple configured origins', () => {
+    expect(
+      normalizeCorsOrigin(
+        ['https://client-a.example.org', 'client-b.example.org'],
+        4003,
+      ),
+    ).toEqual(['https://client-a.example.org', 'http://client-b.example.org']);
+  });
+
   it('builds cors options with expected methods', () => {
     expect(buildCorsOptions('*', 4003)).toEqual({
       origin: true,

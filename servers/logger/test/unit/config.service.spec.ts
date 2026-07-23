@@ -119,6 +119,29 @@ describe('Config service', () => {
     expect(config.getMaxPayloadBytes()).toBe(50000);
   });
 
+  it('loads multiple yaml cors origins', async () => {
+    const configPath = path.join(tempDir, 'logger.yaml');
+    await writeFile(
+      configPath,
+      [
+        'cors-allow-origin:',
+        '  - https://client-a.example.org',
+        '  - https://client-b.example.org',
+        '  - https://client-c.example.org',
+      ].join('\n'),
+      'utf8',
+    );
+
+    process.env.LOGGER_CONFIG_PATH = configPath;
+    const config = new Config();
+
+    expect(config.getCorsAllowOrigin()).toEqual([
+      'https://client-a.example.org',
+      'https://client-b.example.org',
+      'https://client-c.example.org',
+    ]);
+  });
+
   it('parses shorthand boolean env values', () => {
     process.env.LOGGER_TLS = 'y';
     expect(new Config().getTls()).toBe(true);

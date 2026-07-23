@@ -1,8 +1,10 @@
+export type CorsAllowOrigin = string | string[];
+
 export interface IConfig {
   loadConfig(configPath?: string): void;
   getHostname(): string;
   getPort(): number;
-  getCorsAllowOrigin(): string;
+  getCorsAllowOrigin(): CorsAllowOrigin;
   getAuthToken(): string;
   getTls(): boolean;
   getCertsDirectory(): string;

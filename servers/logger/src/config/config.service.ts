@@ -3,13 +3,13 @@ import path from 'node:path';
 import * as yaml from 'js-yaml';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { IConfig } from './config.interface.js';
+import { type CorsAllowOrigin, IConfig } from './config.interface.js';
 import resolveFile from './util.js';
 
 type ConfigValues = {
   hostname: string;
   port: number;
-  'cors-allow-origin': string;
+  'cors-allow-origin': CorsAllowOrigin;
   'auth-token': string;
   certs: string;
   tls: boolean;
@@ -60,7 +60,12 @@ const loggerConfigSchema = z
   .object({
     hostname: z.string().trim().min(1).optional(),
     port: z.coerce.number().int().positive().optional(),
-    'cors-allow-origin': z.string().trim().min(1).optional(),
+    'cors-allow-origin': z
+      .union([
+        z.string().trim().min(1),
+        z.array(z.string().trim().min(1)).min(1),
+      ])
+      .optional(),
     'auth-token': z.string().optional(),
     certs: z.string().trim().min(1).optional(),
     tls: booleanSchema.optional(),
@@ -148,7 +153,7 @@ export default class Config implements IConfig {
     return this.configValues.port;
   }
 
-  getCorsAllowOrigin(): string {
+  getCorsAllowOrigin(): CorsAllowOrigin {
     return this.configValues['cors-allow-origin'];
   }
 
