@@ -36,10 +36,13 @@ describe('Log event validation pipe', () => {
       timestamp: '2026-03-24T20:00:00.000Z',
       event: 'click',
       page: '/library',
-      element: 'tab',
-      label: 'Functions',
+      element: 'button',
+      label: 'Start',
       context: {
-        tab: 'functions',
+        dt: {
+          name: 'WaterTank',
+          button: 'start',
+        },
       },
     };
 

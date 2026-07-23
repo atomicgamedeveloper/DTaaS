@@ -1,9 +1,11 @@
 {
-  "sessionId": "88888888-8888-4888-8888-888888888888",
-  "userHash": "9999999999999999999999999999999999999999999999999999999999999999",
-  "timestamp": "2026-03-24T20:06:00.000Z",
-  "event": "click",
-  "page": "/library",
-  "element": "tab",
-  "context": {}
+  "sessionId": "44444444-4444-4444-8444-444444444444",
+  "userHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "timestamp": "2026-03-24T20:04:00.000Z",
+  "event": "change",
+  "page": "/digitaltwins/create",
+  "element": "editor",
+  "context": {
+    "file": "modelDescription.md"
+  }
 }

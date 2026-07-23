@@ -33,12 +33,15 @@ Ingest a single log event.
   "userHash": "a3f2b8c1d4e5f67890abcdef1234567890abcdef1234567890abcdef12345678",
   "timestamp": "2026-03-24T20:00:00.000Z",
   "event": "click",
-  "page": "/library",
-  "element": "tab",
-  "label": "Functions",
+  "page": "/preview/digitaltwins",
+  "element": "button",
+  "label": "Start",
   "context": {
-    "tab": "functions",
-    "subtab": "private"
+    "dt": {
+      "name": "WaterTank",
+      "button": "start",
+      "history": ["2026-03-24T19:00:00.000Z"]
+    }
   }
 }
 ```
@@ -81,7 +84,7 @@ Returns service health.
 | `event`           | string enum          | Yes      | Event type: `"click"`, `"change"`, `"navigation"`, `"notification"`, or `"dismiss"`                     |
 | `page`            | string               | Yes      | URL path of the current page                                                                            |
 | `page_transition` | object               | No       | Navigation transition metadata, when present: `{ "src": "/from", "target": "/to" }`                     |
-| `element`         | string               | Yes      | Type of UI element (e.g., `"tab"`, `"button"`, `"link"`)                                                |
+| `element`         | string               | Yes      | Type of UI element (e.g., `"button"`, `"checkbox"`, `"snackbar"`, `"dialog"`)                          |
 | `label`           | string               | Yes      | Human-readable label of the element                                                                     |
 | `context`         | object               | No       | Additional metadata; max 6 levels, 100 total nested entries, 128-char keys, and 1024-char string values |
 

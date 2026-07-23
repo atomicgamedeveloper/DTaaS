@@ -1,10 +1,16 @@
 {
-  "sessionId": "77777777-7777-4777-8777-777777777777",
-  "userHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "sessionId": "33333333-3333-4333-8333-333333333333",
+  "userHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
   "timestamp": "not-a-timestamp",
-  "event": "click",
-  "page": "/library",
-  "element": "tab",
-  "label": "Functions",
-  "context": {}
+  "event": "change",
+  "page": "/account",
+  "element": "checkbox",
+  "label": "Toggle Remote Logging",
+  "context": {
+    "settings": {
+      "section": "logging",
+      "field": "remoteLoggingEnabled"
+    },
+    "value": "true"
+  }
 }

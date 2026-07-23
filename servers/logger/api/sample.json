@@ -3,11 +3,14 @@
   "userHash": "a3f2b8c1d4e5f67890abcdef1234567890abcdef1234567890abcdef12345678",
   "timestamp": "2026-03-24T20:00:00.000Z",
   "event": "click",
-  "page": "/library",
-  "element": "tab",
-  "label": "Functions",
+  "page": "/preview/digitaltwins",
+  "element": "button",
+  "label": "Start",
   "context": {
-    "tab": "functions",
-    "subtab": "private"
+    "dt": {
+      "name": "WaterTank",
+      "button": "start",
+      "history": ["2026-03-24T19:00:00.000Z"]
+    }
   }
 }

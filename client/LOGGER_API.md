@@ -68,17 +68,16 @@ contract. A typical event looks like:
   "sessionId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
   "userHash": "a3f2b8c1d4e5f67890abcdef1234567890abcdef1234567890abcdef12345678",
   "timestamp": "2026-03-24T20:00:00.000Z",
-  "event": "navigation",
+  "event": "click",
   "page": "/preview/digitaltwins",
-  "page_transition": {
-    "src": "/library",
-    "target": "/preview/digitaltwins"
-  },
   "element": "button",
   "label": "Start",
   "context": {
-    "tab": "functions",
-    "subtab": "private"
+    "dt": {
+      "name": "WaterTank",
+      "button": "start",
+      "history": ["2026-03-24T19:00:00.000Z"]
+    }
   }
 }
 ```
