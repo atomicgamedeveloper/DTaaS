@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.6.13
+    image: traefik:v3.7.8
     restart: unless-stopped
     command:
       - "--api.insecure=true"
@@ -40,6 +40,23 @@ services:
     networks:
       - frontend
 
+  logger-ms:
+    build:
+      context: ../
+      dockerfile: developer/logger.dockerfile
+    restart: unless-stopped
+    volumes:
+      - "./logs/logger:/dtaas/logger/logs"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.logger-ms.entryPoints=web"
+      - "traefik.http.services.logger-ms.loadbalancer.server.port=4003"
+      - "traefik.http.routers.logger-ms.rule=PathPrefix(`/logger`)"
+      - "traefik.http.routers.logger-ms.middlewares=traefik-forward-auth"
+      - "traefik.http.routers.logger-ms.priority=100"
+    networks:
+      - frontend
+
   libms:
     build:
       context: ../
@@ -58,7 +75,7 @@ services:
       - frontend
 
   user1:
-    image: intocps/workspace:main-967bc10
+    image: intocps/workspace:main-56c6f68
     restart: unless-stopped
     volumes:
       - "./files/common:/workspace/common"
@@ -75,7 +92,7 @@ services:
       - users
 
   user2:
-    image: intocps/workspace:main-967bc10
+    image: intocps/workspace:main-56c6f68
     restart: unless-stopped
     volumes:
       - "./files/common:/workspace/common"

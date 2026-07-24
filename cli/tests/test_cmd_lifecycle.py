@@ -1,4 +1,4 @@
-"""Tests for the lifecycle CLI commands (status / stop / pause / resume)."""
+"""Tests for the platform lifecycle CLI commands (status/stop/pause/resume)."""
 
 import json
 from unittest.mock import patch
@@ -34,7 +34,7 @@ _ROWS = [
 def test_status_table_output(runner):
     """status prints an aligned table with a header and one row per service."""
     with patch("src.cmd_lifecycle.lifecyclePkg.collect_status", return_value=_ROWS):
-        result = runner.invoke(dtaas, ["admin", "status"])
+        result = runner.invoke(dtaas, ["platform", "status"])
 
     assert result.exit_code == 0
     assert "PROJECT" in result.output
@@ -47,7 +47,7 @@ def test_status_table_output(runner):
 def test_status_json_output(runner):
     """status --json emits the raw records as parseable JSON."""
     with patch("src.cmd_lifecycle.lifecyclePkg.collect_status", return_value=_ROWS):
-        result = runner.invoke(dtaas, ["admin", "status", "--json"])
+        result = runner.invoke(dtaas, ["platform", "status", "--json"])
 
     assert result.exit_code == 0
     assert json.loads(result.output) == _ROWS
@@ -56,7 +56,7 @@ def test_status_json_output(runner):
 def test_status_reports_no_services(runner):
     """status handles an empty result without crashing on the table renderer."""
     with patch("src.cmd_lifecycle.lifecyclePkg.collect_status", return_value=[]):
-        result = runner.invoke(dtaas, ["admin", "status"])
+        result = runner.invoke(dtaas, ["platform", "status"])
 
     assert result.exit_code == 0
     assert "No services found." in result.output
@@ -68,7 +68,7 @@ def test_status_maps_missing_deployment_to_error(runner):
         "src.cmd_lifecycle.lifecyclePkg.collect_status",
         side_effect=OSError("No 'docker-compose.yml' found"),
     ):
-        result = runner.invoke(dtaas, ["admin", "status"])
+        result = runner.invoke(dtaas, ["platform", "status"])
 
     assert result.exit_code != 0
     assert "docker-compose.yml" in result.output
@@ -79,11 +79,55 @@ def test_stop_success(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
     ), patch("src.cmd_lifecycle.lifecyclePkg.stop") as mock_stop:
-        result = runner.invoke(dtaas, ["admin", "stop"])
+        result = runner.invoke(dtaas, ["platform", "stop"])
 
     assert result.exit_code == 0
     assert "Deployment stopped successfully" in result.output
     mock_stop.assert_called_once_with(".")
+
+
+def test_stop_reports_leftover_user_containers(runner):
+    """After a core-only stop, any per-user containers left running are reported."""
+    with patch(
+        "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
+    ), patch("src.cmd_lifecycle.lifecyclePkg.stop"), patch(
+        "src.cmd_lifecycle.lifecyclePkg.running_user_container_count", return_value=2
+    ):
+        result = runner.invoke(dtaas, ["platform", "stop"])
+
+    assert result.exit_code == 0
+    assert "Deployment stopped successfully" in result.output
+    assert "2 per-user container(s) are still running" in result.output
+    assert "dtaas user stop --all" in result.output
+
+
+def test_stop_no_leftover_note_when_no_user_containers(runner):
+    """With no per-user containers, stop prints no leftover advisory."""
+    with patch(
+        "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
+    ), patch("src.cmd_lifecycle.lifecyclePkg.stop"), patch(
+        "src.cmd_lifecycle.lifecyclePkg.running_user_container_count", return_value=0
+    ):
+        result = runner.invoke(dtaas, ["platform", "stop"])
+
+    assert result.exit_code == 0
+    assert "still running" not in result.output
+
+
+def test_stop_leftover_advisory_swallows_docker_errors(runner):
+    """A failure counting user containers must not fail an otherwise-good stop,
+    but should still leave a note that the check itself could not run."""
+    with patch(
+        "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
+    ), patch("src.cmd_lifecycle.lifecyclePkg.stop"), patch(
+        "src.cmd_lifecycle.lifecyclePkg.running_user_container_count",
+        side_effect=DockerException(["docker"], 1, stderr=b"boom"),
+    ):
+        result = runner.invoke(dtaas, ["platform", "stop"])
+
+    assert result.exit_code == 0
+    assert "Deployment stopped successfully" in result.output
+    assert "could not check per-user containers" in result.output
 
 
 def test_stop_reports_absent_installation(runner):
@@ -91,7 +135,7 @@ def test_stop_reports_absent_installation(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=False
     ), patch("src.cmd_lifecycle.lifecyclePkg.stop") as mock_stop:
-        result = runner.invoke(dtaas, ["admin", "stop"])
+        result = runner.invoke(dtaas, ["platform", "stop"])
 
     assert result.exit_code == 0
     assert "no existing DTaaS / Workspace installation" in result.output
@@ -106,7 +150,7 @@ def test_stop_maps_docker_exception(runner):
         "src.cmd_lifecycle.lifecyclePkg.stop",
         side_effect=DockerException(["docker"], 1, stderr=b"daemon down"),
     ):
-        result = runner.invoke(dtaas, ["admin", "stop"])
+        result = runner.invoke(dtaas, ["platform", "stop"])
 
     assert result.exit_code != 0
     assert "daemon down" in result.output
@@ -117,7 +161,7 @@ def test_pause_success(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
     ), patch("src.cmd_lifecycle.lifecyclePkg.pause") as mock_pause:
-        result = runner.invoke(dtaas, ["admin", "pause", "--output-dir", "./x"])
+        result = runner.invoke(dtaas, ["platform", "pause", "--output-dir", "./x"])
 
     assert result.exit_code == 0
     assert "Deployment paused successfully" in result.output
@@ -129,7 +173,7 @@ def test_resume_calls_unpause(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
     ), patch("src.cmd_lifecycle.lifecyclePkg.unpause") as mock_unpause:
-        result = runner.invoke(dtaas, ["admin", "resume"])
+        result = runner.invoke(dtaas, ["platform", "resume"])
 
     assert result.exit_code == 0
     assert "Deployment resumed successfully" in result.output
@@ -141,7 +185,7 @@ def test_start_success(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=True
     ), patch("src.cmd_lifecycle.lifecyclePkg.start") as mock_start:
-        result = runner.invoke(dtaas, ["admin", "start"])
+        result = runner.invoke(dtaas, ["platform", "start"])
 
     assert result.exit_code == 0
     assert "Deployment started successfully" in result.output
@@ -153,7 +197,7 @@ def test_start_reports_absent_installation(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=False
     ), patch("src.cmd_lifecycle.lifecyclePkg.start") as mock_start:
-        result = runner.invoke(dtaas, ["admin", "start"])
+        result = runner.invoke(dtaas, ["platform", "start"])
 
     assert result.exit_code == 0
     assert "no existing DTaaS / Workspace installation" in result.output
@@ -165,7 +209,7 @@ def test_pause_reports_absent_installation(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=False
     ), patch("src.cmd_lifecycle.lifecyclePkg.pause") as mock_pause:
-        result = runner.invoke(dtaas, ["admin", "pause"])
+        result = runner.invoke(dtaas, ["platform", "pause"])
 
     assert result.exit_code == 0
     assert "no existing DTaaS / Workspace installation" in result.output
@@ -180,7 +224,7 @@ def test_pause_maps_docker_exception(runner):
         "src.cmd_lifecycle.lifecyclePkg.pause",
         side_effect=DockerException(["docker"], 1, stderr=b"not running"),
     ):
-        result = runner.invoke(dtaas, ["admin", "pause"])
+        result = runner.invoke(dtaas, ["platform", "pause"])
 
     assert result.exit_code != 0
     assert "not running" in result.output
@@ -191,7 +235,7 @@ def test_resume_reports_absent_installation(runner):
     with patch(
         "src.cmd_lifecycle.deployPkg.installation_present", return_value=False
     ), patch("src.cmd_lifecycle.lifecyclePkg.unpause") as mock_unpause:
-        result = runner.invoke(dtaas, ["admin", "resume"])
+        result = runner.invoke(dtaas, ["platform", "resume"])
 
     assert result.exit_code == 0
     assert "no existing DTaaS / Workspace installation" in result.output
@@ -206,7 +250,7 @@ def test_resume_maps_docker_exception(runner):
         "src.cmd_lifecycle.lifecyclePkg.unpause",
         side_effect=DockerException(["docker"], 1, stderr=b"not paused"),
     ):
-        result = runner.invoke(dtaas, ["admin", "resume"])
+        result = runner.invoke(dtaas, ["platform", "resume"])
 
     assert result.exit_code != 0
     assert "not paused" in result.output

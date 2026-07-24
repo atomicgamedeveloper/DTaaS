@@ -1,13 +1,14 @@
-"""The lifecycle subcommands: status, stop, start, pause, resume.
+"""The platform lifecycle subcommands: status, stop, start, pause, resume.
 
-Defined here as standalone commands (rather than under cmd.py's 'admin' group
-decorator) to keep cmd.py within a reasonable line count; cmd.py wires them
-onto the 'admin' group via add_lifecycle_commands.
+Defined here as standalone commands (rather than under cmd_platform.py's
+'platform' group decorator) to keep each file within a reasonable line count;
+they are wired onto the 'platform' group via add_lifecycle_commands.
 
 These operate on an *installed* deployment. 'status' reports per-service state
-for both the main deployment and user-added workloads. 'stop'/'start' and
-'pause'/'resume' suspend or resume a running deployment in place, without
-removing containers or networks (that is what 'uninstall' does).
+for both the core services and user-added workloads. 'stop'/'start' and
+'pause'/'resume' suspend or resume the core services in place, without removing
+containers or networks (that is what 'uninstall' does) and without touching
+per-user containers -- those are managed individually via 'dtaas user ...'.
 """
 
 import json
@@ -16,6 +17,7 @@ from python_on_whales.exceptions import DockerException
 from .pkg import lifecycle as lifecyclePkg
 from .pkg import deploy as deployPkg
 from .cmd_utils import NO_INSTALLATION_MESSAGE
+from .cmd_options import output_dir_option, json_option
 
 _STATUS_HEADERS = ("PROJECT", "SERVICE", "STATE", "HEALTH")
 
@@ -34,8 +36,11 @@ def _status_rows_text(rows):
     )
 
 
-def _echo_status(rows, as_json):
-    """Print status records as JSON or an aligned human-readable table."""
+def echo_status(rows, as_json):
+    """Print status records as JSON or an aligned human-readable table.
+
+    Shared by 'platform status' and 'user status' so both render identically.
+    """
     if as_json:
         click.echo(json.dumps(rows, indent=2))
     elif rows:
@@ -49,87 +54,104 @@ def _run_suspend(output_dir, action, success_msg):
 
     Reports the absent case (exit 0) so scripts can call these idempotently,
     and maps deployment/compose failures to a ClickException (non-zero exit).
+    Returns True if it acted, False if nothing was installed.
     """
     try:
         if not deployPkg.installation_present(output_dir):
             click.echo(NO_INSTALLATION_MESSAGE)
-            return
+            return False
         action(output_dir)
     except (OSError, DockerException) as exc:
         raise click.ClickException(str(exc)) from exc
     click.echo(success_msg)
+    return True
 
 
-_output_dir_option = click.option(
-    "--output-dir",
-    default=".",
-    show_default=True,
-    help="Installation directory containing the generated deployment.",
-)
+def _report_leftover_user_containers(output_dir, verb):
+    """After a core-only *verb*, note any per-user containers left running.
+
+    'platform stop'/'pause' act on the core services only; this makes the
+    per-user blast radius visible so the operator is not misled into thinking
+    the whole installation was quiesced.
+    """
+    try:
+        count = lifecyclePkg.running_user_container_count(output_dir)
+    except (OSError, DockerException) as exc:
+        click.echo(f"Note: could not check per-user containers ({exc}).", err=True)
+        return
+    if count:
+        click.echo(
+            f"Note: {count} per-user container(s) are still running "
+            f"({verb} them too with 'dtaas user {verb} --all')."
+        )
 
 
 @click.command(name="status")
-@_output_dir_option
-@click.option(
-    "--json",
-    "as_json",
-    is_flag=True,
-    help="Emit machine-readable JSON instead of a human-readable table.",
-)
+@output_dir_option
+@json_option
 def status(output_dir, as_json):
-    """Report per-service state for the deployment and user workloads.
+    """Report per-service state for the core services and user containers.
 
-    Each service is reported as running/paused/exited/restarting, or 'not
-    created' when it is defined but has no container yet. Always exits 0 when
-    it can read the deployment; pass --json for automation.
+    Unlike the other platform verbs, 'status' reports the whole installation:
+    both the core services and per-user containers. Each service is reported as
+    running/paused/exited/restarting, or 'not created' when it is defined but
+    has no container yet. Always exits 0 when it can read the deployment; pass
+    --json for automation. For a per-user view, use 'dtaas user status'.
     """
     try:
         rows = lifecyclePkg.collect_status(output_dir)
     except (OSError, DockerException) as exc:
         raise click.ClickException(str(exc)) from exc
-    _echo_status(rows, as_json)
+    echo_status(rows, as_json)
 
 
 @click.command(name="stop")
-@_output_dir_option
+@output_dir_option
 def stop(output_dir):
-    """Stop all services in place ('docker compose stop').
+    """Stop the core services in place ('docker compose stop').
 
-    Containers and networks are kept, so this is not 'uninstall'. Reverse it
-    with 'dtaas admin start'.
+    Acts on the core services only, never on per-user containers (suspend those
+    with 'dtaas user stop'). Containers and networks are kept, so this is not
+    'uninstall'. Reverse it with 'dtaas platform start'.
     """
-    _run_suspend(output_dir, lifecyclePkg.stop, "Deployment stopped successfully")
+    if _run_suspend(output_dir, lifecyclePkg.stop, "Deployment stopped successfully"):
+        _report_leftover_user_containers(output_dir, "stop")
 
 
 @click.command(name="start")
-@_output_dir_option
+@output_dir_option
 def start(output_dir):
-    """Start all stopped services in place ('docker compose start').
+    """Start the stopped core services in place ('docker compose start').
 
-    The counterpart to 'dtaas admin stop'.
+    The counterpart to 'dtaas platform stop'. Acts on the core services only.
     """
     _run_suspend(output_dir, lifecyclePkg.start, "Deployment started successfully")
 
 
 @click.command(name="pause")
-@_output_dir_option
+@output_dir_option
 def pause(output_dir):
-    """Freeze all running services in place ('docker compose pause').
+    """Freeze the running core services in place ('docker compose pause').
 
-    Processes are frozen, not terminated, and memory is preserved. Reverse it
-    with 'dtaas admin resume'.
+    Acts on the core services only, never on per-user containers (freeze those
+    with 'dtaas user pause'). Processes are frozen, not terminated, and memory
+    is preserved. Reverse it with 'dtaas platform resume'.
     """
-    _run_suspend(output_dir, lifecyclePkg.pause, "Deployment paused successfully")
+    if _run_suspend(output_dir, lifecyclePkg.pause, "Deployment paused successfully"):
+        _report_leftover_user_containers(output_dir, "pause")
 
 
 @click.command(name="resume")
-@_output_dir_option
+@output_dir_option
 def resume(output_dir):
-    """Resume all paused services ('docker compose unpause')."""
+    """Resume the paused core services ('docker compose unpause').
+
+    Acts on the core services only. The counterpart to 'dtaas platform pause'.
+    """
     _run_suspend(output_dir, lifecyclePkg.unpause, "Deployment resumed successfully")
 
 
-def add_lifecycle_commands(admin_group):
-    """Register the lifecycle commands (status/stop/start/pause/resume) on *admin_group*."""
+def add_lifecycle_commands(platform_group):
+    """Register status/stop/start/pause/resume on the *platform_group*."""
     for command in (status, stop, start, pause, resume):
-        admin_group.add_command(command)
+        platform_group.add_command(command)
