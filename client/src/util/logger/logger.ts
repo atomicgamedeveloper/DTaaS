@@ -10,7 +10,10 @@ import { hashUsername } from 'util/logger/hashUtils';
 import { getSessionId } from 'util/logger/sessionManager';
 import { sendBeacon } from 'util/logger/beaconLogger';
 import { addLog } from 'util/logger/indexedDBLogger';
-import { getLoggingEnabled } from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
+import {
+  getLoggingEnabled,
+  getRemoteLoggingEnabled,
+} from 'model/backend/gitlab/digitalTwinConfig/settingsUtility';
 import { sanitizeLogContext } from 'util/logger/contextUtils';
 
 const PERSISTENCE_FAILURE_MESSAGE =
@@ -70,7 +73,11 @@ export function log({
   label,
   context = {},
 }: LogInput): LogEvent | null {
-  if (!initialized || !getLoggingEnabled()) return null;
+  const localLoggingEnabled = getLoggingEnabled();
+  const remoteLoggingEnabled = getRemoteLoggingEnabled();
+  if (!initialized || (!localLoggingEnabled && !remoteLoggingEnabled)) {
+    return null;
+  }
 
   const logEvent = createLogEvent({
     sessionId,
@@ -82,10 +89,12 @@ export function log({
     label,
     context: sanitizeLogContext(context),
   });
-  addLog(logEvent).catch(() => {
-    warnPersistenceFailureOnce();
-  });
-  if (loggerUrl.trim()) {
+  if (localLoggingEnabled) {
+    addLog(logEvent).catch(() => {
+      warnPersistenceFailureOnce();
+    });
+  }
+  if (loggerUrl.trim() && remoteLoggingEnabled) {
     sendBeacon(loggerUrl, logEvent);
   }
   return logEvent;
