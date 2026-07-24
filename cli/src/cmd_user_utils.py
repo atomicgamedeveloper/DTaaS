@@ -99,18 +99,20 @@ def stage_users_for_add(user_input):
         raise click.ClickException("Pass either a USERNAME or --file, not both.")
     if not user_input.username and not user_input.csv_file:
         raise click.ClickException(
-            "Provide a USERNAME (e.g. 'dtaas admin user add alice --email "
+            "Provide a USERNAME (e.g. 'dtaas user add alice --email "
             "a@x.io') or --file <users.csv> to add users."
         )
     return _register_users(_users_to_add(user_input))
 
 
-def resolve_usernames(usernames, csv_file, verb="delete"):
+def resolve_usernames(usernames, csv_file, verb="delete", allow_all=False):
     """Resolve the usernames to act on from positional USERNAMES or --file/-f.
 
     Only the username column of the CSV is used; email/groups/load_balance are
     ignored. Raises ClickException if both or neither are given. Shared by
     'user delete'/'pause'/'stop'/'resume'; *verb* only affects the error text.
+    *allow_all* names '--all' as a third option in that error -- set by the
+    lifecycle verbs, which have it, but not by 'delete', which doesn't.
     """
     if usernames and csv_file:
         raise click.ClickException("Pass either USERNAMES or --file, not both.")
@@ -118,9 +120,12 @@ def resolve_usernames(usernames, csv_file, verb="delete"):
         return list(_read_users_csv(csv_file))
     if usernames:
         return list(usernames)
-    raise click.ClickException(
-        f"Provide one or more USERNAMES or --file <users.csv> to {verb} users."
+    target_hint = (
+        "USERNAMES, --file <users.csv>, or --all"
+        if allow_all
+        else "USERNAMES or --file <users.csv>"
     )
+    raise click.ClickException(f"Provide one or more {target_hint} to {verb} users.")
 
 
 def reject_starting_users(usernames, verb):
@@ -129,11 +134,11 @@ def reject_starting_users(usernames, verb):
     'user pause'/'stop'/'resume' only manage additional, registry-tracked
     users; starting users are baked into the main compose file and are
     suspended/resumed as part of the whole installation instead, via
-    'dtaas admin pause'/'stop'/'resume'.
+    'dtaas platform pause'/'stop'/'resume'.
     """
     hits = sorted(set(usernames) & set(_starting_usernames()))
     if hits:
         raise click.ClickException(
             f"Cannot {verb} starting user(s) {', '.join(hits)}: manage the whole "
-            "installation with 'dtaas admin pause'/'stop'/'resume' instead."
+            "installation with 'dtaas platform pause'/'stop'/'resume' instead."
         )
