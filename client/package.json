@@ -30,7 +30,7 @@
     "config:test": "npx shx cp config/test.js public/env.js && npx shx cp config/test.js build/env.js",
     "develop": "vite",
     "format": "prettier --ignore-path ../.gitignore --write \"**/*.{ts,tsx,css,scss}\"",
-    "graph": "npx madge --image src.svg src && npx madge --image test.svg test",
+    "graph": "npx madge --ts-config tsconfig.json --image src.svg src && npx madge --ts-config tsconfig.json --dot test/unit > test-unit.gv && sfdp -Tsvg -Goverlap=true -Gsplines=false test-unit.gv > test-unit.svg && npx madge --ts-config tsconfig.json --dot test/integration > test-int.gv && sfdp -Tsvg -Goverlap=true -Gsplines=false test-int.gv > test-int.svg && npx madge --ts-config tsconfig.json --dot test/e2e > test-e2e.gv && sfdp -Tsvg -Goverlap=true -Gsplines=false test-e2e.gv > test-e2e.svg",
     "start": "vite preview",
     "stop": "npx kill-port 4000",
     "syntax": "npx eslint . --fix",
