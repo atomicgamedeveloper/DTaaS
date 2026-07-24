@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import path from 'node:path';
 import setup from 'test/e2e/setup/fixtures';
+import { disableRemoteLogging } from 'test/e2e/setup/appSettings';
 
 // Use absolute path for reliable environment variable loading
 const envPath = path.join(process.cwd(), 'client/test/.env');
@@ -26,6 +27,7 @@ setup('authenticate', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Open settings' })).toBeVisible(
     { timeout: 30000 },
   );
+  await disableRemoteLogging(page);
   const storage = await page.context().storageState();
 
   storage.cookies = storage.cookies.map((cookie) => {
