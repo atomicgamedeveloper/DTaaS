@@ -19,6 +19,7 @@ rich = "^15.0.0"
 httpx = "^0.28.1"
 python-gitlab = "^8.3.0"
 psycopg = {version = "^3.3", extras = ["binary"]}
+dtaas-gitlab = {path = "../../../lib", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1.1"
